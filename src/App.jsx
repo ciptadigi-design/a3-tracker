@@ -13,7 +13,7 @@ const supabaseHeaders = {
 
 const ADMIN_PASSWORD = 'admin'; 
 
-// --- DAFTAR PART DARI CSV (DIPERBAIKI TYPO & KAPITALISASI) ---
+// --- DAFTAR PART DARI CSV ---
 const PREDEFINED_PARTS = [
   "Charging Corona",
   "Cleaning Blade",
@@ -75,7 +75,7 @@ export default function App() {
   });
   const [adminPriceInput, setAdminPriceInput] = useState(clickPrice.toString());
 
-  // --- APPLE STYLE SYSTEM ---
+  // --- APPLE STYLE SYSTEM (HEX CODES & GLASSMORPHISM) ---
   const cls = {
     appBg: isDarkMode ? 'bg-[#000000] text-[#F5F5F7]' : 'bg-[#F5F5F7] text-[#1D1D1F]',
     cardBg: isDarkMode ? 'bg-[#1C1C1E]/80 backdrop-blur-2xl border border-[#2C2C2E] shadow-[0_8px_30px_rgb(0,0,0,0.12)] rounded-[24px]' : 'bg-white/80 backdrop-blur-2xl border border-white/40 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-[24px]',
@@ -139,7 +139,7 @@ export default function App() {
     tgl: getTodayStr(), nomor_invoice: '', divisi: 'CG', nama_konsumen: '', nama_produk: '',
     qty_kesalahan: '', kerugian_bahan: '', kerugian_jasa: '', kategori_kesalahan: 'Kesesuaian/Ketepatan',
     jenis_kesalahan: 'Machine Error', deskripsi_kesalahan: '', penyebab: '', pencegahan_solusi: '',
-    penyelesaian: 'Cetak Ulang', pic: ''
+    penyelesaian: '', pic: '' // Penyelesaian diisi string kosong default (Penyelesaian Untuk Konsumen)
   });
 
   const [purchaseForm, setPurchaseForm] = useState({
@@ -299,11 +299,9 @@ export default function App() {
 
       const existingPart = inventory.find(p => p.part_name.toLowerCase() === purchaseForm.part_name.toLowerCase());
       if (existingPart) {
-        // Update akumulasi stok gudang (Patch)
         const resInv = await fetch(`${supabaseUrl}/rest/v1/inventory_parts?id=eq.${existingPart.id}`, { method: 'PATCH', headers: { ...supabaseHeaders, 'Prefer': 'return=representation' }, body: JSON.stringify({ stock: existingPart.stock + qtyInt }) });
         if(resInv.ok) { const updatedInv = await resInv.json(); setInventory(inventory.map(item => item.id === existingPart.id ? updatedInv[0] : item)); }
       } else {
-        // Bikin data gudang baru kalau belum pernah ada
         const resInv = await fetch(`${supabaseUrl}/rest/v1/inventory_parts`, { method: 'POST', headers: { ...supabaseHeaders, 'Prefer': 'return=representation' }, body: JSON.stringify({ part_name: purchaseForm.part_name, stock: qtyInt }) });
         if(resInv.ok) { const newInv = await resInv.json(); setInventory([...inventory, newInv[0]]); }
       }
@@ -350,13 +348,18 @@ export default function App() {
     if (!errorForm.nama_konsumen || !errorForm.nama_produk || !errorForm.pic) return showToast("Wajib diisi!", "error");
     const kb = parseFloat(errorForm.kerugian_bahan) || 0; const kj = parseFloat(errorForm.kerugian_jasa) || 0;
     const totalKerugian = (kb + kj) * currentMultiplier;
-    const finalPenyelesaian = currentMultiplier > 1 ? `${errorForm.penyelesaian} [PUNISHMENT ${currentMultiplier}X LIPAT]` : errorForm.penyelesaian;
+    
+    // Punishment status mapping
+    const finalPenyelesaian = currentMultiplier > 1 
+      ? `${errorForm.penyelesaian} [PUNISHMENT ${currentMultiplier}X LIPAT]` 
+      : errorForm.penyelesaian;
+
     try {
       const res = await fetch(`${supabaseUrl}/rest/v1/error_logs`, { method: 'POST', headers: { ...supabaseHeaders, 'Prefer': 'return=representation' }, body: JSON.stringify({ ...errorForm, qty_kesalahan: parseInt(errorForm.qty_kesalahan) || 0, kerugian_bahan: kb, kerugian_jasa: kj, jumlah_kerugian: totalKerugian, penyelesaian: finalPenyelesaian }) });
       if (!res.ok) throw new Error("Gagal simpan");
       const data = await res.json(); setErrorLogs([data[0], ...errorLogs]);
       showToast(currentMultiplier > 1 ? `Log dicatat! Punishment ${currentMultiplier}x.` : "Log Error dicatat!");
-      setErrorForm({ ...errorForm, nomor_invoice: '', nama_konsumen: '', nama_produk: '', qty_kesalahan: '', kerugian_bahan: '', kerugian_jasa: '', deskripsi_kesalahan: '', penyebab: '', pencegahan_solusi: '', pic: '' });
+      setErrorForm({ ...errorForm, nomor_invoice: '', nama_konsumen: '', nama_produk: '', qty_kesalahan: '', kerugian_bahan: '', kerugian_jasa: '', deskripsi_kesalahan: '', penyebab: '', pencegahan_solusi: '', penyelesaian: '', pic: '' });
     } catch (err) { showToast("Gagal menyimpan error", "error"); }
   };
 
@@ -444,6 +447,9 @@ export default function App() {
   const totalExpensePart = reportPurchases.reduce((sum, item) => sum + Number(item.total_harga), 0);
   const netMargin = totalGrossRevenue - totalExpensePart - totalRupiahKerugian;
 
+  // --- ADVANCED METRIC: Click per Pcs (Biaya Part / Klik) ---
+  const clickPerPcsValue = totalReportUsage > 0 ? (totalExpensePart / totalReportUsage) : 0;
+
   const partData = Object.keys(PART_LIFETIMES).map(partName => {
     const lifetime = PART_LIFETIMES[partName]; const usage = Math.max(0, currentTotalClicks - (replacements[partName] || 0)); const remainingPercent = Math.max(0, ((lifetime - usage) / lifetime) * 100);
     let color = 'bg-[#32D74B]'; if (remainingPercent <= 10) color = 'bg-[#FF453A]'; else if (remainingPercent <= 25) color = 'bg-[#FF9F0A]';
@@ -508,7 +514,6 @@ export default function App() {
         </div>
       )}
 
-      {/* MODAL EDIT PEMBELIAN (PENGGUNAAN DROPDOWN NAMA BARANG) */}
       {editPurchaseModal.isOpen && (
         <div className={`fixed inset-0 ${cls.modalBg} z-50 flex items-center justify-center p-4`}>
           <div className={`${cls.cardBg} w-full max-w-md p-6 relative`}>
@@ -537,7 +542,6 @@ export default function App() {
         </div>
       )}
 
-      {/* MODAL EDIT STOK GUDANG (PENGGUNAAN DROPDOWN NAMA BARANG) */}
       {editInventoryModal.isOpen && (
         <div className={`fixed inset-0 ${cls.modalBg} z-50 flex items-center justify-center p-4`}>
           <div className={`${cls.cardBg} w-full max-w-sm p-6 relative`}>
@@ -586,7 +590,8 @@ export default function App() {
               <div className="space-y-4 flex flex-col justify-between">
                 <div className="space-y-4">
                   <textarea value={editErrorForm.deskripsi_kesalahan} onChange={e => setEditErrorForm({ ...editErrorForm, deskripsi_kesalahan: e.target.value })} className={`w-full p-3 ${cls.input}`} rows="2" placeholder="Deskripsi Masalah"></textarea>
-                  <textarea value={editErrorForm.pencegahan_solusi} onChange={e => setEditErrorForm({ ...editErrorForm, pencegahan_solusi: e.target.value })} className={`w-full p-3 ${cls.input}`} rows="2" placeholder="Solusi & Pencegahan"></textarea>
+                  <textarea value={editErrorForm.pencegahan_solusi} onChange={e => setEditErrorForm({ ...editErrorForm, pencegahan_solusi: e.target.value })} className={`w-full p-3 ${cls.input}`} rows="2" placeholder="Penyebab & Solusi"></textarea>
+                  <input type="text" value={editErrorForm.penyelesaian} onChange={e => setEditErrorForm({ ...editErrorForm, penyelesaian: e.target.value })} className={`w-full p-3 ${cls.input}`} placeholder="Penyelesaian Untuk Konsumen" />
                 </div>
                 <button type="submit" className={`w-full py-4 ${cls.roseBg} text-white font-semibold rounded-[16px] shadow-md mt-4`}>Simpan Perubahan</button>
               </div>
@@ -652,15 +657,15 @@ export default function App() {
                         <div className={`flex-1 ${cls.indigoIcon} p-3 rounded-[14px]`}><p className="text-[10px] uppercase font-bold mb-1 opacity-70">Jenis Error</p><p className="font-semibold text-xs">{errorDetailModal.item.jenis_kesalahan}</p></div>
                       </div>
                       <div>
-                        <p className={`text-xs ${cls.textSub} mb-1 ml-1`}>Penyebab Utama</p>
-                        <div className={`bg-black/5 dark:bg-white/5 p-3 rounded-[14px] ${cls.textMain} font-medium`}>{errorDetailModal.item.deskripsi_kesalahan || <i>Belum ada deskripsi.</i>}</div>
+                        <p className={`text-xs ${cls.textSub} mb-1 ml-1`}>Deskripsi Kesalahan</p>
+                        <div className={`bg-black/5 dark:bg-white/5 p-3 rounded-[14px] ${cls.textMain} font-medium`}>{errorDetailModal.item.deskripsi_kesalahan || <i>Belum ada deskripsi kesalahan.</i>}</div>
                       </div>
                       <div>
-                        <p className={`text-xs ${cls.textSub} mb-1 ml-1`}>Solusi Pencegahan</p>
-                        <div className={`${cls.emeraldIcon} p-3 rounded-[14px] font-medium`}>{errorDetailModal.item.pencegahan_solusi || <i>Belum ada solusi.</i>}</div>
+                        <p className={`text-xs ${cls.textSub} mb-1 ml-1`}>Penyebab & Solusi</p>
+                        <div className={`${cls.emeraldIcon} p-3 rounded-[14px] font-medium`}>{errorDetailModal.item.pencegahan_solusi || <i>Belum ada analisis penyebab & solusi.</i>}</div>
                       </div>
                       <div className={`pt-3 flex justify-between items-center border-t border-black/5 dark:border-white/5`}>
-                        <div><p className={`text-xs ${cls.textSub}`}>Penyelesaian Akhir</p><p className={`font-semibold ${errorDetailModal.item.penyelesaian?.includes('PUNISHMENT') ? cls.roseText : cls.textMain}`}>{errorDetailModal.item.penyelesaian || 'Cetak Ulang'}</p></div>
+                        <div><p className={`text-xs ${cls.textSub}`}>Penyelesaian Konsumen</p><p className={`font-semibold ${errorDetailModal.item.penyelesaian?.includes('PUNISHMENT') ? cls.roseText : cls.textMain}`}>{errorDetailModal.item.penyelesaian || '-'}</p></div>
                         <div className="text-right"><p className={`text-xs ${cls.textSub}`}>Qty Rusak</p><p className={`font-bold ${cls.roseText} text-xl`}>{errorDetailModal.item.qty_kesalahan} <span className="text-xs font-medium">pcs</span></p></div>
                       </div>
                     </div>
@@ -669,7 +674,6 @@ export default function App() {
               </div>
             </div>
             
-            {/* Modal Footer */}
             <div className={`p-4 border-t ${cls.cardHeader} text-center`}>
               <button onClick={() => setErrorDetailModal({ isOpen: false, item: null })} className={`px-8 py-2.5 font-semibold text-[15px] rounded-full transition-colors ${cls.btnSec}`}>Tutup</button>
             </div>
@@ -694,7 +698,6 @@ export default function App() {
         </div>
       )}
 
-      {/* Tost Notification Mac Style */}
       {toast && (
         <div className={`fixed top-8 right-8 z-50 flex items-center px-5 py-4 rounded-[18px] shadow-[0_8px_30px_rgb(0,0,0,0.12)] text-white backdrop-blur-xl transition-all ${toast.type === 'error' ? 'bg-[#FF3B30]/90' : 'bg-[#32D74B]/90'}`}>
           {toast.type === 'error' ? <AlertCircle className="w-5 h-5 mr-3" /> : <CheckCircle className="w-5 h-5 mr-3" />} 
@@ -773,12 +776,12 @@ export default function App() {
               <button onClick={() => setActiveTab('dashboard')} className={`flex-1 min-w-[120px] px-5 py-2 text-[15px] flex justify-center items-center whitespace-nowrap transition-all ${activeTab === 'dashboard' ? cls.tabAct : cls.tabInact}`}>Dashboard</button>
               <button onClick={() => setActiveTab('inventory')} className={`flex-1 min-w-[130px] px-5 py-2 text-[15px] flex justify-center items-center whitespace-nowrap transition-all ${activeTab === 'inventory' ? cls.tabAct : cls.tabInact}`}>Stok & Beli</button>
               <button onClick={() => setActiveTab('monitoring')} className={`flex-1 min-w-[120px] px-5 py-2 text-[15px] flex justify-center items-center whitespace-nowrap transition-all ${activeTab === 'monitoring' ? cls.tabAct : cls.tabInact}`}>Umur Part</button>
-              <button onClick={() => setActiveTab('error_log')} className={`flex-1 min-w-[130px] px-5 py-2 text-[15px] flex justify-center items-center whitespace-nowrap transition-all ${activeTab === 'error_log' ? cls.tabAct : cls.tabInact}`}>Log Error</button>
+              <button onClick={() => setActiveTab('error_log')} className={`flex-1 min-w-[130px] px-5 py-2 text-[15px] flex justify-center items-center whitespace-nowrap transition-all ${activeTab === 'error_log' ? cls.tabAct : cls.tabInact}`}>Log Kesalahan</button>
               <button onClick={() => setActiveTab('report')} className={`flex-1 min-w-[120px] px-5 py-2 text-[15px] flex justify-center items-center whitespace-nowrap transition-all ${activeTab === 'report' ? cls.tabAct : cls.tabInact}`}>Laporan</button>
             </div>
           </div>
 
-          {(activeTab === 'dashboard' || activeTab === 'report' || activeTab === 'inventory') && (
+          {(activeTab === 'dashboard' || activeTab === 'report' || activeTab === 'inventory' || activeTab === 'error_log') && (
             <div className={`px-6 py-4 flex flex-col sm:flex-row justify-between sm:items-center gap-4 ${cls.cardBg}`}>
               <div className="flex items-center space-x-2"><Filter className={`w-5 h-5 ${cls.textMuted}`} /><h2 className={`font-semibold text-lg tracking-tight ${cls.textMain}`}>Periode Kalkulasi</h2></div>
               <div className="flex flex-wrap gap-2 text-sm font-medium">
@@ -791,16 +794,29 @@ export default function App() {
           {/* TAB 0: DASHBOARD */}
           {activeTab === 'dashboard' && (
             <div className="space-y-6 animate-in fade-in duration-500">
+              {/* Top Cards Apple Health Style */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                
+                {/* OUTPUT TERCETAK DENGAN ADVANCED METRIC (CLICK PER PCS) */}
                 <div className={`p-6 flex flex-col justify-between h-40 ${cls.cardBg}`}>
                    <div className="flex justify-between items-start">
                      <div className={`w-10 h-10 rounded-full flex items-center justify-center ${cls.indigoIcon}`}><Printer className="w-5 h-5" /></div>
-                     <span className={`text-xs font-bold uppercase tracking-wider ${cls.textMuted}`}>Output Tercetak</span>
+                     <span className={`text-xs font-bold uppercase tracking-wider ${cls.textMuted}`}>Output Tercetak &amp; Efisiensi</span>
                    </div>
-                   <div>
-                     <h3 className={`text-4xl font-bold tracking-tight font-mono ${cls.textMain}`}>{totalReportUsage.toLocaleString()} <span className={`text-lg font-medium ${cls.textMuted}`}>klik</span></h3>
+                   <div className="flex items-end justify-between">
+                     <div>
+                       <h3 className={`text-4xl font-bold tracking-tight font-mono ${cls.textMain}`}>{totalReportUsage.toLocaleString()} <span className={`text-lg font-medium ${cls.textMuted}`}>klik</span></h3>
+                     </div>
+                     {/* Pembeda untuk Harga Click per Pcs */}
+                     <div className="text-right border-l border-[#38383A]/20 dark:border-[#38383A] pl-4">
+                       <p className={`text-[10px] font-bold uppercase tracking-wider ${cls.textMuted}`}>Biaya Part / Klik</p>
+                       <h4 className={`text-lg font-bold font-mono ${cls.amberText}`}>
+                         Rp {clickPerPcsValue.toLocaleString('id-ID', { maximumFractionDigits: 1 })}
+                       </h4>
+                     </div>
                    </div>
                 </div>
+
                 <div className={`p-6 flex flex-col justify-between h-40 ${cls.cardBg}`}>
                    <div className="flex justify-between items-start">
                      <div className={`w-10 h-10 rounded-full flex items-center justify-center ${cls.emeraldIcon}`}><DollarSign className="w-5 h-5" /></div>
@@ -812,6 +828,7 @@ export default function App() {
                 </div>
               </div>
 
+              {/* Expense & Net Margin */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className={`p-6 flex flex-col justify-center space-y-5 ${cls.cardBg}`}>
                   <div className="flex items-center justify-between">
@@ -830,7 +847,9 @@ export default function App() {
                 </div>
               </div>
 
+              {/* COMPACT CHARTS (50/50 SPLIT) */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+                {/* Chart Tren */}
                 <div className={`p-4 md:p-5 ${cls.cardBg} flex flex-col`}>
                   <h3 className={`font-semibold text-[15px] tracking-tight mb-4 flex items-center ${cls.textMain}`}>
                     <TrendingUp className={`w-4 h-4 mr-2 ${cls.indigoText}`} /> Tren Harian
@@ -849,6 +868,7 @@ export default function App() {
                   </div>
                 </div>
 
+                {/* Chart Pie Error */}
                 <div className={`p-4 md:p-5 ${cls.cardBg} flex flex-col`}>
                   <h3 className={`font-semibold text-[15px] tracking-tight mb-4 flex items-center ${cls.textMain}`}>
                     <PieChart className={`w-4 h-4 mr-2 ${cls.roseText}`} /> Rasio Error
@@ -879,10 +899,11 @@ export default function App() {
                   )}
                 </div>
               </div>
+
             </div>
           )}
 
-          {/* TAB: INVENTORY (PENGGUNAAN DROPDOWN NAMA BARANG DARI CSV) */}
+          {/* TAB: INVENTORY */}
           {activeTab === 'inventory' && (
             <div className="space-y-6 animate-in fade-in duration-500">
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -890,10 +911,7 @@ export default function App() {
                 <div className={`col-span-1 p-6 ${cls.cardBg}`}>
                   <h3 className={`font-semibold text-xl mb-6 flex items-center tracking-tight ${cls.textMain}`}><ShoppingCart className={`w-5 h-5 mr-2 ${cls.amberText}`} /> Catat Pembelian</h3>
                   <form onSubmit={handleSavePurchase} className="space-y-4 font-medium">
-                    <div>
-                      <label className={`block text-xs mb-1.5 ml-1 ${cls.textSub}`}>Tgl Beli</label>
-                      <input type="date" value={purchaseForm.tgl_pembelian} onChange={e => setPurchaseForm({...purchaseForm, tgl_pembelian: e.target.value})} className={`w-full p-3.5 ${cls.input}`} required />
-                    </div>
+                    <div><label className={`block text-xs mb-1.5 ml-1 ${cls.textSub}`}>Tgl Beli</label><input type="date" value={purchaseForm.tgl_pembelian} onChange={e => setPurchaseForm({...purchaseForm, tgl_pembelian: e.target.value})} className={`w-full p-3.5 ${cls.input}`} required /></div>
                     <div>
                       <label className={`block text-xs mb-1.5 ml-1 ${cls.textSub}`}>Nama Barang</label>
                       <select value={purchaseForm.part_name} onChange={e => setPurchaseForm({...purchaseForm, part_name: e.target.value})} className={`w-full p-3.5 ${cls.input}`} required>
@@ -945,7 +963,7 @@ export default function App() {
                     </div>
                     <div className="overflow-x-auto max-h-[250px]">
                       <table className="w-full text-left text-[15px] whitespace-nowrap">
-                        <thead className={`sticky top-0 z-10 border-b ${cls.tableHead}`}><tr><th className="px-5 py-3 font-semibold">Tgl Beli</th><th className="px-5 py-3 font-semibold">Nama Part</th><th className="px-5 py-3 font-semibold text-center">Qty</th><th className="px-5 py-3 font-semibold text-right">Total (Rp)</th></tr></thead>
+                        <thead className={`sticky top-0 z-10 border-b ${cls.tableHead}`}><tr><th className="px-5 py-3 font-semibold">Tgl Beli</th><th className="px-5 py-3 font-semibold">Nama Part / Supplier</th><th className="px-5 py-3 font-semibold text-center">Qty</th><th className="px-5 py-3 font-semibold text-right">Total (Rp)</th></tr></thead>
                         <tbody className={`divide-y ${cls.tableDiv}`}>
                           {reportPurchases.map((item, idx) => (
                             <tr key={idx} className={cls.tableRow}>
@@ -976,19 +994,191 @@ export default function App() {
            </div>
           )}
 
-          {/* TAB: ERROR LOG */}
+          {/* --- TAB BARU REWORK: PENYATUAN INPUT & LAPORAN LOG ERROR --- */}
           {activeTab === 'error_log' && (
-             <div className={`overflow-hidden animate-in fade-in duration-500 ${cls.cardBg}`}>
-             <div className={`p-6 border-b flex flex-col justify-center ${cls.tableDiv}`}><h3 className={`font-semibold text-xl flex items-center tracking-tight ${cls.textMain}`}><AlertTriangle className={`w-6 h-6 mr-3 ${cls.roseText}`} /> Pencatatan Kesalahan (Error Log)</h3><p className={`text-sm mt-2 ml-9 ${cls.textSub}`}>Dokumentasi masalah dan kalkulasi penalty.</p></div>
-             <div className="p-6"><form onSubmit={handleSaveErrorLog} className="grid grid-cols-1 md:grid-cols-3 gap-8 font-medium"><div className="space-y-4"><div><h4 className={`font-bold mb-4 text-xs uppercase tracking-wider ${cls.textMuted}`}>Data Order</h4><div className="space-y-4"><input type="date" value={errorForm.tgl} onChange={e => setErrorForm({ ...errorForm, tgl: e.target.value })} className={`w-full p-3.5 ${cls.input}`} required /><input type="text" value={errorForm.nomor_invoice} onChange={e => setErrorForm({ ...errorForm, nomor_invoice: e.target.value })} placeholder="No. Invoice" className={`w-full p-3.5 ${cls.input}`} /><input type="text" value={errorForm.nama_konsumen} onChange={e => setErrorForm({ ...errorForm, nama_konsumen: e.target.value })} placeholder="Nama Konsumen" className={`w-full p-3.5 ${cls.input}`} required /><input type="text" value={errorForm.nama_produk} onChange={e => setErrorForm({ ...errorForm, nama_produk: e.target.value })} placeholder="Nama Produk" className={`w-full p-3.5 ${cls.input}`} required /></div></div></div><div className="space-y-4"><div><h4 className={`font-bold mb-4 text-xs uppercase tracking-wider ${cls.textMuted}`}>Analisis Error</h4><div className="space-y-4"><div className="grid grid-cols-2 gap-3"><select value={errorForm.kategori_kesalahan} onChange={e => setErrorForm({ ...errorForm, kategori_kesalahan: e.target.value })} className={`w-full p-3.5 ${cls.input}`}><option value="Kesesuaian/Ketepatan">Kesesuaian</option><option value="Kualitas">Kualitas</option><option value="Desain">Desain</option><option value="Bahan">Bahan</option><option value="Prosedur/Proses">Prosedur</option></select><select value={errorForm.jenis_kesalahan} onChange={e => setErrorForm({ ...errorForm, jenis_kesalahan: e.target.value })} className={`w-full p-3.5 ${cls.input}`}><option value="Machine Error">Mesin</option><option value="Human Error">Human</option><option value="Print Test">Tes Print</option></select></div><div className="grid grid-cols-2 gap-3"><input type="number" value={errorForm.qty_kesalahan} onChange={e => setErrorForm({ ...errorForm, qty_kesalahan: e.target.value })} placeholder="Qty Rusak" className={`w-full p-3.5 ${cls.input}`} required /><input type="text" value={errorForm.pic} onChange={e => setErrorForm({ ...errorForm, pic: e.target.value })} placeholder="PIC" className={`w-full p-3.5 ${cls.input}`} required /></div><div className="grid grid-cols-2 gap-3"><input type="number" value={errorForm.kerugian_bahan} onChange={e => setErrorForm({ ...errorForm, kerugian_bahan: e.target.value })} placeholder="Rugi Bahan" className={`w-full p-3.5 ${cls.input}`} /><input type="number" value={errorForm.kerugian_jasa} onChange={e => setErrorForm({ ...errorForm, kerugian_jasa: e.target.value })} placeholder="Rugi Jasa" className={`w-full p-3.5 ${cls.input}`} /></div></div></div></div><div className="space-y-4 flex flex-col h-full"><div className="flex-grow"><h4 className={`font-bold mb-4 text-xs uppercase tracking-wider ${cls.textMuted}`}>Tindakan</h4><div className="space-y-4"><textarea value={errorForm.deskripsi_kesalahan} onChange={e => setErrorForm({ ...errorForm, deskripsi_kesalahan: e.target.value })} className={`w-full p-3.5 ${cls.input}`} rows="2" placeholder="Deskripsi Masalah"></textarea><textarea value={errorForm.pencegahan_solusi} onChange={e => setErrorForm({ ...errorForm, pencegahan_solusi: e.target.value })} className={`w-full p-3.5 ${cls.input}`} rows="2" placeholder="Solusi & Pencegahan"></textarea></div></div><button type="submit" className={`w-full py-4 rounded-[14px] font-semibold transition-opacity hover:opacity-90 ${cls.roseBg} text-white`}><CheckCircle className="w-5 h-5 mr-2 inline" /> Simpan Error</button></div></form></div>
-           </div>
+             <div className="grid grid-cols-1 xl:grid-cols-5 gap-6 md:gap-8 animate-in fade-in duration-500">
+               
+               {/* SISI KIRI (2/5): Form Pencatatan Log Error */}
+               <div className={`xl:col-span-2 p-6 h-fit ${cls.cardBg}`}>
+                 <h3 className={`font-semibold text-xl mb-4 flex items-center tracking-tight ${cls.textMain}`}>
+                   <AlertTriangle className={`w-6 h-6 mr-3 ${cls.roseText}`} /> Catat Kesalahan Baru
+                 </h3>
+                 <form onSubmit={handleSaveErrorLog} className="space-y-4 font-medium text-sm">
+                    {currentMultiplier > 1 && errorForm.pic && errorForm.deskripsi_kesalahan && (
+                      <div className={`p-3 rounded-xl flex items-start border ${cls.roseCard} ${cls.roseText} leading-relaxed`}>
+                        <AlertTriangle className="w-5 h-5 mr-2 mt-0.5 flex-shrink-0" />
+                        <p className="text-xs">
+                          <strong>Peringatan Multiplier:</strong> PIC <strong>{errorForm.pic.toUpperCase()}</strong> telah melakukan kesalahan yang sama sebanyak {currentMultiplier - 1} kali sebelumnya. Sistem akan mengalikan nominal kerugian sebesar <strong>{currentMultiplier}x Lipat</strong>!
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Section Detail Order */}
+                    <div className="space-y-3">
+                      <div><label className={`text-xs block mb-1 font-semibold ${cls.textSub}`}>Tanggal Kejadian</label><input type="date" value={errorForm.tgl} onChange={e => setErrorForm({ ...errorForm, tgl: e.target.value })} className={`w-full p-3 ${cls.input}`} required /></div>
+                      <div><label className={`text-xs block mb-1 font-semibold ${cls.textSub}`}>No. Invoice CRM</label><input type="text" value={errorForm.nomor_invoice} onChange={e => setErrorForm({ ...errorForm, nomor_invoice: e.target.value })} placeholder="Misal: INV-2026-001" className={`w-full p-3 ${cls.input}`} /></div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div><label className={`text-xs block mb-1 font-semibold ${cls.textSub}`}>Nama Konsumen</label><input type="text" value={errorForm.nama_konsumen} onChange={e => setErrorForm({ ...errorForm, nama_konsumen: e.target.value })} placeholder="Konsumen" className={`w-full p-3 ${cls.input}`} required /></div>
+                        <div><label className={`text-xs block mb-1 font-semibold ${cls.textSub}`}>Nama Produk</label><input type="text" value={errorForm.nama_produk} onChange={e => setErrorForm({ ...errorForm, nama_produk: e.target.value })} placeholder="Nama Produk" className={`w-full p-3 ${cls.input}`} required /></div>
+                      </div>
+                    </div>
+
+                    {/* Section Analisis Error */}
+                    <div className="space-y-3 border-t border-black/5 dark:border-white/5 pt-3">
+                      <div className="grid grid-cols-2 gap-3">
+                        <div><label className={`text-xs block mb-1 font-semibold ${cls.textSub}`}>Kategori</label><select value={errorForm.kategori_kesalahan} onChange={e => setErrorForm({ ...errorForm, kategori_kesalahan: e.target.value })} className={`w-full p-3 ${cls.input}`}><option value="Kesesuaian/Ketepatan">Kesesuaian</option><option value="Kualitas">Kualitas</option><option value="Desain">Desain</option><option value="Bahan">Bahan</option><option value="Prosedur/Proses">Prosedur</option></select></div>
+                        <div><label className={`text-xs block mb-1 font-semibold ${cls.textSub}`}>Jenis</label><select value={errorForm.jenis_kesalahan} onChange={e => setErrorForm({ ...errorForm, jenis_kesalahan: e.target.value })} className={`w-full p-3 ${cls.input}`}><option value="Machine Error">Mesin</option><option value="Human Error">Human</option><option value="Print Test">Tes Print</option></select></div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div><label className={`text-xs block mb-1 font-semibold ${cls.textSub}`}>Qty Rusak (Pcs)</label><input type="number" value={errorForm.qty_kesalahan} onChange={e => setErrorForm({ ...errorForm, qty_kesalahan: e.target.value })} placeholder="0" className={`w-full p-3 ${cls.input}`} required /></div>
+                        <div><label className={`text-xs block mb-1 font-semibold ${cls.textSub}`}>PIC Terlibat</label><input type="text" value={errorForm.pic} onChange={e => setErrorForm({ ...errorForm, pic: e.target.value })} placeholder="Nama PIC" className={`w-full p-3 ${cls.input}`} required /></div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div><label className={`text-xs block mb-1 font-semibold ${cls.roseText}`}>Rugi Bahan (Rp)</label><input type="number" value={errorForm.kerugian_bahan} onChange={e => setErrorForm({ ...errorForm, kerugian_bahan: e.target.value })} placeholder="0" className={`w-full p-3 ${cls.input}`} /></div>
+                        <div><label className={`text-xs block mb-1 font-semibold ${cls.roseText}`}>Rugi Jasa (Rp)</label><input type="number" value={errorForm.kerugian_jasa} onChange={e => setErrorForm({ ...errorForm, kerugian_jasa: e.target.value })} placeholder="0" className={`w-full p-3 ${cls.input}`} /></div>
+                      </div>
+                    </div>
+
+                    {/* Section Evaluasi & Reworked Input sesuai Alur Baru */}
+                    <div className="space-y-3 border-t border-black/5 dark:border-white/5 pt-3">
+                      <div>
+                        <label className={`text-xs block mb-1 font-semibold ${cls.textSub}`}>1. Deskripsi Kesalahan</label>
+                        <textarea value={errorForm.deskripsi_kesalahan} onChange={e => setErrorForm({ ...errorForm, deskripsi_kesalahan: e.target.value })} className={`w-full p-3 ${cls.input}`} rows="2" placeholder="Ceritakan detail kronologi kesalahan yang terjadi..." required></textarea>
+                      </div>
+                      <div>
+                        <label className={`text-xs block mb-1 font-semibold ${cls.textSub}`}>2. Penyebab & Solusi</label>
+                        <textarea value={errorForm.pencegahan_solusi} onChange={e => setErrorForm({ ...errorForm, pencegahan_solusi: e.target.value })} className={`w-full p-3 ${cls.input}`} rows="2" placeholder="Apa penyebab utama dan solusi agar tidak terjadi lagi..." required></textarea>
+                      </div>
+                      <div>
+                        <label className={`text-xs block mb-1 font-semibold ${cls.textSub}`}>3. Penyelesaian Untuk Konsumen</label>
+                        <input type="text" value={errorForm.penyelesaian} onChange={e => setErrorForm({ ...errorForm, penyelesaian: e.target.value })} placeholder="Misal: Cetak ulang gratis, refund 50%, dll." className={`w-full p-3 ${cls.input}`} required />
+                      </div>
+                    </div>
+
+                    <button type="submit" className={`w-full py-4 rounded-[16px] font-bold transition-all shadow-sm ${cls.roseBg} hover:opacity-90 text-white mt-4 flex items-center justify-center`}>
+                      <CheckCircle className="w-5 h-5 mr-2" /> Simpan Log Error
+                    </button>
+                 </form>
+               </div>
+
+               {/* SISI KANAN (3/5): Daftar & Laporan Log Kesalahan Real-time */}
+               <div className={`xl:col-span-3 ${cls.cardBg} overflow-hidden`}>
+                 <div className={`p-5 border-b flex justify-between items-center ${cls.tableDiv}`}>
+                   <h3 className={`font-semibold text-lg flex items-center tracking-tight ${cls.textMain}`}>
+                     <FileWarning className={`w-5 h-5 mr-2 ${cls.roseText}`} /> Riwayat Log Kesalahan
+                   </h3>
+                   <div className={`px-4 py-1.5 rounded-full text-xs font-bold ${cls.roseIcon}`}>
+                     Kerugian: Rp {totalRupiahKerugian.toLocaleString('id-ID')}
+                   </div>
+                 </div>
+
+                 <div className="overflow-x-auto overflow-y-auto max-h-[640px]">
+                    <table className="w-full text-left text-[14px] whitespace-nowrap">
+                      <thead className={`sticky top-0 z-10 border-b ${cls.tableHead}`}>
+                        <tr>
+                          <th className="px-5 py-3 font-semibold">Tanggal</th>
+                          <th className="px-5 py-3 font-semibold">Konsumen &amp; Produk</th>
+                          <th className="px-5 py-3 text-right font-semibold">Total Rugi (Rp)</th>
+                          <th className="px-5 py-3 text-center font-semibold">Aksi</th>
+                        </tr>
+                      </thead>
+                      <tbody className={`divide-y ${cls.tableDiv}`}>
+                        {reportErrors.map(item => {
+                          const baseLoss = Number(item.kerugian_bahan) + Number(item.kerugian_jasa);
+                          const isPunished = baseLoss > 0 && Number(item.jumlah_kerugian) > baseLoss;
+                          const mult = isPunished ? Math.round(Number(item.jumlah_kerugian) / baseLoss) : 1;
+
+                          return (
+                            <tr key={item.id} className={`${cls.tableRow}`}>
+                              <td className={`px-5 py-4 font-medium ${cls.textSub}`}>{formatDateToLocale(item.tgl)}</td>
+                              <td className="px-5 py-4">
+                                <div className={`font-bold ${cls.textMain}`}>{item.nama_konsumen}</div>
+                                <div className={`text-xs ${cls.textSub} mt-0.5 truncate max-w-[180px]`}>{item.nama_produk}</div>
+                              </td>
+                              <td className="px-5 py-4 text-right">
+                                <div className={`font-mono font-bold ${isPunished ? cls.roseText : cls.textMain}`}>
+                                  Rp {Number(item.jumlah_kerugian).toLocaleString('id-ID')}
+                                </div>
+                                {isPunished && (
+                                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${cls.roseIcon} inline-block mt-1`}>
+                                    Penalty {mult}x
+                                  </span>
+                                )}
+                              </td>
+                              <td className="px-5 py-4 text-center">
+                                <div className="flex items-center justify-center space-x-2">
+                                  <button onClick={() => setErrorDetailModal({ isOpen: true, item: item })} className={`p-2 rounded-full ${cls.indigoIcon}`} title="Lihat Detail Investigasi">
+                                    <Eye className="w-4 h-4" />
+                                  </button>
+                                  {isAdmin && (
+                                    <>
+                                      <button onClick={() => confirmEditError(item)} className={`p-2 rounded-full ${cls.indigoIcon}`} title="Edit Log">
+                                        <Pencil className="w-4 h-4" />
+                                      </button>
+                                      <button onClick={() => confirmDelete(item, 'error')} className={`p-2 rounded-full ${cls.roseIcon}`} title="Hapus Log">
+                                        <Trash2 className="w-4 h-4" />
+                                      </button>
+                                    </>
+                                  )}
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                        {reportErrors.length === 0 && (
+                          <tr>
+                            <td colSpan="4" className={`p-12 text-center font-medium ${cls.textMuted}`}>
+                              Alhamdulillah, tidak ada catatan kesalahan pada periode ini.
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                 </div>
+               </div>
+
+             </div>
           )}
 
-          {/* TAB: REPORT */}
+          {/* TAB: REPORT (Sisa data non-error) */}
           {activeTab === 'report' && (
              <div className={`overflow-hidden animate-in fade-in duration-500 p-6 md:p-8 space-y-8 ${cls.cardBg}`}>
-               <div><div className={`px-2 py-2 mb-4 font-semibold text-lg tracking-tight ${cls.textMain}`}>Laporan Pemakaian Mesin</div><div className={`overflow-hidden border border-black/5 dark:border-white/5 rounded-[20px]`}><table className="w-full text-left text-[15px]"><thead className={`border-b ${cls.tableHead}`}><tr><th className="px-5 py-3">Tgl</th><th className="px-5 py-3">Berlaku Untuk</th><th className="px-5 py-3">Operator</th><th className="px-5 py-3 text-right">Pemakaian</th></tr></thead><tbody className={`divide-y ${cls.tableDiv}`}>{reportClicks.map(item => (<tr key={item.id} className={cls.tableRow}><td className={`px-5 py-3.5 ${cls.textSub}`}>{item.dateStr.split(' ')[0]}</td><td className={`px-5 py-3.5 font-semibold ${cls.textMain}`}>{item.dateFor}</td><td className={`px-5 py-3.5 font-medium ${cls.textSub}`}>{item.operator}</td><td className={`px-5 py-3.5 text-right font-mono font-bold ${cls.indigoText}`}>+{item.dailyClicks}</td></tr>))}</tbody></table></div></div>
-               <div><div className={`px-2 py-2 mb-4 font-semibold text-lg tracking-tight flex justify-between ${cls.textMain}`}><span>Laporan Error</span> <span className={cls.roseText}>Rp {totalRupiahKerugian.toLocaleString()}</span></div><div className={`overflow-hidden border border-black/5 dark:border-white/5 rounded-[20px]`}><table className="w-full text-left text-[15px]"><thead className={`border-b ${cls.tableHead}`}><tr><th className="px-5 py-3">Tanggal</th><th className="px-5 py-3">Konsumen/Produk</th><th className="px-5 py-3">Jenis</th><th className="px-5 py-3 text-right">Rugi (Rp)</th><th className="px-5 py-3">Detail</th></tr></thead><tbody className={`divide-y ${cls.tableDiv}`}>{reportErrors.map(item => (<tr key={item.id} className={cls.tableRow}><td className={`px-5 py-3.5 ${cls.textSub}`}>{formatDateToLocale(item.tgl)}</td><td className="px-5 py-3.5"><div className={`font-semibold ${cls.textMain}`}>{item.nama_konsumen}</div><div className={`text-sm ${cls.textSub}`}>{item.nama_produk}</div></td><td className={`px-5 py-3.5 font-medium ${cls.textMain}`}>{item.jenis_kesalahan}</td><td className={`px-5 py-3.5 text-right font-mono font-bold ${cls.roseText}`}>{Number(item.jumlah_kerugian).toLocaleString('id-ID')}</td><td className="px-5 py-3.5"><button onClick={() => setErrorDetailModal({ isOpen: true, item: item })} className={`p-2 rounded-full ${cls.indigoIcon}`}><Eye className="w-4 h-4" /></button></td></tr>))}</tbody></table></div></div>
+               <div>
+                 <div className={`px-2 py-2 mb-4 font-semibold text-lg tracking-tight ${cls.textMain}`}>Laporan Pemakaian Mesin</div>
+                 <div className={`overflow-hidden border border-black/5 dark:border-white/5 rounded-[20px]`}>
+                   <table className="w-full text-left text-[15px]">
+                     <thead className={`border-b ${cls.tableHead}`}><tr><th className="px-5 py-3">Tgl</th><th className="px-5 py-3">Berlaku Untuk</th><th className="px-5 py-3">Operator</th><th className="px-5 py-3 text-right">Pemakaian</th></tr></thead>
+                     <tbody className={`divide-y ${cls.tableDiv}`}>
+                       {reportClicks.map(item => (
+                         <tr key={item.id} className={cls.tableRow}>
+                           <td className={`px-5 py-3.5 ${cls.textSub}`}>{item.dateStr.split(' ')[0]}</td>
+                           <td className={`px-5 py-3.5 font-semibold ${cls.textMain}`}>{item.dateFor}</td>
+                           <td className={`px-5 py-3.5 font-medium ${cls.textSub}`}>{item.operator}</td>
+                           <td className={`px-5 py-3.5 text-right font-mono font-bold ${cls.indigoText}`}>+{item.dailyClicks}</td>
+                         </tr>
+                       ))}
+                     </tbody>
+                   </table>
+                 </div>
+               </div>
+               <div>
+                 <div className={`px-2 py-2 mb-4 font-semibold text-lg tracking-tight ${cls.textMain}`}>Laporan Penggantian Suku Cadang</div>
+                 <div className={`overflow-hidden border border-black/5 dark:border-white/5 rounded-[20px]`}>
+                   <table className="w-full text-left text-[15px]">
+                     <thead className={`border-b ${cls.tableHead}`}><tr><th className="px-5 py-3">Tanggal Ganti</th><th className="px-5 py-3">Suku Cadang</th><th className="px-5 py-3">Teknisi / PIC</th><th className="px-5 py-3 text-right">Di Klik Ke-</th></tr></thead>
+                     <tbody className={`divide-y ${cls.tableDiv}`}>
+                       {reportReplacements.map(item => (
+                         <tr key={item.id} className={cls.tableRow}>
+                           <td className={`px-5 py-3.5 ${cls.textSub}`}>{formatDateToLocale(item.createdAt)}</td>
+                           <td className={`px-5 py-3.5 font-semibold ${cls.amberText}`}>{item.partName}</td>
+                           <td className={`px-5 py-3.5 font-medium ${cls.textSub}`}>{item.operator}</td>
+                           <td className={`px-5 py-3.5 text-right font-mono font-bold ${cls.textMain}`}>{item.replacedAtClick.toLocaleString()}</td>
+                         </tr>
+                       ))}
+                     </tbody>
+                   </table>
+                 </div>
+               </div>
              </div>
           )}
 
@@ -1041,10 +1231,7 @@ export default function App() {
                 <div className={`overflow-y-auto h-[350px] bg-transparent`}>
                   {purchases.map(h => (
                     <div key={h.id} className={`flex justify-between items-center p-4 border-b text-[15px] ${cls.tableRow} ${cls.tableDiv}`}>
-                      <div className="truncate pr-2">
-                        <div className={`font-semibold truncate ${cls.textMain}`}>{h.part_name} <span className={cls.emeraldText}>(+{h.qty})</span></div>
-                        <div className={`text-sm font-medium ${cls.textSub}`}>{formatDateToLocale(h.tgl_pembelian)}{h.supplier ? ` • ${h.supplier}` : ''}</div>
-                      </div>
+                      <div className="truncate pr-2"><div className={`font-semibold truncate ${cls.textMain}`}>{h.part_name} <span className={cls.emeraldText}>(+{h.qty})</span></div><div className={`text-sm font-medium ${cls.textSub}`}>{formatDateToLocale(h.tgl_pembelian)}</div></div>
                       <div className="flex space-x-2">
                          <button onClick={() => confirmEditPurchase(h)} className={`p-2 rounded-full ${cls.indigoIcon}`}><Pencil className="w-4 h-4" /></button>
                          <button onClick={() => confirmDelete(h, 'purchase')} className={`p-2 rounded-full ${cls.roseIcon}`}><Trash2 className="w-4 h-4" /></button>
