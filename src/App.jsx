@@ -139,7 +139,7 @@ export default function App() {
     tgl: getTodayStr(), nomor_invoice: '', divisi: 'CG', nama_konsumen: '', nama_produk: '',
     qty_kesalahan: '', kerugian_bahan: '', kerugian_jasa: '', kategori_kesalahan: 'Kesesuaian/Ketepatan',
     jenis_kesalahan: 'Machine Error', deskripsi_kesalahan: '', penyebab: '', pencegahan_solusi: '',
-    penyelesaian: '', pic: '' // Penyelesaian diisi string kosong default (Penyelesaian Untuk Konsumen)
+    penyelesaian: '', pic: '' // default kosong (Penyelesaian Untuk Konsumen)
   });
 
   const [purchaseForm, setPurchaseForm] = useState({
@@ -589,7 +589,8 @@ export default function App() {
               <div className="space-y-4 flex flex-col justify-between">
                 <div className="space-y-4">
                   <textarea value={editErrorForm.deskripsi_kesalahan} onChange={e => setEditErrorForm({ ...editErrorForm, deskripsi_kesalahan: e.target.value })} className={`w-full p-3 ${cls.input}`} rows="2" placeholder="Deskripsi Masalah"></textarea>
-                  <textarea value={editErrorForm.pencegahan_solusi} onChange={e => setEditErrorForm({ ...editErrorForm, pencegahan_solusi: e.target.value })} className={`w-full p-3 ${cls.input}`} rows="2" placeholder="Penyebab & Solusi"></textarea>
+                  <textarea value={editErrorForm.penyebab} onChange={e => setEditErrorForm({ ...editErrorForm, penyebab: e.target.value })} className={`w-full p-3 ${cls.input}`} rows="2" placeholder="Penyebab Kesalahan"></textarea>
+                  <textarea value={editErrorForm.pencegahan_solusi} onChange={e => setEditErrorForm({ ...editErrorForm, pencegahan_solusi: e.target.value })} className={`w-full p-3 ${cls.input}`} rows="2" placeholder="Solusi & Pencegahan"></textarea>
                   <input type="text" value={editErrorForm.penyelesaian} onChange={e => setEditErrorForm({ ...editErrorForm, penyelesaian: e.target.value })} className={`w-full p-3 ${cls.input}`} placeholder="Penyelesaian Untuk Konsumen" />
                 </div>
                 <button type="submit" className={`w-full py-4 ${cls.roseBg} text-white font-semibold rounded-[16px] shadow-md mt-4`}>Simpan Perubahan</button>
@@ -657,11 +658,15 @@ export default function App() {
                       </div>
                       <div>
                         <p className={`text-xs ${cls.textSub} mb-1 ml-1`}>Deskripsi Kesalahan</p>
-                        <div className={`bg-black/5 dark:bg-white/5 p-3 rounded-[14px] ${cls.textMain} font-medium`}>{errorDetailModal.item.deskripsi_kesalahan || <i>Belum ada deskripsi kesalahan.</i>}</div>
+                        <div className={`bg-black/5 dark:bg-white/5 p-3 rounded-[14px] ${cls.textMain} text-xs leading-relaxed font-semibold`}>{errorDetailModal.item.deskripsi_kesalahan || <i>Belum ada deskripsi kesalahan.</i>}</div>
                       </div>
                       <div>
-                        <p className={`text-xs ${cls.textSub} mb-1 ml-1`}>Penyebab & Solusi</p>
-                        <div className={`${cls.emeraldIcon} p-3 rounded-[14px] font-medium`}>{errorDetailModal.item.pencegahan_solusi || <i>Belum ada analisis penyebab & solusi.</i>}</div>
+                        <p className={`text-xs ${cls.textSub} mb-1 ml-1`}>Penyebab</p>
+                        <div className={`bg-black/5 dark:bg-white/5 p-3 rounded-[14px] ${cls.textMain} text-xs leading-relaxed font-semibold`}>{errorDetailModal.item.penyebab || <i>Belum ada analisis penyebab kesalahan.</i>}</div>
+                      </div>
+                      <div>
+                        <p className={`text-xs ${cls.textSub} mb-1 ml-1`}>Solusi & Pencegahan</p>
+                        <div className={`${cls.emeraldIcon} p-3 rounded-[14px] text-xs font-semibold`}>{errorDetailModal.item.pencegahan_solusi || <i>Belum ada solusi & pencegahan.</i>}</div>
                       </div>
                       <div className={`pt-3 flex justify-between items-center border-t border-black/5 dark:border-white/5`}>
                         <div><p className={`text-xs ${cls.textSub}`}>Penyelesaian Konsumen</p><p className={`font-semibold ${errorDetailModal.item.penyelesaian?.includes('PUNISHMENT') ? cls.roseText : cls.textMain}`}>{errorDetailModal.item.penyelesaian || '-'}</p></div>
@@ -994,7 +999,7 @@ export default function App() {
            </div>
           )}
 
-          {/* --- TAB BARU REWORK: PENYATUAN INPUT & LAPORAN LOG ERROR --- */}
+          {/* --- TAB: PENYATUAN INPUT & LAPORAN LOG ERROR (DENGAN FIELD PENYEBAB & SOLUSI TERPISAH) --- */}
           {activeTab === 'error_log' && (
              <div className="grid grid-cols-1 xl:grid-cols-5 gap-6 md:gap-8 animate-in fade-in duration-500">
                
@@ -1039,18 +1044,22 @@ export default function App() {
                       </div>
                     </div>
 
-                    {/* Section Evaluasi & Reworked Input sesuai Alur Baru */}
+                    {/* Section Evaluasi & Input Terpisah Baru */}
                     <div className="space-y-3 border-t border-black/5 dark:border-white/5 pt-3">
                       <div>
                         <label className={`text-xs block mb-1 font-semibold ${cls.textSub}`}>1. Deskripsi Kesalahan</label>
                         <textarea value={errorForm.deskripsi_kesalahan} onChange={e => setErrorForm({ ...errorForm, deskripsi_kesalahan: e.target.value })} className={`w-full p-3 ${cls.input}`} rows="2" placeholder="Ceritakan detail kronologi kesalahan yang terjadi..." required></textarea>
                       </div>
                       <div>
-                        <label className={`text-xs block mb-1 font-semibold ${cls.textSub}`}>2. Penyebab & Solusi</label>
-                        <textarea value={errorForm.pencegahan_solusi} onChange={e => setErrorForm({ ...errorForm, pencegahan_solusi: e.target.value })} className={`w-full p-3 ${cls.input}`} rows="2" placeholder="Apa penyebab utama dan solusi agar tidak terjadi lagi..." required></textarea>
+                        <label className={`text-xs block mb-1 font-semibold ${cls.textSub}`}>2. Penyebab Kesalahan</label>
+                        <textarea value={errorForm.penyebab} onChange={e => setErrorForm({ ...errorForm, penyebab: e.target.value })} className={`w-full p-3 ${cls.input}`} rows="2" placeholder="Analisis mengapa kesalahan tersebut bisa terjadi..." required></textarea>
                       </div>
                       <div>
-                        <label className={`text-xs block mb-1 font-semibold ${cls.textSub}`}>3. Penyelesaian Untuk Konsumen</label>
+                        <label className={`text-xs block mb-1 font-semibold ${cls.textSub}`}>3. Solusi & Pencegahan</label>
+                        <textarea value={errorForm.pencegahan_solusi} onChange={e => setErrorForm({ ...errorForm, pencegahan_solusi: e.target.value })} className={`w-full p-3 ${cls.input}`} rows="2" placeholder="Langkah pencegahan konkrit agar tidak terulang kembali..." required></textarea>
+                      </div>
+                      <div>
+                        <label className={`text-xs block mb-1 font-semibold ${cls.textSub}`}>4. Penyelesaian Untuk Konsumen</label>
                         <input type="text" value={errorForm.penyelesaian} onChange={e => setErrorForm({ ...errorForm, penyelesaian: e.target.value })} placeholder="Misal: Cetak ulang gratis, refund 50%, dll." className={`w-full p-3 ${cls.input}`} required />
                       </div>
                     </div>
