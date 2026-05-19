@@ -991,15 +991,84 @@ export default function App() {
             </div>
           )}
 
-          {/* TAB: MONITORING PART */}
+          {/* --- TAB MONITORING REWORK: SEKARANG MENGGABUNGKAN STATUS UMUR DAN RIWAYAT RESET SUKU CADANG --- */}
           {activeTab === 'monitoring' && (
-             <div className={`overflow-hidden animate-in fade-in duration-500 ${cls.cardBg}`}>
-             <div className={`p-6 border-b flex items-center ${cls.tableDiv}`}><Settings className={`w-6 h-6 mr-3 ${cls.textMuted}`} /><h2 className={`text-xl font-semibold tracking-tight ${cls.textMain}`}>Status Suku Cadang</h2></div>
-             <div className="overflow-x-auto max-h-[600px]"><table className="w-full text-left text-[15px] whitespace-nowrap"><thead className={`sticky top-0 z-10 border-b ${cls.tableHead}`}><tr><th className="px-6 py-4 font-semibold">Nama Suku Cadang</th><th className="px-6 py-4 font-semibold text-right">Dipakai</th><th className="px-6 py-4 font-semibold">Indikator Umur</th><th className="px-6 py-4 font-semibold text-right">Est. Ganti</th></tr></thead><tbody className={`divide-y ${cls.tableDiv}`}>{partData.map((part, idx) => (<tr key={idx} className={cls.tableRow}><td className={`px-6 py-4 font-semibold ${cls.textMain}`}>{part.name}</td><td className={`px-6 py-4 text-right font-mono font-medium ${cls.textSub}`}>{part.usage.toLocaleString()}</td><td className="px-6 py-4"><div className="flex items-center"><div className={`w-full rounded-full h-2 mr-4 bg-black/5 dark:bg-white/10 overflow-hidden`}><div className={`h-2 rounded-full ${part.color}`} style={{ width: `${part.remainingPercent}%` }}></div></div><span className={`text-sm font-bold w-12 text-right ${part.remainingPercent <= 10 ? cls.roseText : (part.remainingPercent <= 25 ? cls.amberText : cls.emeraldText)}`}>{part.remainingPercent}%</span></div></td><td className={`px-6 py-4 text-right font-mono font-medium ${cls.textSub}`}>{part.estimatedReplace.toLocaleString()}</td></tr>))}</tbody></table></div>
-           </div>
+             <div className="space-y-6 animate-in fade-in duration-500">
+               {/* 1. Status Suku Cadang (Umur Part) */}
+               <div className={`overflow-hidden ${cls.cardBg}`}>
+                 <div className={`p-6 border-b flex items-center ${cls.tableDiv}`}>
+                   <Settings className={`w-6 h-6 mr-3 ${cls.textMuted}`} />
+                   <h2 className={`text-xl font-semibold tracking-tight ${cls.textMain}`}>Status Suku Cadang</h2>
+                 </div>
+                 <div className="overflow-x-auto max-h-[400px]">
+                   <table className="w-full text-left text-[15px] whitespace-nowrap">
+                     <thead className={`sticky top-0 z-10 border-b ${cls.tableHead}`}>
+                       <tr>
+                         <th className="px-6 py-4 font-semibold">Nama Suku Cadang</th>
+                         <th className="px-6 py-4 font-semibold text-right">Dipakai</th>
+                         <th className="px-6 py-4 font-semibold">Indikator Umur</th>
+                         <th className="px-6 py-4 font-semibold text-right">Est. Ganti</th>
+                       </tr>
+                     </thead>
+                     <tbody className={`divide-y ${cls.tableDiv}`}>
+                       {partData.map((part, idx) => (
+                         <tr key={idx} className={cls.tableRow}>
+                           <td className={`px-6 py-4 font-semibold ${cls.textMain}`}>{part.name}</td>
+                           <td className={`px-6 py-4 text-right font-mono font-medium ${cls.textSub}`}>{part.usage.toLocaleString()}</td>
+                           <td className="px-6 py-4">
+                             <div className="flex items-center">
+                               <div className={`w-full rounded-full h-2 mr-4 bg-black/5 dark:bg-white/10 overflow-hidden`}>
+                                 <div className={`h-2 rounded-full ${part.color}`} style={{ width: `${part.remainingPercent}%` }}></div>
+                               </div>
+                               <span className={`text-sm font-bold w-12 text-right ${part.remainingPercent <= 10 ? cls.roseText : (part.remainingPercent <= 25 ? cls.amberText : cls.emeraldText)}`}>{part.remainingPercent}%</span>
+                             </div>
+                           </td>
+                           <td className={`px-6 py-4 text-right font-mono font-medium ${cls.textSub}`}>{part.estimatedReplace.toLocaleString()}</td>
+                         </tr>
+                       ))}
+                     </tbody>
+                   </table>
+                 </div>
+               </div>
+
+               {/* 2. Riwayat Pergantian Suku Cadang (Dipindahkan ke sini dari Tab Laporan) */}
+               <div className={`overflow-hidden ${cls.cardBg}`}>
+                 <div className={`p-6 border-b flex items-center ${cls.tableDiv}`}>
+                   <RotateCcw className={`w-6 h-6 mr-3 ${cls.amberText}`} />
+                   <h2 className={`text-xl font-semibold tracking-tight ${cls.textMain}`}>Riwayat Pergantian Suku Cadang</h2>
+                 </div>
+                 <div className="overflow-x-auto max-h-[300px] overflow-y-auto">
+                   <table className="w-full text-left text-[15px] whitespace-nowrap">
+                     <thead className={`sticky top-0 z-10 border-b ${cls.tableHead}`}>
+                       <tr>
+                         <th className="px-5 py-3 font-semibold">Tanggal Ganti</th>
+                         <th className="px-5 py-3 font-semibold">Suku Cadang</th>
+                         <th className="px-5 py-3 font-semibold">Teknisi / PIC</th>
+                         <th className="px-5 py-3 text-right font-semibold">Di Klik Ke-</th>
+                       </tr>
+                     </thead>
+                     <tbody className={`divide-y ${cls.tableDiv}`}>
+                       {reportReplacements.map(item => (
+                         <tr key={item.id} className={cls.tableRow}>
+                           <td className={`px-5 py-3.5 ${cls.textSub}`}>{formatDateToLocale(item.createdAt)}</td>
+                           <td className={`px-5 py-3.5 font-semibold ${cls.amberText}`}>{item.partName}</td>
+                           <td className={`px-5 py-3.5 font-medium ${cls.textSub}`}>{item.operator}</td>
+                           <td className={`px-5 py-3.5 text-right font-mono font-bold ${cls.textMain}`}>{item.replacedAtClick.toLocaleString()}</td>
+                         </tr>
+                       ))}
+                       {reportReplacements.length === 0 && (
+                         <tr>
+                           <td colSpan="4" className={`text-center py-6 ${cls.textMuted}`}>Tidak ada pergantian part di periode ini.</td>
+                         </tr>
+                       )}
+                     </tbody>
+                   </table>
+                 </div>
+               </div>
+             </div>
           )}
 
-          {/* --- TAB: PENYATUAN INPUT & LAPORAN LOG ERROR (DENGAN FIELD PENYEBAB & SOLUSI TERPISAH) --- */}
+          {/* TAB: ERROR LOG */}
           {activeTab === 'error_log' && (
              <div className="grid grid-cols-1 xl:grid-cols-5 gap-6 md:gap-8 animate-in fade-in duration-500">
                
@@ -1149,41 +1218,35 @@ export default function App() {
              </div>
           )}
 
-          {/* TAB: REPORT (Sisa data non-error) */}
+          {/* TAB: REPORT (SEKARANG PURE HANYA PENCATATAN CLICK PEMAKAIAN MESIN) */}
           {activeTab === 'report' && (
-             <div className={`overflow-hidden animate-in fade-in duration-500 p-6 md:p-8 space-y-8 ${cls.cardBg}`}>
+             <div className={`overflow-hidden animate-in fade-in duration-500 p-6 md:p-8 ${cls.cardBg}`}>
                <div>
-                 <div className={`px-2 py-2 mb-4 font-semibold text-lg tracking-tight ${cls.textMain}`}>Laporan Pemakaian Mesin</div>
+                 <div className={`px-2 py-2 mb-4 font-semibold text-lg tracking-tight ${cls.textMain}`}>Laporan Pemakaian Mesin (Click Log)</div>
                  <div className={`overflow-hidden border border-black/5 dark:border-white/5 rounded-[20px]`}>
                    <table className="w-full text-left text-[15px]">
-                     <thead className={`border-b ${cls.tableHead}`}><tr><th className="px-5 py-3">Tgl</th><th className="px-5 py-3">Berlaku Untuk</th><th className="px-5 py-3">Operator</th><th className="px-5 py-3 text-right">Pemakaian</th></tr></thead>
+                     <thead className={`border-b ${cls.tableHead}`}>
+                       <tr>
+                         <th className="px-5 py-3 font-semibold">Tgl Input</th>
+                         <th className="px-5 py-3 font-semibold">Berlaku Untuk</th>
+                         <th className="px-5 py-3 font-semibold">Operator</th>
+                         <th className="px-5 py-3 text-right font-semibold">Pemakaian</th>
+                       </tr>
+                     </thead>
                      <tbody className={`divide-y ${cls.tableDiv}`}>
                        {reportClicks.map(item => (
                          <tr key={item.id} className={cls.tableRow}>
                            <td className={`px-5 py-3.5 ${cls.textSub}`}>{item.dateStr.split(' ')[0]}</td>
                            <td className={`px-5 py-3.5 font-semibold ${cls.textMain}`}>{item.dateFor}</td>
                            <td className={`px-5 py-3.5 font-medium ${cls.textSub}`}>{item.operator}</td>
-                           <td className={`px-5 py-3.5 text-right font-mono font-bold ${cls.indigoText}`}>+{item.dailyClicks}</td>
+                           <td className={`px-5 py-3.5 text-right font-mono font-bold ${cls.indigoText}`}>+{item.dailyClicks.toLocaleString()}</td>
                          </tr>
                        ))}
-                     </tbody>
-                   </table>
-                 </div>
-               </div>
-               <div>
-                 <div className={`px-2 py-2 mb-4 font-semibold text-lg tracking-tight ${cls.textMain}`}>Laporan Penggantian Suku Cadang</div>
-                 <div className={`overflow-hidden border border-black/5 dark:border-white/5 rounded-[20px]`}>
-                   <table className="w-full text-left text-[15px]">
-                     <thead className={`border-b ${cls.tableHead}`}><tr><th className="px-5 py-3">Tanggal Ganti</th><th className="px-5 py-3">Suku Cadang</th><th className="px-5 py-3">Teknisi / PIC</th><th className="px-5 py-3 text-right">Di Klik Ke-</th></tr></thead>
-                     <tbody className={`divide-y ${cls.tableDiv}`}>
-                       {reportReplacements.map(item => (
-                         <tr key={item.id} className={cls.tableRow}>
-                           <td className={`px-5 py-3.5 ${cls.textSub}`}>{formatDateToLocale(item.createdAt)}</td>
-                           <td className={`px-5 py-3.5 font-semibold ${cls.amberText}`}>{item.partName}</td>
-                           <td className={`px-5 py-3.5 font-medium ${cls.textSub}`}>{item.operator}</td>
-                           <td className={`px-5 py-3.5 text-right font-mono font-bold ${cls.textMain}`}>{item.replacedAtClick.toLocaleString()}</td>
+                       {reportClicks.length === 0 && (
+                         <tr>
+                           <td colSpan="4" className={`text-center py-8 ${cls.textMuted}`}>Tidak ada data pemakaian click di periode ini.</td>
                          </tr>
-                       ))}
+                       )}
                      </tbody>
                    </table>
                  </div>
