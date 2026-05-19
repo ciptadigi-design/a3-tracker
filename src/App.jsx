@@ -809,7 +809,7 @@ export default function App() {
                      </div>
                      {/* Pembeda untuk Harga Click per Pcs */}
                      <div className="text-right border-l border-[#38383A]/20 dark:border-[#38383A] pl-4">
-                       <p className={`text-[10px] font-bold uppercase tracking-wider ${cls.textMuted}`}>Biaya Part / Klik</p>
+                       <p className={`text-[20px] font-bold uppercase tracking-wider ${cls.textMuted}`}>Biaya Part / Klik</p>
                        <h4 className={`text-lg font-bold font-mono ${cls.amberText}`}>
                          Rp {clickPerPcsValue.toLocaleString('id-ID', { maximumFractionDigits: 1 })}
                        </h4>
