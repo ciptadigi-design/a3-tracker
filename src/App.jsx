@@ -13,7 +13,7 @@ const supabaseHeaders = {
 
 const ADMIN_PASSWORD = 'admin'; 
 
-// --- DAFTAR PART DARI CSV ---
+// --- DAFTAR PART DARI CSV (NAMA SAMA PERSIS DI SELURUH SISTEM) ---
 const PREDEFINED_PARTS = [
   "Charging Corona",
   "Cleaning Blade",
@@ -36,13 +36,27 @@ const PREDEFINED_PARTS = [
   "Toner Yellow"
 ];
 
+// --- KONFIGURASI LIFETIME SUKU CADANG (NAMA BARANG DIRESET DISAMAKAN DENGAN PREDEFINED_PARTS) ---
 const PART_LIFETIMES = {
-  "Toner Cyan": 14000, "Toner Magenta": 14000, "Toner Yellow": 14000, "Toner Black": 14000,
-  "Drum Unit Cyan": 40000, "Drum Unit Magenta": 40000, "Drum Unit Yellow": 40000, "Drum Unit Black": 40000,
-  "Developing Unit Cyan": 200000, "Developing Unit Magenta": 200000, "Developing Unit Yellow": 200000, "Developing Unit Black": 200000,
-  "Developer Cyan": 100000, "Developer Magenta": 100000, "Developer Yellow": 100000, "Developer Black": 100000,
-  "Charging Corona Cyan": 40000, "Charging Corona Magenta": 40000, "Charging Corona Yellow": 40000, "Charging Corona Black": 40000,
-  "Fuser Unit": 200000, "Transfer Belt Unit": 200000, "Blade": 100000
+  "Charging Corona": 40000,
+  "Cleaning Blade": 100000,
+  "Cleaning Unit": 200000,
+  "Developer Black": 100000,
+  "Developer Cyan": 100000,
+  "Developer Magenta": 100000,
+  "Developer Yellow": 100000,
+  "Developing Unit": 200000,
+  "Drum Unit": 40000,
+  "Fuser Belt": 200000,
+  "Gear": 150000,
+  "Intermediate Transfer Belt (IBT)": 200000,
+  "Laser Unit": 300000,
+  "Roll Mesin": 150000,
+  "Sensor": 250000,
+  "Toner Black": 14000,
+  "Toner Cyan": 14000,
+  "Toner Magenta": 14000,
+  "Toner Yellow": 14000
 };
 
 const getTodayStr = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
@@ -329,18 +343,65 @@ export default function App() {
     } catch (err) { showToast("Gagal menyimpan data klik", "error"); }
   };
 
+  // --- LOGIKA UTAMA RESET PART: RESETS LIFETIME & AUTO-POTONG 1 UNIT STOK GUDANG ---
   const handleReplacePart = async (e) => {
     e.preventDefault();
-    if (!isAdmin) return showToast("Hanya Admin!", "error"); if (!replacePart) return showToast("Pilih part!", "error"); if (!replaceOperator) return showToast("Nama teknisi wajib!", "error");
-    const targetClick = replaceClick !== '' ? parseInt(replaceClick) : currentTotalClicks; if (isNaN(targetClick)) return showToast("Klik mesin tidak valid!", "error");
+    if (!isAdmin) return showToast("Hanya Admin yang bisa reset part!", "error");
+    if (!replacePart) return showToast("Pilih part!", "error");
+    if (!replaceOperator) return showToast("Nama teknisi wajib!", "error");
+
+    const targetClick = replaceClick !== '' ? parseInt(replaceClick) : currentTotalClicks;
+    if (isNaN(targetClick)) return showToast("Klik mesin tidak valid!", "error");
+
+    // 1. Validasi ganda ketersediaan stok fisik di gudang sebelum tindakan reset
+    const existingPartInInv = inventory.find(p => p.part_name.toLowerCase() === replacePart.toLowerCase());
+    if (!existingPartInInv || existingPartInInv.stock <= 0) {
+      return showToast(`Stok ${replacePart} tidak mencukupi di gudang! Silakan beli dulu.`, "error");
+    }
+
     try {
-      const response = await fetch(`${supabaseUrl}/rest/v1/part_replacements`, { method: 'POST', headers: { ...supabaseHeaders, 'Prefer': 'return=representation' }, body: JSON.stringify({ part_name: replacePart, replaced_at_click: targetClick, operator: replaceOperator }) });
+      // 2. Post record penggantian baru ke Supabase
+      const response = await fetch(`${supabaseUrl}/rest/v1/part_replacements`, {
+        method: 'POST',
+        headers: { ...supabaseHeaders, 'Prefer': 'return=representation' },
+        body: JSON.stringify({ part_name: replacePart, replaced_at_click: targetClick, operator: replaceOperator })
+      });
       if (!response.ok) throw new Error("Gagal reset");
       const data = await response.json();
-      const insertedData = data && data.length > 0 ? { id: data[0].id, partName: data[0].part_name, replacedAtClick: data[0].replaced_at_click, operator: data[0].operator, createdAt: data[0].created_at } : { id: Date.now(), partName: replacePart, replacedAtClick: targetClick, operator: replaceOperator, createdAt: new Date().toISOString() };
-      setReplacementHistory([...replacementHistory, insertedData]); setReplacements({ ...replacements, [replacePart]: targetClick });
-      setReplacePart(''); setReplaceOperator(''); setReplaceClick(''); showToast(`Reset part ${replacePart} berhasil!`);
-    } catch (err) { showToast("Gagal mereset part.", "error"); }
+
+      const insertedData = data && data.length > 0 ? {
+        id: data[0].id,
+        partName: data[0].part_name,
+        replacedAtClick: data[0].replaced_at_click,
+        operator: data[0].operator,
+        createdAt: data[0].created_at
+      } : {
+        id: Date.now(), partName: replacePart, replacedAtClick: targetClick, operator: replaceOperator, createdAt: new Date().toISOString()
+      };
+
+      setReplacementHistory([...replacementHistory, insertedData]);
+      setReplacements({ ...replacements, [replacePart]: targetClick });
+
+      // 3. Potong stok otomatis sebanyak 1 unit di Supabase
+      const newStock = existingPartInInv.stock - 1;
+      const resInv = await fetch(`${supabaseUrl}/rest/v1/inventory_parts?id=eq.${existingPartInInv.id}`, {
+        method: 'PATCH',
+        headers: { ...supabaseHeaders, 'Prefer': 'return=representation' },
+        body: JSON.stringify({ stock: newStock })
+      });
+      
+      if (resInv.ok) {
+        const updatedInv = await resInv.json();
+        setInventory(inventory.map(inv => inv.id === existingPartInInv.id ? updatedInv[0] : inv));
+      }
+
+      setReplacePart('');
+      setReplaceOperator('');
+      setReplaceClick('');
+      showToast(`Reset part ${replacePart} sukses & stok otomatis dikurangi 1!`);
+    } catch (err) {
+      showToast("Gagal memproses reset suku cadang.", "error");
+    }
   };
 
   const handleSaveErrorLog = async (e) => {
@@ -448,6 +509,13 @@ export default function App() {
   const netMargin = totalGrossRevenue - totalExpensePart - totalRupiahKerugian;
 
   const clickPerPcsValue = totalReportUsage > 0 ? (totalExpensePart / totalReportUsage) : 0;
+
+  // --- MEMBENTUK DAFTAR PART YANG READY DI GUDANG (STOK > 0) ---
+  const availablePartsInWarehouse = useMemo(() => {
+    return inventory
+      .filter(item => item.stock > 0)
+      .map(item => item.part_name);
+  }, [inventory]);
 
   const partData = Object.keys(PART_LIFETIMES).map(partName => {
     const lifetime = PART_LIFETIMES[partName]; const usage = Math.max(0, currentTotalClicks - (replacements[partName] || 0)); const remainingPercent = Math.max(0, ((lifetime - usage) / lifetime) * 100);
@@ -736,7 +804,7 @@ export default function App() {
 
           {isAdmin ? (
             <button onClick={() => setIsAdmin(false)} className={`py-2.5 px-5 rounded-full font-semibold text-[15px] shadow-sm border border-[#FF3B30]/20 ${cls.roseIcon}`}>
-              <Unlock className="w-4 h-4 mr-2 inline" /> Admin
+              <Unlock className="w-4 h-4 mr-2 inline" /> Admin Mode
             </button>
           ) : (
             <button onClick={() => setShowLoginModal(true)} className={`py-2.5 px-5 rounded-full font-semibold text-[15px] shadow-sm ${cls.cardBg}`}>
@@ -760,13 +828,32 @@ export default function App() {
           </div>
 
           <div className={`p-6 relative overflow-hidden ${cls.cardBg}`}>
+            {/* Hanya Mengaktifkan Reset jika pengguna masuk sebagai Admin */}
             {!isAdmin && <div className={`absolute inset-0 z-10 flex flex-col items-center justify-center ${cls.lockOverlay}`}><Lock className="w-8 h-8 mb-2 opacity-80" /><span className="font-semibold tracking-tight">Perlu Akses Admin</span></div>}
             <h2 className={`font-semibold text-xl mb-5 flex items-center tracking-tight ${cls.textMain}`}><RotateCcw className={`w-5 h-5 mr-2 ${cls.amberText}`} /> Reset Part</h2>
             <form onSubmit={handleReplacePart} className="space-y-4 font-medium">
-              <select disabled={!isAdmin} value={replacePart} onChange={(e) => setReplacePart(e.target.value)} className={`w-full p-3.5 ${isAdmin ? cls.input : cls.inputDisabled}`}><option value="">Pilih Suku Cadang...</option>{Object.keys(PART_LIFETIMES).map(p => <option key={p} value={p}>{p}</option>)}</select>
-              <input disabled={!isAdmin} type="text" value={replaceOperator} onChange={(e) => setReplaceOperator(e.target.value)} placeholder="Nama Teknisi" className={`w-full p-3.5 ${isAdmin ? cls.input : cls.inputDisabled}`} />
+              {/* DROPDOWN DINAMIS: HANYA MENAMPILKAN BARANG YANG ADA DI GUDANG DENGAN STOK > 0 */}
+              <div>
+                <label className={`block text-xs mb-1.5 ml-1 ${cls.textSub}`}>Suku Cadang Tersedia</label>
+                <select 
+                  disabled={!isAdmin} 
+                  value={replacePart} 
+                  onChange={(e) => setReplacePart(e.target.value)} 
+                  className={`w-full p-3.5 ${isAdmin ? cls.input : cls.inputDisabled}`}
+                  required
+                >
+                  <option value="">Pilih Suku Cadang...</option>
+                  {availablePartsInWarehouse.map(p => (
+                    <option key={p} value={p}>{p}</option>
+                  ))}
+                </select>
+                {isAdmin && availablePartsInWarehouse.length === 0 && (
+                  <p className="text-[11px] text-[#FF453A] mt-1.5 ml-1">Semua stok di gudang habis! Lakukan pembelian terlebih dahulu.</p>
+                )}
+              </div>
+              <input disabled={!isAdmin} type="text" value={replaceOperator} onChange={(e) => setReplaceOperator(e.target.value)} placeholder="Nama Teknisi" className={`w-full p-3.5 ${isAdmin ? cls.input : cls.inputDisabled}`} required />
               <input disabled={!isAdmin} type="number" value={replaceClick} onChange={(e) => setReplaceClick(e.target.value)} placeholder={`Klik Terakhir (${currentTotalClicks})`} className={`w-full p-3.5 ${isAdmin ? cls.input : cls.inputDisabled}`} />
-              <button type="submit" disabled={!isAdmin} className={`w-full py-3.5 rounded-[14px] font-semibold mt-2 ${isAdmin ? `${cls.amberBg} text-white shadow-sm` : cls.inputDisabled}`}>Lakukan Reset</button>
+              <button type="submit" disabled={!isAdmin || availablePartsInWarehouse.length === 0} className={`w-full py-3.5 rounded-[14px] font-semibold mt-2 ${isAdmin && availablePartsInWarehouse.length > 0 ? `${cls.amberBg} text-white shadow-sm` : cls.inputDisabled}`}>Lakukan Reset</button>
             </form>
           </div>
         </div>
@@ -785,7 +872,8 @@ export default function App() {
             </div>
           </div>
 
-          {(activeTab === 'dashboard' || activeTab === 'report' || activeTab === 'inventory' || activeTab === 'error_log') && (
+          {/* PERIODE KALKULASI DISETTING AGAR MUNCUL JUGA DI TAB MONITORING (UMUR PART) */}
+          {(activeTab === 'dashboard' || activeTab === 'report' || activeTab === 'inventory' || activeTab === 'error_log' || activeTab === 'monitoring') && (
             <div className={`px-6 py-4 flex flex-col sm:flex-row justify-between sm:items-center gap-4 ${cls.cardBg}`}>
               <div className="flex items-center space-x-2"><Filter className={`w-5 h-5 ${cls.textMuted}`} /><h2 className={`font-semibold text-lg tracking-tight ${cls.textMain}`}>Periode Kalkulasi</h2></div>
               <div className="flex flex-wrap gap-2 text-sm font-medium">
@@ -991,7 +1079,7 @@ export default function App() {
             </div>
           )}
 
-          {/* --- TAB MONITORING REWORK: SEKARANG MENGGABUNGKAN STATUS UMUR DAN RIWAYAT RESET SUKU CADANG --- */}
+          {/* --- TAB MONITORING REWORK: MENGGABUNGKAN STATUS UMUR DAN RIWAYAT RESET SUKU CADANG (BERELASI DENGAN PERIODE KALKULASI) --- */}
           {activeTab === 'monitoring' && (
              <div className="space-y-6 animate-in fade-in duration-500">
                {/* 1. Status Suku Cadang (Umur Part) */}
@@ -1031,11 +1119,11 @@ export default function App() {
                  </div>
                </div>
 
-               {/* 2. Riwayat Pergantian Suku Cadang (Dipindahkan ke sini dari Tab Laporan) */}
+               {/* 2. Riwayat Pergantian Suku Cadang (Menyerap Filter Periode Kalkulasi secara dinamis) */}
                <div className={`overflow-hidden ${cls.cardBg}`}>
                  <div className={`p-6 border-b flex items-center ${cls.tableDiv}`}>
                    <RotateCcw className={`w-6 h-6 mr-3 ${cls.amberText}`} />
-                   <h2 className={`text-xl font-semibold tracking-tight ${cls.textMain}`}>Riwayat Pergantian Suku Cadang</h2>
+                   <h2 className={`text-xl font-semibold tracking-tight ${cls.textMain}`}>Riwayat Pergantian Suku Cadang (Periode Terpilih)</h2>
                  </div>
                  <div className="overflow-x-auto max-h-[300px] overflow-y-auto">
                    <table className="w-full text-left text-[15px] whitespace-nowrap">
@@ -1058,7 +1146,7 @@ export default function App() {
                        ))}
                        {reportReplacements.length === 0 && (
                          <tr>
-                           <td colSpan="4" className={`text-center py-6 ${cls.textMuted}`}>Tidak ada pergantian part di periode ini.</td>
+                           <td colSpan="4" className={`text-center py-8 ${cls.textMuted}`}>Tidak ada pergantian part di periode kalkulasi ini.</td>
                          </tr>
                        )}
                      </tbody>
@@ -1242,11 +1330,6 @@ export default function App() {
                            <td className={`px-5 py-3.5 text-right font-mono font-bold ${cls.indigoText}`}>+{item.dailyClicks.toLocaleString()}</td>
                          </tr>
                        ))}
-                       {reportClicks.length === 0 && (
-                         <tr>
-                           <td colSpan="4" className={`text-center py-8 ${cls.textMuted}`}>Tidak ada data pemakaian click di periode ini.</td>
-                         </tr>
-                       )}
                      </tbody>
                    </table>
                  </div>
