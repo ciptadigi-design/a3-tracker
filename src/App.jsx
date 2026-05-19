@@ -447,7 +447,6 @@ export default function App() {
   const totalExpensePart = reportPurchases.reduce((sum, item) => sum + Number(item.total_harga), 0);
   const netMargin = totalGrossRevenue - totalExpensePart - totalRupiahKerugian;
 
-  // --- ADVANCED METRIC: Click per Pcs (Biaya Part / Klik) ---
   const clickPerPcsValue = totalReportUsage > 0 ? (totalExpensePart / totalReportUsage) : 0;
 
   const partData = Object.keys(PART_LIFETIMES).map(partName => {
@@ -776,7 +775,7 @@ export default function App() {
               <button onClick={() => setActiveTab('dashboard')} className={`flex-1 min-w-[120px] px-5 py-2 text-[15px] flex justify-center items-center whitespace-nowrap transition-all ${activeTab === 'dashboard' ? cls.tabAct : cls.tabInact}`}>Dashboard</button>
               <button onClick={() => setActiveTab('inventory')} className={`flex-1 min-w-[130px] px-5 py-2 text-[15px] flex justify-center items-center whitespace-nowrap transition-all ${activeTab === 'inventory' ? cls.tabAct : cls.tabInact}`}>Stok & Beli</button>
               <button onClick={() => setActiveTab('monitoring')} className={`flex-1 min-w-[120px] px-5 py-2 text-[15px] flex justify-center items-center whitespace-nowrap transition-all ${activeTab === 'monitoring' ? cls.tabAct : cls.tabInact}`}>Umur Part</button>
-              <button onClick={() => setActiveTab('error_log')} className={`flex-1 min-w-[130px] px-5 py-2 text-[15px] flex justify-center items-center whitespace-nowrap transition-all ${activeTab === 'error_log' ? cls.tabAct : cls.tabInact}`}>Log Kesalahan</button>
+              <button onClick={() => setActiveTab('error_log')} className={`flex-1 min-w-[130px] px-5 py-2 text-[15px] flex justify-center items-center whitespace-nowrap transition-all ${activeTab === 'error_log' ? cls.tabAct : cls.tabInact}`}>Log Error</button>
               <button onClick={() => setActiveTab('report')} className={`flex-1 min-w-[120px] px-5 py-2 text-[15px] flex justify-center items-center whitespace-nowrap transition-all ${activeTab === 'report' ? cls.tabAct : cls.tabInact}`}>Laporan</button>
             </div>
           </div>
@@ -805,12 +804,13 @@ export default function App() {
                    </div>
                    <div className="flex items-end justify-between">
                      <div>
-                       <h3 className={`text-4xl font-bold tracking-tight font-mono ${cls.textMain}`}>{totalReportUsage.toLocaleString()} <span className={`text-lg font-medium ${cls.textMuted}`}>klik</span></h3>
+                       <p className={`text-[10px] font-bold uppercase tracking-wider ${cls.textMuted} mb-1`}>Total Output</p>
+                       <h3 className={`text-xl md:text-2xl font-bold font-mono ${cls.textMain}`}>{totalReportUsage.toLocaleString()} <span className={`text-xs font-medium ${cls.textMuted}`}>klik</span></h3>
                      </div>
-                     {/* Pembeda untuk Harga Click per Pcs */}
-                     <div className="text-right border-l border-[#38383A]/20 dark:border-[#38383A] pl-4">
-                       <p className={`text-[10px] font-bold uppercase tracking-wider ${cls.textMuted}`}>Biaya Part / Klik</p>
-                       <h4 className={`text-4xl text-lg font-bold font-mono ${cls.amberText}`}>
+                     {/* Pembeda untuk Harga Click per Pcs - Diubah menjadi berwarna hijau dan size lebih besar */}
+                     <div className="text-right border-l border-[#38383A]/20 dark:border-[#38383A] pl-5">
+                       <p className={`text-[10px] font-bold uppercase tracking-wider ${cls.textMuted} mb-1`}>Biaya Part / Klik</p>
+                       <h4 className={`text-3xl md:text-4xl font-extrabold font-mono ${cls.emeraldText}`}>
                          Rp {clickPerPcsValue.toLocaleString('id-ID', { maximumFractionDigits: 1 })}
                        </h4>
                      </div>
