@@ -98,7 +98,7 @@ export default function App() {
     textSub: isDarkMode ? 'text-[#98989D]' : 'text-[#86868B]',
     textMuted: isDarkMode ? 'text-[#636366]' : 'text-[#AEAEB2]',
     
-    input: isDarkMode ? 'bg-[#2C2C2E] border border-[#38383A] text-white [color-scheme:dark] focus:ring-[3px] focus:ring-[#0A84FF]/40 focus:border-[#0A84FF] rounded-[14px] transition-all' : 'bg-white border border-[#E5E5EA] text-[#1D1D1F] [color-scheme:light] focus:ring-[3px] focus:ring-[#007AFF]/30 focus:border-[#007AFF] rounded-[14px] transition-all shadow-sm',
+    input: isDarkMode ? 'bg-[#2C2C2E] border border-[#38383A] text-black [color-scheme:dark] focus:ring-[3px] focus:ring-[#0A84FF]/40 focus:border-[#0A84FF] rounded-[14px] transition-all' : 'bg-white border border-[#E5E5EA] text-[#1D1D1F] [color-scheme:light] focus:ring-[3px] focus:ring-[#007AFF]/30 focus:border-[#007AFF] rounded-[14px] transition-all shadow-sm',
     inputDisabled: isDarkMode ? 'bg-[#1C1C1E] border-[#2C2C2E] text-[#636366] opacity-70' : 'bg-[#F5F5F7] border-[#E5E5EA] text-[#AEAEB2] opacity-70',
     btnSec: isDarkMode ? 'bg-[#2C2C2E] hover:bg-[#3A3A3C] text-white border border-[#38383A] rounded-full transition-all' : 'bg-white hover:bg-[#E5E5EA] text-[#1D1D1F] border border-[#D1D1D6] shadow-sm rounded-full transition-all',
 
@@ -891,9 +891,9 @@ export default function App() {
                 <select value={reportPeriod} onChange={(e) => setReportPeriod(e.target.value)} className={`py-2 px-4 ${cls.input} border-none shadow-none bg-black/5 dark:bg-white/10`}><option value="today">Hari Ini</option><option value="week">7 Hari Terakhir</option><option value="month">Bulan Ini</option><option value="custom">Tentukan Tanggal...</option></select>
                 {reportPeriod === 'custom' && (
                   <div className={`flex items-center space-x-2 border rounded-lg px-2 py-1 ${cls.cardBg}`}>
-                    <input type="date" value={customStart} onChange={e => setCustomStart(e.target.value)} className={`border-none bg-transparent text-sm focus:ring-0 p-1 ${cls.textMain} [color-scheme:${isDarkMode ? 'dark' : 'light'}]`} />
+                    <input type="date" value={customStart} onChange={e => setCustomStart(e.target.value)} onClick={(e) => { try { e.target.showPicker(); } catch(err){} }} className={`border-none bg-transparent text-sm focus:ring-0 p-1 ${cls.textMain} [color-scheme:${isDarkMode ? 'dark' : 'light'}]`} />
                     <span className={cls.textMuted}>-</span>
-                    <input type="date" value={customEnd} onChange={e => setCustomEnd(e.target.value)} className={`border-none bg-transparent text-sm focus:ring-0 p-1 ${cls.textMain} [color-scheme:${isDarkMode ? 'dark' : 'light'}]`} />
+                    <input type="date" value={customEnd} onChange={e => setCustomEnd(e.target.value)} onClick={(e) => { try { e.target.showPicker(); } catch(err){} }} className={`border-none bg-transparent text-sm focus:ring-0 p-1 ${cls.textMain} [color-scheme:${isDarkMode ? 'dark' : 'light'}]`} />
                   </div>
                 )}
               </div>
