@@ -559,6 +559,17 @@ export default function App() {
   return (
     <div className={`min-h-screen ${cls.appBg} font-sans antialiased tracking-tight p-4 md:p-8 relative pb-20 transition-colors duration-300`}>
 
+      {/* Windows CSS Compatibility Fix */}
+      <style>{`
+        select option {
+          background-color: ${isDarkMode ? '#1C1C1E' : '#FFFFFF'} !important;
+          color: ${isDarkMode ? '#F5F5F7' : '#1D1D1F'} !important;
+        }
+        input[type="date"] {
+          cursor: pointer;
+        }
+      `}</style>
+
       {/* --- SEMUA MODAL --- */}
       {deleteModal.isOpen && (
         <div className={`fixed inset-0 ${cls.modalBg} z-50 flex items-center justify-center p-4 transition-opacity`}>
