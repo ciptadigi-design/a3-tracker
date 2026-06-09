@@ -98,7 +98,7 @@ export default function App() {
     textSub: isDarkMode ? 'text-[#98989D]' : 'text-[#86868B]',
     textMuted: isDarkMode ? 'text-[#636366]' : 'text-[#AEAEB2]',
     
-    input: isDarkMode ? 'bg-[#0A84FF] border border-[#38383A] text-white [color-scheme:dark] focus:ring-[3px] focus:ring-[#0A84FF]/40 focus:border-[#0A84FF] rounded-[14px] transition-all' : 'bg-white border border-[#E5E5EA] text-[#1D1D1F] [color-scheme:light] focus:ring-[3px] focus:ring-[#007AFF]/30 focus:border-[#007AFF] rounded-[14px] transition-all shadow-sm',
+    input: isDarkMode ? 'bg-[#2C2C2E] border border-[#38383A] text-black [color-scheme:dark] focus:ring-[3px] focus:ring-[#0A84FF]/40 focus:border-[#0A84FF] rounded-[14px] transition-all' : 'bg-white border border-[#E5E5EA] text-[#1D1D1F] [color-scheme:light] focus:ring-[3px] focus:ring-[#007AFF]/30 focus:border-[#007AFF] rounded-[14px] transition-all shadow-sm',
     inputDisabled: isDarkMode ? 'bg-[#1C1C1E] border-[#2C2C2E] text-[#636366] opacity-70' : 'bg-[#F5F5F7] border-[#E5E5EA] text-[#AEAEB2] opacity-70',
     btnSec: isDarkMode ? 'bg-[#2C2C2E] hover:bg-[#3A3A3C] text-white border border-[#38383A] rounded-full transition-all' : 'bg-white hover:bg-[#E5E5EA] text-[#1D1D1F] border border-[#D1D1D6] shadow-sm rounded-full transition-all',
 
@@ -831,7 +831,7 @@ export default function App() {
           <div className={`p-6 ${cls.cardBg}`}>
             <h2 className={`font-semibold text-xl mb-5 flex items-center tracking-tight ${cls.textMain}`}><PlusCircle className={`w-5 h-5 mr-2 ${cls.indigoText}`} /> Input Shift</h2>
             <form onSubmit={handleSaveData} className="space-y-4 font-medium">
-              <select value={dateType} onChange={(e) => setDateType(e.target.value)} className={`w-full p-3.5 ${cls.input}`}><option value="Hari Ini">Data Hari Ini</option><option value="Kemarin">Data Kemarin</option></select>
+              <select value={dateType} onChange={(e) => setDateType(e.target.value)} className={`w-full p-3.5 ${cls.input} bg-[#0A84FF]`}><option value="Hari Ini">Data Hari Ini</option><option value="Kemarin">Data Kemarin</option></select>
               <input type="text" value={operator} onChange={(e) => setOperator(e.target.value)} placeholder="Nama Operator" className={`w-full p-3.5 ${cls.input}`} />
               <input type="number" value={newClicks} onChange={(e) => setNewClicks(e.target.value)} placeholder="Total Klik Mesin" className={`w-full p-3.5 font-bold ${cls.input}`} />
               <button type="submit" className={`w-full ${cls.indigoBg} text-white py-3.5 rounded-[14px] font-semibold mt-2 shadow-sm hover:opacity-90 transition-opacity`}>Simpan Pemakaian</button>
