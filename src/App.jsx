@@ -13,50 +13,69 @@ const supabaseHeaders = {
 
 const ADMIN_PASSWORD = 'admin'; 
 
-// --- DAFTAR PART DARI CSV (NAMA SAMA PERSIS DI SELURUH SISTEM) ---
+// --- DAFTAR PART DARI CSV (DENGAN TAMBAHAN CMYK & OTHER PART) ---
 const PREDEFINED_PARTS = [
-  "Charging Corona",
+  "Charging Corona Cyan",
+  "Charging Corona Magenta",
+  "Charging Corona Yellow",
+  "Charging Corona Black",
   "Cleaning Blade",
   "Cleaning Unit",
-  "Developer Black",
   "Developer Cyan",
   "Developer Magenta",
   "Developer Yellow",
-  "Developing Unit",
-  "Drum Unit",
+  "Developer Black",
+  "Developing Unit Cyan",
+  "Developing Unit Magenta",
+  "Developing Unit Yellow",
+  "Developing Unit Black",
+  "Drum Unit Cyan",
+  "Drum Unit Magenta",
+  "Drum Unit Yellow",
+  "Drum Unit Black",
   "Fuser Belt",
   "Gear",
   "Intermediate Transfer Belt (IBT)",
   "Laser Unit",
   "Roll Mesin",
   "Sensor",
-  "Toner Black",
   "Toner Cyan",
   "Toner Magenta",
-  "Toner Yellow"
+  "Toner Yellow",
+  "Toner Black",
+  "Other Part"
 ];
 
-// --- KONFIGURASI LIFETIME SUKU CADANG (NAMA BARANG DIRESET DISAMAKAN DENGAN PREDEFINED_PARTS) ---
+// --- KONFIGURASI LIFETIME SUKU CADANG ---
 const PART_LIFETIMES = {
-  "Charging Corona": 40000,
+  "Charging Corona Cyan": 40000,
+  "Charging Corona Magenta": 40000,
+  "Charging Corona Yellow": 40000,
+  "Charging Corona Black": 40000,
   "Cleaning Blade": 100000,
   "Cleaning Unit": 200000,
-  "Developer Black": 100000,
   "Developer Cyan": 100000,
   "Developer Magenta": 100000,
   "Developer Yellow": 100000,
-  "Developing Unit": 200000,
-  "Drum Unit": 40000,
+  "Developer Black": 100000,
+  "Developing Unit Cyan": 200000,
+  "Developing Unit Magenta": 200000,
+  "Developing Unit Yellow": 200000,
+  "Developing Unit Black": 200000,
+  "Drum Unit Cyan": 40000,
+  "Drum Unit Magenta": 40000,
+  "Drum Unit Yellow": 40000,
+  "Drum Unit Black": 40000,
   "Fuser Belt": 200000,
   "Gear": 150000,
   "Intermediate Transfer Belt (IBT)": 200000,
   "Laser Unit": 300000,
   "Roll Mesin": 150000,
   "Sensor": 250000,
-  "Toner Black": 14000,
   "Toner Cyan": 14000,
   "Toner Magenta": 14000,
-  "Toner Yellow": 14000
+  "Toner Yellow": 14000,
+  "Toner Black": 14000
 };
 
 const getTodayStr = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
@@ -521,10 +540,11 @@ export default function App() {
 
   const clickPerPcsValue = totalReportUsage > 0 ? (totalExpensePart / totalReportUsage) : 0;
 
-  // --- MEMBENTUK DAFTAR PART YANG READY DI GUDANG (STOK > 0) ---
+  // --- MEMBENTUK DAFTAR PART YANG READY DI GUDANG ---
   const availablePartsInWarehouse = useMemo(() => {
     return inventory
-      .filter(item => item.stock > 0)
+      // Pastikan stok > 0 DAN part tersebut ada di daftar PART_LIFETIMES (Other Part akan diabaikan dari menu Reset)
+      .filter(item => item.stock > 0 && PART_LIFETIMES.hasOwnProperty(item.part_name))
       .map(item => item.part_name);
   }, [inventory]);
 
