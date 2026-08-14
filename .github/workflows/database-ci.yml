@@ -1,0 +1,62 @@
+name: Database CI
+
+on:
+  pull_request:
+    branches:
+      - develop
+  push:
+    branches:
+      - develop
+
+permissions:
+  contents: read
+
+concurrency:
+  group: database-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: "22"
+  SUPABASE_CLI_VERSION: "2.114.0"
+
+jobs:
+  validate:
+    name: Build and database safety checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install application dependencies
+        run: npm ci
+
+      - name: Build application
+        run: npm run build
+
+      - name: Verify pinned Supabase CLI
+        shell: bash
+        run: |
+          actual_version="$(npx --yes "supabase@${SUPABASE_CLI_VERSION}" --version)"
+          test "${actual_version}" = "${SUPABASE_CLI_VERSION}"
+
+      - name: Start clean local Supabase stack
+        run: npx --yes "supabase@${SUPABASE_CLI_VERSION}" start
+
+      - name: Run database pgTAP tests
+        run: npx --yes "supabase@${SUPABASE_CLI_VERSION}" test db
+
+      - name: Lint local database schema
+        run: npx --yes "supabase@${SUPABASE_CLI_VERSION}" db lint --local
+
+      - name: Stop local Supabase stack
+        if: always()
+        run: npx --yes "supabase@${SUPABASE_CLI_VERSION}" stop --no-backup

@@ -87,12 +87,19 @@ declare
     select password
     from concurrency_connection_secret
   );
+  database_host text := host(inet_server_addr());
   local_connection text := format(
-    'host=host.docker.internal port=54322 dbname=%s user=batch1_concurrency_test password=%s sslmode=disable',
+    'host=%s port=%s dbname=%s user=batch1_concurrency_test password=%s sslmode=disable',
+    database_host,
+    current_setting('port'),
     current_database(),
     generated_password
   );
 begin
+  if database_host is null then
+    raise exception 'concurrency test requires a TCP database connection';
+  end if;
+
   perform extensions.dblink_connect('owner_session_1', local_connection);
   perform extensions.dblink_connect('owner_session_2', local_connection);
 end;
