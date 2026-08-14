@@ -2,8 +2,8 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { AlertCircle, CheckCircle, Settings, Printer, PlusCircle, RotateCcw, BarChart3, Info, Lock, Unlock, Trash2, X, Pencil, Calendar, Filter, FileText, AlertTriangle, FileWarning, Eye, Sun, Moon, LayoutDashboard, DollarSign, Activity, TrendingUp, PieChart, Package, ShoppingCart, Minus } from 'lucide-react';
 
 // --- KONEKSI SUPABASE VIA REST API ---
-const supabaseUrl = 'https://wtslqxjwjqyjgcapfrrz.supabase.co';
-const supabaseKey = 'sb_publishable_HyWB1TfQr-N514kXP3qVjA_uqAlox-A';
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
 const supabaseHeaders = {
   'apikey': supabaseKey,
