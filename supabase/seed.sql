@@ -1,0 +1,5 @@
+-- Intentionally empty for Batch 1.
+--
+-- Tenant data is not seeded automatically because the first owner must be a real
+-- Supabase Auth user. See bootstrap/dev_first_account.sql.example for the guarded,
+-- manual DEV-only bootstrap after that user has been created through Supabase Auth.

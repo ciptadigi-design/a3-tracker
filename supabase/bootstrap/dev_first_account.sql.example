@@ -1,0 +1,95 @@
+-- DEV-ONLY, MANUAL, ONE-TIME BOOTSTRAP TEMPLATE.
+--
+-- 1. Create the real owner through Supabase Auth (Dashboard invite/create user,
+--    normal signup, or the supported Admin Auth API).
+-- 2. Confirm the Auth trigger created public.profiles for that user.
+-- 3. Replace the email below with that real DEV user's email.
+-- 4. Execute this file as a trusted database administrator against DEV only.
+--
+-- This file is not a migration and is not included by supabase db push.
+-- It deliberately fails while the placeholder remains or the Auth user is missing.
+
+begin;
+
+do $$
+declare
+  owner_email constant text := 'REPLACE_WITH_REAL_DEV_OWNER_EMAIL';
+  owner_user_id uuid;
+  new_account_id uuid;
+begin
+  if owner_email = 'REPLACE_WITH_REAL_DEV_OWNER_EMAIL' then
+    raise exception 'replace the DEV owner email before running bootstrap';
+  end if;
+
+  select id
+  into strict owner_user_id
+  from auth.users
+  where lower(email) = lower(owner_email);
+
+  if exists (
+    select 1
+    from public.accounts
+    where lower(btrim(code)) = lower('CIPTA-GRAFIKA')
+  ) then
+    raise exception 'Cipta Grafika account already exists; bootstrap is one-time only';
+  end if;
+
+  insert into public.accounts (
+    code,
+    name,
+    default_timezone,
+    default_currency,
+    status,
+    created_by,
+    updated_by
+  )
+  values (
+    'CIPTA-GRAFIKA',
+    'Cipta Grafika',
+    'Asia/Jakarta',
+    'IDR',
+    'active',
+    owner_user_id,
+    owner_user_id
+  )
+  returning id into new_account_id;
+
+  insert into public.account_memberships (
+    account_id,
+    user_id,
+    role,
+    status,
+    accepted_at,
+    created_by,
+    updated_by
+  )
+  values (
+    new_account_id,
+    owner_user_id,
+    'owner',
+    'active',
+    statement_timestamp(),
+    owner_user_id,
+    owner_user_id
+  );
+
+  insert into public.branches (
+    account_id,
+    code,
+    name,
+    timezone,
+    created_by,
+    updated_by
+  )
+  values (
+    new_account_id,
+    'TUPAREV',
+    'Tuparev',
+    'Asia/Jakarta',
+    owner_user_id,
+    owner_user_id
+  );
+end;
+$$;
+
+commit;
