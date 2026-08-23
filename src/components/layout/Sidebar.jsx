@@ -1,0 +1,42 @@
+import { AlertTriangle, BarChart3, Boxes, CalendarDays, ChevronRight, ClipboardCheck, Gauge, Package, Printer, Settings, Wrench } from 'lucide-react'
+
+const navigation = [
+  { path: '/', label: 'Overview', icon: Gauge, active: true },
+  { path: '/machines', label: 'Machines', icon: Printer, active: true },
+  { path: '/daily', label: 'Daily', icon: CalendarDays },
+  { path: '/components', label: 'Components', icon: Boxes },
+  { path: '/inventory', label: 'Inventory', icon: Package },
+  { path: '/errors', label: 'Errors', icon: AlertTriangle },
+  { path: '/maintenance', label: 'Maintenance', icon: Wrench },
+  { path: '/reports', label: 'Reports', icon: BarChart3 },
+]
+
+function NavLink({ item, path, navigate }) {
+  const Icon = item.icon
+  const isCurrent = path === item.path
+  return (
+    <a href={item.path} className={`nav-item ${isCurrent ? 'nav-item-active' : ''}`} aria-current={isCurrent ? 'page' : undefined} onClick={(event) => { event.preventDefault(); navigate(item.path) }}>
+      <Icon size={19} strokeWidth={1.8} /><span>{item.label}</span>{!item.active && <small>Soon</small>}
+    </a>
+  )
+}
+
+export function Sidebar({ path, navigate, account, branch }) {
+  return (
+    <aside className="sidebar glass-surface">
+      <div className="brand-lockup sidebar-brand"><span className="brand-mark"><Printer size={22} strokeWidth={1.8} /></span><span>A3 Tracker</span></div>
+      <div className="workspace-card">
+        <span className="workspace-avatar">{account?.name?.slice(0, 2).toUpperCase()}</span>
+        <div><strong>{account?.name}</strong><span>{branch?.name ?? 'No active branch'}</span></div><ChevronRight size={16} />
+      </div>
+      <nav className="primary-nav" aria-label="Primary navigation">
+        <span className="nav-label">Workspace</span>
+        {navigation.map((item) => <NavLink key={item.path} item={item} path={path} navigate={navigate} />)}
+      </nav>
+      <nav className="secondary-nav" aria-label="Settings navigation">
+        <NavLink item={{ path: '/settings', label: 'Settings', icon: Settings }} path={path} navigate={navigate} />
+        <div className="sidebar-footnote"><ClipboardCheck size={15} /> Secure tenant access</div>
+      </nav>
+    </aside>
+  )
+}
