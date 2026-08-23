@@ -3,7 +3,7 @@ import { AlertTriangle, BarChart3, Boxes, CalendarDays, ChevronRight, ClipboardC
 const navigation = [
   { path: '/', label: 'Overview', icon: Gauge, active: true },
   { path: '/machines', label: 'Machines', icon: Printer, active: true },
-  { path: '/daily', label: 'Daily', icon: CalendarDays },
+  { path: '/daily', label: 'Daily', icon: CalendarDays, active: true },
   { path: '/components', label: 'Components', icon: Boxes },
   { path: '/inventory', label: 'Inventory', icon: Package },
   { path: '/errors', label: 'Errors', icon: AlertTriangle },
