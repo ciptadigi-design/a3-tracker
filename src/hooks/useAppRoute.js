@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
 
 const supportedRoutes = new Set(['/', '/machines', '/daily', '/components', '/inventory', '/errors', '/maintenance', '/reports', '/settings'])
-const readPath = () => supportedRoutes.has(window.location.pathname) ? window.location.pathname : '/'
+const machineDetailPattern = /^\/machines\/([0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})$/i
+const isSupportedPath = (path) => supportedRoutes.has(path) || machineDetailPattern.test(path)
+const readPath = () => isSupportedPath(window.location.pathname) ? window.location.pathname : '/'
 
 export function useAppRoute() {
   const [path, setPath] = useState(readPath)
@@ -19,4 +21,8 @@ export function useAppRoute() {
   }
 
   return { path, navigate }
+}
+
+export function getMachineIdFromPath(path) {
+  return path.match(machineDetailPattern)?.[1] ?? null
 }

@@ -10,9 +10,12 @@ const machineFields = `
   installed_on,
   status,
   timezone,
+  notes,
   is_active,
+  archived_at,
   machine_models (
     id,
+    manufacturer_id,
     model_code,
     name,
     color_capability,
@@ -32,4 +35,103 @@ export async function loadMachines({ accountId, branchId }) {
   const { data, error } = await query
   if (error) throw error
   return data ?? []
+}
+
+export async function loadMachine({ accountId, machineId }) {
+  const { data, error } = await supabase
+    .from('machines')
+    .select(machineFields)
+    .eq('account_id', accountId)
+    .eq('id', machineId)
+    .maybeSingle()
+
+  if (error) throw error
+  return data
+}
+
+export async function loadMachineCatalog() {
+  const [manufacturerResult, modelResult] = await Promise.all([
+    supabase
+      .from('manufacturers')
+      .select('id, code, name')
+      .eq('is_active', true)
+      .order('name'),
+    supabase
+      .from('machine_models')
+      .select('id, manufacturer_id, model_code, name, machine_category, color_capability')
+      .eq('is_active', true)
+      .order('name'),
+  ])
+
+  if (manufacturerResult.error) throw manufacturerResult.error
+  if (modelResult.error) throw modelResult.error
+  return {
+    manufacturers: manufacturerResult.data ?? [],
+    models: modelResult.data ?? [],
+  }
+}
+
+function cleanOptionalValue(value) {
+  const cleaned = value?.trim()
+  return cleaned || null
+}
+
+export async function createMachine({ accountId, values }) {
+  const { data, error } = await supabase
+    .from('machines')
+    .insert({
+      account_id: accountId,
+      branch_id: values.branchId,
+      machine_model_id: values.machineModelId,
+      machine_code: values.machineCode.trim(),
+      display_name: values.displayName.trim(),
+      serial_number: cleanOptionalValue(values.serialNumber),
+      installed_on: values.installedOn || null,
+      status: values.status,
+      timezone: cleanOptionalValue(values.timezone),
+      notes: cleanOptionalValue(values.notes),
+      is_active: true,
+    })
+    .select(machineFields)
+    .single()
+
+  if (error) throw error
+  return data
+}
+
+export async function updateMachine({ accountId, machineId, values }) {
+  const { data, error } = await supabase
+    .from('machines')
+    .update({
+      branch_id: values.branchId,
+      machine_code: values.machineCode.trim(),
+      display_name: values.displayName.trim(),
+      serial_number: cleanOptionalValue(values.serialNumber),
+      installed_on: values.installedOn || null,
+      status: values.status,
+      timezone: cleanOptionalValue(values.timezone),
+      notes: cleanOptionalValue(values.notes),
+    })
+    .eq('account_id', accountId)
+    .eq('id', machineId)
+    .eq('is_active', true)
+    .select(machineFields)
+    .single()
+
+  if (error) throw error
+  return data
+}
+
+export async function retireMachine({ accountId, machineId }) {
+  const { data, error } = await supabase
+    .from('machines')
+    .update({ status: 'retired', is_active: false })
+    .eq('account_id', accountId)
+    .eq('id', machineId)
+    .eq('is_active', true)
+    .select(machineFields)
+    .single()
+
+  if (error) throw error
+  return data
 }

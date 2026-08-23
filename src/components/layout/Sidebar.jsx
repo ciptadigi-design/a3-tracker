@@ -13,7 +13,7 @@ const navigation = [
 
 function NavLink({ item, path, navigate }) {
   const Icon = item.icon
-  const isCurrent = path === item.path
+  const isCurrent = path === item.path || (item.path === '/machines' && path.startsWith('/machines/'))
   return (
     <a href={item.path} className={`nav-item ${isCurrent ? 'nav-item-active' : ''}`} aria-current={isCurrent ? 'page' : undefined} onClick={(event) => { event.preventDefault(); navigate(item.path) }}>
       <Icon size={19} strokeWidth={1.8} /><span>{item.label}</span>{!item.active && <small>Soon</small>}

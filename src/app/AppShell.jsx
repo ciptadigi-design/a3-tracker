@@ -3,11 +3,12 @@ import { Sidebar } from '../components/layout/Sidebar.jsx'
 import { TopBar } from '../components/layout/TopBar.jsx'
 import { useAuth } from '../features/auth/useAuth.js'
 import { useTenant } from '../features/account/useTenant.js'
-import { useAppRoute } from '../hooks/useAppRoute.js'
+import { getMachineIdFromPath, useAppRoute } from '../hooks/useAppRoute.js'
 import { useTheme } from '../hooks/useTheme.js'
 import { OverviewPage } from '../pages/OverviewPage.jsx'
 import { MachinesPage } from '../pages/MachinesPage.jsx'
 import { ComingSoonPage } from '../pages/ComingSoonPage.jsx'
+import { MachineDetailPage } from '../features/machines/MachineDetailPage.jsx'
 
 const comingSoonPages = {
   '/daily': ['Daily', 'Daily counter activity will appear here in a future milestone.'],
@@ -36,7 +37,8 @@ export function AppShell() {
 
   let page
   if (path === '/') page = <OverviewPage />
-  else if (path === '/machines') page = <MachinesPage />
+  else if (path === '/machines') page = <MachinesPage navigate={handleNavigate} />
+  else if (getMachineIdFromPath(path)) page = <MachineDetailPage machineId={getMachineIdFromPath(path)} navigate={handleNavigate} />
   else {
     const [title, description] = comingSoonPages[path] ?? comingSoonPages['/settings']
     page = <ComingSoonPage title={title} description={description} />
