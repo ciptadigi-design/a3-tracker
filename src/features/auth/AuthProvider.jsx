@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { supabase, supabaseConfigurationError } from '../../services/supabase/client.js'
 import { AuthContext } from './authContext.js'
-import { clearDailyCounterDraftsForUser } from '../counters/dailyCounterDraftStorage.js'
+import { clearDraftsForUser } from '../drafts/draftStorage.js'
 
 export function AuthProvider({ children }) {
   const [session, setSession] = useState(null)
@@ -47,7 +47,7 @@ export function AuthProvider({ children }) {
         if (!supabase) return
         const { error } = await supabase.auth.signOut()
         if (error) throw error
-        clearDailyCounterDraftsForUser(session?.user?.id)
+        clearDraftsForUser(session?.user?.id)
       },
     }),
     [isLoading, session],

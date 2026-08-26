@@ -5,7 +5,8 @@ import { CounterEntryCard } from '../features/counters/CounterEntryCard.jsx'
 import { CounterHistory } from '../features/counters/CounterHistory.jsx'
 import { calculateDailySummary, formatCounter } from '../features/counters/counterUtils.js'
 import { useCounterHistory } from '../features/counters/useCounterHistory.js'
-import { loadSelectedDailyMachine, saveSelectedDailyMachine } from '../features/counters/dailyCounterDraftStorage.js'
+import { createDraftKey } from '../features/drafts/draftKeys.js'
+import { migrateLegacyDailySelection, readDraft, writeDraft } from '../features/drafts/draftStorage.js'
 import { useTenant } from '../features/account/useTenant.js'
 import { useAuth } from '../features/auth/useAuth.js'
 import { useMachines } from '../features/machines/useMachines.js'
@@ -19,14 +20,15 @@ export function DailyPage() {
   const { account, branch, membership } = useTenant()
   const machinesState = useMachines(account?.id, branch?.id)
   const activeMachines = useMemo(() => machinesState.machines.filter((machine) => machine.is_active), [machinesState.machines])
-  const selectionContext = `${user?.id}:${account?.id}:${branch?.id}`
+  const selectionContext = createDraftKey({ userId: user?.id, accountId: account?.id, branchId: branch?.id, feature: 'daily-counter', entityId: 'selected-machine' })
+  const loadSelectedMachineId = () => (readDraft(selectionContext) ?? migrateLegacyDailySelection(selectionContext, user?.id, account?.id, branch?.id))?.value?.machineId ?? ''
   const [machineSelection, setMachineSelection] = useState(() => ({
     context: selectionContext,
-    machineId: loadSelectedDailyMachine(user?.id, account?.id, branch?.id),
+    machineId: loadSelectedMachineId(),
   }))
   const selectedMachineId = machineSelection.context === selectionContext
     ? machineSelection.machineId
-    : loadSelectedDailyMachine(user?.id, account?.id, branch?.id)
+    : loadSelectedMachineId()
   const selectedMachine = activeMachines.find((machine) => machine.id === selectedMachineId) ?? activeMachines[0] ?? null
   const counterState = useCounterHistory(account?.id, selectedMachine?.id)
   const timezone = selectedMachine?.timezone || branch?.timezone || account?.default_timezone || 'Asia/Jakarta'
@@ -46,7 +48,7 @@ export function DailyPage() {
 
   function handleMachineChange(machineId) {
     setMachineSelection({ context: selectionContext, machineId })
-    saveSelectedDailyMachine(user?.id, account?.id, branch?.id, machineId)
+    writeDraft(selectionContext, { value: { machineId } })
     setSuccess(null)
   }
 
@@ -72,7 +74,7 @@ export function DailyPage() {
             <SummaryCard icon={Clock3} label="Last Input" value={summary.lastReading ? new Intl.DateTimeFormat('en-GB', { timeZone: timezone, hour: '2-digit', minute: '2-digit' }).format(new Date(summary.lastReading.observed_at)) : '—'} detail={summary.lastReading ? new Intl.DateTimeFormat('en-GB', { timeZone: timezone, dateStyle: 'medium' }).format(new Date(summary.lastReading.observed_at)) : 'No input recorded'} tone="purple" />
             <SummaryCard icon={ListChecks} label="Today's Entries" value={String(summary.todayEntryCount)} detail="Effective readings in machine timezone" tone="amber" />
           </section>
-          <CounterEntryCard key={`${user.id}:${selectedMachine.id}`} accountId={account.id} userId={user.id} machine={selectedMachine} lastReading={summary.lastReading} onRecorded={handleRecorded} />
+          <CounterEntryCard key={`${user.id}:${selectedMachine.id}`} accountId={account.id} branchId={branch.id} userId={user.id} machine={selectedMachine} lastReading={summary.lastReading} onRecorded={handleRecorded} />
           <CounterHistory history={counterState.history} profiles={counterState.profiles} currentUserId={user?.id} timezone={timezone} isLoading={counterState.isLoading} error={counterState.error} canCorrect={canCorrect} onRefresh={counterState.refresh} onCorrected={handleCorrected} />
         </>}
     </div>

@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { AlertCircle, LoaderCircle, LockKeyhole, Printer, X } from 'lucide-react'
+import { AlertCircle, CheckCircle2, LoaderCircle, LockKeyhole, Printer, RotateCcw, TriangleAlert, X } from 'lucide-react'
+import { useAuth } from '../auth/useAuth.js'
+import { createDraftKey } from '../drafts/draftKeys.js'
+import { usePersistentDraft } from '../drafts/usePersistentDraft.js'
 import { createMachineFormValues, mapMachineMutationError, operationalStatuses, validateMachineForm } from './machineForm.js'
 
 function FieldError({ message }) {
@@ -23,8 +26,41 @@ function initialValues({ machine, branchId, manufacturers, models }) {
   }
 }
 
+const machineDraftFields = ['branchId', 'manufacturerId', 'machineModelId', 'machineCode', 'displayName', 'serialNumber', 'installedOn', 'status', 'timezone', 'notes']
+
+function isMachineDraft(value) {
+  return value && machineDraftFields.every((field) => typeof value[field] === 'string')
+}
+
 export function MachineFormDialog({ mode, machine, account, branches, branchId, manufacturers = [], models = [], onClose, onSave }) {
-  const [values, setValues] = useState(() => initialValues({ machine, branchId, manufacturers, models }))
+  const { user } = useAuth()
+  const isEdit = mode === 'edit'
+  const serverValues = initialValues({ machine, branchId, manufacturers, models })
+  const draftKey = createDraftKey({
+    userId: user.id,
+    accountId: account.id,
+    branchId,
+    feature: 'machine',
+    entityId: isEdit ? machine.id : 'new',
+  })
+  const draftBaseUpdatedAt = machine?.updated_at ?? null
+  const {
+    value: values,
+    updateDraft,
+    hasDraft,
+    wasRestored,
+    pendingDraft,
+    clearDraft,
+    resetDraft,
+    restorePendingDraft,
+    discardPendingDraft,
+  } = usePersistentDraft({
+    draftKey,
+    initialValue: serverValues,
+    metadata: { baseUpdatedAt: draftBaseUpdatedAt },
+    validate: isMachineDraft,
+    shouldRestore: (storedDraft) => !isEdit || !storedDraft.metadata?.baseUpdatedAt || !draftBaseUpdatedAt || storedDraft.metadata.baseUpdatedAt === draftBaseUpdatedAt,
+  })
   const [errors, setErrors] = useState({})
   const [formError, setFormError] = useState(null)
   const [isSaving, setIsSaving] = useState(false)
@@ -32,7 +68,6 @@ export function MachineFormDialog({ mode, machine, account, branches, branchId, 
   const closeButtonRef = useRef(null)
   const isSavingRef = useRef(false)
   const onCloseRef = useRef(onClose)
-  const isEdit = mode === 'edit'
   const filteredModels = useMemo(
     () => models.filter((model) => model.manufacturer_id === values.manufacturerId),
     [models, values.manufacturerId],
@@ -86,19 +121,25 @@ export function MachineFormDialog({ mode, machine, account, branches, branchId, 
   }, [])
 
   function change(field, value) {
-    setValues((current) => ({ ...current, [field]: value }))
+    updateDraft((current) => ({ ...current, [field]: value }))
     setErrors((current) => ({ ...current, [field]: undefined }))
     setFormError(null)
   }
 
   function changeManufacturer(manufacturerId) {
     const manufacturerModels = models.filter((model) => model.manufacturer_id === manufacturerId)
-    setValues((current) => ({
+    updateDraft((current) => ({
       ...current,
       manufacturerId,
       machineModelId: manufacturerModels.length === 1 ? manufacturerModels[0].id : '',
     }))
     setErrors((current) => ({ ...current, manufacturerId: undefined, machineModelId: undefined }))
+    setFormError(null)
+  }
+
+  function handleResetDraft() {
+    resetDraft(serverValues)
+    setErrors({})
     setFormError(null)
   }
 
@@ -116,6 +157,7 @@ export function MachineFormDialog({ mode, machine, account, branches, branchId, 
     setFormError(null)
     try {
       await onSave(values)
+      clearDraft()
       onClose()
     } catch (error) {
       const mapped = mapMachineMutationError(error)
@@ -139,6 +181,8 @@ export function MachineFormDialog({ mode, machine, account, branches, branchId, 
 
         <form className="machine-form" onSubmit={handleSubmit} noValidate>
           <div className="machine-form-body">
+            {pendingDraft && <div className="draft-conflict-banner" role="alert"><TriangleAlert size={18} /><div><strong>This machine changed after your draft was started.</strong><span>Choose the latest server data or restore your saved draft. Values will not be merged automatically.</span><div className="draft-conflict-actions"><button className="secondary-button" type="button" onClick={discardPendingDraft}>Use latest server data</button><button className="primary-button" type="button" onClick={restorePendingDraft}>Restore my draft</button></div></div></div>}
+            {wasRestored && <div className="draft-restored-status" role="status"><CheckCircle2 size={14} /><span>Unsaved draft restored</span></div>}
             <div className="form-section-heading"><strong>Assignment</strong><span>Account is set securely from your active workspace.</span></div>
             <div className="form-grid">
               <label className="form-field"><span>Branch <RequiredMark /></span><select value={values.branchId} onChange={(event) => change('branchId', event.target.value)} aria-invalid={Boolean(errors.branchId)}><option value="">Choose branch</option>{branches.map((branch) => <option key={branch.id} value={branch.id}>{branch.name}</option>)}</select><FieldError message={errors.branchId} /></label>
@@ -167,7 +211,7 @@ export function MachineFormDialog({ mode, machine, account, branches, branchId, 
             {formError && <div className="form-error" role="alert"><AlertCircle size={16} /><span>{formError}</span></div>}
             {!isEdit && selectedManufacturer && <p className="form-context-note">Creating a {selectedManufacturer.name} machine inside {account?.name}. Database constraints and tenant access remain authoritative.</p>}
           </div>
-          <footer className="dialog-actions"><button className="secondary-button" type="button" onClick={onClose} disabled={isSaving}>Cancel</button><button className="primary-button" type="submit" disabled={isSaving}>{isSaving && <LoaderCircle className="spin" size={17} />}{isSaving ? 'Saving machine…' : isEdit ? 'Save changes' : 'Create machine'}</button></footer>
+          <footer className="dialog-actions"><button className="draft-reset-button" type="button" onClick={handleResetDraft} disabled={!hasDraft || isSaving}><RotateCcw size={15} />Reset draft</button><button className="secondary-button" type="button" onClick={onClose} disabled={isSaving}>Cancel</button><button className="primary-button" type="submit" disabled={isSaving || Boolean(pendingDraft)}>{isSaving && <LoaderCircle className="spin" size={17} />}{isSaving ? 'Saving machine…' : isEdit ? 'Save changes' : 'Create machine'}</button></footer>
         </form>
       </section>
     </div>,

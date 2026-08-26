@@ -13,6 +13,7 @@ const machineFields = `
   notes,
   is_active,
   archived_at,
+  updated_at,
   machine_models (
     id,
     manufacturer_id,
