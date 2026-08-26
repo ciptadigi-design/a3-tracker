@@ -6,14 +6,14 @@ const navigation = [
   { path: '/daily', label: 'Daily', icon: CalendarDays, active: true },
   { path: '/components', label: 'Components', icon: Boxes },
   { path: '/inventory', label: 'Inventory', icon: Package },
-  { path: '/errors', label: 'Errors', icon: AlertTriangle },
+  { path: '/errors', label: 'Errors', icon: AlertTriangle, active: true },
   { path: '/maintenance', label: 'Maintenance', icon: Wrench },
   { path: '/reports', label: 'Reports', icon: BarChart3 },
 ]
 
 function NavLink({ item, path, navigate }) {
   const Icon = item.icon
-  const isCurrent = path === item.path || (item.path === '/machines' && path.startsWith('/machines/'))
+  const isCurrent = path === item.path || (item.path !== '/' && path.startsWith(`${item.path}/`))
   return (
     <a href={item.path} className={`nav-item ${isCurrent ? 'nav-item-active' : ''}`} aria-current={isCurrent ? 'page' : undefined} onClick={(event) => { event.preventDefault(); navigate(item.path) }}>
       <Icon size={19} strokeWidth={1.8} /><span>{item.label}</span>{!item.active && <small>Soon</small>}

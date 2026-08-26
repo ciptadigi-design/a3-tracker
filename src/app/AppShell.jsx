@@ -3,18 +3,19 @@ import { Sidebar } from '../components/layout/Sidebar.jsx'
 import { TopBar } from '../components/layout/TopBar.jsx'
 import { useAuth } from '../features/auth/useAuth.js'
 import { useTenant } from '../features/account/useTenant.js'
-import { getMachineIdFromPath, useAppRoute } from '../hooks/useAppRoute.js'
+import { getIncidentIdFromPath, getMachineIdFromPath, useAppRoute } from '../hooks/useAppRoute.js'
 import { useTheme } from '../hooks/useTheme.js'
 import { OverviewPage } from '../pages/OverviewPage.jsx'
 import { MachinesPage } from '../pages/MachinesPage.jsx'
 import { DailyPage } from '../pages/DailyPage.jsx'
 import { ComingSoonPage } from '../pages/ComingSoonPage.jsx'
 import { MachineDetailPage } from '../features/machines/MachineDetailPage.jsx'
+import { ErrorsPage } from '../pages/ErrorsPage.jsx'
+import { IncidentDetailPage } from '../features/incidents/IncidentDetailPage.jsx'
 
 const comingSoonPages = {
   '/components': ['Components', 'Machine component health will be introduced after the machine master workflow.'],
   '/inventory': ['Inventory', 'Inventory remains safely isolated from the V2 shell for now.'],
-  '/errors': ['Errors', 'Structured production errors are planned for a later milestone.'],
   '/maintenance': ['Maintenance', 'Maintenance planning will arrive after machine onboarding.'],
   '/reports': ['Reports', 'Reports will be built from real operational data as modules come online.'],
   '/settings': ['Settings', 'Workspace settings are coming soon.'],
@@ -40,6 +41,8 @@ export function AppShell() {
   else if (path === '/machines') page = <MachinesPage navigate={handleNavigate} />
   else if (getMachineIdFromPath(path)) page = <MachineDetailPage machineId={getMachineIdFromPath(path)} navigate={handleNavigate} />
   else if (path === '/daily') page = <DailyPage />
+  else if (path === '/errors') page = <ErrorsPage navigate={handleNavigate} />
+  else if (getIncidentIdFromPath(path)) page = <IncidentDetailPage incidentId={getIncidentIdFromPath(path)} navigate={handleNavigate} />
   else {
     const [title, description] = comingSoonPages[path] ?? comingSoonPages['/settings']
     page = <ComingSoonPage title={title} description={description} />
