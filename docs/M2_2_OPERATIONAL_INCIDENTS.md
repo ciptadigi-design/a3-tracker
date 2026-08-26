@@ -1,5 +1,7 @@
 # M2.2 Operational Incidents
 
+> M2.2.1 adds transactional Edit Log revisions and the deliberate solve workflow. See [M2_2_1_INCIDENT_REVIEW.md](./M2_2_1_INCIDENT_REVIEW.md).
+
 ## Domain boundary
 
 `operational_incidents` records human and production-process errors: incorrect
@@ -38,4 +40,3 @@ user/account/branch/feature/new key. Its open workflow uses
 `usePersistentUIState`, so navigation and refresh restore both the modal and its
 unsaved values. Explicit close clears only workflow state, successful creation
 clears both workflow and draft, and logout uses the existing prefix cleanup.
-

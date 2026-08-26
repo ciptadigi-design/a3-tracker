@@ -26,10 +26,11 @@ export function parseLoss(value) {
 }
 
 export function mapIncidentError(error) {
+  if (error?.message?.includes('no incident changes supplied')) return 'Belum ada perubahan bidang incident untuk disimpan.'
+  if (error?.code === '40001') return 'Incident data changed since this draft was created.'
   if (error?.code === '23505') return 'Log ini sudah tersimpan. Muat ulang riwayat untuk melihat hasilnya.'
   if (error?.code === '22007') return 'Tanggal kejadian tidak valid atau berada di masa depan.'
   if (error?.code === '22003' || error?.code === '23514') return 'Periksa kembali jumlah rusak dan nilai kerugian.'
   if (error?.code === '42501') return 'Peran Anda tidak diizinkan melakukan tindakan ini.'
   return error?.message || 'Log error tidak dapat disimpan. Coba lagi.'
 }
-

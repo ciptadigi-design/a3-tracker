@@ -1,15 +1,24 @@
-import { createElement, useMemo, useState } from 'react'
-import { ArrowLeft, Boxes, CalendarClock, CheckCircle2, ClipboardCheck, FileText, Gauge, HandCoins, Hash, MapPin, Printer, ReceiptText, ShieldCheck, ShieldX, Tag, UserRound } from 'lucide-react'
+import { createElement, useEffect, useMemo, useState } from 'react'
+import { ArrowLeft, Boxes, CalendarClock, CheckCircle2, ClipboardCheck, FileText, Gauge, HandCoins, Hash, MapPin, PencilLine, Printer, ReceiptText, ShieldCheck, ShieldX, Tag, UserRound } from 'lucide-react'
 import { ErrorState } from '../../components/ui/ErrorState.jsx'
 import { LoadingScreen } from '../../components/ui/LoadingScreen.jsx'
 import { PageHeader } from '../../components/ui/PageHeader.jsx'
 import { useTenant } from '../account/useTenant.js'
+import { useAuth } from '../auth/useAuth.js'
 import { useMachines } from '../machines/useMachines.js'
+import { createUIStateKey } from '../uiState/uiStateKeys.js'
+import { usePersistentUIState } from '../uiState/usePersistentUIState.js'
+import { IncidentAuditHistory } from './IncidentAuditHistory.jsx'
+import { IncidentFormDialog } from './IncidentFormDialog.jsx'
+import { SolveIncidentDialog } from './SolveIncidentDialog.jsx'
 import { categoryLabels, incidentStatusLabels, incidentTypeLabels } from './incidentConstants.js'
 import { formatIncidentDate, formatRupiah, mapIncidentError } from './incidentUtils.js'
 import { useOperationalIncident } from './useOperationalIncidents.js'
 import { VoidIncidentDialog } from './VoidIncidentDialog.jsx'
-import { resolveOperationalIncident, voidOperationalIncident } from '../../services/supabase/operationalIncidents.js'
+import { solveOperationalIncident, updateOperationalIncident, voidOperationalIncident } from '../../services/supabase/operationalIncidents.js'
+
+const emptyEditWorkflow = { type: null }
+const isEditWorkflow = (value) => value && (value.type === null || value.type === 'edit')
 
 function DetailItem({ icon, label, value, hint }) {
   return <div className="detail-item incident-detail-item"><span className="detail-item-icon">{createElement(icon, { size: 18 })}</span><div><span>{label}</span><strong>{value || '—'}</strong>{hint && <small>{hint}</small>}</div></div>
@@ -20,14 +29,25 @@ function Narrative({ number, title, value }) {
 }
 
 export function IncidentDetailPage({ incidentId, navigate }) {
+  const { user } = useAuth()
   const { account, branches, membership } = useTenant()
   const state = useOperationalIncident(account.id, incidentId)
   const machinesState = useMachines(account.id)
   const [showVoid, setShowVoid] = useState(false)
+  const [showSolve, setShowSolve] = useState(false)
   const [actionError, setActionError] = useState(null)
   const [success, setSuccess] = useState(null)
   const [isUpdating, setIsUpdating] = useState(false)
   const memberNames = useMemo(() => new Map(state.members.map((member) => [member.user_id, member.display_name])), [state.members])
+  const branchId = state.incident?.branch_id || 'unknown'
+  const editWorkflowKey = createUIStateKey({ userId: user.id, accountId: account.id, branchId, feature: 'operational-incident-edit-workflow', entityId: incidentId })
+  const editWorkflow = usePersistentUIState({ uiStateKey: editWorkflowKey, initialValue: emptyEditWorkflow, validate: isEditWorkflow })
+  const editWorkflowType = editWorkflow.value.type
+  const clearEditWorkflow = editWorkflow.clearUIState
+
+  useEffect(() => {
+    if (state.incident?.status !== 'open' && editWorkflowType === 'edit') clearEditWorkflow()
+  }, [clearEditWorkflow, editWorkflowType, state.incident?.status])
 
   if (state.isLoading) return <LoadingScreen label="Memuat detail operational error" />
   if (state.error) return <ErrorState title="Incident tidak dapat dimuat" detail={state.error.message} onRetry={state.refresh} />
@@ -37,21 +57,32 @@ export function IncidentDetailPage({ incidentId, navigate }) {
   const branch = branches.find((item) => item.id === incident.branch_id)
   const machine = machinesState.machines.find((item) => item.id === incident.machine_id)
   const timezone = branch?.timezone || account.default_timezone || 'Asia/Jakarta'
+  const canEdit = ['owner', 'admin'].includes(membership.role) && incident.status === 'open'
   const canResolve = ['owner', 'admin', 'technician'].includes(membership.role) && incident.status === 'open'
   const canVoid = ['owner', 'admin'].includes(membership.role) && incident.status !== 'voided'
 
-  async function handleResolve() {
+  async function handleSolve(resolutionNote) {
     setIsUpdating(true)
     setActionError(null)
     try {
-      const updated = await resolveOperationalIncident(incident.id)
+      const updated = await solveOperationalIncident({ incidentId: incident.id, resolutionNote })
       state.setIncident(updated)
-      setSuccess('Incident ditandai resolved.')
+      editWorkflow.clearUIState()
+      await state.refresh({ silent: true })
+      setSuccess('Incident ditandai Diselesaikan dan sekarang read-only.')
     } catch (error) {
       setActionError(mapIncidentError(error))
+      throw error
     } finally {
       setIsUpdating(false)
     }
+  }
+
+  async function handleEdit(values) {
+    const updated = await updateOperationalIncident({ incidentId: incident.id, values })
+    state.setIncident(updated)
+    await state.refresh({ silent: true })
+    setSuccess('Perubahan tersimpan dan revision audit telah ditambahkan.')
   }
 
   async function handleVoid(reason) {
@@ -60,12 +91,12 @@ export function IncidentDetailPage({ incidentId, navigate }) {
     setSuccess('Incident di-void tanpa menghapus riwayat.')
   }
 
-  const actions = (canResolve || canVoid) ? <div className="detail-actions">{canResolve && <button className="secondary-button" type="button" onClick={handleResolve} disabled={isUpdating}><ShieldCheck size={17} /> Tandai resolved</button>}{canVoid && <button className="danger-outline-button" type="button" onClick={() => setShowVoid(true)}><ShieldX size={17} /> Void</button>}</div> : null
+  const actions = (canEdit || canResolve || canVoid) ? <div className="detail-actions">{canEdit && <button className="secondary-button" type="button" onClick={() => editWorkflow.setUIState({ type: 'edit' })}><PencilLine size={17} /> Edit Log</button>}{canResolve && <button className="secondary-button" type="button" onClick={() => setShowSolve(true)} disabled={isUpdating}><ShieldCheck size={17} /> Mark Solved</button>}{canVoid && <button className="danger-outline-button" type="button" onClick={() => setShowVoid(true)}><ShieldX size={17} /> Void</button>}</div> : null
 
   return (
     <div className="page-stack incident-detail-page">
       <button className="back-button" type="button" onClick={() => navigate('/errors')}><ArrowLeft size={17} /> Kembali ke Errors</button>
-      <PageHeader eyebrow={`${account.name} · ${branch?.name || 'Unknown branch'}`} title="Incident detail" description="Posted operational incident content is preserved as an auditable record." action={actions} />
+      <PageHeader eyebrow={`${account.name} · ${branch?.name || 'Unknown branch'}`} title="Incident detail" description="Current truth tetap terbaca; revision history menjelaskan bagaimana data berubah." action={actions} />
       {success && <div className="success-banner" role="status"><CheckCircle2 size={18} /><span>{success}</span><button type="button" onClick={() => setSuccess(null)}>Tutup</button></div>}
       {actionError && <div className="form-error" role="alert"><span>{actionError}</span></div>}
 
@@ -83,7 +114,7 @@ export function IncidentDetailPage({ incidentId, navigate }) {
         <DetailItem icon={Boxes} label="Rugi bahan" value={formatRupiah(incident.material_loss)} />
         <DetailItem icon={HandCoins} label="Rugi jasa" value={formatRupiah(incident.service_loss)} />
         <DetailItem icon={ClipboardCheck} label="Created by" value={memberNames.get(incident.created_by) || 'User record unavailable'} hint={formatIncidentDate(incident.created_at, timezone)} />
-        <DetailItem icon={MapPin} label="Status" value={incidentStatusLabels[incident.status]} hint={incident.void_reason || undefined} />
+        <DetailItem icon={MapPin} label="Status" value={incidentStatusLabels[incident.status]} hint={incident.void_reason || incident.resolution_note || undefined} />
       </section>
 
       <section className="incident-narrative-list">
@@ -93,9 +124,13 @@ export function IncidentDetailPage({ incidentId, navigate }) {
         <Narrative number="4" title="Penyelesaian Untuk Konsumen" value={incident.customer_resolution} />
       </section>
 
+      <IncidentAuditHistory revisions={state.revisions} members={state.members} machines={machinesState.machines} timezone={timezone} />
+
+      {incident.status === 'resolved' && <section className="resolved-banner"><ShieldCheck size={19} /><div><strong>Incident Diselesaikan</strong><span>{incident.resolution_note || 'Tidak ada resolution note.'}{incident.resolved_by ? ` · ${memberNames.get(incident.resolved_by) || 'User record unavailable'}` : ''}{incident.resolved_at ? ` · ${formatIncidentDate(incident.resolved_at, timezone)}` : ''}</span></div></section>}
       {incident.status === 'voided' && <section className="retired-banner"><FileText size={19} /><div><strong>Voided incident</strong><span>{incident.void_reason} · {formatIncidentDate(incident.voided_at, timezone)}</span></div></section>}
+      {editWorkflow.value.type === 'edit' && canEdit && <IncidentFormDialog mode="edit" incident={incident} account={account} branch={branch} machines={machinesState.machines} members={state.members} onClose={editWorkflow.clearUIState} onSave={handleEdit} onLoadLatest={() => state.refresh({ silent: true })} />}
+      {showSolve && canResolve && <SolveIncidentDialog incident={incident} onClose={() => setShowSolve(false)} onConfirm={handleSolve} />}
       {showVoid && <VoidIncidentDialog incident={incident} onClose={() => setShowVoid(false)} onConfirm={handleVoid} />}
     </div>
   )
 }
-

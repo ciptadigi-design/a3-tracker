@@ -29,25 +29,27 @@ export function useOperationalIncidents(accountId, branchId) {
 export function useOperationalIncident(accountId, incidentId) {
   const [incident, setIncident] = useState(null)
   const [members, setMembers] = useState([])
+  const [revisions, setRevisions] = useState([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState(null)
 
-  const refresh = useCallback(async () => {
+  const refresh = useCallback(async ({ silent = false } = {}) => {
     if (!accountId || !incidentId) return
-    setIsLoading(true)
+    if (!silent) setIsLoading(true)
     setError(null)
     try {
       const data = await loadOperationalIncident({ accountId, incidentId })
       setIncident(data.incident)
       setMembers(data.members)
+      setRevisions(data.revisions)
+      return data.incident
     } catch (loadError) {
       setError(loadError)
     } finally {
-      setIsLoading(false)
+      if (!silent) setIsLoading(false)
     }
   }, [accountId, incidentId])
 
   useEffect(() => { refresh() }, [refresh])
-  return { incident, members, isLoading, error, refresh, setIncident }
+  return { incident, members, revisions, isLoading, error, refresh, setIncident }
 }
-

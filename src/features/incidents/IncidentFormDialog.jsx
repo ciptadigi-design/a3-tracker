@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { AlertCircle, CheckCircle2, ClipboardPlus, LoaderCircle, RotateCcw, X } from 'lucide-react'
+import { AlertCircle, CheckCircle2, ClipboardPlus, LoaderCircle, PencilLine, RotateCcw, X } from 'lucide-react'
 import { useAuth } from '../auth/useAuth.js'
 import { createDraftKey } from '../drafts/draftKeys.js'
 import { usePersistentDraft } from '../drafts/usePersistentDraft.js'
@@ -13,6 +13,8 @@ const draftFields = [
   'responsibleName', 'materialLoss', 'serviceLoss', 'description', 'cause',
   'prevention', 'customerResolution', 'clientRequestId',
 ]
+
+const editDraftFields = [...draftFields.filter((field) => field !== 'clientRequestId'), 'changeReason', 'baseUpdatedAt']
 
 function createInitialDraft() {
   return {
@@ -36,8 +38,35 @@ function createInitialDraft() {
   }
 }
 
+function createEditDraft(incident) {
+  return {
+    occurredAt: toLocalDateTimeInput(new Date(incident.occurred_at)),
+    invoiceNumber: incident.invoice_number ?? '',
+    customerName: incident.customer_name_snapshot ?? '',
+    productName: incident.product_name_snapshot ?? '',
+    category: incident.category,
+    incidentType: incident.incident_type,
+    machineId: incident.machine_id ?? '',
+    qtyAffected: incident.qty_affected == null ? '' : String(incident.qty_affected),
+    responsibleUserId: incident.responsible_user_id ?? '',
+    responsibleName: incident.responsible_name_snapshot ?? '',
+    materialLoss: String(Number(incident.material_loss)),
+    serviceLoss: String(Number(incident.service_loss)),
+    description: incident.description,
+    cause: incident.cause ?? '',
+    prevention: incident.prevention ?? '',
+    customerResolution: incident.customer_resolution ?? '',
+    changeReason: '',
+    baseUpdatedAt: incident.updated_at,
+  }
+}
+
 function isIncidentDraft(value) {
   return value && draftFields.every((field) => typeof value[field] === 'string')
+}
+
+function isIncidentEditDraft(value) {
+  return value && editDraftFields.every((field) => typeof value[field] === 'string')
 }
 
 function validate(values) {
@@ -61,17 +90,18 @@ function FieldError({ message }) {
   return message ? <small className="field-error"><AlertCircle size={13} />{message}</small> : null
 }
 
-export function IncidentFormDialog({ account, branch, machines, members, onClose, onSave }) {
+export function IncidentFormDialog({ account, branch, machines, members, incident = null, mode = 'create', onClose, onSave, onLoadLatest }) {
   const { user } = useAuth()
+  const isEdit = mode === 'edit'
   const [draftContext] = useState(() => ({
     key: createDraftKey({
       userId: user.id,
       accountId: account.id,
       branchId: branch.id,
       feature: 'operational-incident',
-      entityId: 'new',
+      entityId: isEdit ? incident.id : 'new',
     }),
-    initialValue: createInitialDraft(),
+    initialValue: isEdit ? createEditDraft(incident) : createInitialDraft(),
   }))
   const {
     value: values,
@@ -80,14 +110,20 @@ export function IncidentFormDialog({ account, branch, machines, members, onClose
     wasRestored,
     clearDraft,
     resetDraft,
+    pendingDraft,
+    restorePendingDraft,
+    discardPendingDraft,
   } = usePersistentDraft({
     draftKey: draftContext.key,
     initialValue: draftContext.initialValue,
-    validate: isIncidentDraft,
+    metadata: isEdit ? { baseUpdatedAt: incident.updated_at } : {},
+    validate: isEdit ? isIncidentEditDraft : isIncidentDraft,
+    shouldRestore: isEdit ? (stored) => stored.value.baseUpdatedAt === incident.updated_at : undefined,
   })
   const [errors, setErrors] = useState({})
   const [formError, setFormError] = useState(null)
   const [isSaving, setIsSaving] = useState(false)
+  const [runtimeConflict, setRuntimeConflict] = useState(null)
   const dialogRef = useRef(null)
   const closeButtonRef = useRef(null)
   const isSavingRef = useRef(false)
@@ -156,14 +192,30 @@ export function IncidentFormDialog({ account, branch, machines, members, onClose
   }
 
   function handleReset() {
-    resetDraft(createInitialDraft())
+    resetDraft(draftContext.initialValue)
     setErrors({})
+    setFormError(null)
+  }
+
+  function handleUseLatestServerData(latest = incident) {
+    const nextValues = createEditDraft(latest)
+    if (pendingDraft) discardPendingDraft()
+    else clearDraft(nextValues)
+    setRuntimeConflict(null)
+    setErrors({})
+    setFormError(null)
+  }
+
+  function restoreMyDraft(latest = incident) {
+    if (pendingDraft) restorePendingDraft()
+    updateDraft((current) => ({ ...current, baseUpdatedAt: latest.updated_at }))
+    setRuntimeConflict(null)
     setFormError(null)
   }
 
   async function handleSubmit(event) {
     event.preventDefault()
-    if (isSaving) return
+    if (isSaving || pendingDraft || runtimeConflict) return
     const nextErrors = validate(values)
     setErrors(nextErrors)
     if (Object.keys(nextErrors).length) {
@@ -178,6 +230,10 @@ export function IncidentFormDialog({ account, branch, machines, members, onClose
       clearDraft()
       onClose()
     } catch (error) {
+      if (isEdit && error?.code === '40001' && onLoadLatest) {
+        const latest = await onLoadLatest()
+        setRuntimeConflict(latest)
+      }
       setFormError(mapIncidentError(error))
     } finally {
       setIsSaving(false)
@@ -188,13 +244,14 @@ export function IncidentFormDialog({ account, branch, machines, members, onClose
     <div className="dialog-backdrop machine-dialog-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && !isSaving) onClose() }}>
       <section ref={dialogRef} className="machine-dialog incident-dialog glass-surface" role="dialog" aria-modal="true" aria-labelledby="incident-dialog-title" aria-describedby="incident-dialog-description">
         <header className="dialog-header">
-          <div className="dialog-heading"><span className="dialog-icon"><ClipboardPlus size={22} /></span><div><span className="card-kicker">Human / Operational Error</span><h2 id="incident-dialog-title">Log error operasional</h2><p id="incident-dialog-description">Catat kejadian produksi nyata di {branch.name}. Bukan kode fault teknis mesin.</p></div></div>
+          <div className="dialog-heading"><span className="dialog-icon">{isEdit ? <PencilLine size={22} /> : <ClipboardPlus size={22} />}</span><div><span className="card-kicker">Human / Operational Error</span><h2 id="incident-dialog-title">{isEdit ? 'Edit Log' : 'Log error operasional'}</h2><p id="incident-dialog-description">{isEdit ? 'Perbarui current truth tanpa menghapus riwayat perubahan.' : `Catat kejadian produksi nyata di ${branch.name}. Bukan kode fault teknis mesin.`}</p></div></div>
           <button ref={closeButtonRef} className="icon-button" type="button" onClick={onClose} disabled={isSaving} aria-label="Tutup form log error"><X size={19} /></button>
         </header>
 
         <form className="machine-form incident-form" onSubmit={handleSubmit} noValidate>
           <div className="machine-form-body">
             {wasRestored && <div className="draft-restored-status" role="status"><CheckCircle2 size={14} /><span>Unsaved draft restored</span></div>}
+            {(pendingDraft || runtimeConflict) && <div className="incident-conflict-banner" role="alert"><AlertCircle size={18} /><div><strong>Incident data changed since this draft was created.</strong><span>Pilih versi terbaru server atau lanjutkan draft Anda berdasarkan versi terbaru sebelum menyimpan.</span><div><button className="secondary-button" type="button" onClick={() => handleUseLatestServerData(runtimeConflict || incident)}>Use latest server data</button><button className="primary-button" type="button" onClick={() => restoreMyDraft(runtimeConflict || incident)}>Restore my draft</button></div></div></div>}
 
             <div className="form-section-heading"><strong>Konteks kejadian</strong><span>Identitas produksi dan klasifikasi operasional.</span></div>
             <div className="form-grid incident-form-grid">
@@ -223,15 +280,15 @@ export function IncidentFormDialog({ account, branch, machines, members, onClose
               <label className="form-field form-field-wide"><span>2. Penyebab Kesalahan <small>Opsional</small></span><textarea value={values.cause} onChange={(event) => change('cause', event.target.value)} rows="3" placeholder="Penyebab yang diketahui saat ini" /></label>
               <label className="form-field form-field-wide"><span>3. Solusi & Pencegahan <small>Opsional</small></span><textarea value={values.prevention} onChange={(event) => change('prevention', event.target.value)} rows="3" placeholder="Tindakan korektif dan pencegahan" /></label>
               <label className="form-field form-field-wide"><span>4. Penyelesaian Untuk Konsumen <small>Opsional</small></span><textarea value={values.customerResolution} onChange={(event) => change('customerResolution', event.target.value)} rows="3" placeholder="Penggantian, komunikasi, atau penyelesaian lain" /></label>
+              {isEdit && <label className="form-field form-field-wide"><span>Catatan perubahan <small>Opsional</small></span><textarea value={values.changeReason} onChange={(event) => change('changeReason', event.target.value)} rows="2" placeholder="Contoh: Hasil diskusi evaluasi produksi pagi." /></label>}
             </div>
 
             {formError && <div className="form-error" role="alert"><AlertCircle size={16} /><span>{formError}</span></div>}
           </div>
-          <footer className="dialog-actions"><button className="draft-reset-button" type="button" onClick={handleReset} disabled={!hasDraft || isSaving}><RotateCcw size={15} />Reset draft</button><button className="secondary-button" type="button" onClick={onClose} disabled={isSaving}>Batal</button><button className="primary-button" type="submit" disabled={isSaving}>{isSaving ? <LoaderCircle className="spin" size={17} /> : <ClipboardPlus size={17} />}{isSaving ? 'Menyimpan…' : 'Simpan Log Error'}</button></footer>
+          <footer className="dialog-actions"><button className="draft-reset-button" type="button" onClick={handleReset} disabled={!hasDraft || isSaving}><RotateCcw size={15} />Reset draft</button><button className="secondary-button" type="button" onClick={onClose} disabled={isSaving}>Batal</button><button className="primary-button" type="submit" disabled={isSaving || Boolean(pendingDraft || runtimeConflict)}>{isSaving ? <LoaderCircle className="spin" size={17} /> : isEdit ? <PencilLine size={17} /> : <ClipboardPlus size={17} />}{isSaving ? 'Menyimpan…' : isEdit ? 'Simpan Perubahan' : 'Simpan Log Error'}</button></footer>
         </form>
       </section>
     </div>,
     document.body,
   )
 }
-

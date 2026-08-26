@@ -27,6 +27,9 @@ const incidentFields = `
   created_at,
   updated_by,
   updated_at,
+  resolved_by,
+  resolved_at,
+  resolution_note,
   voided_by,
   voided_at,
   void_reason
@@ -52,7 +55,7 @@ export async function loadOperationalIncidents({ accountId, branchId }) {
 }
 
 export async function loadOperationalIncident({ accountId, incidentId }) {
-  const [incidentResult, profileResult] = await Promise.all([
+  const [incidentResult, profileResult, revisionResult] = await Promise.all([
     supabase
       .from('operational_incidents')
       .select(incidentFields)
@@ -60,13 +63,63 @@ export async function loadOperationalIncident({ accountId, incidentId }) {
       .eq('id', incidentId)
       .maybeSingle(),
     supabase.rpc('get_account_member_profiles', { target_account_id: accountId }),
+    supabase
+      .from('operational_incident_revisions')
+      .select('id, account_id, incident_id, changed_by, changed_at, change_reason, old_values, new_values, changed_fields')
+      .eq('account_id', accountId)
+      .eq('incident_id', incidentId)
+      .order('changed_at', { ascending: true })
+      .order('id', { ascending: true }),
   ])
 
   if (incidentResult.error) throw incidentResult.error
+  if (revisionResult.error) throw revisionResult.error
   return {
     incident: incidentResult.data,
     members: profileResult.error ? [] : profileResult.data ?? [],
+    revisions: revisionResult.data ?? [],
   }
+}
+
+function incidentMutationPayload(values) {
+  return {
+    target_base_updated_at: values.baseUpdatedAt,
+    target_occurred_at: new Date(values.occurredAt).toISOString(),
+    target_category: values.category,
+    target_incident_type: values.incidentType,
+    target_description: values.description.trim(),
+    target_machine_id: values.machineId || null,
+    target_invoice_number: values.invoiceNumber.trim() || null,
+    target_customer_name: values.customerName.trim() || null,
+    target_product_name: values.productName.trim() || null,
+    target_qty_affected: values.qtyAffected === '' ? null : Number(values.qtyAffected),
+    target_responsible_user_id: values.responsibleUserId || null,
+    target_responsible_name: values.responsibleName.trim() || null,
+    target_material_loss: values.materialLoss === '' ? 0 : Number(values.materialLoss),
+    target_service_loss: values.serviceLoss === '' ? 0 : Number(values.serviceLoss),
+    target_cause: values.cause.trim() || null,
+    target_prevention: values.prevention.trim() || null,
+    target_customer_resolution: values.customerResolution.trim() || null,
+    target_change_reason: values.changeReason.trim() || null,
+  }
+}
+
+export async function updateOperationalIncident({ incidentId, values }) {
+  const { data, error } = await supabase.rpc('update_operational_incident', {
+    target_incident_id: incidentId,
+    ...incidentMutationPayload(values),
+  })
+  if (error) throw error
+  return data
+}
+
+export async function solveOperationalIncident({ incidentId, resolutionNote }) {
+  const { data, error } = await supabase.rpc('solve_operational_incident', {
+    target_incident_id: incidentId,
+    target_resolution_note: resolutionNote.trim() || null,
+  })
+  if (error) throw error
+  return data
 }
 
 export async function createOperationalIncident({ accountId, branchId, values }) {
@@ -112,4 +165,3 @@ export async function voidOperationalIncident({ incidentId, reason }) {
   if (error) throw error
   return data
 }
-
