@@ -125,10 +125,10 @@ as $$
 declare
   actor_id uuid := (select auth.uid());
 begin
-  if (to_jsonb(new) - 'status' - 'updated_by' - 'updated_at'
+  if (to_jsonb(new) - 'assessed_loss' - 'status' - 'updated_by' - 'updated_at'
       - 'voided_by' - 'voided_at' - 'void_reason')
       is distinct from
-     (to_jsonb(old) - 'status' - 'updated_by' - 'updated_at'
+     (to_jsonb(old) - 'assessed_loss' - 'status' - 'updated_by' - 'updated_at'
       - 'voided_by' - 'voided_at' - 'void_reason') then
     raise exception 'posted operational incident content is immutable'
       using errcode = '42501';
@@ -174,4 +174,3 @@ for each row execute function public.protect_operational_incident_history();
 
 comment on table public.operational_incidents is
   'Operational and human production errors only. incident_type machine_operation is not a technical machine fault code.';
-
