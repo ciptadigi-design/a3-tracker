@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { supabase, supabaseConfigurationError } from '../../services/supabase/client.js'
 import { AuthContext } from './authContext.js'
 import { clearDraftsForUser } from '../drafts/draftStorage.js'
+import { clearUIStateForUser } from '../uiState/uiStateStorage.js'
 
 export function AuthProvider({ children }) {
   const [session, setSession] = useState(null)
@@ -48,6 +49,7 @@ export function AuthProvider({ children }) {
         const { error } = await supabase.auth.signOut()
         if (error) throw error
         clearDraftsForUser(session?.user?.id)
+        clearUIStateForUser(session?.user?.id)
       },
     }),
     [isLoading, session],

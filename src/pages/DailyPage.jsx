@@ -6,10 +6,12 @@ import { CounterHistory } from '../features/counters/CounterHistory.jsx'
 import { calculateDailySummary, formatCounter } from '../features/counters/counterUtils.js'
 import { useCounterHistory } from '../features/counters/useCounterHistory.js'
 import { createDraftKey } from '../features/drafts/draftKeys.js'
-import { migrateLegacyDailySelection, readDraft, writeDraft } from '../features/drafts/draftStorage.js'
+import { migrateLegacyDailySelection } from '../features/drafts/draftStorage.js'
 import { useTenant } from '../features/account/useTenant.js'
 import { useAuth } from '../features/auth/useAuth.js'
 import { useMachines } from '../features/machines/useMachines.js'
+import { createUIStateKey } from '../features/uiState/uiStateKeys.js'
+import { usePersistentUIState } from '../features/uiState/usePersistentUIState.js'
 
 function SummaryCard({ icon, label, value, detail, tone }) {
   return <article className="daily-summary-card glass-surface"><span className={`daily-summary-icon ${tone}`}>{createElement(icon, { size: 21 })}</span><div><span>{label}</span><strong>{value}</strong><small>{detail}</small></div></article>
@@ -20,15 +22,16 @@ export function DailyPage() {
   const { account, branch, membership } = useTenant()
   const machinesState = useMachines(account?.id, branch?.id)
   const activeMachines = useMemo(() => machinesState.machines.filter((machine) => machine.is_active), [machinesState.machines])
-  const selectionContext = createDraftKey({ userId: user?.id, accountId: account?.id, branchId: branch?.id, feature: 'daily-counter', entityId: 'selected-machine' })
-  const loadSelectedMachineId = () => (readDraft(selectionContext) ?? migrateLegacyDailySelection(selectionContext, user?.id, account?.id, branch?.id))?.value?.machineId ?? ''
-  const [machineSelection, setMachineSelection] = useState(() => ({
-    context: selectionContext,
-    machineId: loadSelectedMachineId(),
-  }))
-  const selectedMachineId = machineSelection.context === selectionContext
-    ? machineSelection.machineId
-    : loadSelectedMachineId()
+  const selectionKey = createUIStateKey({ userId: user?.id, accountId: account?.id, branchId: branch?.id, feature: 'daily-counter', entityId: 'selected-machine' })
+  const legacySelectionKey = createDraftKey({ userId: user?.id, accountId: account?.id, branchId: branch?.id, feature: 'daily-counter', entityId: 'selected-machine' })
+  const machineSelection = usePersistentUIState({
+    uiStateKey: selectionKey,
+    initialValue: { machineId: '' },
+    validate: (value) => value && typeof value.machineId === 'string',
+    legacyDraftKey: legacySelectionKey,
+    prepareLegacyState: () => migrateLegacyDailySelection(legacySelectionKey, user?.id, account?.id, branch?.id),
+  })
+  const selectedMachineId = machineSelection.value.machineId
   const selectedMachine = activeMachines.find((machine) => machine.id === selectedMachineId) ?? activeMachines[0] ?? null
   const counterState = useCounterHistory(account?.id, selectedMachine?.id)
   const timezone = selectedMachine?.timezone || branch?.timezone || account?.default_timezone || 'Asia/Jakarta'
@@ -47,8 +50,7 @@ export function DailyPage() {
   }
 
   function handleMachineChange(machineId) {
-    setMachineSelection({ context: selectionContext, machineId })
-    writeDraft(selectionContext, { value: { machineId } })
+    machineSelection.setUIState({ machineId })
     setSuccess(null)
   }
 

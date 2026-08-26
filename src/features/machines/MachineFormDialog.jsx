@@ -36,14 +36,18 @@ export function MachineFormDialog({ mode, machine, account, branches, branchId, 
   const { user } = useAuth()
   const isEdit = mode === 'edit'
   const serverValues = initialValues({ machine, branchId, manufacturers, models })
-  const draftKey = createDraftKey({
-    userId: user.id,
-    accountId: account.id,
-    branchId,
-    feature: 'machine',
-    entityId: isEdit ? machine.id : 'new',
-  })
   const draftBaseUpdatedAt = machine?.updated_at ?? null
+  const [draftContext] = useState(() => ({
+    key: createDraftKey({
+      userId: user.id,
+      accountId: account.id,
+      branchId,
+      feature: 'machine',
+      entityId: isEdit ? machine.id : 'new',
+    }),
+    initialValue: serverValues,
+    baseUpdatedAt: draftBaseUpdatedAt,
+  }))
   const {
     value: values,
     updateDraft,
@@ -55,9 +59,9 @@ export function MachineFormDialog({ mode, machine, account, branches, branchId, 
     restorePendingDraft,
     discardPendingDraft,
   } = usePersistentDraft({
-    draftKey,
-    initialValue: serverValues,
-    metadata: { baseUpdatedAt: draftBaseUpdatedAt },
+    draftKey: draftContext.key,
+    initialValue: draftContext.initialValue,
+    metadata: { baseUpdatedAt: draftContext.baseUpdatedAt },
     validate: isMachineDraft,
     shouldRestore: (storedDraft) => !isEdit || !storedDraft.metadata?.baseUpdatedAt || !draftBaseUpdatedAt || storedDraft.metadata.baseUpdatedAt === draftBaseUpdatedAt,
   })

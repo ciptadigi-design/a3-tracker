@@ -1,9 +1,11 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Archive, ArrowRight, CheckCircle2, MapPin, Plus, Printer, RefreshCcw, ShieldCheck } from 'lucide-react'
 import { PageHeader } from '../components/ui/PageHeader.jsx'
 import { useTenant } from '../features/account/useTenant.js'
+import { useAuth } from '../features/auth/useAuth.js'
 import { MachineFormDialog } from '../features/machines/MachineFormDialog.jsx'
 import { useMachineCatalog } from '../features/machines/useMachineCatalog.js'
+import { useMachineWorkflowState } from '../features/machines/useMachineWorkflowState.js'
 import { useMachines } from '../features/machines/useMachines.js'
 import { createMachine } from '../services/supabase/machines.js'
 
@@ -20,17 +22,27 @@ function MachineCard({ machine, branchName, onOpen }) {
 }
 
 export function MachinesPage({ navigate }) {
+  const { user } = useAuth()
   const { account, branch, branches, membership, setSelectedBranchId } = useTenant()
   const { machines, isLoading, error, refresh } = useMachines(account?.id, branch?.id)
   const canManage = membership?.role === 'owner' || membership?.role === 'admin'
   const catalog = useMachineCatalog(canManage)
   const [view, setView] = useState('active')
-  const [showCreate, setShowCreate] = useState(false)
   const [success, setSuccess] = useState(null)
+  const { workflow, workflowBranchId, isContextActive, openCreate, clearWorkflow } = useMachineWorkflowState({ userId: user.id, accountId: account.id, branchId: branch?.id })
 
   const activeMachines = useMemo(() => machines.filter((machine) => machine.is_active), [machines])
   const archivedMachines = useMemo(() => machines.filter((machine) => !machine.is_active), [machines])
   const visibleMachines = view === 'active' ? activeMachines : archivedMachines
+
+  useEffect(() => {
+    if (!workflowBranchId || isContextActive) {
+      if (workflow.type === 'edit' && workflow.machineId) navigate(`/machines/${workflow.machineId}`)
+      return
+    }
+    if (branches.some((item) => item.id === workflowBranchId)) setSelectedBranchId(workflowBranchId)
+    else clearWorkflow()
+  }, [branches, clearWorkflow, isContextActive, navigate, setSelectedBranchId, workflow.machineId, workflow.type, workflowBranchId])
 
   async function handleCreate(values) {
     const created = await createMachine({ accountId: account.id, values })
@@ -40,7 +52,7 @@ export function MachinesPage({ navigate }) {
   }
 
   const addDisabled = catalog.isLoading || Boolean(catalog.error)
-  const addAction = canManage ? <button className="primary-button" type="button" onClick={() => setShowCreate(true)} disabled={addDisabled} title={catalog.error ? 'Machine catalog unavailable' : undefined}><Plus size={18} /> {catalog.isLoading ? 'Loading catalog…' : 'Add machine'}</button> : null
+  const addAction = canManage ? <button className="primary-button" type="button" onClick={openCreate} disabled={addDisabled} title={catalog.error ? 'Machine catalog unavailable' : undefined}><Plus size={18} /> {catalog.isLoading ? 'Loading catalog…' : 'Add machine'}</button> : null
 
   return (
     <div className="page-stack">
@@ -55,11 +67,11 @@ export function MachinesPage({ navigate }) {
 
         {isLoading ? <div className="machine-loading-state"><RefreshCcw className="spin" size={24} /><strong>Loading real machine records…</strong><span>Reading the selected branch from Supabase.</span></div>
           : error ? <div className="embedded-error" role="alert"><strong>Machines could not be loaded.</strong><span>{error.message}</span><button className="secondary-button" type="button" onClick={refresh}>Try again</button></div>
-          : !isLoading && visibleMachines.length === 0 ? <div className="machine-empty-state"><div className="empty-machine-icon">{view === 'active' ? <Printer size={40} strokeWidth={1.35} /> : <Archive size={38} strokeWidth={1.35} />}</div><span className="status-pill neutral-pill">{view === 'active' ? 'Ready for setup' : 'History preserved'}</span><h3>{view === 'active' ? 'No active machines in this branch.' : 'No archived machines in this branch.'}</h3><p>{view === 'active' ? `Register the first physical machine for ${branch?.name} when you are ready.` : 'Retired machines will remain available here without appearing as active.'}</p>{view === 'active' && canManage && <button className="secondary-button" type="button" onClick={() => setShowCreate(true)} disabled={addDisabled}><Plus size={17} /> Add machine</button>}</div>
+          : !isLoading && visibleMachines.length === 0 ? <div className="machine-empty-state"><div className="empty-machine-icon">{view === 'active' ? <Printer size={40} strokeWidth={1.35} /> : <Archive size={38} strokeWidth={1.35} />}</div><span className="status-pill neutral-pill">{view === 'active' ? 'Ready for setup' : 'History preserved'}</span><h3>{view === 'active' ? 'No active machines in this branch.' : 'No archived machines in this branch.'}</h3><p>{view === 'active' ? `Register the first physical machine for ${branch?.name} when you are ready.` : 'Retired machines will remain available here without appearing as active.'}</p>{view === 'active' && canManage && <button className="secondary-button" type="button" onClick={openCreate} disabled={addDisabled}><Plus size={17} /> Add machine</button>}</div>
             : <div className="machine-grid">{visibleMachines.map((machine) => <MachineCard key={machine.id} machine={machine} branchName={branches.find((item) => item.id === machine.branch_id)?.name ?? 'Unknown branch'} onOpen={() => navigate(`/machines/${machine.id}`)} />)}</div>}
       </section>
 
-      {showCreate && <MachineFormDialog mode="create" account={account} branches={branches} branchId={branch?.id} manufacturers={catalog.manufacturers} models={catalog.models} onClose={() => setShowCreate(false)} onSave={handleCreate} />}
+      {canManage && isContextActive && workflow.type === 'create' && !addDisabled && <MachineFormDialog mode="create" account={account} branches={branches} branchId={branch?.id} manufacturers={catalog.manufacturers} models={catalog.models} onClose={clearWorkflow} onSave={handleCreate} />}
     </div>
   )
 }
