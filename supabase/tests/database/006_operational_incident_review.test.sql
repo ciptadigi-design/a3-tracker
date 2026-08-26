@@ -208,6 +208,12 @@ select extensions.is(
 reset role;
 
 -- Operator, technician, suspended, anonymous, and cross-account edit denial.
+select set_config(
+  'a3tracker.test_incident_id',
+  (select id::text from public.operational_incidents where client_request_id = '95000000-0000-4000-8000-000000000001'),
+  true
+);
+
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '90000000-0000-0000-0000-000000000004', true);
 select extensions.throws_ok(
@@ -240,7 +246,7 @@ set local role authenticated;
 select set_config('request.jwt.claim.sub', '90000000-0000-0000-0000-000000000005', true);
 select extensions.throws_ok(
   $$select public.update_operational_incident(
-    target_incident_id => (select id from public.operational_incidents where client_request_id = '95000000-0000-4000-8000-000000000001'),
+    target_incident_id => current_setting('a3tracker.test_incident_id')::uuid,
     target_base_updated_at => (select updated_at from public.operational_incidents where client_request_id = '95000000-0000-4000-8000-000000000001'),
     target_occurred_at => '2026-08-26 08:00+07', target_category => 'prosedur',
     target_incident_type => 'human', target_description => 'Suspended attempt'
@@ -267,7 +273,7 @@ set local role authenticated;
 select set_config('request.jwt.claim.sub', '90000000-0000-0000-0000-000000000006', true);
 select extensions.throws_ok(
   $$select public.update_operational_incident(
-    target_incident_id => (select id from public.operational_incidents where client_request_id = '95000000-0000-4000-8000-000000000001'),
+    target_incident_id => current_setting('a3tracker.test_incident_id')::uuid,
     target_base_updated_at => (select updated_at from public.operational_incidents where client_request_id = '95000000-0000-4000-8000-000000000001'),
     target_occurred_at => '2026-08-26 08:00+07', target_category => 'prosedur',
     target_incident_type => 'human', target_description => 'Cross account attempt'
