@@ -5,6 +5,7 @@ import { CounterEntryCard } from '../features/counters/CounterEntryCard.jsx'
 import { CounterHistory } from '../features/counters/CounterHistory.jsx'
 import { calculateDailySummary, formatCounter } from '../features/counters/counterUtils.js'
 import { useCounterHistory } from '../features/counters/useCounterHistory.js'
+import { loadSelectedDailyMachine, saveSelectedDailyMachine } from '../features/counters/dailyCounterDraftStorage.js'
 import { useTenant } from '../features/account/useTenant.js'
 import { useAuth } from '../features/auth/useAuth.js'
 import { useMachines } from '../features/machines/useMachines.js'
@@ -18,7 +19,14 @@ export function DailyPage() {
   const { account, branch, membership } = useTenant()
   const machinesState = useMachines(account?.id, branch?.id)
   const activeMachines = useMemo(() => machinesState.machines.filter((machine) => machine.is_active), [machinesState.machines])
-  const [selectedMachineId, setSelectedMachineId] = useState('')
+  const selectionContext = `${user?.id}:${account?.id}:${branch?.id}`
+  const [machineSelection, setMachineSelection] = useState(() => ({
+    context: selectionContext,
+    machineId: loadSelectedDailyMachine(user?.id, account?.id, branch?.id),
+  }))
+  const selectedMachineId = machineSelection.context === selectionContext
+    ? machineSelection.machineId
+    : loadSelectedDailyMachine(user?.id, account?.id, branch?.id)
   const selectedMachine = activeMachines.find((machine) => machine.id === selectedMachineId) ?? activeMachines[0] ?? null
   const counterState = useCounterHistory(account?.id, selectedMachine?.id)
   const timezone = selectedMachine?.timezone || branch?.timezone || account?.default_timezone || 'Asia/Jakarta'
@@ -36,6 +44,12 @@ export function DailyPage() {
     setSuccess(action === 'void' ? 'Latest reading was voided without deleting its history.' : 'Latest reading was superseded by an audited replacement.')
   }
 
+  function handleMachineChange(machineId) {
+    setMachineSelection({ context: selectionContext, machineId })
+    saveSelectedDailyMachine(user?.id, account?.id, branch?.id, machineId)
+    setSuccess(null)
+  }
+
   if (machinesState.error) {
     return <div className="page-stack"><PageHeader eyebrow={`${account?.name} · ${branch?.name}`} title="Daily" description="Machine-centric daily counter workspace." /><div className="embedded-error glass-surface" role="alert"><strong>Machines could not be loaded.</strong><span>{machinesState.error.message}</span><button className="secondary-button" type="button" onClick={machinesState.refresh}>Try again</button></div></div>
   }
@@ -47,7 +61,7 @@ export function DailyPage() {
 
       <section className="daily-machine-context glass-surface">
         <div><span className="daily-context-icon"><Printer size={23} /></span><div><span className="card-kicker">Machine context</span><h2>{machinesState.isLoading ? 'Loading active machines…' : selectedMachine?.display_name || 'No active machine available'}</h2><p>{selectedMachine ? `${selectedMachine.machine_code} · ${selectedMachine.machine_models?.manufacturers?.name} ${selectedMachine.machine_models?.name}` : `Register or activate a machine in ${branch?.name} before entering counters.`}</p></div></div>
-        {activeMachines.length > 0 && <label className="daily-machine-select"><span>Select machine</span><select value={selectedMachine?.id ?? ''} onChange={(event) => { setSelectedMachineId(event.target.value); setSuccess(null) }}>{activeMachines.map((machine) => <option key={machine.id} value={machine.id}>{machine.display_name} · {machine.machine_code}</option>)}</select></label>}
+        {activeMachines.length > 0 && <label className="daily-machine-select"><span>Select machine</span><select value={selectedMachine?.id ?? ''} onChange={(event) => handleMachineChange(event.target.value)}>{activeMachines.map((machine) => <option key={machine.id} value={machine.id}>{machine.display_name} · {machine.machine_code}</option>)}</select></label>}
       </section>
 
       {!machinesState.isLoading && !selectedMachine ? <section className="daily-no-machine glass-surface"><span className="empty-machine-icon"><Printer size={38} /></span><h2>No active machine in this branch.</h2><p>Daily counter input becomes available after a physical machine is registered and active.</p></section>
@@ -58,7 +72,7 @@ export function DailyPage() {
             <SummaryCard icon={Clock3} label="Last Input" value={summary.lastReading ? new Intl.DateTimeFormat('en-GB', { timeZone: timezone, hour: '2-digit', minute: '2-digit' }).format(new Date(summary.lastReading.observed_at)) : '—'} detail={summary.lastReading ? new Intl.DateTimeFormat('en-GB', { timeZone: timezone, dateStyle: 'medium' }).format(new Date(summary.lastReading.observed_at)) : 'No input recorded'} tone="purple" />
             <SummaryCard icon={ListChecks} label="Today's Entries" value={String(summary.todayEntryCount)} detail="Effective readings in machine timezone" tone="amber" />
           </section>
-          <CounterEntryCard accountId={account.id} machine={selectedMachine} lastReading={summary.lastReading} onRecorded={handleRecorded} />
+          <CounterEntryCard key={`${user.id}:${selectedMachine.id}`} accountId={account.id} userId={user.id} machine={selectedMachine} lastReading={summary.lastReading} onRecorded={handleRecorded} />
           <CounterHistory history={counterState.history} profiles={counterState.profiles} currentUserId={user?.id} timezone={timezone} isLoading={counterState.isLoading} error={counterState.error} canCorrect={canCorrect} onRefresh={counterState.refresh} onCorrected={handleCorrected} />
         </>}
     </div>
