@@ -165,7 +165,9 @@ begin
     end if;
     return new;
   end if;
-  if tg_table_name = 'inventory_items' and old.unit <> new.unit and exists (
+  if tg_table_name = 'inventory_items'
+    and (to_jsonb(old) ->> 'unit') is distinct from (to_jsonb(new) ->> 'unit')
+    and exists (
     select 1 from public.inventory_movements movement where movement.inventory_item_id = old.id
   ) then
     raise exception 'unit cannot change after inventory movements exist' using errcode = '23503';
