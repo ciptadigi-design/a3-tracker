@@ -1,15 +1,17 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Archive, Boxes, Edit3, Link2, Plus, RefreshCcw, ShieldCheck, Trash2 } from 'lucide-react'
+import { Activity, Archive, Boxes, Edit3, Gauge, Link2, Plus, RefreshCcw, ShieldCheck, Trash2 } from 'lucide-react'
 import { BlockingDialog } from '../components/ui/BlockingDialog.jsx'
 import { PageHeader } from '../components/ui/PageHeader.jsx'
 import { useAuth } from '../features/auth/useAuth.js'
 import { useTenant } from '../features/account/useTenant.js'
 import { ComponentDialog } from '../features/components/ComponentDialog.jsx'
 import { ProfileDialog } from '../features/components/ProfileDialog.jsx'
+import { InitializeLifecycleDialog } from '../features/components/InitializeLifecycleDialog.jsx'
 import { useComponentWorkflowState } from '../features/components/useComponentWorkflowState.js'
 import { createUIStateKey } from '../features/uiState/uiStateKeys.js'
 import { usePersistentUIState } from '../features/uiState/usePersistentUIState.js'
 import { deleteComponent, effectiveProfiles, loadComponentFoundation, removeProfile, saveComponent, saveProfile } from '../services/supabase/components.js'
+import { initializeComponentLifecycle, loadMachineComponentLifecycles } from '../services/supabase/componentLifecycles.js'
 
 const trackingLabels = {
   counter_based: 'Counter based',
@@ -18,9 +20,40 @@ const trackingLabels = {
 }
 
 function validView(value) {
-  return value && ['profiles', 'catalog'].includes(value.tab)
+  return value && ['machine', 'profiles', 'catalog'].includes(value.tab)
     && (value.modelId == null || typeof value.modelId === 'string')
+    && Object.hasOwn(value, 'machineId')
+    && (value.machineId == null || typeof value.machineId === 'string')
     && typeof value.showArchived === 'boolean'
+}
+
+function number(value) {
+  return value == null ? '—' : Number(value).toLocaleString('en-US', { maximumFractionDigits: 0 })
+}
+
+function MachineComponentsPanel({ machines, lifecycles, selectedMachine, onMachineChange, canManage, onInitialize }) {
+  const rows = lifecycles.filter((row) => row.machine_id === selectedMachine?.id)
+  const initialized = rows.filter((row) => row.lifecycle_status === 'active').length
+  const currentCounter = rows.find((row) => row.latest_effective_counter != null)?.latest_effective_counter
+
+  return <>
+    <div className="model-selector-row lifecycle-machine-selector"><label><span>Physical machine</span><select value={selectedMachine?.id ?? ''} onChange={(event) => onMachineChange(event.target.value)}>{machines.map((machine) => <option key={machine.id} value={machine.id}>{machine.machine_code} · {machine.display_name}</option>)}</select></label><div><strong>{rows.length}</strong><span>component slots · {initialized} initialized</span></div></div>
+    {selectedMachine && <div className="lifecycle-counter-banner"><span><Gauge size={17} />Latest effective Total Impressions</span><strong>{number(currentCounter)}</strong><small>Daily Counter source of truth</small></div>}
+    <div className="lifecycle-grid">{rows.map((row) => {
+      const unknown = row.lifecycle_status === 'unknown'
+      const consumption = row.tracking_method === 'consumption_based'
+      const visualPercent = Math.max(0, Math.min(100, Number(row.remaining_percent ?? 0)))
+      return <article className={`lifecycle-card ${unknown ? 'lifecycle-unknown' : `health-${row.health_status}`}`} key={row.lifecycle_id}>
+        <header><div><span className="component-icon"><Activity size={18} /></span><div><h3>{row.component_name}</h3><span>{consumption ? 'Yield-based tracking' : 'Counter-based lifecycle'}</span></div></div>{!unknown && <span className={`health-badge health-${row.health_status}`}>{row.health_status}</span>}</header>
+        {unknown ? <div className="unknown-lifecycle-body"><div><span>Installation history</span><strong>Unknown</strong></div><div><span>Tracking status</span><strong>Not initialized</strong></div><div><span>Expected baseline</span><strong>{number(row.current_profile_baseline)} clicks</strong></div><p>No usage or health is inferred from the machine's lifetime counter.</p>{canManage && <button className="primary-button" onClick={() => onInitialize(row.lifecycle_id)}>Initialize Lifecycle</button>}</div> : <>
+          <div className="lifecycle-metrics"><div><span>{consumption ? 'Used Yield' : 'Current Usage'}</span><strong>{number(row.current_usage)}</strong></div><div><span>{consumption ? 'Expected Yield' : 'Expected Life'}</span><strong>{number(row.effective_expected)}</strong></div><div><span>{consumption ? 'Estimated Remaining' : 'Remaining Clicks'}</span><strong>{number(row.remaining_clicks)}</strong></div><div><span>Remaining</span><strong>{Number(row.remaining_percent).toFixed(1)}%</strong></div><div className="replace-counter"><span>Estimated Replacement Counter</span><strong>{number(row.estimated_replacement_counter)}</strong></div></div>
+          <div className="lifecycle-progress" aria-label={`${Math.max(0, Number(row.remaining_percent)).toFixed(1)} percent remaining`}><span style={{ width: `${visualPercent}%` }} /></div>
+          <footer><span>{row.expected_source}</span>{Number(row.current_profile_baseline) !== Number(row.expected_at_install) && <span>Current profile: {number(row.current_profile_baseline)} · install snapshot: {number(row.expected_at_install)}</span>}</footer>
+        </>}
+      </article>
+    })}</div>
+    {!rows.length && <div className="component-empty">No component lifecycles are available for this machine.</div>}
+  </>
 }
 
 function assignmentMap({ profiles, models, accountId }) {
@@ -44,40 +77,47 @@ export function ComponentsPage() {
   const { account, membership } = useTenant()
   const canManage = ['owner', 'admin'].includes(membership?.role)
   const [data, setData] = useState({ manufacturers: [], models: [], components: [], profiles: [] })
+  const [operational, setOperational] = useState({ machines: [], lifecycles: [] })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [notice, setNotice] = useState(null)
   const [confirm, setConfirm] = useState(null)
   const [busy, setBusy] = useState(false)
   const viewKey = createUIStateKey({ userId: user.id, accountId: account.id, feature: 'components-view', entityId: 'active' })
-  const { value: view, setUIState: setView } = usePersistentUIState({ uiStateKey: viewKey, initialValue: { tab: 'profiles', modelId: null, showArchived: false }, validate: validView })
+  const { value: view, setUIState: setView } = usePersistentUIState({ uiStateKey: viewKey, initialValue: { tab: 'machine', modelId: null, machineId: null, showArchived: false }, validate: validView })
   const { workflow, open, close } = useComponentWorkflowState({ userId: user.id, accountId: account.id })
 
   const refresh = useCallback(async () => {
     setLoading(true)
     setError(null)
     try {
-      setData(await loadComponentFoundation())
+      const [foundation, lifecycleData] = await Promise.all([loadComponentFoundation(), loadMachineComponentLifecycles({ accountId: account.id })])
+      setData(foundation)
+      setOperational(lifecycleData)
     } catch (loadError) {
       setError(loadError)
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [account.id])
 
   useEffect(() => {
     let active = true
-    loadComponentFoundation()
-      .then((result) => { if (active) setData(result) })
+    Promise.all([loadComponentFoundation(), loadMachineComponentLifecycles({ accountId: account.id })])
+      .then(([foundation, lifecycleData]) => { if (active) { setData(foundation); setOperational(lifecycleData) } })
       .catch((loadError) => { if (active) setError(loadError) })
       .finally(() => { if (active) setLoading(false) })
     return () => { active = false }
-  }, [])
+  }, [account.id])
 
   const selectedModel = data.models.find((model) => model.id === view.modelId) ?? data.models[0] ?? null
   useEffect(() => {
     if (!view.modelId && data.models[0]) setView((current) => ({ ...current, modelId: data.models[0].id }))
   }, [data.models, setView, view.modelId])
+  const selectedMachine = operational.machines.find((machine) => machine.id === view.machineId) ?? operational.machines[0] ?? null
+  useEffect(() => {
+    if (!view.machineId && operational.machines[0]) setView((current) => ({ ...current, machineId: operational.machines[0].id }))
+  }, [operational.machines, setView, view.machineId])
 
   const effective = useMemo(() => effectiveProfiles(data.profiles, account.id, selectedModel?.id), [account.id, data.profiles, selectedModel?.id])
   const allEffectiveProfiles = useMemo(() => data.models.flatMap((model) => effectiveProfiles(data.profiles, account.id, model.id)), [account.id, data.models, data.profiles])
@@ -88,6 +128,8 @@ export function ComponentsPage() {
   const editingProfile = allEffectiveProfiles.find((profile) => profile.id === workflow.entityId)
   const assigningComponent = data.components.find((component) => component.id === workflow.entityId)
   const profileModel = data.models.find((model) => model.id === editingProfile?.machine_model_id) ?? selectedModel
+  const initializingLifecycle = operational.lifecycles.find((row) => row.lifecycle_id === workflow.entityId)
+  const lifecycleMachine = operational.machines.find((machine) => machine.id === initializingLifecycle?.machine_id)
 
   async function savedComponent(values) {
     await saveComponent({ accountId: account.id, component: editingComponent, values })
@@ -120,16 +162,24 @@ export function ComponentsPage() {
     }
   }
 
-  const pageAction = canManage ? <div className="page-header-actions"><button className="secondary-button" onClick={() => open('component-create')}><Plus size={17} />Add Component</button>{selectedModel && <button className="primary-button" onClick={() => open('profile-create')}><Plus size={17} />Add Profile</button>}</div> : null
+  async function initializeLifecycle(values) {
+    await initializeComponentLifecycle({ accountId: account.id, machineId: lifecycleMachine.id, profileId: initializingLifecycle.model_component_profile_id, ...values })
+    await refresh()
+    setNotice(`${initializingLifecycle.component_name} lifecycle initialized. Usage now follows Daily Counter.`)
+  }
+
+  const pageAction = canManage && view.tab !== 'machine' ? <div className="page-header-actions"><button className="secondary-button" onClick={() => open('component-create')}><Plus size={17} />Add Component</button>{selectedModel && <button className="primary-button" onClick={() => open('profile-create')}><Plus size={17} />Add Profile</button>}</div> : null
 
   return <div className="page-stack">
-    <PageHeader eyebrow={`${account.name} · Component intelligence`} title="Components" description="Catalog definitions are reusable. Machine-model profiles explicitly assign them to compatible models." action={pageAction} />
+    <PageHeader eyebrow={`${account.name} · Component intelligence`} title="Components" description="Machine lifecycles turn Daily Counter readings into current usage, remaining clicks, replacement targets, and health." action={pageAction} />
     {notice && <div className="success-banner"><span>{notice}</span><button onClick={() => setNotice(null)}>Dismiss</button></div>}
     {!canManage && <div className="permission-banner"><ShieldCheck size={18} /><span>Your {membership?.role} role has read-only access. Owners and admins manage catalog and profiles.</span></div>}
     {error && <div className="inline-error catalog-error"><span>{error.message}</span><button className="secondary-button" onClick={refresh}>Try again</button></div>}
 
     <section className="component-shell glass-surface">
-      <div className="component-toolbar"><div className="machine-view-tabs"><button className={view.tab === 'profiles' ? 'selected' : ''} onClick={() => setView((current) => ({ ...current, tab: 'profiles' }))}>Model Profiles</button><button className={view.tab === 'catalog' ? 'selected' : ''} onClick={() => setView((current) => ({ ...current, tab: 'catalog' }))}>Component Catalog</button></div><button className="icon-button" onClick={refresh} aria-label="Refresh"><RefreshCcw size={17} className={loading ? 'spin' : ''} /></button></div>
+      <div className="component-toolbar"><div className="machine-view-tabs"><button className={view.tab === 'machine' ? 'selected' : ''} onClick={() => setView((current) => ({ ...current, tab: 'machine' }))}>Machine Components</button><button className={view.tab === 'profiles' ? 'selected' : ''} onClick={() => setView((current) => ({ ...current, tab: 'profiles' }))}>Model Profiles</button><button className={view.tab === 'catalog' ? 'selected' : ''} onClick={() => setView((current) => ({ ...current, tab: 'catalog' }))}>Component Catalog</button></div><button className="icon-button" onClick={refresh} aria-label="Refresh"><RefreshCcw size={17} className={loading ? 'spin' : ''} /></button></div>
+
+      {view.tab === 'machine' && <MachineComponentsPanel machines={operational.machines} lifecycles={operational.lifecycles} selectedMachine={selectedMachine} onMachineChange={(machineId) => setView((current) => ({ ...current, machineId }))} canManage={canManage} onInitialize={(lifecycleId) => open('lifecycle-initialize', lifecycleId)} />}
 
       {view.tab === 'profiles' && <>
         <div className="model-selector-row"><label><span>Machine model</span><select value={selectedModel?.id ?? ''} onChange={(event) => setView((current) => ({ ...current, modelId: event.target.value }))}>{data.models.map((model) => <option key={model.id} value={model.id}>{model.manufacturers?.name} · {model.name}</option>)}</select></label><div><strong>{effective.filter((profile) => profile.is_active).length}</strong><span>active profiles</span></div></div>
@@ -153,6 +203,7 @@ export function ComponentsPage() {
 
     {canManage && (workflow.type === 'component-create' || (workflow.type === 'component-edit' && editingComponent)) && <ComponentDialog account={account} component={editingComponent} manufacturers={data.manufacturers} onClose={close} onSave={savedComponent} />}
     {canManage && selectedModel && (workflow.type === 'profile-create' || (workflow.type === 'profile-edit' && editingProfile) || (workflow.type === 'profile-assign' && assigningComponent)) && <ProfileDialog account={account} model={profileModel} models={data.models} profile={editingProfile} components={data.components} initialComponent={workflow.type === 'profile-assign' ? assigningComponent : null} draftEntityId={workflow.type === 'profile-assign' ? `assign-${assigningComponent.id}` : undefined} onClose={close} onSave={savedProfile} />}
+    {canManage && workflow.type === 'lifecycle-initialize' && initializingLifecycle && lifecycleMachine && <InitializeLifecycleDialog account={account} machine={lifecycleMachine} lifecycle={initializingLifecycle} onClose={close} onInitialize={initializeLifecycle} />}
     {confirm && <ConfirmDialog title={confirm.kind === 'component' ? 'Delete Component' : 'Remove Model Profile'} message={confirm.kind === 'component' ? 'If this component has never been referenced, it will be permanently deleted. Historical usage forces a safe archive instead.' : 'Unused profiles are deleted. Any historically referenced profile is archived so operational records remain intact.'} confirmLabel={confirm.kind === 'component' ? 'Delete / archive' : 'Remove / archive'} onCancel={() => setConfirm(null)} onConfirm={runConfirm} busy={busy} />}
   </div>
 }
