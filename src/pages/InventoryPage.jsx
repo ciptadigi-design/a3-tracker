@@ -7,6 +7,7 @@ import { useTenant } from '../features/account/useTenant.js'
 import { createUIStateKey } from '../features/uiState/uiStateKeys.js'
 import { usePersistentUIState } from '../features/uiState/usePersistentUIState.js'
 import { DeleteInventoryMasterDialog, InventoryItemDialog, InventoryLocationDialog, InventoryMovementDialog } from '../features/inventory/InventoryDialogs.jsx'
+import { useInventoryWorkflowState } from '../features/inventory/useInventoryWorkflowState.js'
 import { adjustInventoryStock, deleteInventoryItem, deleteInventoryLocation, initializeInventoryStock, loadInventory, saveInventoryItem, saveInventoryLocation, transferInventoryStock } from '../services/supabase/inventory.js'
 
 const tabs = [
@@ -70,28 +71,45 @@ export function InventoryPage() {
   const canManage = ['owner', 'admin'].includes(membership?.role)
   const viewKey = createUIStateKey({ userId: user.id, accountId: account.id, feature: 'inventory-view', entityId: 'workspace' })
   const viewState = usePersistentUIState({ uiStateKey: viewKey, initialValue: { tab: 'stock', showArchived: false }, validate: validView })
+  const { workflow, open: openWorkflow, close: closeWorkflow } = useInventoryWorkflowState({ userId: user.id, accountId: account.id })
   const [data, setData] = useState({ items: [], locations: [], balances: [], totals: [], movements: [], components: [], people: [] })
-  const [loading, setLoading] = useState(true); const [error, setError] = useState(null); const [notice, setNotice] = useState(null); const [dialog, setDialog] = useState(null)
+  const [loading, setLoading] = useState(true); const [error, setError] = useState(null); const [notice, setNotice] = useState(null)
   const refresh = useCallback(async () => { setLoading(true); setError(null); try { setData(await loadInventory({ accountId: account.id, includeArchived: canManage })) } catch (loadError) { setError(loadError) } finally { setLoading(false) } }, [account.id, canManage])
   useEffect(() => { refresh() }, [refresh])
   async function completed(message) { setNotice(message); await refresh() }
-  async function saveItem(values) { await saveInventoryItem({ accountId: account.id, itemId: dialog.item?.id, values }); await completed('Inventory item saved.') }
-  async function saveLocation(values) { await saveInventoryLocation({ accountId: account.id, locationId: dialog.location?.id, values }); await completed('Inventory location saved.') }
+  async function saveItem(values) { await saveInventoryItem({ accountId: account.id, itemId: workflow.inventoryItemId, values }); await completed('Inventory item saved.') }
+  async function saveLocation(values) { await saveInventoryLocation({ accountId: account.id, locationId: workflow.locationId, values }); await completed('Inventory location saved.') }
   async function submitMovement(values, clientRequestId) {
     const normalized = { ...values, occurredAt: new Date(values.occurredAt).toISOString() }
-    if (dialog.kind === 'opening') await initializeInventoryStock({ accountId: account.id, values: normalized, clientRequestId })
-    else if (dialog.kind === 'adjustment') await adjustInventoryStock({ accountId: account.id, values: normalized, clientRequestId })
+    if (workflow.type === 'stock:opening') await initializeInventoryStock({ accountId: account.id, values: normalized, clientRequestId })
+    else if (workflow.type === 'stock:adjustment') await adjustInventoryStock({ accountId: account.id, values: normalized, clientRequestId })
     else await transferInventoryStock({ accountId: account.id, values: normalized, clientRequestId })
-    await completed(dialog.kind === 'transfer' ? 'Stock transferred atomically.' : 'Inventory movement posted.')
+    await completed(workflow.type === 'stock:transfer' ? 'Stock transferred atomically.' : 'Inventory movement posted.')
   }
   async function removeMaster() {
-    if (dialog.kind === 'delete-item') await deleteInventoryItem({ accountId: account.id, itemId: dialog.item.id })
-    else await deleteInventoryLocation({ accountId: account.id, locationId: dialog.location.id })
+    if (workflow.type === 'item:delete') await deleteInventoryItem({ accountId: account.id, itemId: workflow.inventoryItemId })
+    else await deleteInventoryLocation({ accountId: account.id, locationId: workflow.locationId })
     await completed('Unreferenced inventory master deleted.')
   }
   const activeItems = data.items.filter((item) => item.is_active); const activeLocations = data.locations.filter((location) => location.is_active)
+  const workflowItem = data.items.find((item) => item.id === workflow.inventoryItemId) ?? null
+  const workflowLocation = data.locations.find((location) => location.id === workflow.locationId) ?? null
+
+  useEffect(() => {
+    if (loading || error || !workflow.type) return
+    let staleMessage = null
+    if (!canManage) staleMessage = 'The saved Inventory workflow was closed because your current role cannot manage inventory.'
+    else if ((workflow.type.startsWith('item:') && workflow.type !== 'item:create') && !workflowItem) staleMessage = 'The saved inventory item workflow is no longer available and was closed safely.'
+    else if (workflow.type.startsWith('item:') && workflow.entityActiveAtOpen === true && !workflowItem?.is_active) staleMessage = 'The saved inventory item workflow was closed because the item was archived.'
+    else if ((workflow.type.startsWith('location:') && workflow.type !== 'location:create') && !workflowLocation) staleMessage = 'The saved inventory location workflow is no longer available and was closed safely.'
+    else if (workflow.type.startsWith('location:') && workflow.entityActiveAtOpen === true && !workflowLocation?.is_active) staleMessage = 'The saved inventory location workflow was closed because the location was archived.'
+    else if (workflow.type.startsWith('stock:') && (!workflowItem || !workflowItem.is_active)) staleMessage = 'The saved stock workflow referenced an unavailable or archived item and was closed safely.'
+    if (staleMessage) { closeWorkflow(); setNotice(staleMessage) }
+  }, [canManage, closeWorkflow, error, loading, workflow.entityActiveAtOpen, workflow.type, workflowItem, workflowLocation])
+
+  const movementKind = workflow.type?.startsWith('stock:') ? workflow.type.slice('stock:'.length) : null
   return <div className="page-stack inventory-page">
-    <PageHeader eyebrow={`${account.name} · Inventory`} title="Inventory" description="Auditable physical stock by item and location, derived from an immutable movement ledger." action={canManage ? <div className="page-header-actions"><button className="secondary-button" type="button" onClick={() => setDialog({ kind: 'location' })}><MapPin size={16} />Add location</button><button className="primary-button" type="button" onClick={() => setDialog({ kind: 'item' })}><Plus size={17} />Add item</button></div> : null} />
+    <PageHeader eyebrow={`${account.name} · Inventory`} title="Inventory" description="Auditable physical stock by item and location, derived from an immutable movement ledger." action={canManage ? <div className="page-header-actions"><button className="secondary-button" type="button" onClick={() => openWorkflow('location:create')}><MapPin size={16} />Add location</button><button className="primary-button" type="button" onClick={() => openWorkflow('item:create')}><Plus size={17} />Add item</button></div> : null} />
     {!canManage && <div className="permission-banner"><ShieldCheck size={18} /><span>Your {membership?.role} role can read current stock and immutable history. M2.4A stock mutations are restricted to owner/admin.</span></div>}
     {notice && <div className="success-banner" role="status"><span>{notice}</span><button type="button" onClick={() => setNotice(null)}>Dismiss</button></div>}
     {error && <div className="embedded-error" role="alert"><strong>Inventory could not be loaded.</strong><span>{error.message}</span><button className="secondary-button" type="button" onClick={refresh}>Try again</button></div>}
@@ -99,15 +117,17 @@ export function InventoryPage() {
       <div className="inventory-tabs" role="tablist" aria-label="Inventory sections">{tabs.map((tab) => <button key={tab.id} type="button" role="tab" aria-selected={viewState.value.tab === tab.id} className={viewState.value.tab === tab.id ? 'selected' : ''} onClick={() => viewState.setUIState((current) => ({ ...current, tab: tab.id }))}><tab.icon size={16} />{tab.label}{tab.id === 'movements' && <span>{data.movements.length}</span>}</button>)}<button className="inventory-refresh" type="button" onClick={refresh} disabled={loading} aria-label="Refresh inventory"><RefreshCcw className={loading ? 'spin' : ''} size={17} /></button></div>
       {canManage && viewState.value.tab !== 'movements' && <div className="inventory-record-toggle"><button className={!viewState.value.showArchived ? 'selected' : ''} onClick={() => viewState.setUIState((current) => ({ ...current, showArchived: false }))}>Active</button><button className={viewState.value.showArchived ? 'selected' : ''} onClick={() => viewState.setUIState((current) => ({ ...current, showArchived: true }))}>Archived</button></div>}
       <div className="inventory-content">{loading ? <div className="inventory-empty"><RefreshCcw className="spin" size={25} /><strong>Loading inventory ledger…</strong></div> : !error && <>
-        {viewState.value.tab === 'stock' && <StockPanel data={data} showArchived={viewState.value.showArchived} canManage={canManage} onEdit={(item) => setDialog({ kind: 'item', item })} onDelete={(item) => setDialog({ kind: 'delete-item', item })} onOpening={(item) => setDialog({ kind: 'opening', item })} onAdjust={(item) => setDialog({ kind: 'adjustment', item })} onTransfer={(item) => setDialog({ kind: 'transfer', item })} />}
+        {viewState.value.tab === 'stock' && <StockPanel data={data} showArchived={viewState.value.showArchived} canManage={canManage} onEdit={(item) => openWorkflow('item:edit', { inventoryItemId: item.id, entityActiveAtOpen: item.is_active })} onDelete={(item) => openWorkflow('item:delete', { inventoryItemId: item.id, entityActiveAtOpen: item.is_active })} onOpening={(item) => openWorkflow('stock:opening', { inventoryItemId: item.id, entityActiveAtOpen: true })} onAdjust={(item) => openWorkflow('stock:adjustment', { inventoryItemId: item.id, entityActiveAtOpen: true })} onTransfer={(item) => openWorkflow('stock:transfer', { inventoryItemId: item.id, entityActiveAtOpen: true })} />}
         {viewState.value.tab === 'movements' && <MovementPanel data={data} account={account} />}
-        {viewState.value.tab === 'locations' && <LocationsPanel locations={data.locations} showArchived={viewState.value.showArchived} canManage={canManage} onEdit={(location) => setDialog({ kind: 'location', location })} onDelete={(location) => setDialog({ kind: 'delete-location', location })} />}
+        {viewState.value.tab === 'locations' && <LocationsPanel locations={data.locations} showArchived={viewState.value.showArchived} canManage={canManage} onEdit={(location) => openWorkflow('location:edit', { locationId: location.id, entityActiveAtOpen: location.is_active })} onDelete={(location) => openWorkflow('location:delete', { locationId: location.id, entityActiveAtOpen: location.is_active })} />}
       </>}</div>
     </section>
-    {dialog?.kind === 'item' && <InventoryItemDialog account={account} item={dialog.item} components={data.components} onClose={() => setDialog(null)} onSave={saveItem} />}
-    {dialog?.kind === 'location' && <InventoryLocationDialog account={account} branches={branches} location={dialog.location} onClose={() => setDialog(null)} onSave={saveLocation} />}
-    {['opening','adjustment','transfer'].includes(dialog?.kind) && <InventoryMovementDialog kind={dialog.kind} account={account} item={dialog.item} items={activeItems} locations={activeLocations} people={data.people} balances={data.balances} onClose={() => setDialog(null)} onSubmit={submitMovement} />}
-    {dialog?.kind === 'delete-item' && <DeleteInventoryMasterDialog kind="inventory item" label={dialog.item.name} onClose={() => setDialog(null)} onDelete={removeMaster} />}
-    {dialog?.kind === 'delete-location' && <DeleteInventoryMasterDialog kind="location" label={dialog.location.name} onClose={() => setDialog(null)} onDelete={removeMaster} />}
+    {!loading && canManage && workflow.type === 'item:create' && <InventoryItemDialog account={account} components={data.components} onClose={closeWorkflow} onSave={saveItem} />}
+    {!loading && canManage && workflow.type === 'item:edit' && workflowItem && <InventoryItemDialog account={account} item={workflowItem} components={data.components} onClose={closeWorkflow} onSave={saveItem} />}
+    {!loading && canManage && workflow.type === 'location:create' && <InventoryLocationDialog account={account} branches={branches} onClose={closeWorkflow} onSave={saveLocation} />}
+    {!loading && canManage && workflow.type === 'location:edit' && workflowLocation && <InventoryLocationDialog account={account} branches={branches} location={workflowLocation} onClose={closeWorkflow} onSave={saveLocation} />}
+    {!loading && canManage && ['opening','adjustment','transfer'].includes(movementKind) && workflowItem?.is_active && <InventoryMovementDialog kind={movementKind} account={account} item={workflowItem} items={activeItems} locations={activeLocations} people={data.people} balances={data.balances} onClose={closeWorkflow} onSubmit={submitMovement} />}
+    {!loading && canManage && workflow.type === 'item:delete' && workflowItem && <DeleteInventoryMasterDialog kind="inventory item" label={workflowItem.name} onClose={closeWorkflow} onDelete={removeMaster} />}
+    {!loading && canManage && workflow.type === 'location:delete' && workflowLocation && <DeleteInventoryMasterDialog kind="location" label={workflowLocation.name} onClose={closeWorkflow} onDelete={removeMaster} />}
   </div>
 }

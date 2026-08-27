@@ -101,10 +101,16 @@ export function InventoryMovementDialog({ kind, account, item, items, locations,
   const requestId = useRef(crypto.randomUUID()); const [error, setError] = useState(null); const [busy, setBusy] = useState(false)
   const change = (field, value) => { draft.updateDraft((current) => ({ ...current, [field]: value })); setError(null) }
   const activeItem = items.find((candidate) => candidate.id === draft.value.itemId)
+  const selectedLocationAvailable = !draft.value.locationId || locations.some((location) => location.id === draft.value.locationId)
+  const sourceLocationAvailable = !draft.value.sourceLocationId || locations.some((location) => location.id === draft.value.sourceLocationId)
+  const destinationLocationAvailable = !draft.value.destinationLocationId || locations.some((location) => location.id === draft.value.destinationLocationId)
+  const selectedPersonAvailable = !draft.value.personId || people.some((person) => person.id === draft.value.personId)
+  const hasUnavailableSelection = (draft.value.itemId && !activeItem) || !selectedLocationAvailable || !sourceLocationAvailable || !destinationLocationAvailable || !selectedPersonAvailable
   const sourceBalance = Number(balances.find((row) => row.inventory_item_id === draft.value.itemId && row.location_id === draft.value.sourceLocationId)?.quantity ?? 0)
   async function submit(event) {
     event.preventDefault(); const value = draft.value
-    if (!value.itemId || !quantityValid(value.quantity) || !value.personId || !value.occurredAt) return setError('Item, positive quantity, effective time, and PIC are required.')
+    if (!activeItem || !selectedPersonAvailable || !value.personId || !quantityValid(value.quantity) || !value.occurredAt) return setError('Choose an available item, active PIC, positive quantity, and effective time.')
+    if (!selectedLocationAvailable || !sourceLocationAvailable || !destinationLocationAvailable) return setError('One of the saved locations is no longer active. Choose an available location before posting.')
     if (kind === 'opening' && !value.locationId) return setError('Choose an inventory location.')
     if (kind === 'adjustment' && (!value.locationId || !value.reason.trim())) return setError('Location and adjustment reason are required.')
     if (kind === 'transfer' && (!value.sourceLocationId || !value.destinationLocationId || value.sourceLocationId === value.destinationLocationId)) return setError('Choose different source and destination locations.')
@@ -116,6 +122,7 @@ export function InventoryMovementDialog({ kind, account, item, items, locations,
   return <DialogFrame icon={config.icon} kicker={config.kicker} title={config.title} description={config.description} titleId="inventory-movement-title" busy={busy} onClose={onClose}>
     <form className="machine-form" onSubmit={submit} noValidate><div className="machine-form-body">
       <div className="ledger-notice"><Scale size={17} /><span>Balance is database-derived. Posted movements cannot be edited or deleted.</span></div>
+      {hasUnavailableSelection && <div className="draft-conflict-banner" role="alert"><AlertCircle size={17} /><div><strong>A saved Inventory selection is no longer available.</strong><span>The workflow and draft were restored without attaching them to another item, location, or PIC. Choose an active replacement before posting.</span></div></div>}
       <div className="form-grid">
         <label className="form-field form-field-wide"><span>Inventory item <b className="required-mark">*</b></span><select value={draft.value.itemId} onChange={(event) => change('itemId', event.target.value)} data-dialog-initial-focus><option value="">Choose item</option>{items.map((candidate) => <option key={candidate.id} value={candidate.id}>{candidate.sku} · {candidate.name}</option>)}</select></label>
         {kind === 'transfer' ? <><label className="form-field"><span>Source location <b className="required-mark">*</b></span><select value={draft.value.sourceLocationId} onChange={(event) => change('sourceLocationId', event.target.value)}><option value="">Choose source</option>{locations.map((location) => <option key={location.id} value={location.id}>{location.name}</option>)}</select><small className="field-hint">Available: {sourceBalance.toLocaleString()} {activeItem?.unit}</small></label><label className="form-field"><span>Destination location <b className="required-mark">*</b></span><select value={draft.value.destinationLocationId} onChange={(event) => change('destinationLocationId', event.target.value)}><option value="">Choose destination</option>{locations.filter((location) => location.id !== draft.value.sourceLocationId).map((location) => <option key={location.id} value={location.id}>{location.name}</option>)}</select></label></> : <label className="form-field"><span>Location <b className="required-mark">*</b></span><select value={draft.value.locationId} onChange={(event) => change('locationId', event.target.value)}><option value="">Choose location</option>{locations.map((location) => <option key={location.id} value={location.id}>{location.name}</option>)}</select></label>}
