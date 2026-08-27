@@ -404,8 +404,8 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .history-correct-button { min-height: 35px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 0 10px; color: var(--blue); cursor: pointer; border-radius: 11px; background: var(--blue-soft); font-size: 9px; font-weight: 720; }
 .history-correction-note, .history-notes { min-width: 0; grid-column: 1 / -1; padding-top: 10px; overflow-wrap: anywhere; border-top: 1px solid var(--border-subtle); color: var(--text-soft); font-size: 9px; line-height: 1.5; }
 .history-correction-note { display: flex; gap: 8px; color: var(--danger); }
-.correction-dialog { width: min(560px, calc(100% - 32px)); max-height: calc(100vh - 32px); overflow: auto; }
-.correction-form { display: grid; gap: 16px; margin: 20px 26px 0; }
+.correction-dialog { width: min(640px, 100%); }
+.correction-form-body { gap: 16px; }
 .correction-action-tabs { display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px; padding: 4px; border-radius: 13px; background: var(--surface-muted); }
 .correction-action-tabs button { min-height: 38px; color: var(--text-soft); cursor: pointer; border-radius: 10px; background: transparent; font-size: 10px; font-weight: 720; }
 .correction-action-tabs button.selected { color: var(--blue); background: var(--surface-solid); }
@@ -414,7 +414,9 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .correction-reading-context span { color: var(--text-muted); font-size: 8px; text-transform: uppercase; }
 .correction-reading-context strong { font-size: 20px; }
 .correction-reading-context small { color: var(--text-soft); font-size: 9px; }
-.correction-form .dialog-actions { margin: 0; padding-bottom: 2px; }
+.correction-void-warning { min-width: 0; display: flex; align-items: flex-start; gap: 9px; padding: 12px 13px; color: var(--danger); background: rgba(217, 71, 71, 0.09); border: 1px solid rgba(217, 71, 71, 0.13); border-radius: 13px; font-size: 11px; line-height: 1.5; }
+.correction-void-warning svg { flex: 0 0 auto; margin-top: 1px; }
+.correction-void-warning span { min-width: 0; overflow-wrap: anywhere; }
 .coming-soon-card { border-radius: 30px; }
 .coming-soon-card .status-pill { margin-top: 20px; }
 
@@ -657,9 +659,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   .history-time { grid-column: 1 / -1; }
   .history-status { align-items: flex-end; }
   .history-correct-button { grid-column: 1 / -1; width: 100%; }
-  .correction-form { margin-left: 18px; margin-right: 18px; }
-  .confirm-dialog, .correction-dialog { width: auto; max-width: none; justify-self: stretch; margin-left: max(16px, env(safe-area-inset-left)); margin-right: max(16px, env(safe-area-inset-right)); }
-  .correction-dialog { max-height: calc(100vh - 32px); max-height: calc(100dvh - 32px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); }
+  .confirm-dialog { width: auto; max-width: none; justify-self: stretch; margin-left: max(16px, env(safe-area-inset-left)); margin-right: max(16px, env(safe-area-inset-right)); }
 }
 
 @media (max-width: 1023px) {
