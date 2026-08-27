@@ -7,11 +7,13 @@ import { useTenant } from '../features/account/useTenant.js'
 import { ComponentDialog } from '../features/components/ComponentDialog.jsx'
 import { ProfileDialog } from '../features/components/ProfileDialog.jsx'
 import { InitializeLifecycleDialog } from '../features/components/InitializeLifecycleDialog.jsx'
+import { ReplaceComponentDialog } from '../features/components/ReplaceComponentDialog.jsx'
+import { ReplacementHistory } from '../features/components/ReplacementHistory.jsx'
 import { useComponentWorkflowState } from '../features/components/useComponentWorkflowState.js'
 import { createUIStateKey } from '../features/uiState/uiStateKeys.js'
 import { usePersistentUIState } from '../features/uiState/usePersistentUIState.js'
 import { deleteComponent, effectiveProfiles, loadComponentFoundation, removeProfile, saveComponent, saveProfile } from '../services/supabase/components.js'
-import { initializeComponentLifecycle, loadMachineComponentLifecycles } from '../services/supabase/componentLifecycles.js'
+import { initializeComponentLifecycle, loadMachineComponentLifecycles, replaceComponentLifecycle } from '../services/supabase/componentLifecycles.js'
 
 const trackingLabels = {
   counter_based: 'Counter based',
@@ -45,7 +47,7 @@ function DensityControl({ density, onChange }) {
   </button>
 }
 
-function MachineComponentsPanel({ machines, lifecycles, selectedMachine, onMachineChange, canManage, onInitialize, density }) {
+function MachineComponentsPanel({ machines, lifecycles, replacementHistory, selectedMachine, onMachineChange, canManage, canReplace, onInitialize, onReplace, density }) {
   const rows = lifecycles.filter((row) => row.machine_id === selectedMachine?.id)
   const initialized = rows.filter((row) => row.lifecycle_status === 'active').length
   const currentCounter = rows.find((row) => row.latest_effective_counter != null)?.latest_effective_counter
@@ -66,11 +68,12 @@ function MachineComponentsPanel({ machines, lifecycles, selectedMachine, onMachi
         {unknown ? <div className="unknown-lifecycle-body"><div><span>Installation history</span><strong>Unknown</strong></div><div><span>Tracking status</span><strong>Not initialized</strong></div><div><span>Expected baseline</span><strong>{number(row.current_profile_baseline)} clicks</strong></div><p>No usage or health is inferred from the machine's lifetime counter.</p>{canManage && <button className="primary-button" onClick={() => onInitialize(row.lifecycle_id)}>Initialize Lifecycle</button>}</div> : <>
           <div className="lifecycle-metrics"><div><span>{consumption ? 'Used Yield' : 'Current Usage'}</span><strong>{number(row.current_usage)}</strong></div><div><span>{consumption ? 'Expected Yield' : 'Expected Life'}</span><strong>{number(row.effective_expected)}</strong></div><div><span>{consumption ? 'Estimated Remaining' : 'Remaining Clicks'}</span><strong>{number(row.remaining_clicks)}</strong></div><div><span>Remaining</span><strong>{Number(row.remaining_percent).toFixed(1)}%</strong></div><div className="replace-counter"><span>Estimated Replacement Counter</span><strong>{number(row.estimated_replacement_counter)}</strong></div></div>
           <div className="lifecycle-progress" aria-label={`${Math.max(0, Number(row.remaining_percent)).toFixed(1)} percent remaining`}><span style={{ width: `${visualPercent}%` }} /></div>
-          <footer><span>{row.expected_source}</span>{Number(row.current_profile_baseline) !== Number(row.expected_at_install) && <span>Current profile: {number(row.current_profile_baseline)} · install snapshot: {number(row.expected_at_install)}</span>}</footer>
+          <footer><div className="lifecycle-snapshot-context"><span>{row.expected_source}</span>{Number(row.current_profile_baseline) !== Number(row.expected_at_install) && <span>Current profile: {number(row.current_profile_baseline)} · install snapshot: {number(row.expected_at_install)}</span>}</div>{canReplace && <button className="secondary-button lifecycle-replace-button" type="button" onClick={() => onReplace(row.lifecycle_id)}><RefreshCcw size={14} />{consumption ? 'Replace / Refill Toner' : 'Replace Component'}</button>}</footer>
         </>}</>}
       </article>
     })}</div>
     {!rows.length && <div className="component-empty">No component lifecycles are available for this machine.</div>}
+    {selectedMachine && density === 'detailed' && <ReplacementHistory history={replacementHistory} machine={selectedMachine} />}
   </>
 }
 
@@ -92,10 +95,11 @@ function ConfirmDialog({ title, message, confirmLabel, onCancel, onConfirm, busy
 
 export function ComponentsPage() {
   const { user } = useAuth()
-  const { account, membership } = useTenant()
+  const { account, membership, profile } = useTenant()
   const canManage = ['owner', 'admin'].includes(membership?.role)
+  const canReplace = ['owner', 'admin', 'technician', 'operator'].includes(membership?.role)
   const [data, setData] = useState({ manufacturers: [], models: [], components: [], profiles: [] })
-  const [operational, setOperational] = useState({ machines: [], lifecycles: [] })
+  const [operational, setOperational] = useState({ machines: [], lifecycles: [], replacementHistory: [], members: [] })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [notice, setNotice] = useState(null)
@@ -189,18 +193,24 @@ export function ComponentsPage() {
     setNotice(`${initializingLifecycle.component_name} lifecycle initialized. Usage now follows Daily Counter.`)
   }
 
+  async function replaceLifecycle(values) {
+    await replaceComponentLifecycle({ accountId: account.id, machineId: lifecycleMachine.id, lifecycleId: initializingLifecycle.lifecycle_id, ...values })
+    await refresh()
+    setNotice(`${initializingLifecycle.component_name} replacement recorded. The previous lifecycle is closed and new tracking starts at the replacement counter.`)
+  }
+
   const pageAction = canManage && view.tab !== 'machine' ? <div className="page-header-actions"><button className="secondary-button" onClick={() => open('component-create')}><Plus size={17} />Add Component</button>{selectedModel && <button className="primary-button" onClick={() => open('profile-create')}><Plus size={17} />Add Profile</button>}</div> : null
 
   return <div className="page-stack">
     <PageHeader eyebrow={`${account.name} · Component intelligence`} title="Components" description="Machine lifecycles turn Daily Counter readings into current usage, remaining clicks, replacement targets, and health." action={pageAction} />
     {notice && <div className="success-banner"><span>{notice}</span><button onClick={() => setNotice(null)}>Dismiss</button></div>}
-    {!canManage && <div className="permission-banner"><ShieldCheck size={18} /><span>Your {membership?.role} role has read-only access. Owners and admins manage catalog and profiles.</span></div>}
+    {!canManage && <div className="permission-banner"><ShieldCheck size={18} /><span>Your {membership?.role} role can record operational component replacements. Catalog and model-profile management remain owner/admin only.</span></div>}
     {error && <div className="inline-error catalog-error"><span>{error.message}</span><button className="secondary-button" onClick={refresh}>Try again</button></div>}
 
     <section className={`component-shell component-density-${density} glass-surface`}>
       <div className="component-toolbar"><div className="machine-view-tabs"><button className={view.tab === 'machine' ? 'selected' : ''} onClick={() => setView((current) => ({ ...current, tab: 'machine' }))}>Machine Components</button><button className={view.tab === 'profiles' ? 'selected' : ''} onClick={() => setView((current) => ({ ...current, tab: 'profiles' }))}>Model Profiles</button><button className={view.tab === 'catalog' ? 'selected' : ''} onClick={() => setView((current) => ({ ...current, tab: 'catalog' }))}>Component Catalog</button></div><div className="component-toolbar-actions"><DensityControl density={density} onChange={(mode) => setDensityState({ mode })} /><button className="icon-button" type="button" onClick={refresh} aria-label="Refresh Components" title="Refresh Components"><RefreshCcw size={17} className={loading ? 'spin' : ''} /></button></div></div>
 
-      {view.tab === 'machine' && <MachineComponentsPanel machines={operational.machines} lifecycles={operational.lifecycles} selectedMachine={selectedMachine} onMachineChange={(machineId) => setView((current) => ({ ...current, machineId }))} canManage={canManage} onInitialize={(lifecycleId) => open('lifecycle-initialize', lifecycleId)} density={density} />}
+      {view.tab === 'machine' && <MachineComponentsPanel machines={operational.machines} lifecycles={operational.lifecycles} replacementHistory={operational.replacementHistory} selectedMachine={selectedMachine} onMachineChange={(machineId) => setView((current) => ({ ...current, machineId }))} canManage={canManage} canReplace={canReplace} onInitialize={(lifecycleId) => open('lifecycle-initialize', lifecycleId)} onReplace={(lifecycleId) => open('lifecycle-replace', lifecycleId)} density={density} />}
 
       {view.tab === 'profiles' && <>
         <div className="model-selector-row"><label><span>Machine model</span><select value={selectedModel?.id ?? ''} onChange={(event) => setView((current) => ({ ...current, modelId: event.target.value }))}>{data.models.map((model) => <option key={model.id} value={model.id}>{model.manufacturers?.name} · {model.name}</option>)}</select></label><div><strong>{effective.filter((profile) => profile.is_active).length}</strong><span>active profiles</span></div></div>
@@ -225,6 +235,7 @@ export function ComponentsPage() {
     {canManage && (workflow.type === 'component-create' || (workflow.type === 'component-edit' && editingComponent)) && <ComponentDialog account={account} component={editingComponent} manufacturers={data.manufacturers} onClose={close} onSave={savedComponent} />}
     {canManage && selectedModel && (workflow.type === 'profile-create' || (workflow.type === 'profile-edit' && editingProfile) || (workflow.type === 'profile-assign' && assigningComponent)) && <ProfileDialog account={account} model={profileModel} models={data.models} profile={editingProfile} components={data.components} initialComponent={workflow.type === 'profile-assign' ? assigningComponent : null} draftEntityId={workflow.type === 'profile-assign' ? `assign-${assigningComponent.id}` : undefined} onClose={close} onSave={savedProfile} />}
     {canManage && workflow.type === 'lifecycle-initialize' && initializingLifecycle && lifecycleMachine && <InitializeLifecycleDialog account={account} machine={lifecycleMachine} lifecycle={initializingLifecycle} onClose={close} onInitialize={initializeLifecycle} />}
+    {canReplace && workflow.type === 'lifecycle-replace' && initializingLifecycle?.lifecycle_status === 'active' && lifecycleMachine && <ReplaceComponentDialog account={account} machine={lifecycleMachine} lifecycle={initializingLifecycle} members={operational.members} currentProfile={profile} onClose={close} onReplace={replaceLifecycle} />}
     {confirm && <ConfirmDialog title={confirm.kind === 'component' ? 'Delete Component' : 'Remove Model Profile'} message={confirm.kind === 'component' ? 'If this component has never been referenced, it will be permanently deleted. Historical usage forces a safe archive instead.' : 'Unused profiles are deleted. Any historically referenced profile is archived so operational records remain intact.'} confirmLabel={confirm.kind === 'component' ? 'Delete / archive' : 'Remove / archive'} onCancel={() => setConfirm(null)} onConfirm={runConfirm} busy={busy} />}
   </div>
 }
