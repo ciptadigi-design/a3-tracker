@@ -191,7 +191,7 @@ declare
   input_count integer;
   requested_quantity numeric(20,4);
   received_quantity numeric(20,4);
-  receipt_id uuid := gen_random_uuid();
+  resolved_receipt_id uuid := gen_random_uuid();
 begin
   if actor_id is null then raise exception 'authentication required' using errcode='42501'; end if;
   if not public.has_account_role(target_account_id,array['owner','admin']::public.account_role[]) then
@@ -297,8 +297,8 @@ begin
     received_at,operational_person_id,operational_person_name_snapshot,purchase_number_snapshot,
     supplier_code_snapshot,supplier_name_snapshot,currency_code,notes,client_request_id,
     created_by,created_by_name_snapshot)
-  values(receipt_id,target_account_id,purchase_record.id,purchase_record.supplier_id,location_record.id,
-    'RCV-'||to_char(target_received_at at time zone 'Asia/Jakarta','YYYYMMDD')||'-'||upper(left(replace(receipt_id::text,'-',''),8)),
+  values(resolved_receipt_id,target_account_id,purchase_record.id,purchase_record.supplier_id,location_record.id,
+    'RCV-'||to_char(target_received_at at time zone 'Asia/Jakarta','YYYYMMDD')||'-'||upper(left(replace(resolved_receipt_id::text,'-',''),8)),
     target_received_at,person_record.id,person_record.name,purchase_record.purchase_number,
     purchase_record.supplier_code_snapshot,purchase_record.supplier_name_snapshot,purchase_record.currency_code,
     normalized_notes,target_client_request_id,actor_id,actor_name)
