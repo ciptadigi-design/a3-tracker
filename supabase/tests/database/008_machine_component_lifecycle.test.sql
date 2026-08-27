@@ -105,8 +105,7 @@ with legacy(slot_code,used,estimated,expected,is_unknown) as (values
 select extensions.is((select count(*)::int from legacy where not is_unknown and 1437911-(estimated-expected)=used),18,'all 18 trusted legacy rows reconstruct exactly');
 with sentinel(slot_code,used,estimated,expected) as (values ('CLEANING_UNIT',1437911,200000,200000),('DEVELOPER_K',1437911,100000,100000),('DEVELOPING_UNIT_C',1437911,200000,200000),('DEVELOPING_UNIT_M',1437911,200000,200000),('DEVELOPING_UNIT_K',1437911,200000,200000),('DRUM_K',1437911,40000,40000),('GEAR',1437911,150000,150000),('LASER_UNIT',1437911,300000,300000),('ROLL_MESIN',1437911,150000,150000),('SENSOR',1437911,250000,250000))
 select extensions.is((select count(*)::int from sentinel where used=1437911 and estimated=expected),10,'all 10 known sentinel rows remain classified unknown');
-select extensions.is(1437911-(1444638-14000),7273::bigint,'Toner Cyan historical 14K reconstruction is preserved despite 13.5K override');
+select extensions.is((1437911::bigint-(1444638::bigint-14000::bigint)),7273::bigint,'Toner Cyan historical 14K reconstruction is preserved despite 13.5K override');
 
 select * from extensions.finish();
 rollback;
-
