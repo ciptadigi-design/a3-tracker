@@ -36,10 +36,13 @@ function validDensity(value) {
 }
 
 function DensityControl({ density, onChange }) {
-  return <div className="component-density-control" role="group" aria-label="Components display density">
-    <button type="button" className={density === 'compact' ? 'selected' : ''} aria-label="Use compact component view" aria-pressed={density === 'compact'} title="Compact view" onClick={() => onChange('compact')}><EyeOff size={16} /></button>
-    <button type="button" className={density === 'detailed' ? 'selected' : ''} aria-label="Use detailed component view" aria-pressed={density === 'detailed'} title="Detailed view" onClick={() => onChange('detailed')}><Eye size={16} /></button>
-  </div>
+  const detailed = density === 'detailed'
+  const nextDensity = detailed ? 'compact' : 'detailed'
+  const actionLabel = `Switch to ${detailed ? 'Compact' : 'Detailed'} view`
+
+  return <button type="button" className={`component-density-toggle density-${density}`} aria-label={actionLabel} aria-pressed={detailed} title={actionLabel} onClick={() => onChange(nextDensity)}>
+    <span className="component-density-icon" key={density} aria-hidden="true">{detailed ? <Eye size={17} /> : <EyeOff size={17} />}</span>
+  </button>
 }
 
 function MachineComponentsPanel({ machines, lifecycles, selectedMachine, onMachineChange, canManage, onInitialize, density }) {
