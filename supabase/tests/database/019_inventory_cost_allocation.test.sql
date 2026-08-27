@@ -24,7 +24,8 @@ insert into public.inventory_locations(id,account_id,branch_id,code,name) values
 ('f5000000-0000-4000-8000-000000000002','f1000000-0000-4000-8000-000000000001','f3000000-0000-4000-8000-000000000001','FLOOR','Machine Area');
 insert into public.inventory_items(id,account_id,sku,name,unit) values
 ('f6000000-0000-4000-8000-000000000001','f1000000-0000-4000-8000-000000000001','FIFO','FIFO Part','pcs'),
-('f6000000-0000-4000-8000-000000000002','f1000000-0000-4000-8000-000000000001','UNKNOWN','Unknown Part','pcs');
+('f6000000-0000-4000-8000-000000000002','f1000000-0000-4000-8000-000000000001','UNKNOWN','Unknown Part','pcs'),
+('f6000000-0000-4000-8000-000000000003','f1000000-0000-4000-8000-000000000001','MAINT','Maintenance Part','pcs');
 insert into public.inventory_suppliers(id,account_id,supplier_code,name) values
 ('f7000000-0000-4000-8000-000000000001','f1000000-0000-4000-8000-000000000001','SUP','PT Cost Supplier');
 
@@ -69,7 +70,7 @@ select extensions.is((select count(*)::int from public.inventory_cost_allocation
 select extensions.is((select quantity from public.inventory_cost_allocations where outbound_movement_id=(select id from public.inventory_movements where client_request_id='fa000000-0000-4000-8000-000000000002') and allocation_order=1),2::numeric,'FIFO exhausts oldest lot first');
 select extensions.is((select unit_cost from public.inventory_cost_allocations where outbound_movement_id=(select id from public.inventory_movements where client_request_id='fa000000-0000-4000-8000-000000000002') and allocation_order=2),2650000::numeric,'FIFO continues into second lot');
 select extensions.is((select sum(allocated_cost) from public.inventory_cost_allocations where outbound_movement_id=(select id from public.inventory_movements where client_request_id='fa000000-0000-4000-8000-000000000002')),7650000::numeric,'issue consumption cost is authoritative allocation sum');
-select extensions.is((select sum(quantity) from public.inventory_cost_allocations allocation join public.inventory_cost_lots lot on lot.id=allocation.source_cost_lot_id where allocation.outbound_movement_id=(select id from public.inventory_movements where client_request_id='fa000000-0000-4000-8000-000000000002') and lot.location_id='f5000000-0000-4000-8000-000000000002'),0::numeric,'location FIFO does not consume cheaper stock from another location');
+select extensions.is((select coalesce(sum(quantity),0) from public.inventory_cost_allocations allocation join public.inventory_cost_lots lot on lot.id=allocation.source_cost_lot_id where allocation.outbound_movement_id=(select id from public.inventory_movements where client_request_id='fa000000-0000-4000-8000-000000000002') and lot.location_id='f5000000-0000-4000-8000-000000000002'),0::numeric,'location FIFO does not consume cheaper stock from another location');
 select extensions.is((select known_inventory_cost from public.inventory_cost_position where inventory_item_id='f6000000-0000-4000-8000-000000000001' and location_id='f5000000-0000-4000-8000-000000000001'),5300000::numeric,'partial second lot remains at original unit cost');
 select extensions.is((select algorithm_version from public.inventory_cost_allocations where outbound_movement_id=(select id from public.inventory_movements where client_request_id='fa000000-0000-4000-8000-000000000002') order by allocation_order limit 1),'fifo_v1','allocation records policy algorithm version');
 
@@ -84,8 +85,18 @@ select public.adjust_inventory_stock_costed('f1000000-0000-4000-8000-00000000000
 select extensions.ok((select unit_cost is null and allocated_cost is null from public.inventory_cost_allocations where outbound_movement_id=(select id from public.inventory_movements where client_request_id='fb000000-0000-4000-8000-000000000002')),'unknown stock creates explicit unknown-cost allocation');
 select extensions.ok(not (select cost_is_complete from public.inventory_consumption_cost_history where outbound_movement_id=(select id from public.inventory_movements where client_request_id='fb000000-0000-4000-8000-000000000002')),'unknown consumption is never presented as complete zero cost');
 
+select public.adjust_inventory_stock_costed('f1000000-0000-4000-8000-000000000001','f6000000-0000-4000-8000-000000000003','f5000000-0000-4000-8000-000000000001',1,'2026-07-15 10:00+07','f4000000-0000-4000-8000-000000000001','Known maintenance stock',null,'fb000000-0000-4000-8000-000000000003',500);
+reset role;
+insert into public.inventory_movements(account_id,inventory_item_id,location_id,movement_type,quantity,unit_snapshot,occurred_at,
+  operational_person_id,operational_person_name_snapshot,reference_type,reason,client_request_id,created_by,created_by_name_snapshot)
+values('f1000000-0000-4000-8000-000000000001','f6000000-0000-4000-8000-000000000003','f5000000-0000-4000-8000-000000000001',
+  'issue',-1,'pcs','2026-08-15 10:00+07','f4000000-0000-4000-8000-000000000001','Cost PIC','maintenance','Maintenance consumption',
+  'fb000000-0000-4000-8000-000000000004','f0000000-0000-4000-8000-000000000001','Cost Owner');
+set local role authenticated;
+select set_config('request.jwt.claim.sub','f0000000-0000-4000-8000-000000000001',true);
+
 select extensions.is((select purchase_cost from public.monthly_inventory_cost_summary where account_id='f1000000-0000-4000-8000-000000000001' and period_start='2026-07-01'),12950000::numeric,'purchase cost belongs to purchase month');
-select extensions.is((select known_consumption_cost from public.monthly_inventory_cost_summary where account_id='f1000000-0000-4000-8000-000000000001' and period_start='2026-08-01'),7650000::numeric,'consumption cost belongs to outbound movement month');
+select extensions.is((select known_consumption_cost from public.monthly_inventory_cost_summary where account_id='f1000000-0000-4000-8000-000000000001' and period_start='2026-08-01'),500::numeric,'operational issue consumption cost belongs to outbound movement month');
 select extensions.is((select purchase_cost from public.monthly_inventory_cost_summary where account_id='f1000000-0000-4000-8000-000000000001' and period_start='2026-08-01'),0::numeric,'consumption month has zero purchase cost');
 
 select extensions.throws_ok($$update public.inventory_cost_allocations set quantity=99 where account_id='f1000000-0000-4000-8000-000000000001'$$,'42501',null,'allocation history is immutable even to table owner path');
