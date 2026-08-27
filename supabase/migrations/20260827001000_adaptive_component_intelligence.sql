@@ -229,7 +229,7 @@ with ranked_profiles as (
     profile.updated_at as profile_updated_at,
     row_number() over (
       partition by account.id, profile.machine_model_id, lower(btrim(profile.slot_code))
-      order by (profile.account_id = account.id) desc, profile.created_at desc, profile.id desc
+      order by (profile.account_id = account.id) desc nulls last, profile.created_at desc, profile.id desc
     ) as preference_rank
   from public.accounts account
   join public.machine_model_components profile

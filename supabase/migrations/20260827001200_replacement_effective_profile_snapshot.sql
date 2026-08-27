@@ -153,7 +153,7 @@ begin
     and lower(btrim(profile.slot_code))=lower(btrim(lifecycle_record.slot_code))
     and (profile.account_id is null or profile.account_id=target_account_id)
     and profile.is_active
-  order by (profile.account_id=target_account_id) desc, profile.created_at desc, profile.id desc
+  order by (profile.account_id=target_account_id) desc nulls last, profile.created_at desc, profile.id desc
   limit 1;
   if not found then raise exception 'active effective component profile does not match lifecycle and machine' using errcode = '23514'; end if;
   if lower(btrim(profile_record.slot_code))='test_component' then raise exception 'TEST_COMPONENT replacement is not allowed' using errcode = '23514'; end if;
