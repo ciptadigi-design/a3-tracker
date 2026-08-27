@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Gauge, LoaderCircle, RefreshCcw, RotateCcw, UserRound, X } from 'lucide-react'
+import { Boxes, Gauge, LoaderCircle, MapPin, RefreshCcw, RotateCcw, UserRound, X } from 'lucide-react'
 import { BlockingDialog } from '../../components/ui/BlockingDialog.jsx'
 import { useAuth } from '../auth/useAuth.js'
 import { createDraftKey } from '../drafts/draftKeys.js'
@@ -12,7 +12,7 @@ function localDateTime() {
 }
 
 function number(value) {
-  return value == null || !Number.isFinite(Number(value)) ? '—' : Number(value).toLocaleString('en-US', { maximumFractionDigits: 0 })
+  return value == null || !Number.isFinite(Number(value)) ? '—' : Number(value).toLocaleString('en-US', { maximumFractionDigits: 4 })
 }
 
 function parseCounter(value) {
@@ -30,8 +30,13 @@ const validDraft = (value) => value
   && typeof value.includeLearning === 'boolean'
   && typeof value.notes === 'string'
   && typeof value.clientRequestId === 'string'
+  && (value.inventorySource == null || ['', 'inventory', 'external_untracked'].includes(value.inventorySource))
+  && (value.inventoryItemId == null || typeof value.inventoryItemId === 'string')
+  && (value.inventoryLocationId == null || typeof value.inventoryLocationId === 'string')
+  && (value.inventoryQuantity == null || typeof value.inventoryQuantity === 'string')
+  && (value.externalInventoryReason == null || typeof value.externalInventoryReason === 'string')
 
-export function ReplaceComponentDialog({ account, machine, lifecycle, members, currentProfile, onClose, onReplace }) {
+export function ReplaceComponentDialog({ account, machine, lifecycle, members, currentProfile, inventoryItems, inventoryLocations, inventoryBalances, onClose, onReplace }) {
   const { user } = useAuth()
   const currentMember = members.find((member) => member.user_id === user.id)
   const initialValue = useMemo(() => ({
@@ -44,6 +49,11 @@ export function ReplaceComponentDialog({ account, machine, lifecycle, members, c
     includeLearning: true,
     notes: '',
     clientRequestId: crypto.randomUUID(),
+    inventorySource: '',
+    inventoryItemId: '',
+    inventoryLocationId: '',
+    inventoryQuantity: '1',
+    externalInventoryReason: '',
   }), [currentMember?.user_id, lifecycle.latest_effective_counter, lifecycle.tracking_method, user.id])
   const { value, updateDraft, clearDraft, resetDraft, hasDraft, wasRestored } = usePersistentDraft({
     draftKey: createDraftKey({ userId: user.id, accountId: account.id, branchId: machine.branch_id, feature: 'component-replacement', entityId: lifecycle.lifecycle_id }),
@@ -61,6 +71,15 @@ export function ReplaceComponentDialog({ account, machine, lifecycle, members, c
   const manualPic = value.performedBy === 'manual'
   const selectedMember = members.find((member) => member.user_id === value.performedBy)
   const performerName = manualPic ? value.manualPic.trim() : selectedMember?.display_name ?? currentProfile?.display_name ?? user.email ?? 'User'
+  const inventorySource = value.inventorySource ?? ''
+  const eligibleItems = inventoryItems.filter((item) => item.component_id === lifecycle.component_id)
+  const selectedInventoryItem = eligibleItems.find((item) => item.id === (value.inventoryItemId ?? '')) ?? null
+  const selectedInventoryLocation = inventoryLocations.find((location) => location.id === (value.inventoryLocationId ?? '')) ?? null
+  const availableQuantity = selectedInventoryItem && selectedInventoryLocation
+    ? Number(inventoryBalances.find((balance) => balance.inventory_item_id === selectedInventoryItem.id && balance.location_id === selectedInventoryLocation.id)?.quantity ?? 0)
+    : null
+  const inventoryQuantity = Number(value.inventoryQuantity ?? '1')
+  const afterQuantity = availableQuantity == null || !Number.isFinite(inventoryQuantity) ? null : availableQuantity - inventoryQuantity
 
   function change(field, next) {
     updateDraft((current) => ({ ...current, [field]: next }))
@@ -79,6 +98,14 @@ export function ReplaceComponentDialog({ account, machine, lifecycle, members, c
     if (!value.replacedAt) return setError('Tanggal dan waktu penggantian wajib diisi.')
     if (!performerName) return setError('PIC penggantian wajib diisi.')
     if (value.reason === 'other' && !value.notes.trim()) return setError('Catatan alasan wajib diisi untuk pilihan Lainnya.')
+    if (!inventorySource) return setError('Pilih sumber komponen pengganti.')
+    if (inventorySource === 'inventory') {
+      if (!selectedInventoryItem) return setError('Pilih Inventory Item yang terhubung dengan komponen ini.')
+      if (!selectedInventoryLocation) return setError('Pilih lokasi stok fisik.')
+      if (!Number.isFinite(inventoryQuantity) || inventoryQuantity <= 0 || Math.round(inventoryQuantity * 10_000) !== inventoryQuantity * 10_000) return setError('Quantity yang digunakan harus positif dengan maksimal empat angka desimal.')
+      if (availableQuantity < inventoryQuantity) return setError(`Stock ${selectedInventoryItem.name} di ${selectedInventoryLocation.name} tidak mencukupi. Tersedia ${number(availableQuantity)} ${selectedInventoryItem.unit}.`)
+    }
+    if (inventorySource === 'external_untracked' && !(value.externalInventoryReason ?? '').trim()) return setError('Alasan stok eksternal / belum tercatat wajib diisi.')
 
     setSaving(true)
     setError(null)
@@ -93,6 +120,11 @@ export function ReplaceComponentDialog({ account, machine, lifecycle, members, c
         performedByName: performerName,
         notes: value.notes,
         clientRequestId: value.clientRequestId,
+        inventorySource,
+        inventoryItemId: selectedInventoryItem?.id ?? null,
+        inventoryLocationId: selectedInventoryLocation?.id ?? null,
+        inventoryQuantity,
+        externalInventoryReason: value.externalInventoryReason ?? '',
       })
       clearDraft()
       onClose()
@@ -113,6 +145,22 @@ export function ReplaceComponentDialog({ account, machine, lifecycle, members, c
         <div className="replacement-counter-context"><div><span>Latest recorded counter</span><strong>{number(lifecycle.latest_effective_counter)}</strong><small>Read from effective Daily Counter</small></div><label className="form-field"><span>Current physical counter *</span><input data-dialog-initial-focus inputMode="numeric" value={value.physicalCounter} onChange={(event) => change('physicalCounter', event.target.value)} /></label></div>
         <div className="replacement-preview"><span className="replacement-preview-icon"><Gauge size={19} /></span><div><span>Installed counter</span><strong>{number(lifecycle.installed_counter)}</strong></div><div><span>{lifecycle.tracking_method === 'consumption_based' ? 'Actual yield preview' : 'Actual usage preview'}</span><strong>{number(actualUsage)}</strong></div><div><span>Expected at install</span><strong>{number(lifecycle.expected_at_install)}</strong></div><div><span>Performance</span><strong>{performance == null ? '—' : `${performance.toFixed(1)}%`}</strong></div></div>
         <div className="form-grid"><label className="form-field"><span>Replacement date & time *</span><input type="datetime-local" value={value.replacedAt} onChange={(event) => change('replacedAt', event.target.value)} /></label><label className="form-field"><span>PIC / performed by *</span><select value={value.performedBy} onChange={(event) => change('performedBy', event.target.value)}>{members.map((member) => <option key={member.user_id} value={member.user_id}>{member.display_name}</option>)}<option value="manual">Manual PIC…</option></select></label>{manualPic && <label className="form-field form-field-wide"><span>Manual PIC name *</span><div className="input-with-icon"><UserRound size={16} /><input value={value.manualPic} onChange={(event) => change('manualPic', event.target.value)} placeholder="Nama pelaksana" /></div></label>}<label className="form-field"><span>Replacement reason *</span><select value={value.reason} onChange={(event) => changeReason(event.target.value)}>{replacementReasons.map((reason) => <option key={reason.value} value={reason.value}>{reason.label}</option>)}</select></label><label className="form-field"><span>Condition at removal *</span><select value={value.condition} onChange={(event) => change('condition', event.target.value)}>{removalConditions.map((condition) => <option key={condition.value} value={condition.value}>{condition.label}</option>)}</select></label></div>
+        <section className="replacement-inventory-section" aria-labelledby="replacement-inventory-title">
+          <div className="replacement-section-heading"><span className="replacement-preview-icon"><Boxes size={18} /></span><div><strong id="replacement-inventory-title">Inventory Source</strong><small>Record where the physical replacement came from.</small></div></div>
+          <div className="replacement-source-options" role="radiogroup" aria-label="Inventory source">
+            <label className={inventorySource === 'inventory' ? 'selected' : ''}><input type="radio" name="inventory-source" checked={inventorySource === 'inventory'} onChange={() => change('inventorySource', 'inventory')} /><span><strong>Ambil dari Inventory</strong><small>Post an atomic stock issue with this replacement.</small></span></label>
+            <label className={inventorySource === 'external_untracked' ? 'selected' : ''}><input type="radio" name="inventory-source" checked={inventorySource === 'external_untracked'} onChange={() => change('inventorySource', 'external_untracked')} /><span><strong>Stok eksternal / belum tercatat</strong><small>Record the source explicitly without creating stock movement.</small></span></label>
+          </div>
+          {inventorySource === 'inventory' && <>
+            <div className="form-grid replacement-inventory-fields">
+              <label className="form-field"><span>Inventory Item *</span><select value={value.inventoryItemId ?? ''} onChange={(event) => updateDraft((current) => ({ ...current, inventoryItemId: event.target.value, inventoryLocationId: '' }))}><option value="">Select matching item</option>{eligibleItems.map((item) => <option key={item.id} value={item.id}>{item.name} · {item.sku}</option>)}</select><small>{eligibleItems.length ? `Only items explicitly linked to ${lifecycle.component_name}.` : `No active Inventory Item is linked to ${lifecycle.component_name}.`}</small></label>
+              <label className="form-field"><span>Stock Location *</span><div className="input-with-icon"><MapPin size={16} /><select value={value.inventoryLocationId ?? ''} onChange={(event) => change('inventoryLocationId', event.target.value)}><option value="">Select physical location</option>{inventoryLocations.map((location) => { const stock = selectedInventoryItem ? Number(inventoryBalances.find((balance) => balance.inventory_item_id === selectedInventoryItem.id && balance.location_id === location.id)?.quantity ?? 0) : 0; return <option key={location.id} value={location.id}>{location.name} · {number(stock)} {selectedInventoryItem?.unit ?? ''}</option> })}</select></div></label>
+              <label className="form-field"><span>Quantity Used *</span><input type="number" min="0.0001" step="0.0001" value={value.inventoryQuantity ?? '1'} onChange={(event) => change('inventoryQuantity', event.target.value)} /><small>{selectedInventoryItem?.unit ?? 'Select an item to see its unit'}</small></label>
+            </div>
+            {selectedInventoryItem && selectedInventoryLocation && <div className="replacement-stock-preview"><div><span>Current stock</span><strong>{number(availableQuantity)} {selectedInventoryItem.unit}</strong></div><div><span>Used</span><strong>{Number.isFinite(inventoryQuantity) ? `-${number(inventoryQuantity)}` : '—'} {selectedInventoryItem.unit}</strong></div><div className={afterQuantity < 0 ? 'stock-preview-negative' : ''}><span>After replacement</span><strong>{afterQuantity == null ? '—' : number(afterQuantity)} {selectedInventoryItem.unit}</strong></div></div>}
+          </>}
+          {inventorySource === 'external_untracked' && <label className="form-field"><span>External stock reason *</span><textarea rows="2" value={value.externalInventoryReason ?? ''} onChange={(event) => change('externalInventoryReason', event.target.value)} placeholder="Contoh: Teknisi membawa sparepart" /></label>}
+        </section>
         <label className="replacement-learning-toggle"><input type="checkbox" checked={value.includeLearning} onChange={(event) => change('includeLearning', event.target.checked)} /><span><strong>Include in adaptive learning</strong><small>Preserve this completed lifecycle as an eligible sample for database-derived intelligence.</small></span></label>
         <label className="form-field"><span>Notes {value.reason === 'other' ? '*' : ''}</span><textarea rows="3" value={value.notes} onChange={(event) => change('notes', event.target.value)} placeholder="Replacement context, observed condition, or reason detail" /></label>
         {replacementCounter > Number(lifecycle.latest_effective_counter) && <div className="replacement-counter-notice">A new Total Impressions reading of <strong>{number(replacementCounter)}</strong> will be recorded atomically with this replacement.</div>}

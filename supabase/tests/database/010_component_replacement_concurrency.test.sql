@@ -78,7 +78,8 @@ select extensions.is(
         'a6000000-0000-0000-0000-000000000001',
         1000000,'2026-02-01','normal_eol','worn',null,
         'a0000000-0000-0000-0000-000000000001','Race Operator',null,
-        'a7000000-0000-0000-0000-000000000001'
+        'a7000000-0000-0000-0000-000000000001',
+        'external_untracked',null,null,null,'Regression fixture'
       ) event
     )
     select replaced.id from replaced cross join lateral (select pg_sleep(1)) hold_lock$$
@@ -97,7 +98,8 @@ select extensions.is(
         'a6000000-0000-0000-0000-000000000001',
         1000000,'2026-02-01','failure','failed',false,
         'a0000000-0000-0000-0000-000000000001','Race Operator',null,
-        'a7000000-0000-0000-0000-000000000002'
+        'a7000000-0000-0000-0000-000000000002',
+        'external_untracked',null,null,null,'Regression fixture'
       ) event$$
   ),
   1,
