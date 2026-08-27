@@ -12,9 +12,9 @@ import { ComingSoonPage } from '../pages/ComingSoonPage.jsx'
 import { MachineDetailPage } from '../features/machines/MachineDetailPage.jsx'
 import { ErrorsPage } from '../pages/ErrorsPage.jsx'
 import { IncidentDetailPage } from '../features/incidents/IncidentDetailPage.jsx'
+import { ComponentsPage } from '../pages/ComponentsPage.jsx'
 
 const comingSoonPages = {
-  '/components': ['Components', 'Machine component health will be introduced after the machine master workflow.'],
   '/inventory': ['Inventory', 'Inventory remains safely isolated from the V2 shell for now.'],
   '/maintenance': ['Maintenance', 'Maintenance planning will arrive after machine onboarding.'],
   '/reports': ['Reports', 'Reports will be built from real operational data as modules come online.'],
@@ -42,6 +42,7 @@ export function AppShell() {
   else if (getMachineIdFromPath(path)) page = <MachineDetailPage machineId={getMachineIdFromPath(path)} navigate={handleNavigate} />
   else if (path === '/daily') page = <DailyPage />
   else if (path === '/errors') page = <ErrorsPage navigate={handleNavigate} />
+  else if (path === '/components') page = <ComponentsPage />
   else if (getIncidentIdFromPath(path)) page = <IncidentDetailPage incidentId={getIncidentIdFromPath(path)} navigate={handleNavigate} />
   else {
     const [title, description] = comingSoonPages[path] ?? comingSoonPages['/settings']
