@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Activity, Archive, Boxes, Edit3, Eye, EyeOff, Gauge, Link2, Plus, RefreshCcw, ShieldCheck, Trash2 } from 'lucide-react'
+import { Activity, Archive, BarChart3, Boxes, Edit3, Eye, EyeOff, Gauge, Link2, Plus, RefreshCcw, ShieldCheck, Trash2 } from 'lucide-react'
 import { BlockingDialog } from '../components/ui/BlockingDialog.jsx'
 import { PageHeader } from '../components/ui/PageHeader.jsx'
 import { useAuth } from '../features/auth/useAuth.js'
@@ -9,10 +9,11 @@ import { ProfileDialog } from '../features/components/ProfileDialog.jsx'
 import { InitializeLifecycleDialog } from '../features/components/InitializeLifecycleDialog.jsx'
 import { ReplaceComponentDialog } from '../features/components/ReplaceComponentDialog.jsx'
 import { ReplacementHistory } from '../features/components/ReplacementHistory.jsx'
+import { ComponentIntelligenceDialog } from '../features/components/ComponentIntelligenceDialog.jsx'
 import { useComponentWorkflowState } from '../features/components/useComponentWorkflowState.js'
 import { createUIStateKey } from '../features/uiState/uiStateKeys.js'
 import { usePersistentUIState } from '../features/uiState/usePersistentUIState.js'
-import { deleteComponent, effectiveProfiles, loadComponentFoundation, removeProfile, saveComponent, saveProfile } from '../services/supabase/components.js'
+import { adoptIntelligenceRecommendation, deleteComponent, effectiveProfiles, loadComponentFoundation, removeProfile, saveComponent, saveProfile } from '../services/supabase/components.js'
 import { initializeComponentLifecycle, loadMachineComponentLifecycles, replaceComponentLifecycle } from '../services/supabase/componentLifecycles.js'
 
 const trackingLabels = {
@@ -98,7 +99,7 @@ export function ComponentsPage() {
   const { account, membership, profile } = useTenant()
   const canManage = ['owner', 'admin'].includes(membership?.role)
   const canReplace = ['owner', 'admin', 'technician', 'operator'].includes(membership?.role)
-  const [data, setData] = useState({ manufacturers: [], models: [], components: [], profiles: [] })
+  const [data, setData] = useState({ manufacturers: [], models: [], components: [], profiles: [], intelligence: [], intelligenceSamples: [] })
   const [operational, setOperational] = useState({ machines: [], lifecycles: [], replacementHistory: [], members: [] })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -116,7 +117,7 @@ export function ComponentsPage() {
     setLoading(true)
     setError(null)
     try {
-      const [foundation, lifecycleData] = await Promise.all([loadComponentFoundation(), loadMachineComponentLifecycles({ accountId: account.id })])
+      const [foundation, lifecycleData] = await Promise.all([loadComponentFoundation({ accountId: account.id }), loadMachineComponentLifecycles({ accountId: account.id })])
       setData(foundation)
       setOperational(lifecycleData)
     } catch (loadError) {
@@ -128,7 +129,7 @@ export function ComponentsPage() {
 
   useEffect(() => {
     let active = true
-    Promise.all([loadComponentFoundation(), loadMachineComponentLifecycles({ accountId: account.id })])
+    Promise.all([loadComponentFoundation({ accountId: account.id }), loadMachineComponentLifecycles({ accountId: account.id })])
       .then(([foundation, lifecycleData]) => { if (active) { setData(foundation); setOperational(lifecycleData) } })
       .catch((loadError) => { if (active) setError(loadError) })
       .finally(() => { if (active) setLoading(false) })
@@ -151,6 +152,8 @@ export function ComponentsPage() {
   const visibleComponents = data.components.filter((component) => view.showArchived ? !component.is_active : component.is_active)
   const editingComponent = data.components.find((component) => component.id === workflow.entityId)
   const editingProfile = allEffectiveProfiles.find((profile) => profile.id === workflow.entityId)
+  const intelligenceProfile = allEffectiveProfiles.find((item) => item.id === workflow.entityId)
+  const activeIntelligence = data.intelligence.find((item) => item.effective_profile_id === intelligenceProfile?.id)
   const assigningComponent = data.components.find((component) => component.id === workflow.entityId)
   const profileModel = data.models.find((model) => model.id === editingProfile?.machine_model_id) ?? selectedModel
   const initializingLifecycle = operational.lifecycles.find((row) => row.lifecycle_id === workflow.entityId)
@@ -199,6 +202,21 @@ export function ComponentsPage() {
     setNotice(`${initializingLifecycle.component_name} replacement recorded. The previous lifecycle is closed and new tracking starts at the replacement counter.`)
   }
 
+  async function adoptRecommendation({ intelligence, reason, clientRequestId }) {
+    await adoptIntelligenceRecommendation({
+      accountId: account.id,
+      profileId: intelligence.effective_profile_id,
+      baseline: intelligence.current_baseline,
+      sampleFingerprint: intelligence.sample_fingerprint,
+      algorithmVersion: intelligence.algorithm_version,
+      clientRequestId,
+      reason,
+    })
+    await refresh()
+    close()
+    setNotice(`Adaptive recommendation adopted for ${intelligence.component_name}. Existing lifecycle snapshots were not changed.`)
+  }
+
   const pageAction = canManage && view.tab !== 'machine' ? <div className="page-header-actions"><button className="secondary-button" onClick={() => open('component-create')}><Plus size={17} />Add Component</button>{selectedModel && <button className="primary-button" onClick={() => open('profile-create')}><Plus size={17} />Add Profile</button>}</div> : null
 
   return <div className="page-stack">
@@ -216,7 +234,10 @@ export function ComponentsPage() {
         <div className="model-selector-row"><label><span>Machine model</span><select value={selectedModel?.id ?? ''} onChange={(event) => setView((current) => ({ ...current, modelId: event.target.value }))}>{data.models.map((model) => <option key={model.id} value={model.id}>{model.manufacturers?.name} · {model.name}</option>)}</select></label><div><strong>{effective.filter((profile) => profile.is_active).length}</strong><span>active profiles</span></div></div>
         <div className="profile-list-tools"><div className="machine-view-tabs record-tabs"><button className={!view.showArchived ? 'selected' : ''} onClick={() => setView((current) => ({ ...current, showArchived: false }))}>Active <span>{effective.filter((profile) => profile.is_active).length}</span></button><button className={view.showArchived ? 'selected' : ''} onClick={() => setView((current) => ({ ...current, showArchived: true }))}>Archived <span>{effective.filter((profile) => !profile.is_active).length}</span></button></div></div>
         {density === 'detailed' && <div className="component-table-head"><span>Component / slot</span><span>Tracking</span><span>Baseline</span><span>Adaptive</span><span>Actions</span></div>}
-        <div className={`component-list ${density === 'compact' ? 'compact-profile-grid' : ''}`}>{visibleProfiles.map((profile) => <article className={density === 'compact' ? 'compact-profile-item' : 'component-row'} key={profile.id}>{density === 'compact' ? <><div className="compact-item-heading"><strong>{profile.components?.name}</strong>{canManage && <div className="compact-context-actions"><button type="button" onClick={() => open('profile-edit', profile.id)} aria-label={`Edit ${profile.components?.name}`} title={`Edit ${profile.components?.name}`}><Edit3 size={14} /></button><button type="button" onClick={() => setConfirm({ kind: 'profile', item: profile })} aria-label={`Remove ${profile.components?.name}`} title={`Remove ${profile.components?.name}`}>{profile.is_active ? <Archive size={14} /> : <Trash2 size={14} />}</button></div>}</div><strong className="compact-baseline">{profile.baseline_expected_clicks?.toLocaleString() ?? 'Reference only'}<small> expected clicks</small></strong><div className="compact-profile-meta"><span className="tracking-pill">{trackingLabels[profile.tracking_method]}</span><span className={profile.adaptive_enabled ? 'adaptive-on' : 'adaptive-off'}>{profile.adaptive_enabled ? 'Adaptive on' : 'Adaptive off'}</span></div></> : <><div className="component-identity"><span className="component-icon"><Boxes size={18} /></span><div><strong>{profile.components?.name}</strong><code>{profile.slot_code}</code></div></div><span className="tracking-pill">{trackingLabels[profile.tracking_method]}</span><div className="component-baseline"><strong>{profile.baseline_expected_clicks?.toLocaleString() ?? 'Reference only'}</strong><span>expected clicks</span></div><span className={profile.adaptive_enabled ? 'adaptive-on' : 'adaptive-off'}>{profile.adaptive_enabled ? 'Enabled' : 'Disabled'}</span><div className="row-actions">{canManage && <><button onClick={() => open('profile-edit', profile.id)} aria-label={`Edit ${profile.components?.name}`}><Edit3 size={16} /></button><button onClick={() => setConfirm({ kind: 'profile', item: profile })} aria-label={`Remove ${profile.components?.name}`}>{profile.is_active ? <Archive size={16} /> : <Trash2 size={16} />}</button></>}</div></>}</article>)}</div>
+        <div className={`component-list ${density === 'compact' ? 'compact-profile-grid' : ''}`}>{visibleProfiles.map((profile) => {
+          const intelligence = data.intelligence.find((item) => item.effective_profile_id === profile.id)
+          return <article className={density === 'compact' ? 'compact-profile-item' : 'component-row'} key={profile.id}>{density === 'compact' ? <><div className="compact-item-heading"><strong>{profile.components?.name}</strong>{canManage && <div className="compact-context-actions"><button type="button" onClick={() => open('profile-edit', profile.id)} aria-label={`Edit ${profile.components?.name}`} title={`Edit ${profile.components?.name}`}><Edit3 size={14} /></button><button type="button" onClick={() => setConfirm({ kind: 'profile', item: profile })} aria-label={`Remove ${profile.components?.name}`} title={`Remove ${profile.components?.name}`}>{profile.is_active ? <Archive size={14} /> : <Trash2 size={14} />}</button></div>}</div><strong className="compact-baseline">{profile.baseline_expected_clicks?.toLocaleString() ?? 'Reference only'}<small> expected clicks</small></strong><div className="compact-profile-meta"><span className="tracking-pill">{trackingLabels[profile.tracking_method]}</span>{intelligence && <button className={profile.adaptive_enabled ? 'adaptive-intelligence-badge adaptive-on' : 'adaptive-intelligence-badge adaptive-off'} type="button" onClick={() => open('intelligence-view', profile.id)} aria-label={`View intelligence for ${profile.components?.name}`}><BarChart3 size={12} />Adaptive · {intelligence.usable_samples}</button>}</div></> : <><div className="component-identity"><span className="component-icon"><Boxes size={18} /></span><div><strong>{profile.components?.name}</strong><code>{profile.slot_code}</code></div></div><span className="tracking-pill">{trackingLabels[profile.tracking_method]}</span><div className="component-baseline"><strong>{profile.baseline_expected_clicks?.toLocaleString() ?? 'Reference only'}</strong><span>expected clicks</span></div><div className="adaptive-intelligence-cell"><span className={profile.adaptive_enabled ? 'adaptive-on' : 'adaptive-off'}>{profile.adaptive_enabled ? `${intelligence?.confidence_label === 'no_data' ? 'No Data' : `${intelligence?.confidence_label ?? '—'} · ${intelligence?.usable_samples ?? 0}`}` : 'Disabled'}</span>{intelligence && <button type="button" onClick={() => open('intelligence-view', profile.id)}><BarChart3 size={13} />View Intelligence</button>}</div><div className="row-actions">{canManage && <><button onClick={() => open('profile-edit', profile.id)} aria-label={`Edit ${profile.components?.name}`}><Edit3 size={16} /></button><button onClick={() => setConfirm({ kind: 'profile', item: profile })} aria-label={`Remove ${profile.components?.name}`}>{profile.is_active ? <Archive size={16} /> : <Trash2 size={16} />}</button></>}</div></>}</article>
+        })}</div>
       </>}
 
       {view.tab === 'catalog' && <>
@@ -236,6 +257,7 @@ export function ComponentsPage() {
     {canManage && selectedModel && (workflow.type === 'profile-create' || (workflow.type === 'profile-edit' && editingProfile) || (workflow.type === 'profile-assign' && assigningComponent)) && <ProfileDialog account={account} model={profileModel} models={data.models} profile={editingProfile} components={data.components} initialComponent={workflow.type === 'profile-assign' ? assigningComponent : null} draftEntityId={workflow.type === 'profile-assign' ? `assign-${assigningComponent.id}` : undefined} onClose={close} onSave={savedProfile} />}
     {canManage && workflow.type === 'lifecycle-initialize' && initializingLifecycle && lifecycleMachine && <InitializeLifecycleDialog account={account} machine={lifecycleMachine} lifecycle={initializingLifecycle} onClose={close} onInitialize={initializeLifecycle} />}
     {canReplace && workflow.type === 'lifecycle-replace' && initializingLifecycle?.lifecycle_status === 'active' && lifecycleMachine && <ReplaceComponentDialog account={account} machine={lifecycleMachine} lifecycle={initializingLifecycle} members={operational.members} currentProfile={profile} onClose={close} onReplace={replaceLifecycle} />}
+    {workflow.type === 'intelligence-view' && activeIntelligence && <ComponentIntelligenceDialog intelligence={activeIntelligence} samples={data.intelligenceSamples} canManage={canManage} onClose={close} onAdopt={adoptRecommendation} />}
     {confirm && <ConfirmDialog title={confirm.kind === 'component' ? 'Delete Component' : 'Remove Model Profile'} message={confirm.kind === 'component' ? 'If this component has never been referenced, it will be permanently deleted. Historical usage forces a safe archive instead.' : 'Unused profiles are deleted. Any historically referenced profile is archived so operational records remain intact.'} confirmLabel={confirm.kind === 'component' ? 'Delete / archive' : 'Remove / archive'} onCancel={() => setConfirm(null)} onConfirm={runConfirm} busy={busy} />}
   </div>
 }

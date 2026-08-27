@@ -6,15 +6,38 @@ baseline_expected_clicks, adaptive_enabled, healthy_threshold_percent, watch_thr
 warning_threshold_percent, critical_threshold_percent, notes, is_active, archived_at, updated_at,
 components (${componentFields})`
 
-export async function loadComponentFoundation() {
-  const [manufacturers, models, components, profiles] = await Promise.all([
+export async function loadComponentFoundation({ accountId } = {}) {
+  const [manufacturers, models, components, profiles, intelligence, samples] = await Promise.all([
     supabase.from('manufacturers').select('id, code, name').order('name'),
     supabase.from('machine_models').select('id, manufacturer_id, model_code, name, manufacturers(id, name)').order('name'),
     supabase.from('components').select(componentFields).order('name'),
     supabase.from('machine_model_components').select(profileFields).order('display_order'),
+    accountId
+      ? supabase.from('component_adaptive_intelligence').select('*').eq('account_id', accountId)
+      : Promise.resolve({ data: [], error: null }),
+    accountId
+      ? supabase.from('component_adaptive_sample_diagnostics').select('*').eq('account_id', accountId).order('replaced_at', { ascending: false })
+      : Promise.resolve({ data: [], error: null }),
   ])
-  for (const result of [manufacturers, models, components, profiles]) if (result.error) throw result.error
-  return { manufacturers: manufacturers.data ?? [], models: models.data ?? [], components: components.data ?? [], profiles: profiles.data ?? [] }
+  for (const result of [manufacturers, models, components, profiles, intelligence, samples]) if (result.error) throw result.error
+  return {
+    manufacturers: manufacturers.data ?? [], models: models.data ?? [], components: components.data ?? [], profiles: profiles.data ?? [],
+    intelligence: intelligence.data ?? [], intelligenceSamples: samples.data ?? [],
+  }
+}
+
+export async function adoptIntelligenceRecommendation({ accountId, profileId, baseline, sampleFingerprint, algorithmVersion, clientRequestId, reason }) {
+  const { data, error } = await supabase.rpc('adopt_component_intelligence_recommendation', {
+    target_account_id: accountId,
+    target_effective_profile_id: profileId,
+    target_current_baseline: baseline,
+    target_sample_fingerprint: sampleFingerprint,
+    target_algorithm_version: algorithmVersion,
+    target_client_request_id: clientRequestId,
+    target_reason: reason?.trim() || null,
+  })
+  if (error) throw error
+  return data
 }
 
 export function effectiveProfiles(profiles, accountId, modelId) {
