@@ -41,7 +41,7 @@ select extensions.is(
     select count(*)::integer
     from pg_catalog.pg_proc as function
     where function.oid = any(array[
-      'public.record_machine_counter(uuid,uuid,numeric,timestamptz,uuid,text,text,text)'::regprocedure,
+      'public.record_machine_counter(uuid,uuid,numeric,timestamptz,uuid,uuid,text,text,text)'::regprocedure,
       'public.correct_machine_counter(uuid,text,numeric,uuid,text)'::regprocedure
     ])
       and function.prosecdef
@@ -56,7 +56,7 @@ select extensions.is(
     from pg_catalog.pg_proc as function
     join pg_catalog.pg_roles as owner on owner.oid = function.proowner
     where function.oid = any(array[
-      'public.record_machine_counter(uuid,uuid,numeric,timestamptz,uuid,text,text,text)'::regprocedure,
+      'public.record_machine_counter(uuid,uuid,numeric,timestamptz,uuid,uuid,text,text,text)'::regprocedure,
       'public.correct_machine_counter(uuid,text,numeric,uuid,text)'::regprocedure
     ])
       and owner.rolname = 'postgres'
@@ -75,7 +75,7 @@ select extensions.is(
     ) as privilege
     where function.oid = any(array[
       'public.protect_counter_reading_history()'::regprocedure,
-      'public.record_machine_counter(uuid,uuid,numeric,timestamptz,uuid,text,text,text)'::regprocedure,
+      'public.record_machine_counter(uuid,uuid,numeric,timestamptz,uuid,uuid,text,text,text)'::regprocedure,
       'public.correct_machine_counter(uuid,text,numeric,uuid,text)'::regprocedure
     ])
       and privilege.grantee = 0
@@ -90,7 +90,7 @@ select extensions.is(
     select count(*)::integer
     from pg_catalog.pg_proc as function
     where function.oid = any(array[
-      'public.record_machine_counter(uuid,uuid,numeric,timestamptz,uuid,text,text,text)'::regprocedure,
+      'public.record_machine_counter(uuid,uuid,numeric,timestamptz,uuid,uuid,text,text,text)'::regprocedure,
       'public.correct_machine_counter(uuid,text,numeric,uuid,text)'::regprocedure
     ])
       and has_function_privilege('authenticated', function.oid, 'EXECUTE')
@@ -105,7 +105,7 @@ select extensions.is(
     from pg_catalog.pg_proc as function
     where function.oid = any(array[
       'public.protect_counter_reading_history()'::regprocedure,
-      'public.record_machine_counter(uuid,uuid,numeric,timestamptz,uuid,text,text,text)'::regprocedure,
+      'public.record_machine_counter(uuid,uuid,numeric,timestamptz,uuid,uuid,text,text,text)'::regprocedure,
       'public.correct_machine_counter(uuid,text,numeric,uuid,text)'::regprocedure
     ])
       and (
@@ -151,6 +151,10 @@ values
   ('73000000-0000-0000-0000-000000000001', '71000000-0000-0000-0000-000000000001', 'M21-A-MAIN', 'M2.1 A Main', '70000000-0000-0000-0000-000000000001', '70000000-0000-0000-0000-000000000001'),
   ('73000000-0000-0000-0000-000000000002', '71000000-0000-0000-0000-000000000002', 'M21-B-MAIN', 'M2.1 B Main', '70000000-0000-0000-0000-000000000006', '70000000-0000-0000-0000-000000000006');
 
+insert into public.operational_people (id, account_id, name, code, created_by, updated_by)
+values
+  ('76000000-0000-4000-8000-000000000001', '71000000-0000-0000-0000-000000000001', 'M2.1 Test PIC', 'M21-PIC', '70000000-0000-0000-0000-000000000001', '70000000-0000-0000-0000-000000000001');
+
 insert into public.machines (
   id, account_id, branch_id, machine_model_id, machine_code, display_name,
   created_by, updated_by
@@ -170,7 +174,8 @@ select extensions.throws_ok(
     '71000000-0000-0000-0000-000000000001',
     '74000000-0000-4000-8000-000000000001',
     1, '2026-08-23 08:00+07',
-    '75000000-0000-4000-8000-000000000001'
+    '75000000-0000-4000-8000-000000000001',
+    '76000000-0000-4000-8000-000000000001'
   )$$,
   '42501', null,
   'anonymous cannot execute counter submission'
@@ -179,12 +184,23 @@ reset role;
 
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '70000000-0000-0000-0000-000000000001', true);
+select extensions.throws_ok(
+  $$select public.record_machine_counter(
+    '71000000-0000-0000-0000-000000000001',
+    '74000000-0000-4000-8000-000000000001',
+    99, '2026-08-23 07:00+07',
+    '75000000-0000-4000-8000-000000000097'
+  )$$,
+  '42501', null,
+  'legacy counter API cannot bypass required operator selection'
+);
 select extensions.lives_ok(
   $$select public.record_machine_counter(
     '71000000-0000-0000-0000-000000000001',
     '74000000-0000-4000-8000-000000000001',
     100, '2026-08-23 08:00+07',
     '75000000-0000-4000-8000-000000000001',
+    '76000000-0000-4000-8000-000000000001',
     null, 'First baseline'
   )$$,
   'owner can create a counter reading'
@@ -203,7 +219,8 @@ select extensions.throws_ok(
     '71000000-0000-0000-0000-000000000001',
     '74000000-0000-4000-8000-000000000003',
     1, '2026-08-23 09:00+07',
-    '75000000-0000-4000-8000-000000000099'
+    '75000000-0000-4000-8000-000000000099',
+    '76000000-0000-4000-8000-000000000001'
   )$$,
   'P0002', null,
   'cross-account machine submission is denied'
@@ -213,7 +230,8 @@ select extensions.throws_ok(
     '71000000-0000-0000-0000-000000000001',
     '74000000-0000-4000-8000-000000000001',
     -1, '2026-08-23 09:00+07',
-    '75000000-0000-4000-8000-000000000098'
+    '75000000-0000-4000-8000-000000000098',
+    '76000000-0000-4000-8000-000000000001'
   )$$,
   '22003', null,
   'negative counter submission is denied'
@@ -228,6 +246,7 @@ select extensions.lives_ok(
     '74000000-0000-4000-8000-000000000001',
     150, '2026-08-23 10:00+07',
     '75000000-0000-4000-8000-000000000002',
+    '76000000-0000-4000-8000-000000000001',
     'S1'
   )$$,
   'admin can create an S1 reading'
@@ -242,6 +261,7 @@ select extensions.lives_ok(
     '74000000-0000-4000-8000-000000000001',
     180, '2026-08-23 14:00+07',
     '75000000-0000-4000-8000-000000000003',
+    '76000000-0000-4000-8000-000000000001',
     'S2'
   )$$,
   'technician can create an S2 reading'
@@ -256,6 +276,7 @@ select extensions.lives_ok(
     '74000000-0000-4000-8000-000000000001',
     200, '2026-08-23 20:00+07',
     '75000000-0000-4000-8000-000000000004',
+    '76000000-0000-4000-8000-000000000001',
     'S2'
   )$$,
   'operator can create another valid reading on the same day'
@@ -298,6 +319,7 @@ select extensions.lives_ok(
     '74000000-0000-4000-8000-000000000002',
     50, '2026-08-23 20:00+07',
     '75000000-0000-4000-8000-000000000005',
+    '76000000-0000-4000-8000-000000000001',
     'S2'
   )$$,
   'missing S1 does not block an S2 baseline on another machine'
@@ -307,7 +329,8 @@ select extensions.throws_ok(
     '71000000-0000-0000-0000-000000000001',
     '74000000-0000-4000-8000-000000000001',
     190, '2026-08-23 21:00+07',
-    '75000000-0000-4000-8000-000000000006'
+    '75000000-0000-4000-8000-000000000006',
+    '76000000-0000-4000-8000-000000000001'
   )$$,
   '22003', null,
   'monotonic regression is denied'
@@ -319,6 +342,7 @@ select extensions.is(
       '74000000-0000-4000-8000-000000000001',
       200, '2026-08-23 20:00+07',
       '75000000-0000-4000-8000-000000000004',
+      '76000000-0000-4000-8000-000000000001',
       'S2'
     )).id
   ),
@@ -344,6 +368,7 @@ select extensions.throws_ok(
     '74000000-0000-4000-8000-000000000001',
     201, '2026-08-23 20:00+07',
     '75000000-0000-4000-8000-000000000004',
+    '76000000-0000-4000-8000-000000000001',
     'S2'
   )$$,
   '23505', null,
@@ -430,7 +455,8 @@ select extensions.throws_ok(
     '71000000-0000-0000-0000-000000000001',
     '74000000-0000-4000-8000-000000000001',
     210, '2026-08-23 22:00+07',
-    '75000000-0000-4000-8000-000000000008'
+    '75000000-0000-4000-8000-000000000008',
+    '76000000-0000-4000-8000-000000000001'
   )$$,
   '42501', null,
   'suspended member cannot submit counter readings'
