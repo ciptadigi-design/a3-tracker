@@ -1,4 +1,23 @@
 -- Deterministic editable baseline profile for the existing C1070 model.
+-- These idempotent catalog inserts make clean migration reconstruction
+-- independent of seed.sql ordering; existing DEV records remain unchanged.
+
+insert into public.manufacturers (id, code, name)
+values ('50000000-0000-0000-0000-000000000001', 'KONICA_MINOLTA', 'Konica Minolta')
+on conflict (id) do nothing;
+
+insert into public.machine_models (
+  id, manufacturer_id, model_code, name, machine_category, color_capability
+)
+values (
+  '51000000-0000-0000-0000-000000000001',
+  '50000000-0000-0000-0000-000000000001',
+  'ACCURIOPRESS_C1070',
+  'AccurioPress C1070',
+  'digital_a3',
+  'color'
+)
+on conflict (id) do nothing;
 
 insert into public.components (id, code, name, category, manufacturer_id, default_tracking_method)
 select
