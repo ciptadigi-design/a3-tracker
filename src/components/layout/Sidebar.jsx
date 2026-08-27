@@ -5,7 +5,7 @@ const navigation = [
   { path: '/machines', label: 'Machines', icon: Printer, active: true },
   { path: '/daily', label: 'Daily', icon: CalendarDays, active: true },
   { path: '/components', label: 'Components', icon: Boxes, active: true },
-  { path: '/inventory', label: 'Inventory', icon: Package },
+  { path: '/inventory', label: 'Inventory', icon: Package, active: true },
   { path: '/errors', label: 'Errors', icon: AlertTriangle, active: true },
   { path: '/maintenance', label: 'Maintenance', icon: Wrench },
   { path: '/reports', label: 'Reports', icon: BarChart3 },

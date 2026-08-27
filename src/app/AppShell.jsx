@@ -14,9 +14,9 @@ import { ErrorsPage } from '../pages/ErrorsPage.jsx'
 import { IncidentDetailPage } from '../features/incidents/IncidentDetailPage.jsx'
 import { ComponentsPage } from '../pages/ComponentsPage.jsx'
 import { SettingsPage } from '../pages/SettingsPage.jsx'
+import { InventoryPage } from '../pages/InventoryPage.jsx'
 
 const comingSoonPages = {
-  '/inventory': ['Inventory', 'Inventory remains safely isolated from the V2 shell for now.'],
   '/maintenance': ['Maintenance', 'Maintenance planning will arrive after machine onboarding.'],
   '/reports': ['Reports', 'Reports will be built from real operational data as modules come online.'],
   '/settings': ['Settings', 'Operational workspace settings.'],
@@ -44,6 +44,7 @@ export function AppShell() {
   else if (path === '/daily') page = <DailyPage />
   else if (path === '/errors') page = <ErrorsPage navigate={handleNavigate} />
   else if (path === '/components') page = <ComponentsPage />
+  else if (path === '/inventory') page = <InventoryPage />
   else if (path === '/settings') page = <SettingsPage />
   else if (getIncidentIdFromPath(path)) page = <IncidentDetailPage incidentId={getIncidentIdFromPath(path)} navigate={handleNavigate} />
   else {
