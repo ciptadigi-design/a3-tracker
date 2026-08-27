@@ -15,6 +15,7 @@ import { IncidentDetailPage } from '../features/incidents/IncidentDetailPage.jsx
 import { ComponentsPage } from '../pages/ComponentsPage.jsx'
 import { SettingsPage } from '../pages/SettingsPage.jsx'
 import { InventoryPage } from '../pages/InventoryPage.jsx'
+import { MachineCostPage } from '../pages/MachineCostPage.jsx'
 
 const comingSoonPages = {
   '/maintenance': ['Maintenance', 'Maintenance planning will arrive after machine onboarding.'],
@@ -45,6 +46,7 @@ export function AppShell() {
   else if (path === '/errors') page = <ErrorsPage navigate={handleNavigate} />
   else if (path === '/components') page = <ComponentsPage />
   else if (path === '/inventory') page = <InventoryPage />
+  else if (path === '/machine-cost') page = <MachineCostPage />
   else if (path === '/settings') page = <SettingsPage />
   else if (getIncidentIdFromPath(path)) page = <IncidentDetailPage incidentId={getIncidentIdFromPath(path)} navigate={handleNavigate} />
   else {

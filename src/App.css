@@ -744,6 +744,91 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   .confirm-dialog { width: auto; max-width: none; justify-self: stretch; margin-left: max(16px, env(safe-area-inset-left)); margin-right: max(16px, env(safe-area-inset-right)); }
 }
 
+/* M2.5A machine component-consumption cost engine */
+.machine-cost-page { min-width: 0; }
+.machine-cost-filters { min-width: 0; display: grid; grid-template-columns: minmax(190px,1.35fr) minmax(140px,.8fr) minmax(220px,1fr) auto; align-items: end; gap: 10px; padding: 16px; border-radius: 20px; }
+.machine-cost-filters > label { min-width: 0; display: grid; gap: 6px; }
+.machine-cost-filters > label > span { color: var(--text-muted); font-size: 9px; font-weight: 780; letter-spacing: .06em; text-transform: uppercase; }
+.machine-cost-filters select, .machine-cost-filters input { width: 100%; min-width: 0; min-height: 42px; padding: 0 11px; color: var(--text); border: 1px solid var(--border-subtle); border-radius: 11px; background: var(--surface-muted); font: inherit; font-size: 11px; }
+.machine-cost-filters button { min-height: 42px; justify-content: center; }
+.machine-cost-period-readout { min-width: 0; min-height: 42px; display: flex; align-items: center; gap: 9px; padding: 0 11px; color: var(--blue); border: 1px solid color-mix(in srgb,var(--blue) 15%,var(--border-subtle)); border-radius: 11px; background: var(--blue-soft); }
+.machine-cost-period-readout > span { min-width: 0; display: grid; gap: 2px; overflow-wrap: anywhere; font-size: 10px; font-weight: 720; }
+.machine-cost-period-readout small { color: var(--text-muted); font-size: 8px; font-weight: 500; }
+.machine-cost-status { min-width: 0; display: flex; align-items: flex-start; gap: 11px; padding: 14px 16px; color: var(--blue); border: 1px solid color-mix(in srgb,var(--blue) 18%,var(--border-subtle)); border-radius: 16px; background: var(--blue-soft); }
+.machine-cost-status.status-partial, .machine-cost-status.status-insufficient_counter_data { color: var(--warning); border-color: color-mix(in srgb,var(--warning) 20%,var(--border-subtle)); background: color-mix(in srgb,var(--warning) 9%,var(--surface-solid)); }
+.machine-cost-status.status-no_data { color: var(--text-muted); border-color: var(--border-subtle); background: var(--surface-muted); }
+.machine-cost-status > div { min-width: 0; display: grid; gap: 3px; }
+.machine-cost-status strong { color: var(--text); font-size: 12px; }
+.machine-cost-status span, .machine-cost-status small { color: var(--text-soft); font-size: 9px; line-height: 1.5; }
+.machine-cost-status small { color: currentColor; }
+.machine-cost-summary-grid { min-width: 0; display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 12px; }
+.machine-cost-summary-card { min-width: 0; min-height: 118px; display: flex; align-items: center; gap: 13px; padding: 17px; border-radius: 20px; }
+.machine-cost-summary-icon { width: 42px; height: 42px; display: grid; place-items: center; flex: 0 0 auto; color: var(--blue); border-radius: 14px; background: var(--blue-soft); }
+.machine-cost-summary-icon.tone-purple { color: var(--purple); background: rgba(123,97,232,.12); }
+.machine-cost-summary-icon.tone-green { color: var(--green); background: rgba(33,164,107,.11); }
+.machine-cost-summary-icon.tone-warning { color: var(--warning); background: rgba(197,123,23,.11); }
+.machine-cost-summary-card > div { min-width: 0; display: grid; gap: 4px; }
+.machine-cost-summary-card div > span { color: var(--text-muted); font-size: 8px; font-weight: 780; letter-spacing: .06em; text-transform: uppercase; }
+.machine-cost-summary-card strong { overflow-wrap: anywhere; font-size: clamp(16px,1.7vw,21px); line-height: 1.2; letter-spacing: -.025em; }
+.machine-cost-summary-card small { color: var(--text-soft); font-size: 8px; line-height: 1.45; }
+.machine-cost-panel { min-width: 0; padding: 21px; border-radius: 23px; }
+.machine-cost-panel > header { min-width: 0; display: flex; align-items: center; justify-content: space-between; gap: 14px; padding-bottom: 16px; border-bottom: 1px solid var(--border-subtle); }
+.machine-cost-panel h2 { margin: 5px 0 0; font-size: 19px; letter-spacing: -.035em; }
+.machine-cost-partial, .machine-cost-context-note { display: inline-flex; align-items: center; gap: 6px; flex: 0 0 auto; padding: 6px 9px; color: var(--warning); border-radius: 99px; background: rgba(197,123,23,.11); font-size: 8px; font-weight: 760; }
+.machine-cost-context-note { color: var(--blue); background: var(--blue-soft); }
+.machine-cost-breakdown { min-width: 0; display: grid; gap: 8px; padding-top: 16px; }
+.machine-cost-breakdown > article { min-width: 0; display: grid; grid-template-columns: minmax(150px,1fr) minmax(140px,2fr) minmax(130px,.75fr); align-items: center; gap: 14px; padding: 11px 12px; border: 1px solid var(--border-subtle); border-radius: 13px; background: var(--surface-muted); }
+.machine-cost-breakdown-label, .machine-cost-breakdown article > div:last-child { min-width: 0; display: grid; gap: 3px; }
+.machine-cost-breakdown-label strong, .machine-cost-breakdown article > div:last-child strong { overflow-wrap: anywhere; font-size: 10px; }
+.machine-cost-breakdown-label span, .machine-cost-breakdown article > div:last-child span { color: var(--text-muted); font-size: 8px; }
+.machine-cost-breakdown article > div:last-child { justify-items: end; text-align: right; }
+.machine-cost-bar { height: 8px; overflow: hidden; border-radius: 99px; background: var(--surface-solid); border: 1px solid var(--border-subtle); }
+.machine-cost-bar span { height: 100%; display: block; border-radius: inherit; background: linear-gradient(90deg,var(--blue),var(--purple)); }
+.machine-cost-empty { min-height: 180px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 7px; color: var(--text-muted); text-align: center; }
+.machine-cost-empty.compact { min-height: 120px; }
+.machine-cost-empty strong { color: var(--text); font-size: 11px; }
+.machine-cost-empty span { max-width: 430px; font-size: 9px; line-height: 1.5; }
+.machine-cost-context-grid { min-width: 0; display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; }
+.machine-cost-context-card { min-width: 0; display: flex; align-items: flex-start; gap: 12px; padding: 18px; color: var(--blue); border-radius: 20px; }
+.machine-cost-context-card > div { min-width: 0; display: grid; gap: 5px; }
+.machine-cost-context-card span { color: var(--text-muted); font-size: 8px; font-weight: 780; letter-spacing: .06em; text-transform: uppercase; }
+.machine-cost-context-card strong { color: var(--text); overflow-wrap: anywhere; font-size: 18px; }
+.machine-cost-context-card small { color: var(--text-soft); font-size: 8px; line-height: 1.5; }
+.machine-cost-lifecycles { min-width: 0; display: grid; gap: 8px; padding-top: 16px; }
+.machine-cost-lifecycles > article { min-width: 0; display: grid; grid-template-columns: minmax(150px,.8fr) minmax(0,1.6fr); align-items: center; gap: 18px; padding: 12px; border: 1px solid var(--border-subtle); border-radius: 13px; background: var(--surface-muted); }
+.machine-cost-lifecycles article > div { min-width: 0; display: grid; gap: 3px; }
+.machine-cost-lifecycles article > div strong { font-size: 10px; }
+.machine-cost-lifecycles article > div span { color: var(--text-muted); font-size: 8px; }
+.machine-cost-lifecycles dl { min-width: 0; display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 10px; margin: 0; }
+.machine-cost-lifecycles dl > div { min-width: 0; display: grid; gap: 3px; }
+.machine-cost-lifecycles dt { color: var(--text-muted); font-size: 8px; }
+.machine-cost-lifecycles dd { margin: 0; overflow-wrap: anywhere; font-size: 10px; font-weight: 720; }
+
+@media (max-width: 1180px) {
+  .machine-cost-summary-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .machine-cost-filters { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .machine-cost-filters .machine-cost-period-readout { grid-column: 1 / -2; }
+}
+
+@media (max-width: 760px) {
+  .machine-cost-filters { grid-template-columns: minmax(0,1fr); padding: 13px; }
+  .machine-cost-filters .machine-cost-period-readout { grid-column: auto; }
+  .machine-cost-summary-grid, .machine-cost-context-grid { grid-template-columns: minmax(0,1fr); }
+  .machine-cost-summary-card { min-height: 100px; }
+  .machine-cost-panel { padding: 15px; }
+  .machine-cost-panel > header { align-items: flex-start; flex-direction: column; }
+  .machine-cost-breakdown > article { grid-template-columns: minmax(0,1fr) auto; gap: 9px 12px; }
+  .machine-cost-bar { grid-column: 1 / -1; grid-row: 2; }
+  .machine-cost-breakdown article > div:last-child { grid-column: 2; grid-row: 1; }
+  .machine-cost-lifecycles > article { grid-template-columns: minmax(0,1fr); }
+}
+
+@media (max-width: 430px) {
+  .machine-cost-summary-card { align-items: flex-start; }
+  .machine-cost-lifecycles dl { grid-template-columns: minmax(0,1fr); }
+  .machine-cost-breakdown > article { padding: 11px; }
+}
+
 @media (max-width: 1023px) {
   .machine-dialog-backdrop { padding: 20px; }
   .machine-dialog { max-height: calc(100vh - 40px); max-height: calc(100dvh - 40px); border-radius: 28px; }

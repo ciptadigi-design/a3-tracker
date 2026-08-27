@@ -1,4 +1,4 @@
-import { AlertTriangle, BarChart3, Boxes, CalendarDays, ChevronRight, ClipboardCheck, Gauge, Package, Printer, Settings, Wrench } from 'lucide-react'
+import { AlertTriangle, BarChart3, Boxes, CalendarDays, ChevronRight, CircleDollarSign, ClipboardCheck, Gauge, Package, Printer, Settings, Wrench } from 'lucide-react'
 
 const navigation = [
   { path: '/', label: 'Overview', icon: Gauge, active: true },
@@ -6,6 +6,7 @@ const navigation = [
   { path: '/daily', label: 'Daily', icon: CalendarDays, active: true },
   { path: '/components', label: 'Components', icon: Boxes, active: true },
   { path: '/inventory', label: 'Inventory', icon: Package, active: true },
+  { path: '/machine-cost', label: 'Machine Cost', icon: CircleDollarSign, active: true },
   { path: '/errors', label: 'Errors', icon: AlertTriangle, active: true },
   { path: '/maintenance', label: 'Maintenance', icon: Wrench },
   { path: '/reports', label: 'Reports', icon: BarChart3 },
