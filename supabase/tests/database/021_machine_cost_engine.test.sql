@@ -41,7 +41,7 @@ insert into public.machines(id,account_id,branch_id,machine_model_id,machine_cod
 ('a5400000-0000-4000-8000-000000000006','a5100000-0000-4000-8000-000000000002','a5300000-0000-4000-8000-000000000002','51000000-0000-0000-0000-000000000001','COST-X','Other Machine',null),
 ('a5400000-0000-4000-8000-000000000007','a5100000-0000-4000-8000-000000000001','a5300000-0000-4000-8000-000000000001','51000000-0000-0000-0000-000000000001','COST-F','Zero Consumption Machine',null);
 
-insert into public.operational_people(id,account_id,user_id,name,code) values
+insert into public.operational_people(id,account_id,linked_user_id,name,code) values
 ('a5500000-0000-4000-8000-000000000001','a5100000-0000-4000-8000-000000000001','a5000000-0000-4000-8000-000000000001','M25A Owner','OWNER');
 insert into public.inventory_locations(id,account_id,branch_id,code,name) values
 ('a5600000-0000-4000-8000-000000000001','a5100000-0000-4000-8000-000000000001','a5300000-0000-4000-8000-000000000001','FLOOR','Machine Floor');
