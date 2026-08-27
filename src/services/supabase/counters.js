@@ -4,7 +4,7 @@ export async function loadCounterHistory({ accountId, machineId }) {
   const [historyResult, profilesResult] = await Promise.all([
     supabase
       .from('machine_counter_history')
-      .select('reading_id, account_id, machine_id, counter_type_code, reading_value, previous_value, usage, observed_at, shift_code, entered_by, source, status, correction_reason, notes, previous_reading_id, corrects_reading_id, created_at')
+      .select('reading_id, account_id, machine_id, counter_type_code, reading_value, previous_value, usage, observed_at, shift_code, operator_person_id, operator_name_snapshot, entered_by, created_by, source, status, correction_reason, notes, previous_reading_id, corrects_reading_id, created_at')
       .eq('account_id', accountId)
       .eq('machine_id', machineId)
       .eq('counter_type_code', 'total_impressions')
@@ -21,13 +21,14 @@ export async function loadCounterHistory({ accountId, machineId }) {
   }
 }
 
-export async function recordCounterReading({ accountId, machineId, readingValue, observedAt, shiftCode, notes, clientRequestId }) {
+export async function recordCounterReading({ accountId, machineId, readingValue, observedAt, operatorPersonId, shiftCode, notes, clientRequestId }) {
   const { data, error } = await supabase.rpc('record_machine_counter', {
     target_account_id: accountId,
     target_machine_id: machineId,
     target_reading_value: readingValue,
     target_observed_at: observedAt,
     target_client_request_id: clientRequestId,
+    target_operator_person_id: operatorPersonId,
     target_shift_code: shiftCode || null,
     target_notes: notes?.trim() || null,
     target_counter_type_code: 'total_impressions',

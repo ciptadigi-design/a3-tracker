@@ -5,6 +5,7 @@ import { useAuth } from '../auth/useAuth.js'
 import { createDraftKey } from '../drafts/draftKeys.js'
 import { usePersistentDraft } from '../drafts/usePersistentDraft.js'
 import { createMachineFormValues, mapMachineMutationError, operationalStatuses, validateMachineForm } from './machineForm.js'
+import { inheritedMachineTimezone, supportedTimezones } from './timezones.js'
 
 function FieldError({ message }) {
   return message ? <span className="field-error"><AlertCircle size={13} /> {message}</span> : null
@@ -123,6 +124,11 @@ export function MachineFormDialog({ mode, machine, account, branches, branchId, 
 
   const selectedManufacturer = manufacturers.find((item) => item.id === values.manufacturerId)
   const selectedModel = machine?.machine_models
+  const selectedBranch = branches.find((item) => item.id === values.branchId)
+  const inheritedTimezone = inheritedMachineTimezone({ branch: selectedBranch, account })
+  const timezones = supportedTimezones()
+  const unavailableManufacturer = !isEdit && values.manufacturerId && !selectedManufacturer
+  const unavailableModel = !isEdit && values.machineModelId && !models.some((item) => item.id === values.machineModelId)
 
   return (
     <BlockingDialog className="machine-dialog glass-surface" backdropClassName="machine-dialog-backdrop" labelledBy="machine-dialog-title" describedBy="machine-dialog-description" onClose={onClose} busy={isSaving}>
@@ -135,10 +141,11 @@ export function MachineFormDialog({ mode, machine, account, branches, branchId, 
           <div className="machine-form-body">
             {pendingDraft && <div className="draft-conflict-banner" role="alert"><TriangleAlert size={18} /><div><strong>This machine changed after your draft was started.</strong><span>Choose the latest server data or restore your saved draft. Values will not be merged automatically.</span><div className="draft-conflict-actions"><button className="secondary-button" type="button" onClick={discardPendingDraft}>Use latest server data</button><button className="primary-button" type="button" onClick={restorePendingDraft}>Restore my draft</button></div></div></div>}
             {wasRestored && <div className="draft-restored-status" role="status"><CheckCircle2 size={14} /><span>Unsaved draft restored</span></div>}
+            {(unavailableManufacturer || unavailableModel) && <div className="draft-conflict-banner" role="alert"><TriangleAlert size={18} /><div><strong>Your saved catalog selection is no longer available.</strong><span>Choose an active manufacturer and model before saving. The draft was not changed automatically.</span></div></div>}
             <div className="form-section-heading"><strong>Assignment</strong><span>Account is set securely from your active workspace.</span></div>
             <div className="form-grid">
               <label className="form-field"><span>Branch <RequiredMark /></span><select value={values.branchId} onChange={(event) => change('branchId', event.target.value)} aria-invalid={Boolean(errors.branchId)}><option value="">Choose branch</option>{branches.map((branch) => <option key={branch.id} value={branch.id}>{branch.name}</option>)}</select><FieldError message={errors.branchId} /></label>
-              {isEdit ? <label className="form-field"><span>Manufacturer & model</span><div className="locked-field"><LockKeyhole size={15} /><span>{selectedModel?.manufacturers?.name} · {selectedModel?.name}</span></div><small>Model assignment is fixed in M1.2.</small></label>
+              {isEdit ? <label className="form-field"><span>Manufacturer & model</span><div className="locked-field"><LockKeyhole size={15} /><span>{selectedModel?.manufacturers?.name} · {selectedModel?.name}</span></div><small>Model assignment remains fixed after machine registration.</small></label>
                 : <>
                   <label className="form-field"><span>Manufacturer <RequiredMark /></span><select value={values.manufacturerId} onChange={(event) => changeManufacturer(event.target.value)} aria-invalid={Boolean(errors.manufacturerId)}><option value="">Choose manufacturer</option>{manufacturers.map((manufacturer) => <option key={manufacturer.id} value={manufacturer.id}>{manufacturer.name}</option>)}</select><FieldError message={errors.manufacturerId} /></label>
                   <label className="form-field"><span>Machine model <RequiredMark /></span><select value={values.machineModelId} onChange={(event) => change('machineModelId', event.target.value)} disabled={!values.manufacturerId} aria-invalid={Boolean(errors.machineModelId)}><option value="">Choose model</option>{filteredModels.map((model) => <option key={model.id} value={model.id}>{model.name}</option>)}</select><FieldError message={errors.machineModelId} /></label>
@@ -156,7 +163,7 @@ export function MachineFormDialog({ mode, machine, account, branches, branchId, 
             <div className="form-section-heading"><strong>Operations</strong><span>Timezone inherits from the branch or account when left blank.</span></div>
             <div className="form-grid">
               <label className="form-field"><span>Status <RequiredMark /></span><select value={values.status} onChange={(event) => change('status', event.target.value)} aria-invalid={Boolean(errors.status)}>{operationalStatuses.map((status) => <option key={status.value} value={status.value}>{status.label}</option>)}</select><FieldError message={errors.status} /></label>
-              <label className="form-field"><span>Timezone <small>Optional</small></span><input value={values.timezone} onChange={(event) => change('timezone', event.target.value)} placeholder="Inherit workspace timezone" autoComplete="off" aria-invalid={Boolean(errors.timezone)} /><FieldError message={errors.timezone} /></label>
+              <label className="form-field"><span>Timezone <small>Optional override</small></span><select value={values.timezone} onChange={(event) => change('timezone', event.target.value)} aria-invalid={Boolean(errors.timezone)}><option value="">Use {inheritedTimezone.source} timezone — {inheritedTimezone.value}</option>{timezones.map((timezone) => <option key={timezone} value={timezone}>{timezone}</option>)}</select><FieldError message={errors.timezone} /></label>
               <label className="form-field form-field-wide"><span>Notes <small>Optional</small></span><textarea value={values.notes} onChange={(event) => change('notes', event.target.value)} placeholder="Physical location, ownership note, or setup context" rows="4" /></label>
             </div>
 

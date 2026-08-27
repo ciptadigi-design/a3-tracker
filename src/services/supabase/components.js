@@ -8,8 +8,8 @@ components (${componentFields})`
 
 export async function loadComponentFoundation({ accountId } = {}) {
   const [manufacturers, models, components, profiles, intelligence, samples] = await Promise.all([
-    supabase.from('manufacturers').select('id, code, name').order('name'),
-    supabase.from('machine_models').select('id, manufacturer_id, model_code, name, manufacturers(id, name)').order('name'),
+    supabase.from('manufacturers').select('id, account_id, code, name').or(`account_id.is.null,account_id.eq.${accountId}`).order('name'),
+    supabase.from('machine_models').select('id, account_id, manufacturer_id, model_code, name, manufacturers(id, name)').or(`account_id.is.null,account_id.eq.${accountId}`).order('name'),
     supabase.from('components').select(componentFields).order('name'),
     supabase.from('machine_model_components').select(profileFields).order('display_order'),
     accountId

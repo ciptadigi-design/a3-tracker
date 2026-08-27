@@ -10,6 +10,7 @@ import { migrateLegacyDailySelection } from '../features/drafts/draftStorage.js'
 import { useTenant } from '../features/account/useTenant.js'
 import { useAuth } from '../features/auth/useAuth.js'
 import { useMachines } from '../features/machines/useMachines.js'
+import { useOperationalPeople } from '../features/operationalPeople/useOperationalPeople.js'
 import { createUIStateKey } from '../features/uiState/uiStateKeys.js'
 import { usePersistentUIState } from '../features/uiState/usePersistentUIState.js'
 
@@ -21,6 +22,7 @@ export function DailyPage() {
   const { user } = useAuth()
   const { account, branch, membership } = useTenant()
   const machinesState = useMachines(account?.id, branch?.id)
+  const peopleState = useOperationalPeople(account?.id)
   const activeMachines = useMemo(() => machinesState.machines.filter((machine) => machine.is_active), [machinesState.machines])
   const selectionKey = createUIStateKey({ userId: user?.id, accountId: account?.id, branchId: branch?.id, feature: 'daily-counter', entityId: 'selected-machine' })
   const legacySelectionKey = createDraftKey({ userId: user?.id, accountId: account?.id, branchId: branch?.id, feature: 'daily-counter', entityId: 'selected-machine' })
@@ -76,7 +78,7 @@ export function DailyPage() {
             <SummaryCard icon={Clock3} label="Last Input" value={summary.lastReading ? new Intl.DateTimeFormat('en-GB', { timeZone: timezone, hour: '2-digit', minute: '2-digit' }).format(new Date(summary.lastReading.observed_at)) : '—'} detail={summary.lastReading ? new Intl.DateTimeFormat('en-GB', { timeZone: timezone, dateStyle: 'medium' }).format(new Date(summary.lastReading.observed_at)) : 'No input recorded'} tone="purple" />
             <SummaryCard icon={ListChecks} label="Today's Entries" value={String(summary.todayEntryCount)} detail="Effective readings in machine timezone" tone="amber" />
           </section>
-          <CounterEntryCard key={`${user.id}:${selectedMachine.id}`} accountId={account.id} branchId={branch.id} userId={user.id} machine={selectedMachine} lastReading={summary.lastReading} onRecorded={handleRecorded} />
+          <CounterEntryCard key={`${user.id}:${selectedMachine.id}`} accountId={account.id} branchId={branch.id} userId={user.id} machine={selectedMachine} people={peopleState.people} peopleLoading={peopleState.isLoading} peopleError={peopleState.error} lastReading={summary.lastReading} onRecorded={handleRecorded} />
           <CounterHistory history={counterState.history} profiles={counterState.profiles} currentUserId={user?.id} timezone={timezone} isLoading={counterState.isLoading} error={counterState.error} canCorrect={canCorrect} onRefresh={counterState.refresh} onCorrected={handleCorrected} />
         </>}
     </div>

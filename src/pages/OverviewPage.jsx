@@ -11,7 +11,7 @@ export function OverviewPage() {
       <PageHeader eyebrow="Live workspace" title={`Good to see you at ${account?.name}`} description="Your machine operations workspace is ready for its first registered machine." />
       <section className="overview-grid">
         <article className="hero-card glass-surface"><div className="hero-card-copy"><span className="status-pill"><span /> Workspace online</span><h2>A clean foundation for every machine you operate.</h2><p>Your account and branch context are connected to Supabase and protected by tenant-level access controls.</p></div><div className="hero-machine-visual" aria-hidden="true"><div className="machine-glow" /><Printer size={72} strokeWidth={1.2} /></div></article>
-        <article className="next-step-card glass-surface"><span className="section-icon"><Sparkles size={21} /></span><div><span className="card-kicker">Next milestone</span><h3>Register your first machine</h3><p>Machine creation will be enabled in M1.2.</p></div><ArrowRight size={18} /></article>
+        <article className="next-step-card glass-surface"><span className="section-icon"><Sparkles size={21} /></span><div><span className="card-kicker">Machine setup</span><h3>Register your first machine</h3><p>Use the Machines workspace to register operational equipment.</p></div><ArrowRight size={18} /></article>
       </section>
       <section className="metric-grid" aria-label="Workspace summary">
         <article className="metric-card glass-surface"><span className="metric-icon metric-icon-blue"><Building2 size={22} /></span><div><span>Account</span><strong>{account?.name}</strong></div></article>

@@ -1,0 +1,89 @@
+begin;
+create extension if not exists pgtap with schema extensions;
+select extensions.no_plan();
+
+insert into auth.users (id,aud,role,email,encrypted_password,email_confirmed_at,raw_app_meta_data,raw_user_meta_data,created_at,updated_at) values
+('e3000000-0000-0000-0000-000000000001','authenticated','authenticated','m23e-owner-a@test.invalid','',now(),'{}','{}',now(),now()),
+('e3000000-0000-0000-0000-000000000002','authenticated','authenticated','m23e-admin-a@test.invalid','',now(),'{}','{}',now(),now()),
+('e3000000-0000-0000-0000-000000000003','authenticated','authenticated','m23e-tech-a@test.invalid','',now(),'{}','{}',now(),now()),
+('e3000000-0000-0000-0000-000000000004','authenticated','authenticated','m23e-operator-a@test.invalid','',now(),'{}','{}',now(),now()),
+('e3000000-0000-0000-0000-000000000005','authenticated','authenticated','m23e-suspended-a@test.invalid','',now(),'{}','{}',now(),now()),
+('e3000000-0000-0000-0000-000000000006','authenticated','authenticated','m23e-owner-b@test.invalid','',now(),'{}','{}',now(),now());
+
+insert into public.accounts (id,code,name,created_by,updated_by) values
+('e3100000-0000-0000-0000-000000000001','M23E-A','M2.3E Account A','e3000000-0000-0000-0000-000000000001','e3000000-0000-0000-0000-000000000001'),
+('e3100000-0000-0000-0000-000000000002','M23E-B','M2.3E Account B','e3000000-0000-0000-0000-000000000006','e3000000-0000-0000-0000-000000000006');
+
+insert into public.account_memberships (id,account_id,user_id,role,status,accepted_at,created_by,updated_by) values
+('e3200000-0000-0000-0000-000000000001','e3100000-0000-0000-0000-000000000001','e3000000-0000-0000-0000-000000000001','owner','active',now(),'e3000000-0000-0000-0000-000000000001','e3000000-0000-0000-0000-000000000001'),
+('e3200000-0000-0000-0000-000000000002','e3100000-0000-0000-0000-000000000001','e3000000-0000-0000-0000-000000000002','admin','active',now(),'e3000000-0000-0000-0000-000000000001','e3000000-0000-0000-0000-000000000001'),
+('e3200000-0000-0000-0000-000000000003','e3100000-0000-0000-0000-000000000001','e3000000-0000-0000-0000-000000000003','technician','active',now(),'e3000000-0000-0000-0000-000000000001','e3000000-0000-0000-0000-000000000001'),
+('e3200000-0000-0000-0000-000000000004','e3100000-0000-0000-0000-000000000001','e3000000-0000-0000-0000-000000000004','operator','active',now(),'e3000000-0000-0000-0000-000000000001','e3000000-0000-0000-0000-000000000001'),
+('e3200000-0000-0000-0000-000000000005','e3100000-0000-0000-0000-000000000001','e3000000-0000-0000-0000-000000000005','operator','suspended',now(),'e3000000-0000-0000-0000-000000000001','e3000000-0000-0000-0000-000000000001'),
+('e3200000-0000-0000-0000-000000000006','e3100000-0000-0000-0000-000000000002','e3000000-0000-0000-0000-000000000006','owner','active',now(),'e3000000-0000-0000-0000-000000000006','e3000000-0000-0000-0000-000000000006');
+
+insert into public.branches (id,account_id,code,name,timezone,created_by,updated_by) values
+('e3300000-0000-0000-0000-000000000001','e3100000-0000-0000-0000-000000000001','M23E-A-MAIN','M2.3E A Main','Asia/Jakarta','e3000000-0000-0000-0000-000000000001','e3000000-0000-0000-0000-000000000001'),
+('e3300000-0000-0000-0000-000000000002','e3100000-0000-0000-0000-000000000002','M23E-B-MAIN','M2.3E B Main','Asia/Makassar','e3000000-0000-0000-0000-000000000006','e3000000-0000-0000-0000-000000000006');
+
+insert into public.machines (id,account_id,branch_id,machine_model_id,machine_code,display_name,created_by,updated_by) values
+('e3400000-0000-4000-8000-000000000001','e3100000-0000-0000-0000-000000000001','e3300000-0000-0000-0000-000000000001','51000000-0000-0000-0000-000000000001','M23E-A-01','M2.3E Machine A','e3000000-0000-0000-0000-000000000001','e3000000-0000-0000-0000-000000000001');
+
+set local role anon;
+select extensions.throws_ok('select * from public.operational_people','42501',null,'anonymous cannot read operators');
+reset role;
+
+set local role authenticated;
+select set_config('request.jwt.claim.sub','e3000000-0000-0000-0000-000000000001',true);
+select extensions.lives_ok($$insert into public.operational_people(id,account_id,name,code) values ('e3500000-0000-4000-8000-000000000001','e3100000-0000-0000-0000-000000000001','Press PIC','PIC-1')$$,'owner can create operator');
+select extensions.lives_ok($$insert into public.manufacturers(id,account_id,code,name) values ('e3600000-0000-4000-8000-000000000001','e3100000-0000-0000-0000-000000000001','TEST-MFG','Test Manufacturer')$$,'owner can create workspace manufacturer');
+select extensions.lives_ok($$insert into public.machine_models(id,account_id,manufacturer_id,model_code,name,machine_category,color_capability) values ('e3700000-0000-4000-8000-000000000001','e3100000-0000-0000-0000-000000000001','e3600000-0000-4000-8000-000000000001','TEST-MODEL','Test Model','digital_a3','color')$$,'owner can create workspace model');
+select extensions.throws_ok($$delete from public.manufacturers where id='e3600000-0000-4000-8000-000000000001'$$,'23503',null,'manufacturer deletion is denied while a model references it');
+reset role;
+
+set local role authenticated;
+select set_config('request.jwt.claim.sub','e3000000-0000-0000-0000-000000000002',true);
+select extensions.lives_ok($$update public.operational_people set notes='Admin managed' where id='e3500000-0000-4000-8000-000000000001'$$,'admin can update operator');
+select extensions.lives_ok($$select public.record_machine_counter('e3100000-0000-0000-0000-000000000001','e3400000-0000-4000-8000-000000000001',100,'2026-08-26 08:00+07','e3800000-0000-4000-8000-000000000001','e3500000-0000-4000-8000-000000000001',null,null,'total_impressions')$$,'admin records a reading for a different operational person');
+select extensions.is((select operator_name_snapshot from public.counter_readings where client_request_id='e3800000-0000-4000-8000-000000000001'),'Press PIC','counter stores operator name snapshot');
+select extensions.is((select created_by from public.counter_readings where client_request_id='e3800000-0000-4000-8000-000000000001'),'e3000000-0000-0000-0000-000000000002'::uuid,'authenticated creator remains separate from operator');
+select extensions.throws_ok($$delete from public.operational_people where id='e3500000-0000-4000-8000-000000000001'$$,'23503',null,'referenced operator cannot be hard deleted');
+select extensions.lives_ok($$update public.operational_people set name='Renamed PIC',is_active=false where id='e3500000-0000-4000-8000-000000000001'$$,'referenced operator can be archived');
+select extensions.is((select operator_name_snapshot from public.counter_readings where client_request_id='e3800000-0000-4000-8000-000000000001'),'Press PIC','archive and rename do not change historical snapshot');
+reset role;
+
+set local role authenticated;
+select set_config('request.jwt.claim.sub','e3000000-0000-0000-0000-000000000003',true);
+select extensions.is((select count(*)::integer from public.operational_people),1,'technician can read account operators including archived history');
+select extensions.throws_ok($$insert into public.operational_people(account_id,name) values ('e3100000-0000-0000-0000-000000000001','Denied PIC')$$,'42501',null,'technician cannot manage operators');
+select extensions.throws_ok($$insert into public.manufacturers(account_id,code,name) values ('e3100000-0000-0000-0000-000000000001','DENIED','Denied')$$,'42501',null,'technician cannot manage manufacturers');
+reset role;
+
+set local role authenticated;
+select set_config('request.jwt.claim.sub','e3000000-0000-0000-0000-000000000004',true);
+select extensions.is((select count(*)::integer from public.machine_models where id='e3700000-0000-4000-8000-000000000001'),1,'operator can read workspace models');
+reset role;
+
+set local role authenticated;
+select set_config('request.jwt.claim.sub','e3000000-0000-0000-0000-000000000005',true);
+select extensions.is((select count(*)::integer from public.operational_people),0,'suspended member cannot read operators');
+reset role;
+
+set local role authenticated;
+select set_config('request.jwt.claim.sub','e3000000-0000-0000-0000-000000000006',true);
+select extensions.lives_ok($$update public.operational_people set name='Cross account' where id='e3500000-0000-4000-8000-000000000001'$$,'cross-account update exposes no writable row');
+select extensions.is((select count(*)::integer from public.operational_people where id='e3500000-0000-4000-8000-000000000001'),0,'cross-account operator remains invisible');
+select extensions.throws_ok($$insert into public.machine_models(account_id,manufacturer_id,model_code,name,machine_category,color_capability) values ('e3100000-0000-0000-0000-000000000002','e3600000-0000-4000-8000-000000000001','CROSS','Cross Model','digital_a3','color')$$,'23503',null,'cross-account manufacturer cannot back a model');
+reset role;
+
+select extensions.lives_ok($$insert into public.counter_readings(account_id,machine_id,counter_type_id,reading_value,observed_at,entered_by,client_request_id,created_by) values ('e3100000-0000-0000-0000-000000000001','e3400000-0000-4000-8000-000000000001','52000000-0000-0000-0000-000000000001',90,'2026-08-25 08:00+07','e3000000-0000-0000-0000-000000000001','e3800000-0000-4000-8000-000000000002','e3000000-0000-0000-0000-000000000001')$$,'historical counter readings may retain a null operator');
+select extensions.lives_ok($$update public.machines set timezone='Asia/Jayapura' where id='e3400000-0000-4000-8000-000000000001'$$,'valid IANA machine timezone is accepted');
+select extensions.is((select timezone from public.machines where id='e3400000-0000-4000-8000-000000000001'),'Asia/Jayapura','explicit machine timezone remains explicit');
+select extensions.throws_ok($$update public.machines set timezone='Jakarta Time' where id='e3400000-0000-4000-8000-000000000001'$$,'23514',null,'invalid machine timezone is rejected');
+select extensions.lives_ok($$update public.machines set timezone=null where id='e3400000-0000-4000-8000-000000000001'$$,'null machine timezone remains available for inheritance');
+select extensions.is((select timezone from public.branches where id='e3300000-0000-0000-0000-000000000001'),'Asia/Jakarta','branch timezone remains the inheritance source');
+select extensions.lives_ok($$delete from public.machine_models where id='e3700000-0000-4000-8000-000000000001'$$,'unreferenced workspace model can be deleted');
+select extensions.lives_ok($$delete from public.manufacturers where id='e3600000-0000-4000-8000-000000000001'$$,'unreferenced workspace manufacturer can be deleted');
+
+select extensions.finish();
+rollback;

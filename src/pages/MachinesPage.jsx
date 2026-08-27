@@ -26,7 +26,7 @@ export function MachinesPage({ navigate }) {
   const { account, branch, branches, membership, setSelectedBranchId } = useTenant()
   const { machines, isLoading, error, refresh } = useMachines(account?.id, branch?.id)
   const canManage = membership?.role === 'owner' || membership?.role === 'admin'
-  const catalog = useMachineCatalog(canManage)
+  const catalog = useMachineCatalog(account?.id, canManage)
   const [view, setView] = useState('active')
   const [success, setSuccess] = useState(null)
   const { workflow, workflowBranchId, isContextActive, openCreate, clearWorkflow } = useMachineWorkflowState({ userId: user.id, accountId: account.id, branchId: branch?.id })

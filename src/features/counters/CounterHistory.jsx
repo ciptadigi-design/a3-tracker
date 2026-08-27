@@ -28,7 +28,7 @@ export function CounterHistory({ history, profiles, currentUserId, timezone, isL
         : error ? <div className="history-state error-state"><strong>Counter history could not be loaded.</strong><span>{error.message}</span><button className="secondary-button" type="button" onClick={onRefresh}>Try again</button></div>
           : history.length === 0 ? <div className="history-state"><span className="history-empty-icon"><History size={27} /></span><strong>No counter history yet.</strong><span>The first real submission will establish the cumulative baseline.</span></div>
             : <div className="counter-history-list">{history.map((reading) => <article className={`counter-history-row counter-history-${reading.status}`} key={reading.reading_id}>
-              <div className="history-time"><Clock3 size={15} /><div><strong>{formatObservedAt(reading.observed_at, timezone)}</strong><span>{reading.shift_code || 'No shift'} · {enteredBy(reading)}</span></div></div>
+              <div className="history-time"><Clock3 size={15} /><div><strong>{formatObservedAt(reading.observed_at, timezone)}</strong><span>{reading.shift_code || 'No shift'} · Operator: {reading.operator_name_snapshot || 'Not recorded'}</span><small>Recorded by {enteredBy(reading)}</small></div></div>
               <div className="history-value"><span>Reading</span><strong>{formatCounter(reading.reading_value)}</strong></div>
               <div className="history-value usage"><span>Usage</span><strong>{formatUsage(reading.usage)}</strong></div>
               <div className="history-status"><span className={`reading-status reading-status-${reading.status}`}>{reading.status}</span>{reading.source === 'correction' && <small>Correction</small>}</div>

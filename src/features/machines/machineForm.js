@@ -33,6 +33,9 @@ export function validateMachineForm(values, { branches, models, mode }) {
   if (!values.machineCode.trim()) errors.machineCode = 'Machine code is required.'
   if (!values.displayName.trim()) errors.displayName = 'Display name is required.'
   if (!operationalStatuses.some((status) => status.value === values.status)) errors.status = 'Choose a valid operational status.'
+  if (values.timezone) {
+    try { new Intl.DateTimeFormat('en', { timeZone: values.timezone }) } catch { errors.timezone = 'Choose a valid IANA timezone.' }
+  }
   return errors
 }
 

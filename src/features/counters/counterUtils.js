@@ -47,7 +47,7 @@ export function mapCounterError(error) {
   if (message.includes('zero or greater')) return 'Counter value must be zero or greater.'
   if (message.includes('decimal places')) return 'Total Impressions must be entered as a whole number.'
   if (message.includes('client request id')) return 'This submission was already processed with different values. Refresh the history before trying again.'
-  if (message.includes('latest effective reading can be corrected')) return 'Only the latest effective reading can be corrected in this milestone.'
+  if (message.includes('latest effective reading can be corrected')) return 'Only the latest effective reading can be corrected.'
   if (error?.code === '42501') return 'Your account role does not allow this counter action.'
   if (error?.code === 'P0002') return 'The selected machine or counter type is no longer available.'
   return error?.message || 'The counter action could not be completed. Check your connection and try again.'

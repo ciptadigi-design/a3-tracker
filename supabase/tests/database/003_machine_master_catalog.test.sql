@@ -209,11 +209,11 @@ reset role;
 
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '60000000-0000-0000-0000-000000000001', true);
-select extensions.throws_ok(
+select extensions.is_empty(
   $$update public.manufacturers
     set name = 'Tenant Modified Manufacturer'
-    where id = '50000000-0000-0000-0000-000000000001'$$,
-  '42501', null,
+    where id = '50000000-0000-0000-0000-000000000001'
+    returning id$$,
   'tenant owner cannot update the shared manufacturer catalog'
 );
 select extensions.throws_ok(
@@ -259,11 +259,11 @@ reset role;
 
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '60000000-0000-0000-0000-000000000002', true);
-select extensions.throws_ok(
+select extensions.is_empty(
   $$update public.machine_models
     set name = 'Admin Modified Shared Model'
-    where id = '51000000-0000-0000-0000-000000000001'$$,
-  '42501', null,
+    where id = '51000000-0000-0000-0000-000000000001'
+    returning id$$,
   'tenant admin cannot update the shared machine model catalog'
 );
 select extensions.lives_ok(

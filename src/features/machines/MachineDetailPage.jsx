@@ -43,6 +43,7 @@ export function MachineDetailPage({ machineId, navigate }) {
   const model = machine.machine_models
   const branch = branches.find((item) => item.id === machine.branch_id)
   const effectiveTimezone = machine.timezone || branch?.timezone || account?.default_timezone || 'Not configured'
+  const timezoneSource = machine.timezone ? 'Machine-specific timezone' : branch?.timezone ? 'Inherited from branch' : account?.default_timezone ? 'Inherited from account' : 'No timezone configured'
 
   async function handleUpdate(values) {
     const updated = await updateMachine({ accountId: account.id, machineId: machine.id, values })
@@ -75,7 +76,7 @@ export function MachineDetailPage({ machineId, navigate }) {
         <DetailItem icon={MapPin} label="Branch" value={branch?.name} />
         <DetailItem icon={Tag} label="Serial number" value={machine.serial_number || 'Not recorded'} />
         <DetailItem icon={CalendarDays} label="Installed date" value={formatDate(machine.installed_on)} />
-        <DetailItem icon={Clock3} label="Timezone" value={effectiveTimezone} hint={machine.timezone ? 'Machine-specific timezone' : 'Inherited from workspace'} />
+        <DetailItem icon={Clock3} label="Timezone" value={effectiveTimezone} hint={timezoneSource} />
         <DetailItem icon={Printer} label="Machine model" value={model?.name} hint={model?.model_code} />
         <DetailItem icon={FileText} label="Notes" value={machine.notes || 'No notes recorded'} />
       </section>

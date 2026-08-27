@@ -7,14 +7,15 @@ import { readLegacyDailyDraft } from '../drafts/draftStorage.js'
 import { usePersistentDraft } from '../drafts/usePersistentDraft.js'
 
 function createInitialCounterDraft(shiftCode = '') {
-  return { readingValue: '', shiftCode, observedAt: toLocalDateTimeInput(), notes: '', clientRequestId: crypto.randomUUID() }
+  return { readingValue: '', operatorPersonId: '', shiftCode, observedAt: toLocalDateTimeInput(), notes: '', clientRequestId: crypto.randomUUID() }
 }
 
 function isCounterDraft(value) {
   return value && [value.readingValue, value.shiftCode, value.observedAt, value.notes, value.clientRequestId].every((field) => typeof field === 'string')
+    && (value.operatorPersonId === undefined || typeof value.operatorPersonId === 'string')
 }
 
-export function CounterEntryCard({ accountId, branchId, userId, machine, lastReading, onRecorded }) {
+export function CounterEntryCard({ accountId, branchId, userId, machine, people, peopleLoading, peopleError, lastReading, onRecorded }) {
   const draftKey = createDraftKey({ userId, accountId, branchId, feature: 'daily-counter', entityId: machine.id })
   const {
     value: draft,
@@ -30,6 +31,7 @@ export function CounterEntryCard({ accountId, branchId, userId, machine, lastRea
     legacyDraft: readLegacyDailyDraft(userId, machine.id),
   })
   const { readingValue, shiftCode, observedAt, notes, clientRequestId } = draft
+  const operatorPersonId = draft.operatorPersonId ?? ''
   const [error, setError] = useState(null)
   const [success, setSuccess] = useState(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -72,6 +74,10 @@ export function CounterEntryCard({ accountId, branchId, userId, machine, lastRea
       setError('Choose the observed date and time.')
       return
     }
+    if (!operatorPersonId || !people.some((person) => person.id === operatorPersonId && person.is_active)) {
+      setError('Choose an active PIC / Operator for this reading.')
+      return
+    }
 
     setIsSubmitting(true)
     setError(null)
@@ -82,6 +88,7 @@ export function CounterEntryCard({ accountId, branchId, userId, machine, lastRea
         machineId: machine.id,
         readingValue: parsedValue,
         observedAt: new Date(observedAt).toISOString(),
+        operatorPersonId,
         shiftCode,
         notes,
         clientRequestId,
@@ -102,10 +109,13 @@ export function CounterEntryCard({ accountId, branchId, userId, machine, lastRea
       <form className="counter-form" onSubmit={handleSubmit} noValidate>
         {wasRestored && <div className="draft-restored-status" role="status"><CheckCircle2 size={14} /><span>Unsaved draft restored</span></div>}
         <div className="counter-context-grid">
-          <div><span>Counter type</span><strong>Total Impressions</strong><small>Fixed for M2.1</small></div>
+          <div><span>Counter type</span><strong>Total Impressions</strong><small>Cumulative machine counter</small></div>
           <div><span>Current / last counter</span><strong>{formatCounter(lastReading?.reading_value)}</strong><small>{lastReading ? 'Latest effective reading' : 'First entry becomes the baseline'}</small></div>
         </div>
-        <label className="counter-value-field"><span>New Counter <b>*</b></span><input value={readingValue} onChange={(event) => changeReading(event.target.value)} inputMode="numeric" pattern="[0-9]*" placeholder="207960" autoComplete="off" aria-invalid={Boolean(validationError || error)} /><small>Enter the cumulative number displayed by the machine—not daily usage.</small>{validationError && <span className="field-error"><AlertCircle size={13} />{validationError}</span>}</label>
+        <div className="counter-primary-grid">
+          <label className="counter-value-field"><span>New Counter <b>*</b></span><input value={readingValue} onChange={(event) => changeReading(event.target.value)} inputMode="numeric" pattern="[0-9]*" placeholder="207960" autoComplete="off" aria-invalid={Boolean(validationError || error)} /><small>Enter the cumulative number displayed by the machine—not daily usage.</small>{validationError && <span className="field-error"><AlertCircle size={13} />{validationError}</span>}</label>
+          <label className="form-field counter-operator-field"><span>PIC / Operator <b className="required-mark">*</b></span><select value={operatorPersonId} onChange={(event) => markDraftChanged('operatorPersonId', event.target.value)} disabled={peopleLoading || Boolean(peopleError)} aria-invalid={Boolean(error && !operatorPersonId)}><option value="">{peopleLoading ? 'Loading operators…' : 'Choose PIC / Operator'}</option>{people.map((person) => <option key={person.id} value={person.id}>{person.name}</option>)}</select><small>{peopleError ? 'Operator directory is unavailable. Refresh Daily and try again.' : 'The selected name is preserved as a historical snapshot.'}</small></label>
+        </div>
         <div className="counter-form-grid">
           <label className="form-field"><span>Shift <small>Optional</small></span><select value={shiftCode} onChange={(event) => markDraftChanged('shiftCode', event.target.value)}><option value="">No shift specified</option><option value="S1">S1</option><option value="S2">S2</option></select></label>
           <label className="form-field"><span>Observed date/time <b className="required-mark">*</b></span><input type="datetime-local" value={observedAt} max={toLocalDateTimeInput(new Date(Date.now() + 5 * 60_000))} onChange={(event) => markDraftChanged('observedAt', event.target.value)} /></label>

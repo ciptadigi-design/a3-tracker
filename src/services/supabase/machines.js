@@ -50,16 +50,18 @@ export async function loadMachine({ accountId, machineId }) {
   return data
 }
 
-export async function loadMachineCatalog() {
+export async function loadMachineCatalog(accountId) {
   const [manufacturerResult, modelResult] = await Promise.all([
     supabase
       .from('manufacturers')
       .select('id, code, name')
+      .or(`account_id.is.null,account_id.eq.${accountId}`)
       .eq('is_active', true)
       .order('name'),
     supabase
       .from('machine_models')
       .select('id, manufacturer_id, model_code, name, machine_category, color_capability')
+      .or(`account_id.is.null,account_id.eq.${accountId}`)
       .eq('is_active', true)
       .order('name'),
   ])

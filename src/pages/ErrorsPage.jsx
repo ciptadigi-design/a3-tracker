@@ -50,7 +50,7 @@ export function ErrorsPage({ navigate }) {
       <PageHeader eyebrow={`${account.name} · ${branch.name}`} title="Human / Operational Error" description="Catat kesalahan produksi manusia dan operasional. Fault code teknis mesin tetap menjadi domain terpisah." action={addAction} />
       {success && <div className="success-banner" role="status"><CheckCircle2 size={18} /><span>{success}</span><button type="button" onClick={() => setSuccess(null)}>Tutup</button></div>}
 
-      <section className="incident-domain-note"><AlertTriangle size={18} /><div><strong>Batas domain M2.2</strong><span>Jenis “Mesin” berarti kesalahan setting atau penggunaan mesin dalam proses produksi—bukan C-xxxx, kerusakan hardware, atau diagnosis service.</span></div></section>
+      <section className="incident-domain-note"><AlertTriangle size={18} /><div><strong>Operational incident scope</strong><span>Jenis “Mesin” berarti kesalahan setting atau penggunaan mesin dalam proses produksi—bukan C-xxxx, kerusakan hardware, atau diagnosis service.</span></div></section>
 
       <section className="incident-summary-grid" aria-label="Ringkasan kerugian branch aktif">
         <SummaryCard icon={ReceiptText} label="Total Incident" value={String(summary.count)} detail="Open + resolved; voided tidak dihitung" tone="blue" />
