@@ -73,7 +73,7 @@ set local role authenticated;
 select set_config('request.jwt.claim.sub','e3000000-0000-0000-0000-000000000004',true);
 select extensions.is((select count(*)::integer from public.machine_models where id='e3700000-0000-4000-8000-000000000002'),1,'operator can read workspace models');
 select extensions.throws_ok($$insert into public.operational_people(account_id,name) values ('e3100000-0000-0000-0000-000000000001','Operator Denied PIC')$$,'42501',null,'operator cannot manage operational people');
-select extensions.throws_ok($$update public.machine_models set notes='Operator denied' where id='e3700000-0000-4000-8000-000000000002'$$,'42501',null,'operator cannot manage machine models');
+select extensions.is_empty($$update public.machine_models set notes='Operator denied' where id='e3700000-0000-4000-8000-000000000002' returning id$$,'operator cannot manage machine models');
 reset role;
 
 set local role authenticated;
