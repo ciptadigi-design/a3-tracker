@@ -169,15 +169,15 @@ begin
     raise exception 'period end must be on or after period start' using errcode='22007';
   end if;
 
-  select * into machine_record
-  from public.machines
-  where id=target_machine_id and account_id=target_account_id;
+  select machine.* into machine_record
+  from public.machines machine
+  where machine.id=target_machine_id and machine.account_id=target_account_id;
   if not found then
     raise exception 'machine not found in account' using errcode='P0002';
   end if;
 
-  select * into branch_record from public.branches where id=machine_record.branch_id;
-  select * into account_record from public.accounts where id=target_account_id;
+  select branch.* into branch_record from public.branches branch where branch.id=machine_record.branch_id;
+  select account.* into account_record from public.accounts account where account.id=target_account_id;
   v_timezone := coalesce(machine_record.timezone,branch_record.timezone,account_record.default_timezone);
   v_start_at := target_period_start::timestamp at time zone v_timezone;
   v_end_at := (target_period_end+1)::timestamp at time zone v_timezone;
