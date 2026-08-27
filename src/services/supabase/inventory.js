@@ -12,7 +12,7 @@ export async function loadInventory({ accountId, includeArchived = false }) {
   if (!includeArchived) { itemsQuery.eq('is_active', true); locationsQuery.eq('is_active', true) }
   const suppliersQuery = supabase.from('inventory_suppliers').select(supplierFields).eq('account_id', accountId).order('name')
   if (!includeArchived) suppliersQuery.eq('is_active', true)
-  const [items, locations, balances, totals, movements, components, people, suppliers, purchases, purchaseLines, receipts, lastPrices, costHistory] = await Promise.all([
+  const [items, locations, balances, totals, movements, components, people, suppliers, purchases, purchaseLines, receipts, lastPrices, costHistory, costPositions] = await Promise.all([
     itemsQuery,
     locationsQuery,
     supabase.from('inventory_stock_balances').select('account_id,inventory_item_id,location_id,quantity').eq('account_id', accountId),
@@ -26,13 +26,15 @@ export async function loadInventory({ accountId, includeArchived = false }) {
     supabase.from('inventory_receipt_history').select('*').eq('account_id', accountId).order('received_at', { ascending: false }).order('created_at', { ascending: false }),
     supabase.from('inventory_item_last_purchase_prices').select('*').eq('account_id', accountId),
     supabase.from('inventory_purchase_cost_history').select('*').eq('account_id', accountId).order('purchase_date', { ascending: false }).limit(500),
+    supabase.from('inventory_cost_position').select('*').eq('account_id', accountId),
   ])
-  for (const result of [items, locations, balances, totals, movements, components, people, suppliers, purchases, purchaseLines, receipts, lastPrices, costHistory]) if (result.error) throw result.error
+  for (const result of [items, locations, balances, totals, movements, components, people, suppliers, purchases, purchaseLines, receipts, lastPrices, costHistory, costPositions]) if (result.error) throw result.error
   return {
     items: items.data ?? [], locations: locations.data ?? [], balances: balances.data ?? [],
     totals: totals.data ?? [], movements: movements.data ?? [], components: components.data ?? [], people: people.data ?? [],
     suppliers: suppliers.data ?? [], purchases: purchases.data ?? [], purchaseLines: purchaseLines.data ?? [],
     receipts: receipts.data ?? [], lastPrices: lastPrices.data ?? [], costHistory: costHistory.data ?? [],
+    costPositions: costPositions.data ?? [],
   }
 }
 
@@ -57,10 +59,9 @@ export async function deleteInventorySupplier({ accountId, supplierId }) {
 }
 
 export async function createInventoryPurchase({ accountId, values, clientRequestId }) {
-  const { data, error } = await supabase.rpc('create_inventory_purchase', {
+  const { data, error } = await supabase.rpc('create_inventory_purchase_auto', {
     target_account_id: accountId, target_supplier_id: values.supplierId,
-    target_purchase_number: values.purchaseNumber, target_purchase_date: values.purchaseDate,
-    target_supplier_reference: optional(values.supplierReference), target_currency_code: 'IDR',
+    target_purchase_date: values.purchaseDate, target_external_reference: optional(values.supplierReference), target_currency_code: 'IDR',
     target_notes: optional(values.notes), target_lines: values.lines.map((line) => ({
       inventory_item_id: line.itemId, quantity: line.quantity, unit_price: line.unitPrice, notes: optional(line.notes),
     })), target_client_request_id: clientRequestId,
@@ -127,10 +128,11 @@ export async function deleteInventoryLocation({ accountId, locationId }) {
 }
 
 export async function initializeInventoryStock({ accountId, values, clientRequestId }) {
-  const { data, error } = await supabase.rpc('initialize_inventory_stock', {
+  const { data, error } = await supabase.rpc('initialize_inventory_stock_costed', {
     target_account_id: accountId, target_inventory_item_id: values.itemId, target_location_id: values.locationId,
     target_quantity: values.quantity, target_occurred_at: values.occurredAt,
     target_operational_person_id: values.personId, target_notes: optional(values.notes), target_client_request_id: clientRequestId,
+    target_opening_unit_cost: values.costState === 'known' ? values.unitCost : null,
   })
   if (error) throw error
   return data
@@ -138,11 +140,12 @@ export async function initializeInventoryStock({ accountId, values, clientReques
 
 export async function adjustInventoryStock({ accountId, values, clientRequestId }) {
   const delta = values.direction === 'in' ? values.quantity : `-${values.quantity}`
-  const { data, error } = await supabase.rpc('adjust_inventory_stock', {
+  const { data, error } = await supabase.rpc('adjust_inventory_stock_costed', {
     target_account_id: accountId, target_inventory_item_id: values.itemId, target_location_id: values.locationId,
-    target_quantity_delta: delta, target_occurred_at: values.occurredAt,
+    target_quantity: delta, target_occurred_at: values.occurredAt,
     target_operational_person_id: values.personId, target_reason: values.reason,
     target_notes: optional(values.notes), target_client_request_id: clientRequestId,
+    target_unit_cost: values.direction === 'in' && values.costState === 'known' ? values.unitCost : null,
   })
   if (error) throw error
   return data

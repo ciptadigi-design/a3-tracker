@@ -50,16 +50,16 @@ export function InventorySupplierDialog({ account, supplier, onClose, onSave }) 
 
 export function InventoryPurchaseDialog({ account, suppliers, items, onClose, onCreate }) {
   const { user } = useAuth()
-  const initial = { supplierId: '', purchaseNumber: '', purchaseDate: localDate(), supplierReference: '', notes: '', lines: [{ rowId: crypto.randomUUID(), itemId: '', quantity: '1', unitPrice: '', notes: '' }] }
+  const initial = { supplierId: '', purchaseDate: localDate(), supplierReference: '', notes: '', lines: [{ rowId: crypto.randomUUID(), itemId: '', quantity: '1', unitPrice: '', notes: '' }] }
   const draftKey = createDraftKey({ userId: user.id, accountId: account.id, feature: 'inventory-purchase', entityId: 'new' })
-  const draft = usePersistentDraft({ draftKey, initialValue: initial, validate: (value) => value && typeof value.supplierId === 'string' && typeof value.purchaseNumber === 'string' && Array.isArray(value.lines) })
+  const draft = usePersistentDraft({ draftKey, initialValue: initial, validate: (value) => value && typeof value.supplierId === 'string' && Array.isArray(value.lines) })
   const requestId = useRef(crypto.randomUUID()); const [busy, setBusy] = useState(false); const [error, setError] = useState(null)
   const change = (field, value) => { draft.updateDraft((current) => ({ ...current, [field]: value })); setError(null) }
   const changeLine = (rowId, field, value) => { draft.updateDraft((current) => ({ ...current, lines: current.lines.map((line) => line.rowId === rowId ? { ...line, [field]: value } : line) })); setError(null) }
   const purchaseTotal = draft.value.lines.reduce((total, line) => total + (Number(line.quantity) || 0) * (Number(line.unitPrice) || 0), 0)
   async function submit(event) {
     event.preventDefault(); const value = draft.value
-    if (!suppliers.some((supplier) => supplier.id === value.supplierId) || !value.purchaseNumber.trim() || !value.purchaseDate) return setError('Choose an active supplier and enter a purchase number and date.')
+    if (!suppliers.some((supplier) => supplier.id === value.supplierId) || !value.purchaseDate) return setError('Choose an active supplier and purchase date.')
     if (!value.lines.length || value.lines.some((line) => !items.some((item) => item.id === line.itemId) || !positiveQuantity(line.quantity) || !moneyValue(line.unitPrice))) return setError('Every line needs a unique active item, positive quantity, and valid nonnegative unit price.')
     if (new Set(value.lines.map((line) => line.itemId)).size !== value.lines.length) return setError('An inventory item may appear only once per purchase.')
     setBusy(true)
@@ -72,9 +72,9 @@ export function InventoryPurchaseDialog({ account, suppliers, items, onClose, on
       <div className="ledger-notice"><PackageCheck size={17} /><span>Stock changes only after Receive Goods is posted through the inventory ledger.</span></div>
       <div className="form-grid">
         <label className="form-field"><span>Supplier <b className="required-mark">*</b></span><select value={draft.value.supplierId} onChange={(event) => change('supplierId', event.target.value)} data-dialog-initial-focus><option value="">Choose supplier</option>{suppliers.map((supplier) => <option key={supplier.id} value={supplier.id}>{supplier.supplier_code} · {supplier.name}</option>)}</select></label>
-        <label className="form-field"><span>Purchase number <b className="required-mark">*</b></span><input value={draft.value.purchaseNumber} onChange={(event) => change('purchaseNumber', event.target.value)} placeholder="PUR-2026-0001" /></label>
+        <label className="form-field"><span>Internal purchase number</span><input value="Generated after saving" readOnly aria-readonly="true" /><small className="field-hint">Account-scoped format: PUR-YYYYMM-####</small></label>
         <label className="form-field"><span>Purchase date <b className="required-mark">*</b></span><input type="date" max={localDate()} value={draft.value.purchaseDate} onChange={(event) => change('purchaseDate', event.target.value)} /></label>
-        <label className="form-field"><span>Supplier invoice/reference <small>Optional</small></span><input value={draft.value.supplierReference} onChange={(event) => change('supplierReference', event.target.value)} /></label>
+        <label className="form-field"><span>External reference <small>Optional</small></span><input value={draft.value.supplierReference} onChange={(event) => change('supplierReference', event.target.value)} placeholder="Supplier invoice, PO, or integration ID" /></label>
       </div>
       <section className="purchase-lines-editor"><header><div><strong>Purchase lines</strong><span>All values are IDR acquisition evidence.</span></div><button className="secondary-button" type="button" onClick={() => change('lines', [...draft.value.lines, { rowId: crypto.randomUUID(), itemId: '', quantity: '1', unitPrice: '', notes: '' }])}><Plus size={15} />Add line</button></header>
         {draft.value.lines.map((line, index) => { const item = items.find((candidate) => candidate.id === line.itemId); const lineTotal = (Number(line.quantity) || 0) * (Number(line.unitPrice) || 0); return <div className="purchase-line-editor" key={line.rowId}>

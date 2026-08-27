@@ -84,6 +84,9 @@ select extensions.is((select count(*)::int from extensions.dblink_get_result('m2
 select extensions.ok(position('tidak mencukupi' in extensions.dblink_error_message('m24b_stock_race_2'))>0,'concurrent loser receives readable insufficient-stock error');
 select extensions.is((select count(*)::int from public.component_replacement_events where account_id='d1000000-0000-4000-8000-000000000001'),1,'race commits exactly one replacement');
 select extensions.is((select count(*)::int from public.inventory_movements where account_id='d1000000-0000-4000-8000-000000000001' and movement_type='issue'),1,'race commits exactly one inventory issue');
+select extensions.is((select count(*)::int from public.inventory_cost_allocations where account_id='d1000000-0000-4000-8000-000000000001'),1,'race commits exactly one FIFO cost allocation');
+select extensions.is((select sum(quantity) from public.inventory_cost_allocations where account_id='d1000000-0000-4000-8000-000000000001'),1::numeric,'competing sessions cannot double-allocate the last cost lot');
+select extensions.is((select remaining_quantity from public.inventory_cost_lot_balances where account_id='d1000000-0000-4000-8000-000000000001'),0::numeric,'winning session exhausts the lot exactly once');
 select extensions.is((select quantity from public.inventory_stock_balances where inventory_item_id='d7000000-0000-4000-8000-000000000001'),0::numeric,'last-stock race ends at zero, never negative');
 select extensions.is((select status::text from public.machine_component_lifecycles where id='d6000000-0000-4000-8000-000000000002'),'active','losing replacement lifecycle remains active');
 select extensions.is((select count(*)::int from public.counter_readings where client_request_id='d8000000-0000-4000-8000-000000000002'),0,'losing replacement creates no higher counter reading');
