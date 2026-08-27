@@ -119,7 +119,10 @@ begin
   if normalized_reason is null then raise exception 'adjustment reason is required' using errcode='22023'; end if;
   if target_occurred_at is null or target_occurred_at > statement_timestamp()+interval '5 minutes' then
     raise exception 'effective date and time are invalid' using errcode='22007'; end if;
-  resolved_type := case when target_quantity_delta>0 then 'adjustment_in' else 'adjustment_out' end;
+  resolved_type := case
+    when target_quantity_delta>0 then 'adjustment_in'::public.inventory_movement_type
+    else 'adjustment_out'::public.inventory_movement_type
+  end;
 
   select * into existing from public.inventory_movements
   where account_id=target_account_id and client_request_id=target_client_request_id limit 1;
