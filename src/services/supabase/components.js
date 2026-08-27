@@ -27,11 +27,12 @@ export function effectiveProfiles(profiles, accountId, modelId) {
 }
 
 const optional = (value) => value?.trim() || null
+const normalizedCategory = (value) => value?.trim().replace(/\s+/g, ' ') || null
 
 export async function saveComponent({ accountId, component, values }) {
   const payload = {
     code: values.code.trim().toUpperCase().replace(/[^A-Z0-9]+/g, '_').replace(/^_|_$/g, ''),
-    name: values.name.trim(), category: optional(values.category), description: optional(values.description),
+    name: values.name.trim(), category: normalizedCategory(values.category), description: optional(values.description),
     manufacturer_id: values.manufacturerId || null, part_number: optional(values.partNumber),
     default_tracking_method: values.trackingMethod, is_active: true,
   }

@@ -1,17 +1,134 @@
 import { useState } from 'react'
 import { createPortal } from 'react-dom'
-import { LoaderCircle, SlidersHorizontal, X } from 'lucide-react'
+import { LoaderCircle, LockKeyhole, SlidersHorizontal, X } from 'lucide-react'
 import { useAuth } from '../auth/useAuth.js'
 import { createDraftKey } from '../drafts/draftKeys.js'
 import { usePersistentDraft } from '../drafts/usePersistentDraft.js'
 
-const initialValues = (profile) => profile ? { componentId: profile.component_id, slotCode: profile.slot_code, displayOrder: String(profile.display_order), trackingMethod: profile.tracking_method, baselineExpectedClicks: String(profile.baseline_expected_clicks ?? ''), adaptiveEnabled: profile.adaptive_enabled, healthyThreshold: String(profile.healthy_threshold_percent), watchThreshold: String(profile.watch_threshold_percent), warningThreshold: String(profile.warning_threshold_percent), criticalThreshold: String(profile.critical_threshold_percent), notes: profile.notes ?? '' } : { componentId:'',slotCode:'',displayOrder:'0',trackingMethod:'counter_based',baselineExpectedClicks:'',adaptiveEnabled:true,healthyThreshold:'30',watchThreshold:'15',warningThreshold:'5',criticalThreshold:'0',notes:'' }
-const validDraft = (v) => v && typeof v.slotCode === 'string' && typeof v.componentId === 'string'
+function initialValues({ profile, model, initialComponent }) {
+  if (profile) {
+    return {
+      machineModelId: profile.machine_model_id,
+      componentId: profile.component_id,
+      slotCode: profile.slot_code,
+      displayOrder: String(profile.display_order),
+      trackingMethod: profile.tracking_method,
+      baselineExpectedClicks: String(profile.baseline_expected_clicks ?? ''),
+      adaptiveEnabled: profile.adaptive_enabled,
+      healthyThreshold: String(profile.healthy_threshold_percent),
+      watchThreshold: String(profile.watch_threshold_percent),
+      warningThreshold: String(profile.warning_threshold_percent),
+      criticalThreshold: String(profile.critical_threshold_percent),
+      notes: profile.notes ?? '',
+    }
+  }
+  return {
+    machineModelId: model?.id ?? '',
+    componentId: initialComponent?.id ?? '',
+    slotCode: initialComponent?.code ?? '',
+    displayOrder: '0',
+    trackingMethod: initialComponent?.default_tracking_method ?? 'counter_based',
+    baselineExpectedClicks: '',
+    adaptiveEnabled: true,
+    healthyThreshold: '30',
+    watchThreshold: '15',
+    warningThreshold: '5',
+    criticalThreshold: '0',
+    notes: '',
+  }
+}
 
-export function ProfileDialog({ account, model, profile, components, onClose, onSave }) {
-  const { user } = useAuth(); const initial = initialValues(profile)
-  const { value, updateDraft, clearDraft, wasRestored } = usePersistentDraft({ draftKey:createDraftKey({userId:user.id,accountId:account.id,feature:'component-profile',entityId:profile?.id??`new-${model.id}`}),initialValue:initial,metadata:{baseUpdatedAt:profile?.updated_at??null},validate:validDraft })
-  const [error,setError]=useState(null); const [saving,setSaving]=useState(false); const change=(field,next)=>updateDraft((v)=>({...v,[field]:next}))
-  async function submit(e){e.preventDefault(); const nums=['displayOrder','healthyThreshold','watchThreshold','warningThreshold','criticalThreshold']; if(!value.componentId||!value.slotCode.trim()||nums.some((f)=>value[f]===''||Number.isNaN(Number(value[f])))||(value.baselineExpectedClicks!==''&&Number(value.baselineExpectedClicks)<=0)){setError('Complete required fields with valid positive click values.');return} setSaving(true);setError(null);try{await onSave(value);clearDraft();onClose()}catch(err){setError(err.message)}finally{setSaving(false)}}
-  return createPortal(<div className="dialog-backdrop"><section className="machine-dialog component-dialog glass-surface" role="dialog" aria-modal="true"><header className="dialog-header"><div className="dialog-heading"><span className="dialog-icon"><SlidersHorizontal size={22}/></span><div><span className="card-kicker">{model.manufacturers?.name} · {model.name}</span><h2>{profile?'Edit profile':'Add to model'}</h2><p>Baseline and thresholds are editable configuration, not lifecycle data.</p></div></div><button className="icon-button" onClick={onClose} aria-label="Close"><X size={19}/></button></header><form className="machine-form" onSubmit={submit}><div className="machine-form-body">{wasRestored&&<div className="draft-restored-status">Unsaved draft restored</div>}<div className="form-grid"><label className="form-field"><span>Component *</span><select value={value.componentId} onChange={(e)=>{const c=components.find((x)=>x.id===e.target.value);updateDraft((v)=>({...v,componentId:e.target.value,trackingMethod:c?.default_tracking_method??v.trackingMethod}))}}><option value="">Choose component</option>{components.filter((c)=>c.is_active).map((c)=><option key={c.id} value={c.id}>{c.name}</option>)}</select></label><label className="form-field"><span>Slot code *</span><input value={value.slotCode} onChange={(e)=>change('slotCode',e.target.value)} placeholder="DRUM_C"/></label><label className="form-field"><span>Tracking method</span><select value={value.trackingMethod} onChange={(e)=>change('trackingMethod',e.target.value)}><option value="counter_based">Counter based</option><option value="consumption_based">Consumption based</option><option value="inspection_based">Inspection based</option></select></label><label className="form-field"><span>Baseline expected clicks</span><input type="number" min="1" value={value.baselineExpectedClicks} onChange={(e)=>change('baselineExpectedClicks',e.target.value)}/></label><label className="form-field"><span>Display order</span><input type="number" min="0" value={value.displayOrder} onChange={(e)=>change('displayOrder',e.target.value)}/></label><label className="form-field checkbox-field"><input type="checkbox" checked={value.adaptiveEnabled} onChange={(e)=>change('adaptiveEnabled',e.target.checked)}/><span>Adaptive foundation enabled</span></label></div><div className="form-section-heading"><strong>Remaining-life thresholds</strong><span>Overdue is always 0% or below.</span></div><div className="threshold-grid">{[['healthyThreshold','Healthy above %'],['watchThreshold','Watch above %'],['warningThreshold','Warning above %'],['criticalThreshold','Critical above %']].map(([f,l])=><label className="form-field" key={f}><span>{l}</span><input type="number" min="0" max="100" step="0.01" value={value[f]} onChange={(e)=>change(f,e.target.value)}/></label>)}</div><label className="form-field"><span>Notes</span><textarea rows="3" value={value.notes} onChange={(e)=>change('notes',e.target.value)}/></label>{error&&<div className="form-error">{error}</div>}</div><footer className="dialog-actions"><button className="secondary-button" type="button" onClick={onClose}>Cancel</button><button className="primary-button" disabled={saving}>{saving&&<LoaderCircle className="spin" size={16}/>}Save profile</button></footer></form></section></div>,document.body)
+function validDraft(value) {
+  return value && typeof value.slotCode === 'string' && typeof value.componentId === 'string'
+}
+
+function profileErrorMessage(error) {
+  if (error?.code === '23505') return 'That active slot is already assigned for this machine model. Choose a unique slot code.'
+  if (error?.code === '23514') return 'The expected clicks or lifecycle thresholds are outside the allowed range.'
+  if (error?.code === '42501') return 'Your current workspace role is not allowed to assign this component.'
+  return error?.message ?? 'The profile could not be saved.'
+}
+
+export function ProfileDialog({ account, model, models, profile, components, initialComponent, draftEntityId, onClose, onSave }) {
+  const { user } = useAuth()
+  const initial = initialValues({ profile, model, initialComponent })
+  const { value, updateDraft, clearDraft, wasRestored } = usePersistentDraft({
+    draftKey: createDraftKey({
+      userId: user.id,
+      accountId: account.id,
+      feature: 'component-profile',
+      entityId: draftEntityId ?? profile?.id ?? `new-${model?.id ?? 'model'}`,
+    }),
+    initialValue: initial,
+    metadata: { baseUpdatedAt: profile?.updated_at ?? null },
+    validate: validDraft,
+  })
+  const [error, setError] = useState(null)
+  const [saving, setSaving] = useState(false)
+  const values = { ...initial, ...value, machineModelId: value.machineModelId ?? initial.machineModelId }
+  const selectedModel = models.find((item) => item.id === values.machineModelId) ?? model
+  const selectedComponent = components.find((item) => item.id === values.componentId)
+  const isAssignment = Boolean(initialComponent) && !profile
+
+  function change(field, next) {
+    updateDraft((current) => ({ ...current, [field]: next }))
+    setError(null)
+  }
+
+  async function submit(event) {
+    event.preventDefault()
+    const numericFields = ['displayOrder', 'healthyThreshold', 'watchThreshold', 'warningThreshold', 'criticalThreshold']
+    if (!values.machineModelId || !values.componentId || !values.slotCode.trim()
+      || numericFields.some((field) => values[field] === '' || Number.isNaN(Number(values[field])))
+      || (values.baselineExpectedClicks !== '' && Number(values.baselineExpectedClicks) <= 0)) {
+      setError('Complete the required fields with valid positive click values.')
+      return
+    }
+    setSaving(true)
+    setError(null)
+    try {
+      await onSave(values)
+      clearDraft()
+      onClose()
+    } catch (saveError) {
+      setError(profileErrorMessage(saveError))
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return createPortal(
+    <div className="dialog-backdrop">
+      <section className="machine-dialog component-dialog glass-surface" role="dialog" aria-modal="true" aria-labelledby="profile-dialog-title">
+        <header className="dialog-header">
+          <div className="dialog-heading"><span className="dialog-icon"><SlidersHorizontal size={22} /></span><div><span className="card-kicker">Machine-model configuration</span><h2 id="profile-dialog-title">{profile ? 'Edit profile' : isAssignment ? 'Assign to model' : 'Add model profile'}</h2><p>A catalog definition is referenced, never duplicated.</p></div></div>
+          <button className="icon-button" type="button" onClick={onClose} disabled={saving} aria-label="Close profile form"><X size={19} /></button>
+        </header>
+        <form className="machine-form" onSubmit={submit}>
+          <div className="machine-form-body">
+            {wasRestored && <div className="draft-restored-status">Unsaved draft restored</div>}
+            <div className="form-section-heading"><strong>Assignment</strong><span>Manufacturer does not imply machine-model compatibility.</span></div>
+            <div className="form-grid">
+              {profile ? <label className="form-field"><span>Machine model</span><div className="locked-field"><LockKeyhole size={15} /><span>{selectedModel?.manufacturers?.name} · {selectedModel?.name}</span></div></label>
+                : <label className="form-field"><span>Machine model *</span><select value={values.machineModelId} onChange={(event) => change('machineModelId', event.target.value)}><option value="">Choose machine model</option>{models.map((item) => <option key={item.id} value={item.id}>{item.manufacturers?.name} · {item.name}</option>)}</select></label>}
+              {isAssignment ? <label className="form-field"><span>Component</span><div className="locked-field"><LockKeyhole size={15} /><span>{initialComponent.name}</span></div><small>Uses catalog component {initialComponent.code}.</small></label>
+                : profile ? <label className="form-field"><span>Component</span><div className="locked-field"><LockKeyhole size={15} /><span>{selectedComponent?.name}</span></div></label>
+                  : <label className="form-field"><span>Component *</span><select value={values.componentId} onChange={(event) => { const component = components.find((item) => item.id === event.target.value); updateDraft((current) => ({ ...current, componentId: event.target.value, slotCode: current.slotCode || component?.code || '', trackingMethod: component?.default_tracking_method ?? current.trackingMethod })); setError(null) }}><option value="">Choose component</option>{components.filter((component) => component.is_active).map((component) => <option key={component.id} value={component.id}>{component.name}</option>)}</select></label>}
+              <label className="form-field"><span>Slot code *</span><input value={values.slotCode} onChange={(event) => change('slotCode', event.target.value)} placeholder="DRUM_C" /></label>
+              <label className="form-field"><span>Tracking method</span><select value={values.trackingMethod} onChange={(event) => change('trackingMethod', event.target.value)}><option value="counter_based">Counter based</option><option value="consumption_based">Consumption based</option><option value="inspection_based">Inspection based</option></select></label>
+              <label className="form-field"><span>Baseline expected clicks</span><input type="number" min="1" value={values.baselineExpectedClicks} onChange={(event) => change('baselineExpectedClicks', event.target.value)} /></label>
+              <label className="form-field"><span>Display order</span><input type="number" min="0" value={values.displayOrder} onChange={(event) => change('displayOrder', event.target.value)} /></label>
+              <label className="form-field checkbox-field"><input type="checkbox" checked={values.adaptiveEnabled} onChange={(event) => change('adaptiveEnabled', event.target.checked)} /><span>Adaptive foundation enabled</span></label>
+            </div>
+            <div className="form-section-heading"><strong>Remaining-life thresholds</strong><span>Overdue is always 0% or below.</span></div>
+            <div className="threshold-grid">{[['healthyThreshold', 'Healthy above %'], ['watchThreshold', 'Watch above %'], ['warningThreshold', 'Warning above %'], ['criticalThreshold', 'Critical above %']].map(([field, label]) => <label className="form-field" key={field}><span>{label}</span><input type="number" min="0" max="100" step="0.01" value={values[field]} onChange={(event) => change(field, event.target.value)} /></label>)}</div>
+            <label className="form-field"><span>Notes</span><textarea rows="3" value={values.notes} onChange={(event) => change('notes', event.target.value)} /></label>
+            {error && <div className="form-error">{error}</div>}
+          </div>
+          <footer className="dialog-actions"><button className="secondary-button" type="button" onClick={onClose} disabled={saving}>Cancel</button><button className="primary-button" disabled={saving}>{saving && <LoaderCircle className="spin" size={16} />}{profile ? 'Save profile' : 'Create assignment'}</button></footer>
+        </form>
+      </section>
+    </div>,
+    document.body,
+  )
 }

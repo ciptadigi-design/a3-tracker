@@ -8,6 +8,10 @@
 
 Stable `slot_code` values are machine-readable identifiers. Names remain user-facing labels. Active slots are unique within machine model and scope.
 
+Manufacturer metadata describes who makes or owns a catalog definition. It never implies compatibility or assignment to one of that manufacturer's machine models. Assignment is an explicit `machine_model_components` operation that references the existing component row without duplicating it.
+
+The component form uses a conservative controlled category list for reporting consistency, plus a Custom / Other value. Custom values are whitespace-normalized, while existing categories outside the controlled list remain editable through the custom path and are not silently rewritten.
+
 ## Tracking and baseline semantics
 
 - `counter_based`: mechanical lifetime measured against machine counter movement.
