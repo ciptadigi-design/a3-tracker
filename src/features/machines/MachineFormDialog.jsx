@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { createPortal } from 'react-dom'
+import { useMemo, useState } from 'react'
 import { AlertCircle, CheckCircle2, LoaderCircle, LockKeyhole, Printer, RotateCcw, TriangleAlert, X } from 'lucide-react'
+import { BlockingDialog } from '../../components/ui/BlockingDialog.jsx'
 import { useAuth } from '../auth/useAuth.js'
 import { createDraftKey } from '../drafts/draftKeys.js'
 import { usePersistentDraft } from '../drafts/usePersistentDraft.js'
@@ -68,61 +68,10 @@ export function MachineFormDialog({ mode, machine, account, branches, branchId, 
   const [errors, setErrors] = useState({})
   const [formError, setFormError] = useState(null)
   const [isSaving, setIsSaving] = useState(false)
-  const dialogRef = useRef(null)
-  const closeButtonRef = useRef(null)
-  const isSavingRef = useRef(false)
-  const onCloseRef = useRef(onClose)
   const filteredModels = useMemo(
     () => models.filter((model) => model.manufacturer_id === values.manufacturerId),
     [models, values.manufacturerId],
   )
-
-  useEffect(() => { isSavingRef.current = isSaving }, [isSaving])
-  useEffect(() => { onCloseRef.current = onClose }, [onClose])
-
-  useEffect(() => {
-    const previouslyFocused = document.activeElement
-    const previousRootOverflow = document.documentElement.style.overflow
-    const previousOverflow = document.body.style.overflow
-    const previousPaddingRight = document.body.style.paddingRight
-    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth
-    const bodyPaddingRight = Number.parseFloat(window.getComputedStyle(document.body).paddingRight) || 0
-
-    document.documentElement.style.overflow = 'hidden'
-    document.body.style.overflow = 'hidden'
-    if (scrollbarWidth > 0) document.body.style.paddingRight = `${bodyPaddingRight + scrollbarWidth}px`
-    closeButtonRef.current?.focus()
-
-    function handleKeyDown(event) {
-      if (event.key === 'Escape' && !isSavingRef.current) {
-        event.preventDefault()
-        onCloseRef.current()
-        return
-      }
-      if (event.key !== 'Tab') return
-
-      const focusableElements = [...(dialogRef.current?.querySelectorAll('button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"])') ?? [])]
-      if (!focusableElements.length) return
-      const firstElement = focusableElements[0]
-      const lastElement = focusableElements[focusableElements.length - 1]
-      if (event.shiftKey && document.activeElement === firstElement) {
-        event.preventDefault()
-        lastElement.focus()
-      } else if (!event.shiftKey && document.activeElement === lastElement) {
-        event.preventDefault()
-        firstElement.focus()
-      }
-    }
-
-    window.addEventListener('keydown', handleKeyDown)
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown)
-      document.documentElement.style.overflow = previousRootOverflow
-      document.body.style.overflow = previousOverflow
-      document.body.style.paddingRight = previousPaddingRight
-      previouslyFocused?.focus()
-    }
-  }, [])
 
   function change(field, value) {
     updateDraft((current) => ({ ...current, [field]: value }))
@@ -175,12 +124,11 @@ export function MachineFormDialog({ mode, machine, account, branches, branchId, 
   const selectedManufacturer = manufacturers.find((item) => item.id === values.manufacturerId)
   const selectedModel = machine?.machine_models
 
-  return createPortal(
-    <div className="dialog-backdrop machine-dialog-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && !isSaving) onClose() }}>
-      <section ref={dialogRef} className="machine-dialog glass-surface" role="dialog" aria-modal="true" aria-labelledby="machine-dialog-title" aria-describedby="machine-dialog-description">
+  return (
+    <BlockingDialog className="machine-dialog glass-surface" backdropClassName="machine-dialog-backdrop" labelledBy="machine-dialog-title" describedBy="machine-dialog-description" onClose={onClose} busy={isSaving}>
         <header className="dialog-header">
           <div className="dialog-heading"><span className="dialog-icon"><Printer size={22} /></span><div><span className="card-kicker">Machine master</span><h2 id="machine-dialog-title">{isEdit ? 'Edit machine' : 'Add machine'}</h2><p id="machine-dialog-description">{isEdit ? 'Update operational details without changing the machine model.' : `Register a physical machine in ${account?.name}.`}</p></div></div>
-          <button ref={closeButtonRef} className="icon-button" type="button" onClick={onClose} disabled={isSaving} aria-label="Close machine form"><X size={19} /></button>
+          <button className="icon-button" type="button" onClick={onClose} disabled={isSaving} aria-label="Close machine form"><X size={19} /></button>
         </header>
 
         <form className="machine-form" onSubmit={handleSubmit} noValidate>
@@ -217,8 +165,6 @@ export function MachineFormDialog({ mode, machine, account, branches, branchId, 
           </div>
           <footer className="dialog-actions"><button className="draft-reset-button" type="button" onClick={handleResetDraft} disabled={!hasDraft || isSaving}><RotateCcw size={15} />Reset draft</button><button className="secondary-button" type="button" onClick={onClose} disabled={isSaving}>Cancel</button><button className="primary-button" type="submit" disabled={isSaving || Boolean(pendingDraft)}>{isSaving && <LoaderCircle className="spin" size={17} />}{isSaving ? 'Saving machine…' : isEdit ? 'Save changes' : 'Create machine'}</button></footer>
         </form>
-      </section>
-    </div>,
-    document.body,
+    </BlockingDialog>
   )
 }

@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { createPortal } from 'react-dom'
+import { useMemo, useState } from 'react'
 import { AlertCircle, CheckCircle2, ClipboardPlus, LoaderCircle, PencilLine, RotateCcw, X } from 'lucide-react'
+import { BlockingDialog } from '../../components/ui/BlockingDialog.jsx'
 import { useAuth } from '../auth/useAuth.js'
 import { createDraftKey } from '../drafts/draftKeys.js'
 import { usePersistentDraft } from '../drafts/usePersistentDraft.js'
@@ -124,52 +124,10 @@ export function IncidentFormDialog({ account, branch, machines, members, inciden
   const [formError, setFormError] = useState(null)
   const [isSaving, setIsSaving] = useState(false)
   const [runtimeConflict, setRuntimeConflict] = useState(null)
-  const dialogRef = useRef(null)
-  const closeButtonRef = useRef(null)
-  const isSavingRef = useRef(false)
-  const onCloseRef = useRef(onClose)
   const assessedLoss = useMemo(
     () => parseLoss(values.materialLoss) + parseLoss(values.serviceLoss),
     [values.materialLoss, values.serviceLoss],
   )
-
-  useEffect(() => { isSavingRef.current = isSaving }, [isSaving])
-  useEffect(() => { onCloseRef.current = onClose }, [onClose])
-
-  useEffect(() => {
-    const previouslyFocused = document.activeElement
-    const previousRootOverflow = document.documentElement.style.overflow
-    const previousBodyOverflow = document.body.style.overflow
-    document.documentElement.style.overflow = 'hidden'
-    document.body.style.overflow = 'hidden'
-    closeButtonRef.current?.focus()
-
-    function handleKeyDown(event) {
-      if (event.key === 'Escape' && !isSavingRef.current) {
-        event.preventDefault()
-        onCloseRef.current()
-        return
-      }
-      if (event.key !== 'Tab') return
-      const focusable = [...(dialogRef.current?.querySelectorAll('button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"])') ?? [])]
-      if (!focusable.length) return
-      if (event.shiftKey && document.activeElement === focusable[0]) {
-        event.preventDefault()
-        focusable.at(-1).focus()
-      } else if (!event.shiftKey && document.activeElement === focusable.at(-1)) {
-        event.preventDefault()
-        focusable[0].focus()
-      }
-    }
-
-    window.addEventListener('keydown', handleKeyDown)
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown)
-      document.documentElement.style.overflow = previousRootOverflow
-      document.body.style.overflow = previousBodyOverflow
-      previouslyFocused?.focus()
-    }
-  }, [])
 
   function change(field, value) {
     updateDraft((current) => ({ ...current, [field]: value }))
@@ -240,12 +198,11 @@ export function IncidentFormDialog({ account, branch, machines, members, inciden
     }
   }
 
-  return createPortal(
-    <div className="dialog-backdrop machine-dialog-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && !isSaving) onClose() }}>
-      <section ref={dialogRef} className="machine-dialog incident-dialog glass-surface" role="dialog" aria-modal="true" aria-labelledby="incident-dialog-title" aria-describedby="incident-dialog-description">
+  return (
+    <BlockingDialog className="machine-dialog incident-dialog glass-surface" backdropClassName="machine-dialog-backdrop" labelledBy="incident-dialog-title" describedBy="incident-dialog-description" onClose={onClose} busy={isSaving}>
         <header className="dialog-header">
           <div className="dialog-heading"><span className="dialog-icon">{isEdit ? <PencilLine size={22} /> : <ClipboardPlus size={22} />}</span><div><span className="card-kicker">Human / Operational Error</span><h2 id="incident-dialog-title">{isEdit ? 'Edit Log' : 'Log error operasional'}</h2><p id="incident-dialog-description">{isEdit ? 'Perbarui current truth tanpa menghapus riwayat perubahan.' : `Catat kejadian produksi nyata di ${branch.name}. Bukan kode fault teknis mesin.`}</p></div></div>
-          <button ref={closeButtonRef} className="icon-button" type="button" onClick={onClose} disabled={isSaving} aria-label="Tutup form log error"><X size={19} /></button>
+          <button className="icon-button" type="button" onClick={onClose} disabled={isSaving} aria-label="Tutup form log error"><X size={19} /></button>
         </header>
 
         <form className="machine-form incident-form" onSubmit={handleSubmit} noValidate>
@@ -287,8 +244,6 @@ export function IncidentFormDialog({ account, branch, machines, members, inciden
           </div>
           <footer className="dialog-actions"><button className="draft-reset-button" type="button" onClick={handleReset} disabled={!hasDraft || isSaving}><RotateCcw size={15} />Reset draft</button><button className="secondary-button" type="button" onClick={onClose} disabled={isSaving}>Batal</button><button className="primary-button" type="submit" disabled={isSaving || Boolean(pendingDraft || runtimeConflict)}>{isSaving ? <LoaderCircle className="spin" size={17} /> : isEdit ? <PencilLine size={17} /> : <ClipboardPlus size={17} />}{isSaving ? 'Menyimpan…' : isEdit ? 'Simpan Perubahan' : 'Simpan Log Error'}</button></footer>
         </form>
-      </section>
-    </div>,
-    document.body,
+    </BlockingDialog>
   )
 }

@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { createPortal } from 'react-dom'
 import { LoaderCircle, LockKeyhole, SlidersHorizontal, X } from 'lucide-react'
+import { BlockingDialog } from '../../components/ui/BlockingDialog.jsx'
 import { useAuth } from '../auth/useAuth.js'
 import { createDraftKey } from '../drafts/draftKeys.js'
 import { usePersistentDraft } from '../drafts/usePersistentDraft.js'
@@ -97,9 +97,8 @@ export function ProfileDialog({ account, model, models, profile, components, ini
     }
   }
 
-  return createPortal(
-    <div className="dialog-backdrop">
-      <section className="machine-dialog component-dialog glass-surface" role="dialog" aria-modal="true" aria-labelledby="profile-dialog-title">
+  return (
+    <BlockingDialog className="machine-dialog component-dialog glass-surface" backdropClassName="machine-dialog-backdrop" labelledBy="profile-dialog-title" onClose={onClose} busy={saving}>
         <header className="dialog-header">
           <div className="dialog-heading"><span className="dialog-icon"><SlidersHorizontal size={22} /></span><div><span className="card-kicker">Machine-model configuration</span><h2 id="profile-dialog-title">{profile ? 'Edit profile' : isAssignment ? 'Assign to model' : 'Add model profile'}</h2><p>A catalog definition is referenced, never duplicated.</p></div></div>
           <button className="icon-button" type="button" onClick={onClose} disabled={saving} aria-label="Close profile form"><X size={19} /></button>
@@ -127,8 +126,6 @@ export function ProfileDialog({ account, model, models, profile, components, ini
           </div>
           <footer className="dialog-actions"><button className="secondary-button" type="button" onClick={onClose} disabled={saving}>Cancel</button><button className="primary-button" disabled={saving}>{saving && <LoaderCircle className="spin" size={16} />}{profile ? 'Save profile' : 'Create assignment'}</button></footer>
         </form>
-      </section>
-    </div>,
-    document.body,
+    </BlockingDialog>
   )
 }

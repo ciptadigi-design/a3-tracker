@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from 'react'
-import { createPortal } from 'react-dom'
+import { useState } from 'react'
 import { AlertCircle, FilePenLine, LoaderCircle, X } from 'lucide-react'
+import { BlockingDialog } from '../../components/ui/BlockingDialog.jsx'
 import { correctCounterReading } from '../../services/supabase/counters.js'
 import { formatCounter, mapCounterError } from './counterUtils.js'
 
@@ -12,58 +12,6 @@ export function CorrectCounterDialog({ reading, onClose, onCorrected }) {
   const [clientRequestId] = useState(() => crypto.randomUUID())
   const [error, setError] = useState(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const dialogRef = useRef(null)
-  const closeButtonRef = useRef(null)
-  const isSubmittingRef = useRef(false)
-  const onCloseRef = useRef(onClose)
-
-  useEffect(() => { isSubmittingRef.current = isSubmitting }, [isSubmitting])
-  useEffect(() => { onCloseRef.current = onClose }, [onClose])
-
-  useEffect(() => {
-    const previouslyFocused = document.activeElement
-    const previousRootOverflow = document.documentElement.style.overflow
-    const previousOverflow = document.body.style.overflow
-    const previousPaddingRight = document.body.style.paddingRight
-    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth
-    const bodyPaddingRight = Number.parseFloat(window.getComputedStyle(document.body).paddingRight) || 0
-
-    document.documentElement.style.overflow = 'hidden'
-    document.body.style.overflow = 'hidden'
-    if (scrollbarWidth > 0) document.body.style.paddingRight = `${bodyPaddingRight + scrollbarWidth}px`
-    closeButtonRef.current?.focus()
-
-    function handleKeyDown(event) {
-      if (event.key === 'Escape' && !isSubmittingRef.current) {
-        event.preventDefault()
-        onCloseRef.current()
-        return
-      }
-      if (event.key !== 'Tab') return
-
-      const focusableElements = [...(dialogRef.current?.querySelectorAll('button:not(:disabled), input:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"])') ?? [])]
-      if (!focusableElements.length) return
-      const firstElement = focusableElements[0]
-      const lastElement = focusableElements[focusableElements.length - 1]
-      if (event.shiftKey && document.activeElement === firstElement) {
-        event.preventDefault()
-        lastElement.focus()
-      } else if (!event.shiftKey && document.activeElement === lastElement) {
-        event.preventDefault()
-        firstElement.focus()
-      }
-    }
-
-    window.addEventListener('keydown', handleKeyDown)
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown)
-      document.documentElement.style.overflow = previousRootOverflow
-      document.body.style.overflow = previousOverflow
-      document.body.style.paddingRight = previousPaddingRight
-      previouslyFocused?.focus()
-    }
-  }, [])
-
   const replacement = replacementValue === '' ? null : Number(replacementValue)
   const previous = reading.previous_value == null ? null : Number(reading.previous_value)
   const invalidReplacement = action === 'replace' && (
@@ -103,9 +51,8 @@ export function CorrectCounterDialog({ reading, onClose, onCorrected }) {
     }
   }
 
-  return createPortal(
-    <div className="dialog-backdrop machine-dialog-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && !isSubmitting) onClose() }}>
-      <section ref={dialogRef} className="machine-dialog correction-dialog glass-surface" role="dialog" aria-modal="true" aria-labelledby="correction-dialog-title" aria-describedby="correction-dialog-description">
+  return (
+    <BlockingDialog className="machine-dialog correction-dialog glass-surface" backdropClassName="machine-dialog-backdrop" labelledBy="correction-dialog-title" describedBy="correction-dialog-description" onClose={onClose} busy={isSubmitting}>
         <header className="dialog-header">
           <div className="dialog-heading">
             <span className="dialog-icon"><FilePenLine size={22} /></span>
@@ -114,7 +61,7 @@ export function CorrectCounterDialog({ reading, onClose, onCorrected }) {
               <p id="correction-dialog-description">History is append-only. Replace the latest value with an audited correction, or void it without deleting the record.</p>
             </div>
           </div>
-          <button ref={closeButtonRef} className="icon-button" type="button" onClick={onClose} disabled={isSubmitting} aria-label="Close correction form"><X size={19} /></button>
+          <button className="icon-button" type="button" onClick={onClose} disabled={isSubmitting} aria-label="Close correction form"><X size={19} /></button>
         </header>
         <form className="machine-form correction-form" onSubmit={handleSubmit}>
           <div className="machine-form-body correction-form-body">
@@ -128,8 +75,6 @@ export function CorrectCounterDialog({ reading, onClose, onCorrected }) {
           </div>
           <footer className="dialog-actions"><button className="secondary-button" type="button" onClick={onClose} disabled={isSubmitting}>Cancel</button><button className={action === 'void' ? 'danger-button' : 'primary-button'} type="submit" disabled={isSubmitting || invalidReplacement}>{isSubmitting && <LoaderCircle className="spin" size={17} />}{isSubmitting ? 'Saving correction…' : action === 'void' ? 'Void reading' : 'Save replacement'}</button></footer>
         </form>
-      </section>
-    </div>,
-    document.body,
+    </BlockingDialog>
   )
 }

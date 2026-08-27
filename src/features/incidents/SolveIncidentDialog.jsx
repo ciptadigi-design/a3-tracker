@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from 'react'
-import { createPortal } from 'react-dom'
+import { useState } from 'react'
 import { AlertCircle, CheckCircle2, LoaderCircle, X } from 'lucide-react'
+import { BlockingDialog } from '../../components/ui/BlockingDialog.jsx'
 import { formatRupiah, mapIncidentError } from './incidentUtils.js'
 
 function ReadinessItem({ label, value }) {
@@ -11,22 +11,6 @@ export function SolveIncidentDialog({ incident, onClose, onConfirm }) {
   const [resolutionNote, setResolutionNote] = useState('')
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState(null)
-  const closeRef = useRef(null)
-
-  useEffect(() => {
-    const previousRootOverflow = document.documentElement.style.overflow
-    const previousBodyOverflow = document.body.style.overflow
-    document.documentElement.style.overflow = 'hidden'
-    document.body.style.overflow = 'hidden'
-    closeRef.current?.focus()
-    const onKeyDown = (event) => { if (event.key === 'Escape' && !isSaving) onClose() }
-    window.addEventListener('keydown', onKeyDown)
-    return () => {
-      window.removeEventListener('keydown', onKeyDown)
-      document.documentElement.style.overflow = previousRootOverflow
-      document.body.style.overflow = previousBodyOverflow
-    }
-  }, [isSaving, onClose])
 
   async function submit(event) {
     event.preventDefault()
@@ -42,10 +26,9 @@ export function SolveIncidentDialog({ incident, onClose, onConfirm }) {
     }
   }
 
-  return createPortal(
-    <div className="dialog-backdrop" role="presentation">
-      <section className="confirm-dialog solve-dialog glass-surface" role="dialog" aria-modal="true" aria-labelledby="solve-dialog-title">
-        <header className="dialog-header"><span className="dialog-icon"><CheckCircle2 size={22} /></span><button ref={closeRef} className="icon-button" type="button" onClick={onClose} disabled={isSaving} aria-label="Tutup konfirmasi solve"><X size={18} /></button></header>
+  return (
+    <BlockingDialog className="confirm-dialog solve-dialog glass-surface" labelledBy="solve-dialog-title" onClose={onClose} busy={isSaving}>
+        <header className="dialog-header"><span className="dialog-icon"><CheckCircle2 size={22} /></span><button className="icon-button" type="button" onClick={onClose} disabled={isSaving} aria-label="Tutup konfirmasi solve"><X size={18} /></button></header>
         <h2 id="solve-dialog-title">Mark Incident as Solved</h2>
         <p>Konfirmasi bahwa tim telah meninjau current truth incident ini. Status database tetap memakai kode stabil <strong>resolved</strong>.</p>
         <form className="incident-solve-form" onSubmit={submit}>
@@ -59,8 +42,6 @@ export function SolveIncidentDialog({ incident, onClose, onConfirm }) {
           {error && <div className="form-error" role="alert"><AlertCircle size={16} /><span>{error}</span></div>}
           <div className="dialog-actions"><button className="secondary-button" type="button" onClick={onClose} disabled={isSaving}>Batal</button><button className="primary-button" type="submit" disabled={isSaving}>{isSaving ? <LoaderCircle className="spin" size={17} /> : <CheckCircle2 size={17} />}{isSaving ? 'Menyelesaikan…' : 'Confirm Solved'}</button></div>
         </form>
-      </section>
-    </div>,
-    document.body,
+    </BlockingDialog>
   )
 }

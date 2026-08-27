@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Archive, Boxes, Edit3, Link2, Plus, RefreshCcw, ShieldCheck, Trash2 } from 'lucide-react'
+import { BlockingDialog } from '../components/ui/BlockingDialog.jsx'
 import { PageHeader } from '../components/ui/PageHeader.jsx'
 import { useAuth } from '../features/auth/useAuth.js'
 import { useTenant } from '../features/account/useTenant.js'
@@ -35,7 +36,7 @@ function assignmentMap({ profiles, models, accountId }) {
 }
 
 function ConfirmDialog({ title, message, confirmLabel, onCancel, onConfirm, busy }) {
-  return <div className="dialog-backdrop"><section className="confirm-dialog glass-surface" role="alertdialog" aria-modal="true"><span className="danger-dialog-icon"><Trash2 size={22} /></span><h2>{title}</h2><p>{message}</p><div className="dialog-actions"><button className="secondary-button" onClick={onCancel} disabled={busy}>Cancel</button><button className="danger-button" onClick={onConfirm} disabled={busy}>{busy ? 'Working…' : confirmLabel}</button></div></section></div>
+  return <BlockingDialog className="confirm-dialog glass-surface" role="alertdialog" labelledBy="components-confirm-title" describedBy="components-confirm-description" onClose={onCancel} busy={busy}><span className="danger-dialog-icon"><Trash2 size={22} /></span><h2 id="components-confirm-title">{title}</h2><p id="components-confirm-description">{message}</p><div className="dialog-actions"><button className="secondary-button" onClick={onCancel} disabled={busy}>Cancel</button><button className="danger-button" onClick={onConfirm} disabled={busy}>{busy ? 'Working…' : confirmLabel}</button></div></BlockingDialog>
 }
 
 export function ComponentsPage() {

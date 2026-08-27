@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { createPortal } from 'react-dom'
 import { Boxes, LoaderCircle, RotateCcw, X } from 'lucide-react'
+import { BlockingDialog } from '../../components/ui/BlockingDialog.jsx'
 import { useAuth } from '../auth/useAuth.js'
 import { createDraftKey } from '../drafts/draftKeys.js'
 import { usePersistentDraft } from '../drafts/usePersistentDraft.js'
@@ -83,9 +83,8 @@ export function ComponentDialog({ account, component, manufacturers, onClose, on
     }
   }
 
-  return createPortal(
-    <div className="dialog-backdrop">
-      <section className="machine-dialog component-dialog glass-surface" role="dialog" aria-modal="true" aria-labelledby="component-dialog-title">
+  return (
+    <BlockingDialog className="machine-dialog component-dialog glass-surface" backdropClassName="machine-dialog-backdrop" labelledBy="component-dialog-title" onClose={onClose} busy={saving}>
         <header className="dialog-header">
           <div className="dialog-heading"><span className="dialog-icon"><Boxes size={22} /></span><div><span className="card-kicker">Component catalog</span><h2 id="component-dialog-title">{component ? 'Edit component' : 'Add component'}</h2><p>Reusable definition only. Manufacturer does not assign a machine model.</p></div></div>
           <button className="icon-button" type="button" onClick={onClose} disabled={saving} aria-label="Close component form"><X size={19} /></button>
@@ -107,8 +106,6 @@ export function ComponentDialog({ account, component, manufacturers, onClose, on
           </div>
           <footer className="dialog-actions"><button className="draft-reset-button" type="button" onClick={() => resetDraft(initial)} disabled={!hasDraft || saving}><RotateCcw size={15} />Reset draft</button><button className="secondary-button" type="button" onClick={onClose} disabled={saving}>Cancel</button><button className="primary-button" disabled={saving}>{saving && <LoaderCircle className="spin" size={16} />}Save component</button></footer>
         </form>
-      </section>
-    </div>,
-    document.body,
+    </BlockingDialog>
   )
 }
