@@ -35,20 +35,20 @@ select set_config('request.jwt.claim.sub','70000000-0000-0000-0000-000000000004'
 select extensions.throws_ok($$insert into public.components(account_id,code,name) values('71000000-0000-0000-0000-000000000001','OP','Operator')$$,'42501',null,'operator write denied');
 
 select set_config('request.jwt.claim.sub','70000000-0000-0000-0000-000000000001',true);
-select extensions.lives_ok($$insert into public.components(id,account_id,code,name) values('73000000-0000-0000-0000-000000000001','71000000-0000-0000-0000-000000000001','OWNER_PART','Owner Part')$$,'owner component create');
+select extensions.lives_ok($$insert into public.components(account_id,code,name) values('71000000-0000-0000-0000-000000000001','OWNER_PART','Owner Part')$$,'owner component create');
 select extensions.throws_ok($$insert into public.components(account_id,code,name) values('71000000-0000-0000-0000-000000000002','CROSS','Cross')$$,'42501',null,'cross-account component create denied');
 select set_config('request.jwt.claim.sub','70000000-0000-0000-0000-000000000002',true);
-select extensions.lives_ok($$insert into public.components(id,account_id,code,name) values('73000000-0000-0000-0000-000000000002','71000000-0000-0000-0000-000000000001','ADMIN_PART','Admin Part')$$,'admin component create');
-select extensions.lives_ok($$insert into public.machine_model_components(id,account_id,machine_model_id,component_id,slot_code,tracking_method,baseline_expected_clicks) values('74000000-0000-0000-0000-000000000001','71000000-0000-0000-0000-000000000001','51000000-0000-0000-0000-000000000001','73000000-0000-0000-0000-000000000001','OWNER_SLOT','counter_based',1000)$$,'admin model profile create');
-select extensions.lives_ok($$update public.machine_model_components set notes='updated' where id='74000000-0000-0000-0000-000000000001'$$,'admin model profile update');
-select extensions.lives_ok($$update public.machine_model_components set baseline_expected_clicks=13200 where id='74000000-0000-0000-0000-000000000001'$$,'expected clicks editable');
-select extensions.throws_ok($$update public.machine_model_components set baseline_expected_clicks=-1 where id='74000000-0000-0000-0000-000000000001'$$,'23514',null,'negative expected clicks denied');
-select extensions.throws_ok($$insert into public.machine_model_components(account_id,machine_model_id,component_id,slot_code,tracking_method) values('71000000-0000-0000-0000-000000000001','51000000-0000-0000-0000-000000000001','73000000-0000-0000-0000-000000000002','owner_slot','counter_based')$$,'23505',null,'duplicate active slot denied');
-select extensions.lives_ok($$update public.machine_model_components set is_active=false where id='74000000-0000-0000-0000-000000000001'$$,'profile archive allowed');
-select extensions.ok((select archived_at is not null from public.machine_model_components where id='74000000-0000-0000-0000-000000000001'),'archived profile remains readable');
-select extensions.lives_ok($$delete from public.components where id='73000000-0000-0000-0000-000000000002'$$,'unused component hard delete allowed');
-select extensions.throws_ok($$delete from public.components where id='73000000-0000-0000-0000-000000000001'$$,'23503',null,'referenced component hard delete denied');
-select extensions.lives_ok($$update public.components set is_active=false where id='73000000-0000-0000-0000-000000000001'$$,'referenced component can archive');
+select extensions.lives_ok($$insert into public.components(account_id,code,name) values('71000000-0000-0000-0000-000000000001','ADMIN_PART','Admin Part')$$,'admin component create');
+select extensions.lives_ok($$insert into public.machine_model_components(account_id,machine_model_id,component_id,slot_code,tracking_method,baseline_expected_clicks) values('71000000-0000-0000-0000-000000000001','51000000-0000-0000-0000-000000000001',(select id from public.components where code='OWNER_PART'),'OWNER_SLOT','counter_based',1000)$$,'admin model profile create');
+select extensions.lives_ok($$update public.machine_model_components set notes='updated' where account_id='71000000-0000-0000-0000-000000000001' and slot_code='OWNER_SLOT'$$,'admin model profile update');
+select extensions.lives_ok($$update public.machine_model_components set baseline_expected_clicks=13200 where account_id='71000000-0000-0000-0000-000000000001' and slot_code='OWNER_SLOT'$$,'expected clicks editable');
+select extensions.throws_ok($$update public.machine_model_components set baseline_expected_clicks=-1 where account_id='71000000-0000-0000-0000-000000000001' and slot_code='OWNER_SLOT'$$,'23514',null,'negative expected clicks denied');
+select extensions.throws_ok($$insert into public.machine_model_components(account_id,machine_model_id,component_id,slot_code,tracking_method) values('71000000-0000-0000-0000-000000000001','51000000-0000-0000-0000-000000000001',(select id from public.components where code='ADMIN_PART'),'owner_slot','counter_based')$$,'23505',null,'duplicate active slot denied');
+select extensions.lives_ok($$update public.machine_model_components set is_active=false where account_id='71000000-0000-0000-0000-000000000001' and slot_code='OWNER_SLOT'$$,'profile archive allowed');
+select extensions.ok((select archived_at is not null from public.machine_model_components where account_id='71000000-0000-0000-0000-000000000001' and slot_code='OWNER_SLOT'),'archived profile remains readable');
+select extensions.lives_ok($$delete from public.components where account_id='71000000-0000-0000-0000-000000000001' and code='ADMIN_PART'$$,'unused component hard delete allowed');
+select extensions.throws_ok($$delete from public.components where account_id='71000000-0000-0000-0000-000000000001' and code='OWNER_PART'$$,'23503',null,'referenced component hard delete denied');
+select extensions.lives_ok($$update public.components set is_active=false where account_id='71000000-0000-0000-0000-000000000001' and code='OWNER_PART'$$,'referenced component can archive');
 reset role;
 
 select extensions.is((select count(*)::int from public.machine_model_components where account_id is null and machine_model_id='51000000-0000-0000-0000-000000000001'),28,'exactly 28 authoritative C1070 profiles are seeded');
