@@ -20,6 +20,14 @@
   --purple: #7b61e8;
   --danger: #d94747;
   --warning: #c57b17;
+  --cmyk-cyan: #00a8c6;
+  --cmyk-magenta: #d62b7f;
+  --cmyk-yellow: #f0c419;
+  --cmyk-black: #171a20;
+  --cmyk-cyan-ring: rgba(0, 103, 124, 0.25);
+  --cmyk-magenta-ring: rgba(137, 8, 69, 0.24);
+  --cmyk-yellow-ring: rgba(122, 91, 0, 0.32);
+  --cmyk-black-ring: rgba(23, 26, 32, 0.28);
   --shadow: 0 24px 60px rgba(34, 51, 84, 0.10), 0 4px 14px rgba(34, 51, 84, 0.04);
 }
 
@@ -40,6 +48,10 @@
   --purple: #a18cf2;
   --danger: #ff6a6a;
   --warning: #ffb44d;
+  --cmyk-cyan-ring: rgba(116, 232, 255, 0.32);
+  --cmyk-magenta-ring: rgba(255, 141, 200, 0.3);
+  --cmyk-yellow-ring: rgba(255, 235, 134, 0.34);
+  --cmyk-black-ring: rgba(255, 255, 255, 0.52);
   --shadow: 0 28px 80px rgba(0, 0, 0, 0.34);
 }
 
@@ -737,6 +749,11 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .adaptive-intelligence-cell { min-width: 0; display: grid; gap: 5px; }
 .adaptive-intelligence-cell > button, .adaptive-intelligence-badge { width: fit-content; display: inline-flex; align-items: center; gap: 5px; padding: 0; color: var(--blue); cursor: pointer; border: 0; background: transparent; font-size: 8px; font-weight: 750; }
 .adaptive-intelligence-cell > button:focus-visible, .adaptive-intelligence-badge:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; border-radius: 5px; }
+.component-channel-marker { width: 9px; height: 9px; display: inline-block; flex: 0 0 auto; margin-right: 7px; border: 1px solid transparent; border-radius: 50%; vertical-align: .08em; }
+.component-channel-cyan { border-color: var(--cmyk-cyan-ring); background: var(--cmyk-cyan); }
+.component-channel-magenta { border-color: var(--cmyk-magenta-ring); background: var(--cmyk-magenta); }
+.component-channel-yellow { border-color: var(--cmyk-yellow-ring); background: var(--cmyk-yellow); }
+.component-channel-black { border-color: var(--cmyk-black-ring); background: var(--cmyk-black); }
 .intelligence-dialog { --intelligence-gutter: 28px; width: min(920px, 100%); }
 .intelligence-dialog > .dialog-header { min-height: 98px; align-items: center; padding: 22px var(--intelligence-gutter) 20px; }
 .intelligence-dialog .dialog-heading { gap: 16px; }
