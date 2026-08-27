@@ -39,12 +39,22 @@ select extensions.lives_ok($$insert into public.operational_people(id,account_id
 select extensions.lives_ok($$insert into public.manufacturers(id,account_id,code,name) values ('e3600000-0000-4000-8000-000000000001','e3100000-0000-0000-0000-000000000001','TEST-MFG','Test Manufacturer')$$,'owner can create workspace manufacturer');
 select extensions.lives_ok($$insert into public.machine_models(id,account_id,manufacturer_id,model_code,name,machine_category,color_capability) values ('e3700000-0000-4000-8000-000000000001','e3100000-0000-0000-0000-000000000001','e3600000-0000-4000-8000-000000000001','TEST-MODEL','Test Model','digital_a3','color')$$,'owner can create workspace model');
 select extensions.throws_ok($$delete from public.manufacturers where id='e3600000-0000-4000-8000-000000000001'$$,'23503',null,'manufacturer deletion is denied while a model references it');
+select extensions.lives_ok($$insert into public.manufacturers(id,account_id,code,name) values ('e3600000-0000-4000-8000-000000000002','e3100000-0000-0000-0000-000000000001','TEMP-MFG','Temporary Manufacturer')$$,'owner can create a second workspace manufacturer for deletion coverage');
+select extensions.lives_ok($$insert into public.machine_models(id,account_id,manufacturer_id,model_code,name,machine_category,color_capability) values ('e3700000-0000-4000-8000-000000000002','e3100000-0000-0000-0000-000000000001','e3600000-0000-4000-8000-000000000002','TEMP-MODEL','Temporary Model','digital_a3','color')$$,'owner can create a second workspace model for deletion coverage');
 reset role;
 
 set local role authenticated;
 select set_config('request.jwt.claim.sub','e3000000-0000-0000-0000-000000000002',true);
 select extensions.lives_ok($$update public.operational_people set notes='Admin managed' where id='e3500000-0000-4000-8000-000000000001'$$,'admin can update operator');
+select extensions.lives_ok($$update public.manufacturers set notes='Admin managed' where id='e3600000-0000-4000-8000-000000000001'$$,'admin can update workspace manufacturers');
+select extensions.lives_ok($$update public.machine_models set description='Admin managed' where id='e3700000-0000-4000-8000-000000000001'$$,'admin can update workspace machine models');
+select extensions.lives_ok($$insert into public.machines(id,account_id,branch_id,machine_model_id,machine_code,display_name) values ('e3400000-0000-4000-8000-000000000002','e3100000-0000-0000-0000-000000000001','e3300000-0000-0000-0000-000000000001','e3700000-0000-4000-8000-000000000001','M23E-A-02','M2.3E Workspace Model Machine')$$,'admin can create a machine referencing a workspace model');
+select extensions.throws_ok($$delete from public.machine_models where id='e3700000-0000-4000-8000-000000000001'$$,'23503',null,'machine model deletion is denied while a machine references it');
+select extensions.lives_ok($$update public.machine_models set is_active=false where id='e3700000-0000-4000-8000-000000000001'$$,'referenced workspace model can be archived');
+select extensions.lives_ok($$update public.manufacturers set is_active=false where id='e3600000-0000-4000-8000-000000000001'$$,'referenced workspace manufacturer can be archived');
+select extensions.is((select machine_model_id from public.machines where id='e3400000-0000-4000-8000-000000000002'),'e3700000-0000-4000-8000-000000000001'::uuid,'catalog archive preserves the physical machine reference');
 select extensions.lives_ok($$select public.record_machine_counter('e3100000-0000-0000-0000-000000000001','e3400000-0000-4000-8000-000000000001',100,'2026-08-26 08:00+07','e3800000-0000-4000-8000-000000000001','e3500000-0000-4000-8000-000000000001',null,null,'total_impressions')$$,'admin records a reading for a different operational person');
+select extensions.is((select operator_person_id from public.counter_readings where client_request_id='e3800000-0000-4000-8000-000000000001'),'e3500000-0000-4000-8000-000000000001'::uuid,'counter stores the operational person reference');
 select extensions.is((select operator_name_snapshot from public.counter_readings where client_request_id='e3800000-0000-4000-8000-000000000001'),'Press PIC','counter stores operator name snapshot');
 select extensions.is((select created_by from public.counter_readings where client_request_id='e3800000-0000-4000-8000-000000000001'),'e3000000-0000-0000-0000-000000000002'::uuid,'authenticated creator remains separate from operator');
 select extensions.throws_ok($$delete from public.operational_people where id='e3500000-0000-4000-8000-000000000001'$$,'23503',null,'referenced operator cannot be hard deleted');
@@ -62,17 +72,21 @@ reset role;
 set local role authenticated;
 select set_config('request.jwt.claim.sub','e3000000-0000-0000-0000-000000000004',true);
 select extensions.is((select count(*)::integer from public.machine_models where id='e3700000-0000-4000-8000-000000000001'),1,'operator can read workspace models');
+select extensions.throws_ok($$insert into public.operational_people(account_id,name) values ('e3100000-0000-0000-0000-000000000001','Operator Denied PIC')$$,'42501',null,'operator cannot manage operational people');
+select extensions.throws_ok($$update public.machine_models set notes='Operator denied' where id='e3700000-0000-4000-8000-000000000001'$$,'42501',null,'operator cannot manage machine models');
 reset role;
 
 set local role authenticated;
 select set_config('request.jwt.claim.sub','e3000000-0000-0000-0000-000000000005',true);
 select extensions.is((select count(*)::integer from public.operational_people),0,'suspended member cannot read operators');
+select extensions.throws_ok($$insert into public.operational_people(account_id,name) values ('e3100000-0000-0000-0000-000000000001','Suspended Denied PIC')$$,'42501',null,'suspended member cannot manage operational people');
 reset role;
 
 set local role authenticated;
 select set_config('request.jwt.claim.sub','e3000000-0000-0000-0000-000000000006',true);
 select extensions.lives_ok($$update public.operational_people set name='Cross account' where id='e3500000-0000-4000-8000-000000000001'$$,'cross-account update exposes no writable row');
 select extensions.is((select count(*)::integer from public.operational_people where id='e3500000-0000-4000-8000-000000000001'),0,'cross-account operator remains invisible');
+select extensions.throws_ok($$insert into public.manufacturers(account_id,code,name) values ('e3100000-0000-0000-0000-000000000001','CROSS-MFG','Cross-account Manufacturer')$$,'42501',null,'cross-account manufacturer creation is denied');
 select extensions.throws_ok($$insert into public.machine_models(account_id,manufacturer_id,model_code,name,machine_category,color_capability) values ('e3100000-0000-0000-0000-000000000002','e3600000-0000-4000-8000-000000000001','CROSS','Cross Model','digital_a3','color')$$,'23503',null,'cross-account manufacturer cannot back a model');
 reset role;
 
@@ -82,8 +96,8 @@ select extensions.is((select timezone from public.machines where id='e3400000-00
 select extensions.throws_ok($$update public.machines set timezone='Jakarta Time' where id='e3400000-0000-4000-8000-000000000001'$$,'23514',null,'invalid machine timezone is rejected');
 select extensions.lives_ok($$update public.machines set timezone=null where id='e3400000-0000-4000-8000-000000000001'$$,'null machine timezone remains available for inheritance');
 select extensions.is((select timezone from public.branches where id='e3300000-0000-0000-0000-000000000001'),'Asia/Jakarta','branch timezone remains the inheritance source');
-select extensions.lives_ok($$delete from public.machine_models where id='e3700000-0000-4000-8000-000000000001'$$,'unreferenced workspace model can be deleted');
-select extensions.lives_ok($$delete from public.manufacturers where id='e3600000-0000-4000-8000-000000000001'$$,'unreferenced workspace manufacturer can be deleted');
+select extensions.lives_ok($$delete from public.machine_models where id='e3700000-0000-4000-8000-000000000002'$$,'unreferenced workspace model can be deleted');
+select extensions.lives_ok($$delete from public.manufacturers where id='e3600000-0000-4000-8000-000000000002'$$,'unreferenced workspace manufacturer can be deleted');
 
 select extensions.finish();
 rollback;
