@@ -423,15 +423,18 @@ create policy operational_people_delete_owner_admin on public.operational_people
 using (public.has_account_role(account_id,array['owner','admin']::public.account_role[]));
 
 grant insert (account_id,code,name,website,notes,is_active) on public.manufacturers to authenticated;
+grant insert (id) on public.manufacturers to authenticated;
 grant update (code,name,website,notes,is_active) on public.manufacturers to authenticated;
 grant delete on public.manufacturers to authenticated;
 grant insert (account_id,manufacturer_id,model_code,name,machine_category,color_capability,description,notes,is_active) on public.machine_models to authenticated;
+grant insert (id) on public.machine_models to authenticated;
 grant update (manufacturer_id,model_code,name,machine_category,color_capability,description,notes,is_active) on public.machine_models to authenticated;
 grant delete on public.machine_models to authenticated;
 
 revoke all on table public.operational_people from public,anon,authenticated,service_role;
 grant select on public.operational_people to authenticated;
 grant insert (account_id,name,linked_user_id,code,is_active,notes) on public.operational_people to authenticated;
+grant insert (id) on public.operational_people to authenticated;
 grant update (name,linked_user_id,code,is_active,notes) on public.operational_people to authenticated;
 grant delete on public.operational_people to authenticated;
 grant select,insert,update,delete on public.operational_people to service_role;
