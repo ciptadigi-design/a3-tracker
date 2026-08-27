@@ -159,7 +159,7 @@ select extensions.throws_ok($$update public.component_replacement_events set not
 select extensions.throws_ok($$insert into public.inventory_movements(account_id,inventory_item_id,location_id,movement_type,quantity,unit_snapshot,occurred_at,operational_person_name_snapshot,reference_type,client_request_id,created_by,created_by_name_snapshot) values('c1000000-0000-4000-8000-000000000001','c8100000-0000-4000-8000-000000000001','c8000000-0000-4000-8000-000000000001','issue',-1,'pcs',now(),'PIC','maintenance',gen_random_uuid(),'c0000000-0000-4000-8000-000000000001','Owner')$$,'42501',null,'direct ledger insert remains denied');
 select extensions.lives_ok($$update public.inventory_items set is_active=false where id='c8100000-0000-4000-8000-000000000001'$$,'replacement-referenced item can be safely archived');
 select extensions.lives_ok($$update public.inventory_locations set is_active=false where id='c8000000-0000-4000-8000-000000000001'$$,'replacement-referenced location can be safely archived');
-select extensions.is((select inventory_item_name from public.component_replacement_history where client_request_id='c9000000-0000-4000-8000-000000000011'),'Corona Cyan','archive preserves replacement inventory history');
+select extensions.is((select inventory_item_name from public.component_replacement_history where previous_lifecycle_id='c7000000-0000-4000-8000-000000000001'),'Corona Cyan','archive preserves replacement inventory history');
 reset role;
 
 select extensions.ok((select bool_and(quantity>=0) from public.inventory_stock_balances where account_id='c1000000-0000-4000-8000-000000000001'),'all derived stock balances remain nonnegative');
