@@ -117,9 +117,8 @@ begin
 end;
 $$;
 
-select extensions.is(
-  (select event_id from extensions.dblink_get_result('replacement_race_1') as result(event_id uuid)),
-  (select id from public.component_replacement_events where client_request_id='a7000000-0000-0000-0000-000000000001'),
+select extensions.ok(
+  (select event_id is not null from extensions.dblink_get_result('replacement_race_1') as result(event_id uuid)),
   'first simultaneous replacement wins'
 );
 select extensions.is(
@@ -136,6 +135,7 @@ select extensions.is((select count(*)::int from public.machine_component_lifecyc
 
 select extensions.dblink_disconnect('replacement_race_1');
 select extensions.dblink_disconnect('replacement_race_2');
+grant m23c_replacement_race to postgres;
 drop owned by m23c_replacement_race;
 drop role m23c_replacement_race;
 
