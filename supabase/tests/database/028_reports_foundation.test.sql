@@ -13,7 +13,12 @@ select extensions.ok((select bool_and(prosecdef and proconfig @> array['search_p
     'public.get_report_error_waste(uuid,uuid,uuid,date,date,public.operational_incident_category,public.operational_incident_status)'::regprocedure,
     'public.get_report_inventory_activity(uuid,uuid,date,date)'::regprocedure,
     'public.get_report_purchase_lines(uuid,date,date)'::regprocedure,
-    'public.get_report_inventory_stock(uuid,uuid)'::regprocedure
+    'public.get_report_inventory_stock(uuid,uuid)'::regprocedure,
+    'public.get_report_period_comparison(uuid,uuid,uuid,date,date,text)'::regprocedure,
+    'public.get_report_machine_comparison(uuid,uuid,uuid,date,date)'::regprocedure,
+    'public.get_report_component_ranking(uuid,uuid,uuid,date,date)'::regprocedure,
+    'public.get_report_error_summary(uuid,uuid,uuid,date,date,public.operational_incident_category,public.operational_incident_status)'::regprocedure,
+    'public.get_report_inventory_analytics(uuid,uuid,date,date)'::regprocedure
   ])),'all Reports RPCs are SECURITY DEFINER with an empty search path');
 select extensions.ok(not has_function_privilege('anon','public.get_report_overview(uuid,uuid,uuid,date,date)','EXECUTE'),'anonymous has no Reports RPC grant');
 select extensions.ok(has_function_privilege('authenticated','public.get_report_overview(uuid,uuid,uuid,date,date)','EXECUTE'),'authenticated role reaches the membership-guarded Reports RPC');
@@ -110,6 +115,32 @@ select extensions.is((select branch_only_error_waste from public.get_report_over
 select extensions.is((select report_status from public.get_report_overview('b6100000-0000-4000-8000-000000000001','b6300000-0000-4000-8000-000000000001',null,'2026-08-01','2026-08-31')),'PARTIAL_PRICE','overview completeness exposes no-price machines');
 select extensions.is((select report_status from public.get_report_overview('b6100000-0000-4000-8000-000000000001',null,null,'2025-01-01','2025-01-31')),'NO_COUNTER_DATA','machines without period counter evidence remain explicitly incomplete');
 
+-- M2.6B period comparison is equal-duration, timezone-aware, and evidence-qualified in PostgreSQL.
+select extensions.ok((select current_period_start='2026-08-10' and current_period_end='2026-08-20'
+  and previous_period_start='2026-07-30' and previous_period_end='2026-08-09'
+  from public.get_report_period_comparison('b6100000-0000-4000-8000-000000000001',null,'b6400000-0000-4000-8000-000000000001','2026-08-10','2026-08-20','custom')
+  where metric_code='TOTAL_CLICKS'),'custom comparison uses the immediately preceding inclusive range of equal duration');
+select extensions.ok((select previous_period_start='2026-07-01' and previous_period_end='2026-07-31'
+  from public.get_report_period_comparison('b6100000-0000-4000-8000-000000000001',null,'b6400000-0000-4000-8000-000000000001','2026-08-01','2026-08-29','this_month')
+  where metric_code='TOTAL_CLICKS'),'This Month compares with the full previous calendar month');
+select extensions.ok((select previous_period_start='2025-01-01' and previous_period_end='2025-12-31'
+  from public.get_report_period_comparison('b6100000-0000-4000-8000-000000000001',null,'b6400000-0000-4000-8000-000000000001','2026-01-01','2026-08-29','this_year')
+  where metric_code='TOTAL_CLICKS'),'This Year compares with the full previous calendar year');
+select extensions.ok((select previous_period_start='2026-08-03' and previous_period_end='2026-08-09'
+  from public.get_report_period_comparison('b6100000-0000-4000-8000-000000000001',null,'b6400000-0000-4000-8000-000000000001','2026-08-10','2026-08-14','this_week')
+  where metric_code='TOTAL_CLICKS'),'This Week compares with the previous Monday-through-Sunday week');
+select extensions.throws_ok($$select public.get_report_period_comparison('b6100000-0000-4000-8000-000000000001',null,null,'2026-08-01','2026-08-31','invalid')$$,'22023',null,'unknown comparison preset is rejected by PostgreSQL');
+select extensions.is((select current_value from public.get_report_period_comparison('b6100000-0000-4000-8000-000000000001',null,'b6400000-0000-4000-8000-000000000001','2026-08-10','2026-08-20','custom') where metric_code='TOTAL_CLICKS'),350::numeric,'comparison current clicks reuse effective counter usage and local operational dates');
+select extensions.ok((select delta_percent is null and delta_status='NO_COMPARISON'
+  from public.get_report_period_comparison('b6100000-0000-4000-8000-000000000001',null,'b6400000-0000-4000-8000-000000000001','2026-08-10','2026-08-20','custom')
+  where metric_code='TOTAL_CLICKS'),'invalid previous denominator never emits NaN, Infinity, or a fabricated percentage');
+select extensions.is((select current_evidence_status from public.get_report_period_comparison('b6100000-0000-4000-8000-000000000001','b6300000-0000-4000-8000-000000000001',null,'2026-08-01','2026-08-31','this_month') where metric_code='ESTIMATED_MACHINE_REVENUE'),'PARTIAL_PRICE','period comparison preserves partial price evidence across machines');
+select extensions.is((select current_evidence_status from public.get_report_period_comparison('b6100000-0000-4000-8000-000000000001',null,'b6400000-0000-4000-8000-000000000001','2026-08-01','2026-08-31','this_month') where metric_code='ESTIMATED_CONTRIBUTION'),'PARTIAL_COST','period comparison preserves unknown FIFO cost qualification');
+
+select extensions.is((select comparison_status from public.get_report_machine_comparison('b6100000-0000-4000-8000-000000000001','b6300000-0000-4000-8000-000000000001',null,'2026-08-01','2026-08-31') where machine_code='RPT-A1'),'PARTIAL_COST','machine comparison qualifies incomplete component cost');
+select extensions.is((select comparison_status from public.get_report_machine_comparison('b6100000-0000-4000-8000-000000000001','b6300000-0000-4000-8000-000000000001',null,'2026-08-01','2026-08-31') where machine_code='RPT-A2'),'PARTIAL_PRICE','machine comparison qualifies missing selling-price evidence');
+select extensions.ok((select bool_and(contribution_rank is null) from public.get_report_machine_comparison('b6100000-0000-4000-8000-000000000001','b6300000-0000-4000-8000-000000000001',null,'2026-08-01','2026-08-31')),'partial machine evidence is not contribution-ranked as fully comparable');
+
 select public.set_machine_economics_advanced_enabled('b6100000-0000-4000-8000-000000000001',true);
 select public.create_machine_operating_cost('b6100000-0000-4000-8000-000000000001','b6400000-0000-4000-8000-000000000001','electricity',10000,'one_time','Report advanced fixture','b7300000-0000-4000-8000-000000000001','2026-08-18 10:00+07',null,null,null,null,null,'manual');
 select extensions.ok((select advanced_enabled and full_machine_operating_cost=12500 and estimated_full_contribution=277500 from public.get_report_machine_economics('b6100000-0000-4000-8000-000000000001',null,'b6400000-0000-4000-8000-000000000001','2026-08-01','2026-08-31')),'Advanced ON exposes separate Full economics without changing Standard');
@@ -118,15 +149,24 @@ select extensions.ok((select advanced_enabled and full_machine_operating_cost=12
 select extensions.is((select replacement_count from public.get_report_component_consumption('b6100000-0000-4000-8000-000000000001',null,'b6400000-0000-4000-8000-000000000001','2026-08-01','2026-08-31')),1,'component report counts replacement evidence once');
 select extensions.is((select unknown_cost_events from public.get_report_component_consumption('b6100000-0000-4000-8000-000000000001',null,'b6400000-0000-4000-8000-000000000001','2026-08-01','2026-08-31')),1,'component report keeps unknown acquisition evidence explicit');
 select extensions.is((select average_observed_yield from public.get_report_component_consumption('b6100000-0000-4000-8000-000000000001',null,'b6400000-0000-4000-8000-000000000001','2026-08-01','2026-08-31')),350::numeric,'component report reuses observed lifecycle yield');
+select extensions.is((select replacement_count from public.get_report_component_ranking('b6100000-0000-4000-8000-000000000001',null,null,'2026-08-01','2026-08-31') where component_code='CHARGING_CORONA_C'),1,'component ranking aggregates the logical component without double counting lifecycle evidence');
+select extensions.ok((select known_cost_share_percent is null and unknown_cost_events=1 and evidence_status='PARTIAL_COST'
+  from public.get_report_component_ranking('b6100000-0000-4000-8000-000000000001',null,null,'2026-08-01','2026-08-31') where component_code='CHARGING_CORONA_C'),'known-cost share uses only a valid known denominator and unknown cost is not zero');
 select extensions.is((select count(*)::int from public.get_report_error_waste('b6100000-0000-4000-8000-000000000001','b6300000-0000-4000-8000-000000000001',null,'2026-08-01','2026-08-31',null,null)),2,'Error/Waste branch report includes machine and branch-only incidents');
 select extensions.is((select count(*)::int from public.get_report_error_waste('b6100000-0000-4000-8000-000000000001','b6300000-0000-4000-8000-000000000001','b6400000-0000-4000-8000-000000000001','2026-08-01','2026-08-31',null,null)),1,'Error/Waste machine filter excludes branch-only incidents');
 select extensions.is((select count(*)::int from public.get_report_error_waste('b6100000-0000-4000-8000-000000000001',null,null,'2026-08-01','2026-08-31','bahan',null)),1,'Error/Waste category filter is authoritative');
 select extensions.is((select count(*)::int from public.get_report_error_waste('b6100000-0000-4000-8000-000000000001',null,null,'2026-08-01','2026-08-31',null,'resolved')),1,'Error/Waste status filter is authoritative');
+select extensions.is((select assessed_loss from public.get_report_error_summary('b6100000-0000-4000-8000-000000000001','b6300000-0000-4000-8000-000000000001',null,'2026-08-01','2026-08-31',null,null) where dimension_type='ATTRIBUTION' and dimension_value='MACHINE'),2500::numeric,'Error/Waste summary aggregates machine-attributed assessed loss');
+select extensions.is((select assessed_loss from public.get_report_error_summary('b6100000-0000-4000-8000-000000000001','b6300000-0000-4000-8000-000000000001',null,'2026-08-01','2026-08-31',null,null) where dimension_type='ATTRIBUTION' and dimension_value='BRANCH_ONLY'),3000::numeric,'Error/Waste summary preserves branch-only loss without machine allocation');
+select extensions.is((select incident_count from public.get_report_error_summary('b6100000-0000-4000-8000-000000000001',null,'b6400000-0000-4000-8000-000000000001','2026-08-01','2026-08-31',null,null) where dimension_type='PIC' and dimension_value='Operator A'),1,'Error/Waste PIC aggregation respects machine isolation');
 select extensions.is((select purchases from public.get_report_inventory_activity('b6100000-0000-4000-8000-000000000001',null,'2026-08-01','2026-08-31')),1,'inventory context reports purchases in period');
 select extensions.is((select purchase_value from public.get_report_inventory_activity('b6100000-0000-4000-8000-000000000001',null,'2026-08-01','2026-08-31')),480000::numeric,'purchase value remains acquisition context');
 select extensions.is((select receipts from public.get_report_inventory_activity('b6100000-0000-4000-8000-000000000001','b6300000-0000-4000-8000-000000000001','2026-08-01','2026-08-31')),1,'branch inventory context counts receipts at branch locations');
 select extensions.is((select adjustments from public.get_report_inventory_activity('b6100000-0000-4000-8000-000000000001',null,'2026-08-01','2026-08-31')),2,'inventory context reports opening/physical adjustments according to movement type');
 select extensions.is((select transfer_legs from public.get_report_inventory_activity('b6100000-0000-4000-8000-000000000001',null,'2026-08-01','2026-08-31')),2,'inventory context reports both immutable transfer legs');
+select extensions.is((select received_value from public.get_report_inventory_analytics('b6100000-0000-4000-8000-000000000001','b6300000-0000-4000-8000-000000000001','2026-08-01','2026-08-31')),240000::numeric,'receipt analytics exposes immutable received acquisition value separately from consumption');
+select extensions.ok((select purchases=1 and receipts=1 and replacement_issues=0 and adjustments=2 and transfer_legs=1
+  from public.get_report_inventory_analytics('b6100000-0000-4000-8000-000000000001','b6300000-0000-4000-8000-000000000001','2026-08-01','2026-08-31')),'inventory analytics keeps purchase, receipt, issue, adjustment, and branch transfer context separate');
 select extensions.is((select remaining_quantity from public.get_report_purchase_lines('b6100000-0000-4000-8000-000000000001','2026-08-01','2026-08-31') where purchase_number='RPT-PO-001'),2::numeric,'purchase report exposes partial receipt remaining quantity');
 select extensions.is((select external_reference from public.get_report_purchase_lines('b6100000-0000-4000-8000-000000000001','2026-08-01','2026-08-31') where purchase_number='RPT-PO-001'),'EXT-001','purchase report exposes readable external reference');
 select extensions.is((select total_stock from public.get_report_inventory_stock('b6100000-0000-4000-8000-000000000001',null) where inventory_item_id='b6c00000-0000-4000-8000-000000000001'),6::numeric,'account inventory report derives current movement balance');
@@ -136,18 +176,24 @@ select extensions.ok((select jsonb_array_length(location_breakdown)=2 from publi
 -- All active operational roles read the same projection; suspended, cross-account, and anonymous callers are denied.
 select set_config('request.jwt.claim.sub','b6000000-0000-4000-8000-000000000002',true);
 select extensions.is((select total_clicks from public.get_report_overview('b6100000-0000-4000-8000-000000000001',null,null,'2026-08-01','2026-08-31')),500::numeric,'Admin reads account report');
+select extensions.is((select count(*)::int from public.get_report_period_comparison('b6100000-0000-4000-8000-000000000001',null,null,'2026-08-01','2026-08-31','this_month')),7,'Admin reads all comparison metrics');
 select set_config('request.jwt.claim.sub','b6000000-0000-4000-8000-000000000003',true);
 select extensions.is((select total_clicks from public.get_report_overview('b6100000-0000-4000-8000-000000000001',null,null,'2026-08-01','2026-08-31')),500::numeric,'Technician reads permitted operational report');
+select extensions.is((select count(*)::int from public.get_report_machine_comparison('b6100000-0000-4000-8000-000000000001',null,null,'2026-08-01','2026-08-31')),3,'Technician reads permitted machine comparison');
 select set_config('request.jwt.claim.sub','b6000000-0000-4000-8000-000000000004',true);
 select extensions.is((select total_clicks from public.get_report_overview('b6100000-0000-4000-8000-000000000001',null,null,'2026-08-01','2026-08-31')),500::numeric,'Operator reads permitted operational report');
+select extensions.is((select count(*)::int from public.get_report_component_ranking('b6100000-0000-4000-8000-000000000001',null,null,'2026-08-01','2026-08-31')),1,'Operator reads permitted component ranking');
 select set_config('request.jwt.claim.sub','b6000000-0000-4000-8000-000000000005',true);
 select extensions.throws_ok($$select public.get_report_overview('b6100000-0000-4000-8000-000000000001',null,null,'2026-08-01','2026-08-31')$$,'42501',null,'suspended membership is denied');
+select extensions.throws_ok($$select public.get_report_period_comparison('b6100000-0000-4000-8000-000000000001',null,null,'2026-08-01','2026-08-31','this_month')$$,'42501',null,'suspended membership cannot read report comparison');
 select set_config('request.jwt.claim.sub','b6000000-0000-4000-8000-000000000006',true);
 select extensions.throws_ok($$select public.get_report_overview('b6100000-0000-4000-8000-000000000001',null,null,'2026-08-01','2026-08-31')$$,'42501',null,'cross-account member is denied');
+select extensions.throws_ok($$select public.get_report_machine_comparison('b6100000-0000-4000-8000-000000000001',null,null,'2026-08-01','2026-08-31')$$,'42501',null,'cross-account member cannot read machine comparison');
 select extensions.throws_ok($$select public.get_report_machine_performance('b6100000-0000-4000-8000-000000000002',null,'b6400000-0000-4000-8000-000000000001','2026-08-01','2026-08-31')$$,'P0002',null,'machine outside requested account is denied');
 reset role;
 set local role anon;
 select extensions.throws_ok($$select public.get_report_overview('b6100000-0000-4000-8000-000000000001',null,null,'2026-08-01','2026-08-31')$$,'42501',null,'anonymous caller is denied');
+select extensions.throws_ok($$select public.get_report_component_ranking('b6100000-0000-4000-8000-000000000001',null,null,'2026-08-01','2026-08-31')$$,'42501',null,'anonymous caller cannot read component ranking');
 reset role;
 
 select * from extensions.finish();

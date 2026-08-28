@@ -4,6 +4,7 @@ export const reportTabs = [
   { id: 'overview', label: 'Overview' },
   { id: 'performance', label: 'Machine Performance' },
   { id: 'economics', label: 'Machine Economics' },
+  { id: 'comparison', label: 'Machine Comparison' },
   { id: 'components', label: 'Component Consumption' },
   { id: 'errors', label: 'Error / Waste' },
   { id: 'inventory', label: 'Inventory / Purchasing' },
@@ -14,7 +15,18 @@ export function validReportFilters(value) {
     && machineCostPeriodPresets.some((preset) => preset.id === value.preset)
     && typeof value.branchId === 'string' && typeof value.machineId === 'string'
     && typeof value.customStart === 'string' && typeof value.customEnd === 'string'
-    && typeof value.errorCategory === 'string' && typeof value.errorStatus === 'string')
+    && typeof value.errorCategory === 'string' && typeof value.errorStatus === 'string'
+    && (value.comparisonMetric == null || ['estimated_standard_contribution','total_clicks','standard_cost_per_click','error_waste_cost'].includes(value.comparisonMetric))
+    && (value.componentSort == null || ['cost_rank','replacement_rank','unknown_evidence_rank'].includes(value.componentSort)))
+}
+
+export function deltaPresentation(row) {
+  if (!row) return { label: 'No comparison', tone: 'neutral' }
+  if (row.delta_status === 'NEW') return { label: 'New vs previous', tone: 'positive' }
+  if (row.delta_status === 'PARTIAL') return { label: 'Partial evidence', tone: 'warning' }
+  if (row.delta_status !== 'COMPLETE' || row.delta_percent == null) return { label: 'No comparison', tone: 'neutral' }
+  const value = Number(row.delta_percent)
+  return { label: `${value > 0 ? '+' : ''}${value.toLocaleString('en-US', { maximumFractionDigits: 1 })}% vs previous`, tone: value > 0 ? 'positive' : value < 0 ? 'negative' : 'neutral' }
 }
 
 export function reportStatus(status) {

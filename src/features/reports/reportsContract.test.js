@@ -5,6 +5,7 @@ import test from 'node:test'
 const page = readFileSync(new URL('../../pages/ReportsPage.jsx', import.meta.url), 'utf8')
 const service = readFileSync(new URL('../../services/supabase/reports.js', import.meta.url), 'utf8')
 const detail = readFileSync(new URL('./ReportDetailDialog.jsx', import.meta.url), 'utf8')
+const blockingDialog = readFileSync(new URL('../../components/ui/BlockingDialog.jsx', import.meta.url), 'utf8')
 const shell = readFileSync(new URL('../../app/AppShell.jsx', import.meta.url), 'utf8')
 const sidebar = readFileSync(new URL('../../components/layout/Sidebar.jsx', import.meta.url), 'utf8')
 const css = readFileSync(new URL('../../App.css', import.meta.url), 'utf8')
@@ -23,7 +24,7 @@ test('report filters reuse Machine Cost period and persistent UI-state contracts
   for (const label of ['All Branches', 'All Machines', 'Period', 'Start', 'End']) assert.match(page, new RegExp(label))
 })
 
-test('six report tabs are semantic and keyboard-native', () => {
+test('report tabs are semantic and keyboard-native', () => {
   assert.match(page, /role="tablist"/)
   assert.match(page, /role="tab"/)
   assert.match(page, /aria-selected=/)
@@ -39,7 +40,7 @@ test('Overview has exactly six primary KPI instances and explicit terminology', 
 })
 
 test('PostgreSQL RPCs remain the report aggregation authority', () => {
-  for (const rpc of ['get_report_overview', 'get_report_machine_performance', 'get_report_machine_economics', 'get_report_daily_clicks', 'get_report_component_consumption', 'get_report_error_waste', 'get_report_inventory_activity', 'get_report_purchase_lines', 'get_report_inventory_stock']) assert.match(service, new RegExp(rpc))
+  for (const rpc of ['get_report_overview', 'get_report_machine_performance', 'get_report_machine_economics', 'get_report_daily_clicks', 'get_report_component_consumption', 'get_report_error_waste', 'get_report_inventory_analytics', 'get_report_purchase_lines', 'get_report_inventory_stock', 'get_report_period_comparison', 'get_report_machine_comparison', 'get_report_component_ranking', 'get_report_error_summary']) assert.match(service, new RegExp(rpc))
   assert.doesNotMatch(page, /\.reduce\(/)
 })
 
@@ -69,7 +70,10 @@ test('read-only detail follows Eye to BlockingDialog convention', () => {
   assert.match(page, /aria-label="View purchase detail"/)
   assert.match(page, /aria-label="View Error \/ Waste detail"/)
   assert.match(detail, /<BlockingDialog/)
-  assert.match(detail, />Close<\/button>/)
+  assert.match(detail, /aria-label="Close report detail"/)
+  assert.doesNotMatch(detail, /dialog-actions|>Close<\/button>/)
+  assert.match(blockingDialog, /event\.key === 'Escape'/)
+  assert.match(blockingDialog, /previouslyFocused\.focus\(\)/)
   assert.doesNotMatch(page, />Edit<|>Delete</)
 })
 

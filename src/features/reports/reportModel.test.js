@@ -1,11 +1,19 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { priceEvidence, reportStatus, reportTabs, validReportFilters } from './reportModel.js'
+import { deltaPresentation, priceEvidence, reportStatus, reportTabs, validReportFilters } from './reportModel.js'
 
 const filters = { tab: 'overview', branchId: '', machineId: '', preset: 'this_month', customStart: '', customEnd: '', errorCategory: '', errorStatus: '' }
 
-test('Reports exposes the six bounded operational sections', () => {
-  assert.deepEqual(reportTabs.map((tab) => tab.label), ['Overview', 'Machine Performance', 'Machine Economics', 'Component Consumption', 'Error / Waste', 'Inventory / Purchasing'])
+test('Reports exposes the foundation sections plus bounded machine comparison', () => {
+  assert.deepEqual(reportTabs.map((tab) => tab.label), ['Overview', 'Machine Performance', 'Machine Economics', 'Machine Comparison', 'Component Consumption', 'Error / Waste', 'Inventory / Purchasing'])
+})
+
+test('database delta states render invalid denominators and partial evidence without fabricated percentages', () => {
+  assert.deepEqual(deltaPresentation({ delta_status: 'NEW' }), { label: 'New vs previous', tone: 'positive' })
+  assert.deepEqual(deltaPresentation({ delta_status: 'PARTIAL' }), { label: 'Partial evidence', tone: 'warning' })
+  assert.deepEqual(deltaPresentation({ delta_status: 'NO_COMPARISON' }), { label: 'No comparison', tone: 'neutral' })
+  assert.deepEqual(deltaPresentation({ delta_status: 'COMPLETE', delta_percent: 12.44 }), { label: '+12.4% vs previous', tone: 'positive' })
+  assert.deepEqual(deltaPresentation({ delta_status: 'COMPLETE', delta_percent: -8.06 }), { label: '-8.1% vs previous', tone: 'negative' })
 })
 test('persistent report filters accept every shared period preset', () => {
   for (const preset of ['today', 'this_week', 'this_month', 'last_month', 'this_year', 'custom']) assert.equal(validReportFilters({ ...filters, preset }), true)
