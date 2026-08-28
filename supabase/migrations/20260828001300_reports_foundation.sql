@@ -157,6 +157,7 @@ begin
     coalesce(sum(history.usage),0)::numeric(20,4),count(distinct scope.id) filter(where coalesce(history.usage,0)>0)::integer
   from machine_scope scope join public.machine_counter_history history on history.account_id=target_account_id and history.machine_id=scope.id
   where lower(btrim(history.counter_type_code))='total_impressions' and history.status='effective'
+    and history.usage is not null
     and (history.observed_at at time zone scope.tz)::date between target_period_start and target_period_end
   group by (history.observed_at at time zone scope.tz)::date order by 1;
 end; $$;
