@@ -15,6 +15,18 @@ export function hasDailyTrendEvidence(rows) {
   return rows.some((row) => row.counterReadings > 0 || row.componentEvents > 0 || row.errorWasteEvents > 0)
 }
 
+export function hasDailyClickActivity(rows) {
+  return rows.some((row) => Number(row.clicks ?? 0) > 0)
+}
+
+export function dailyClickTotal(rows) {
+  return rows.reduce((total, row) => total + Number(row.clicks ?? 0), 0)
+}
+
+export function formatDailyClicks(value) {
+  return new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(Number(value))
+}
+
 export function dailyCostLabel(row, formatCurrency) {
   if (row.knownCost == null) return 'No known cost recorded'
   return formatCurrency(row.knownCost)

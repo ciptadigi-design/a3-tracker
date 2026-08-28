@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { AlertCircle, BarChart3, Boxes, CalendarRange, CircleDollarSign, Gauge, Package, Printer, RefreshCcw, ShoppingCart } from 'lucide-react'
 import { PageHeader } from '../components/ui/PageHeader.jsx'
 import { useAuth } from '../features/auth/useAuth.js'
@@ -8,7 +8,7 @@ import { componentCompositionPresentation, costPerClickPresentation, counterEvid
 import { OperatingCostDialog } from '../features/machineCost/OperatingCostDialog.jsx'
 import { OperatingCostsPanel } from '../features/machineCost/OperatingCostsPanel.jsx'
 import { VoidOperatingCostDialog } from '../features/machineCost/VoidOperatingCostDialog.jsx'
-import { dailyCostLabel, hasDailyTrendEvidence, normalizeDailyTrend } from '../features/machineCost/dailyTrendModel.js'
+import { formatDailyClicks, hasDailyClickActivity, normalizeDailyTrend } from '../features/machineCost/dailyTrendModel.js'
 import { createUIStateKey } from '../features/uiState/uiStateKeys.js'
 import { usePersistentUIState } from '../features/uiState/usePersistentUIState.js'
 import { createMachineOperatingCost, loadMachineCostPeriod, loadMachineOperatingCosts, voidMachineOperatingCost } from '../services/supabase/machineCost.js'
@@ -16,7 +16,6 @@ import { loadMachines } from '../services/supabase/machines.js'
 
 const idr = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 2 })
 const number = new Intl.NumberFormat('en-US', { maximumFractionDigits: 4 })
-const compactIDR = new Intl.NumberFormat('id-ID', { notation: 'compact', maximumFractionDigits: 1 })
 
 function currency(value) { return idr.format(Number(value ?? 0)) }
 function formatNumber(value) { return value == null ? 'Unavailable' : number.format(Number(value)) }
@@ -45,39 +44,43 @@ function LifecycleEvidence({ rows }) {
 
 function DailyTrendChart({ rows }) {
   const trend = normalizeDailyTrend(rows)
-  if (!hasDailyTrendEvidence(trend)) return <section className="machine-cost-panel machine-cost-trend-panel glass-surface"><header><div><span className="card-kicker">Operational trend</span><h2>Daily Click &amp; Cost Trend</h2></div></header><div className="machine-cost-empty compact"><BarChart3 size={22} /><strong>No daily activity in this period.</strong><span>No counter, component consumption, or Error / Waste evidence was recorded.</span></div></section>
+  const hasClicks = hasDailyClickActivity(trend)
+  const chartWrapRef = useRef(null)
+  const [chartWidth, setChartWidth] = useState(920)
+  useEffect(() => {
+    const element = chartWrapRef.current
+    if (!element) return undefined
+    const updateWidth = (value) => setChartWidth(Math.max(320, Math.round(value)))
+    updateWidth(element.getBoundingClientRect().width)
+    const observer = new ResizeObserver(([entry]) => updateWidth(entry.contentRect.width))
+    observer.observe(element)
+    return () => observer.disconnect()
+  }, [hasClicks])
 
-  const width = 920; const height = 300; const left = 60; const right = 82; const top = 28; const bottom = 52
+  if (!hasClicks) return <section className="machine-cost-panel machine-cost-trend-panel glass-surface"><header><div><span className="card-kicker">Operational trend</span><h2>Daily Click Trend</h2><p className="machine-cost-trend-helper">Daily machine usage for the selected period.</p></div></header><div className="machine-cost-empty compact"><BarChart3 size={22} /><strong>No recorded click activity in this period.</strong></div></section>
+
+  const width = chartWidth; const height = 300; const compact = width < 520; const left = compact ? 44 : 60; const right = compact ? 12 : 24; const top = 48; const bottom = 52
   const plotWidth = width - left - right; const plotHeight = height - top - bottom
   const maxClicks = Math.max(1, ...trend.map((row) => row.clicks ?? 0))
-  const knownRows = trend.filter((row) => row.knownCost != null)
-  const hasUnknownEvidence = trend.some((row) => row.costEvidenceStatus === 'PARTIAL')
-  const maxCost = Math.max(1, ...knownRows.map((row) => row.knownCost))
-  const step = plotWidth / Math.max(1, trend.length); const barWidth = Math.max(2, Math.min(18, step * .56))
+  const scaleStep = 10 ** Math.floor(Math.log10(maxClicks)) / 5
+  const axisMaximum = Math.ceil((maxClicks * 1.15) / scaleStep) * scaleStep
+  const step = plotWidth / Math.max(1, trend.length); const barWidth = Math.max(3, Math.min(28, step * .58))
+  const denseLabels = step < 42
   const x = (index) => left + step * index + step / 2
-  const clickY = (value) => top + plotHeight - (Number(value) / maxClicks) * plotHeight
-  const costY = (value) => top + plotHeight - (Number(value) / maxCost) * plotHeight
+  const clickY = (value) => top + plotHeight - (Number(value) / axisMaximum) * plotHeight
   const dateText = (value) => new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' }).format(new Date(`${value}T00:00:00Z`))
-  const labelEvery = Math.max(1, Math.ceil(trend.length / 7))
-  const segments = []; let activeSegment = []
-  trend.forEach((row, index) => {
-    if (row.knownCost == null) { if (activeSegment.length) segments.push(activeSegment); activeSegment = []; return }
-    activeSegment.push({ row, index })
-  })
-  if (activeSegment.length) segments.push(activeSegment)
-  const tooltip = (row) => `${dateText(row.operationalDate)}\nClicks: ${row.clicks == null ? 'No counter activity' : number.format(row.clicks)}\nKnown Cost: ${dailyCostLabel(row, currency)}\nCost evidence: ${row.costEvidenceStatus === 'PARTIAL' ? 'Partial' : row.costEvidenceStatus === 'COMPLETE' ? 'Complete' : 'None recorded'}`
+  const maximumDateTicks = Math.max(3, Math.floor(plotWidth / 70))
+  const labelEvery = Math.max(1, Math.ceil(trend.length / maximumDateTicks))
+  const axisDate = (value) => `${value.slice(8, 10)}/${value.slice(5, 7)}`
+  const tooltip = (row) => `${dateText(row.operationalDate)}\nClicks: ${formatDailyClicks(row.clicks)}`
 
-  return <section className="machine-cost-panel machine-cost-trend-panel glass-surface"><header><div><span className="card-kicker">Operational trend</span><h2>Daily Click &amp; Cost Trend</h2></div><div className="machine-cost-trend-legend" aria-label="Chart legend"><span className="clicks">Daily Clicks</span><span className="cost">Known Daily Cost</span><span className="partial">Partial evidence</span></div></header>
-    <div className="machine-cost-chart-wrap"><svg className="machine-cost-chart" viewBox={`0 0 ${width} ${height}`} role="img" aria-labelledby="daily-trend-title daily-trend-description"><title id="daily-trend-title">Daily Click and Known Cost Trend</title><desc id="daily-trend-description">Bars use the left clicks axis. The line uses the separate right Indonesian rupiah axis. Missing known cost is not plotted.</desc>
-      {[0, .5, 1].map((ratio) => <g key={ratio}><line className="trend-grid-line" x1={left} x2={width - right} y1={top + plotHeight * ratio} y2={top + plotHeight * ratio} /><text className="trend-axis-label" x={left - 10} y={top + plotHeight * ratio + 4} textAnchor="end">{number.format(maxClicks * (1 - ratio))}</text><text className="trend-axis-label" x={width - right + 10} y={top + plotHeight * ratio + 4}>{`Rp${compactIDR.format(maxCost * (1 - ratio))}`}</text></g>)}
-      <text className="trend-axis-title" x={left} y={14}>Clicks</text><text className="trend-axis-title" x={width - right} y={14} textAnchor="end">Known cost (IDR)</text>
-      {trend.map((row, index) => row.clicks == null ? null : <rect className="trend-click-bar" key={`bar-${row.operationalDate}`} x={x(index) - barWidth / 2} y={row.clicks === 0 ? top + plotHeight - 2 : clickY(row.clicks)} width={barWidth} height={row.clicks === 0 ? 2 : top + plotHeight - clickY(row.clicks)} rx="2"><title>{tooltip(row)}</title></rect>)}
-      {segments.map((segment, segmentIndex) => segment.length > 1 ? <polyline className="trend-cost-line" key={`line-${segmentIndex}`} points={segment.map(({ row, index }) => `${x(index)},${costY(row.knownCost)}`).join(' ')} /> : null)}
-      {trend.map((row, index) => row.knownCost == null ? null : <circle className={row.costEvidenceStatus === 'PARTIAL' ? 'trend-cost-point partial' : 'trend-cost-point'} key={`cost-${row.operationalDate}`} cx={x(index)} cy={costY(row.knownCost)} r="4"><title>{tooltip(row)}</title></circle>)}
-      {trend.map((row, index) => row.costEvidenceStatus !== 'PARTIAL' || row.knownCost != null ? null : <path className="trend-unknown-marker" key={`unknown-${row.operationalDate}`} d={`M ${x(index)} ${top + 2} l 5 9 h -10 z`}><title>{tooltip(row)}</title></path>)}
-      {trend.map((row, index) => index % labelEvery === 0 || index === trend.length - 1 ? <text className="trend-date-label" key={`date-${row.operationalDate}`} x={x(index)} y={height - 20} textAnchor="middle">{row.operationalDate.slice(5)}</text> : null)}
+  return <section className="machine-cost-panel machine-cost-trend-panel glass-surface"><header><div><span className="card-kicker">Operational trend</span><h2>Daily Click Trend</h2><p className="machine-cost-trend-helper">Daily machine usage for the selected period.</p></div></header>
+    <div className="machine-cost-chart-wrap" ref={chartWrapRef}><svg className="machine-cost-chart" viewBox={`0 0 ${width} ${height}`} role="img" aria-labelledby="daily-trend-title daily-trend-description"><title id="daily-trend-title">Daily Click Trend</title><desc id="daily-trend-description">Daily machine clicks plotted as vertical bars using operational dates. Positive bars show exact click values.</desc>
+      {[0, .5, 1].map((ratio) => <g key={ratio}><line className="trend-grid-line" x1={left} x2={width - right} y1={top + plotHeight * ratio} y2={top + plotHeight * ratio} /><text className="trend-axis-label" x={left - 10} y={top + plotHeight * ratio + 4} textAnchor="end">{formatDailyClicks(axisMaximum * (1 - ratio))}</text></g>)}
+      <text className="trend-axis-title" x={left} y={18}>Clicks</text>
+      {trend.map((row, index) => Number(row.clicks ?? 0) <= 0 ? null : <g key={`bar-${row.operationalDate}`}><rect className="trend-click-bar" x={x(index) - barWidth / 2} y={clickY(row.clicks)} width={barWidth} height={top + plotHeight - clickY(row.clicks)} rx="3"><title>{tooltip(row)}</title></rect><text className="trend-click-value" x={x(index)} y={clickY(row.clicks) - 8} textAnchor={denseLabels ? 'start' : 'middle'} transform={denseLabels ? `rotate(-55 ${x(index)} ${clickY(row.clicks) - 8})` : undefined}>{formatDailyClicks(row.clicks)}</text></g>)}
+      {trend.map((row, index) => index % labelEvery === 0 || index === trend.length - 1 ? <text className="trend-date-label" key={`date-${row.operationalDate}`} x={x(index)} y={height - 20} textAnchor="middle">{axisDate(row.operationalDate)}</text> : null)}
     </svg></div>
-    {!knownRows.length && <p className="machine-cost-trend-note"><AlertCircle size={14} />{hasUnknownEvidence ? 'No known daily cost is plotted. Unknown evidence remains explicit and is not converted to zero.' : 'No known cost was recorded for these operational days.'}</p>}
   </section>
 }
 

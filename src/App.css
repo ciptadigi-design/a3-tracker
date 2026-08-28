@@ -861,22 +861,14 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .machine-cost-lifecycles dt { color: var(--text-muted); font-size: 8px; }
 .machine-cost-lifecycles dd { margin: 0; overflow-wrap: anywhere; font-size: 10px; font-weight: 720; }
 .machine-cost-trend-panel { overflow: hidden; }
-.machine-cost-trend-legend { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px 14px; color: var(--text-muted); font-size: 8px; }
-.machine-cost-trend-legend span { display: inline-flex; align-items: center; gap: 6px; }
-.machine-cost-trend-legend span::before { width: 9px; height: 9px; content: ''; border-radius: 3px; background: var(--blue); }
-.machine-cost-trend-legend .cost::before { height: 3px; border-radius: 99px; background: var(--green); }
-.machine-cost-trend-legend .partial::before { background: var(--warning); clip-path: polygon(50% 0,100% 100%,0 100%); }
+.machine-cost-trend-helper { margin: 4px 0 0; color: var(--text-muted); font-size: 9px; line-height: 1.45; }
 .machine-cost-chart-wrap { min-width: 0; padding-top: 15px; }
 .machine-cost-chart { width: 100%; height: auto; display: block; overflow: visible; }
 .trend-grid-line { stroke: var(--border-subtle); stroke-width: 1; }
 .trend-axis-label,.trend-date-label,.trend-axis-title { fill: var(--text-muted); font-size: 9px; }
 .trend-axis-title { font-size: 10px; font-weight: 750; }
 .trend-click-bar { fill: color-mix(in srgb,var(--blue) 70%,transparent); }
-.trend-cost-line { fill: none; stroke: var(--green); stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
-.trend-cost-point { fill: var(--surface-solid); stroke: var(--green); stroke-width: 2.5; }
-.trend-cost-point.partial { stroke: var(--warning); }
-.trend-unknown-marker { fill: var(--warning); }
-.machine-cost-trend-note { display: flex; align-items: center; gap: 7px; margin: 4px 0 0; color: var(--warning); font-size: 9px; }
+.trend-click-value { fill: var(--text); font-size: 10px; font-weight: 760; }
 
 @media (max-width: 1180px) {
   .machine-cost-summary-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
@@ -901,7 +893,6 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   .machine-cost-summary-card { min-height: 100px; }
   .machine-cost-panel { padding: 15px; }
   .machine-cost-panel > header { align-items: flex-start; flex-direction: column; }
-  .machine-cost-trend-legend { justify-content: flex-start; }
   .machine-cost-breakdown > article { grid-template-columns: minmax(0,1fr) auto; gap: 9px 12px; }
   .machine-cost-bar { grid-column: 1 / -1; grid-row: 2; }
   .machine-cost-breakdown article > div:last-child { grid-column: 2; grid-row: 1; }

@@ -12,15 +12,33 @@ test('Summary uses a responsive 2 by 2 primary grid and retains four intended ca
   assert.equal((page.match(/<SummaryCard/g) ?? []).length, 4)
 })
 
-test('daily operational chart labels independent click and rupiah scales', () => {
-  assert.match(page, /Daily Click &amp; Cost Trend/)
-  assert.match(page, /Bars use the left clicks axis/)
-  assert.match(page, /Known cost \(IDR\)/)
-  assert.match(page, /Known Daily Cost/)
+test('daily operational chart presents only daily clicks', () => {
+  assert.match(page, /<h2>Daily Click Trend<\/h2>/)
+  assert.match(page, /Daily machine usage for the selected period/)
+  assert.match(page, /<text className="trend-axis-title"[^>]*>Clicks<\/text>/)
+  assert.doesNotMatch(page, /Known cost \(IDR\)/)
+  assert.doesNotMatch(page, /Known Daily Cost/)
+  assert.doesNotMatch(page, /trend-cost-line|trend-cost-point|trend-unknown-marker|Partial evidence/)
 })
 
-test('daily trend is loaded from the database RPC and missing cost is not plotted', () => {
+test('daily click trend retains the authoritative database RPC', () => {
   assert.match(service, /get_machine_cost_daily_trend/)
-  assert.match(page, /row\.knownCost == null \? null/)
-  assert.match(page, /Unknown evidence remains explicit and is not converted to zero/)
+  assert.match(page, /summary\.daily_trend/)
+})
+
+test('positive bars show exact formatted clicks and tooltips contain date and clicks only', () => {
+  assert.match(page, /Number\(row\.clicks \?\? 0\) <= 0 \? null/)
+  assert.match(page, /className="trend-click-value"/)
+  assert.match(page, /formatDailyClicks\(row\.clicks\)/)
+  assert.match(page, /Clicks: \$\{formatDailyClicks\(row\.clicks\)\}/)
+  assert.doesNotMatch(page, /Known Cost:|Cost evidence:/)
+})
+
+test('chart has honest empty state, responsive tick density, and no duplicate Total Clicks card', () => {
+  assert.match(page, /No recorded click activity in this period/)
+  assert.match(page, /new ResizeObserver/)
+  assert.match(page, /Math\.floor\(plotWidth \/ 70\)/)
+  assert.match(page, /denseLabels \? `rotate\(-55/)
+  assert.equal((page.match(/label="Total Clicks"/g) ?? []).length, 1)
+  assert.match(css, /\.machine-cost-chart \{ width: 100%; height: auto; display: block;/)
 })
