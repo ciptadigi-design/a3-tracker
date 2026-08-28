@@ -3,7 +3,8 @@ import { AlertCircle, Building2, CalendarCheck, LoaderCircle, PackageCheck, Plus
 import { useAuth } from '../auth/useAuth.js'
 import { createDraftKey } from '../drafts/draftKeys.js'
 import { usePersistentDraft } from '../drafts/usePersistentDraft.js'
-import { DialogFrame } from './InventoryDialogs.jsx'
+import { DialogFrame, InventoryItemDialog } from './InventoryDialogs.jsx'
+import { discoverPurchaseItems, inventoryItemLabel } from './purchaseItemDiscovery.js'
 
 const money = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 2 })
 const quantity = (value) => Number(value ?? 0).toLocaleString('id-ID', { maximumFractionDigits: 4 })
@@ -48,15 +49,23 @@ export function InventorySupplierDialog({ account, supplier, onClose, onSave }) 
   </DialogFrame>
 }
 
-export function InventoryPurchaseDialog({ account, suppliers, items, onClose, onCreate }) {
+export function InventoryPurchaseDialog({ account, suppliers, items, components, onClose, onCreate, onCreateItem }) {
   const { user } = useAuth()
   const initial = { supplierId: '', purchaseDate: localDate(), supplierReference: '', notes: '', lines: [{ rowId: crypto.randomUUID(), itemId: '', quantity: '1', unitPrice: '', notes: '' }] }
   const draftKey = createDraftKey({ userId: user.id, accountId: account.id, feature: 'inventory-purchase', entityId: 'new' })
   const draft = usePersistentDraft({ draftKey, initialValue: initial, validate: (value) => value && typeof value.supplierId === 'string' && Array.isArray(value.lines) })
   const requestId = useRef(crypto.randomUUID()); const [busy, setBusy] = useState(false); const [error, setError] = useState(null)
+  const [inlineCreate, setInlineCreate] = useState(null)
   const change = (field, value) => { draft.updateDraft((current) => ({ ...current, [field]: value })); setError(null) }
   const changeLine = (rowId, field, value) => { draft.updateDraft((current) => ({ ...current, lines: current.lines.map((line) => line.rowId === rowId ? { ...line, [field]: value } : line) })); setError(null) }
   const purchaseTotal = draft.value.lines.reduce((total, line) => total + (Number(line.quantity) || 0) * (Number(line.unitPrice) || 0), 0)
+  async function createInlineItem(values) {
+    const created = await onCreateItem(values)
+    changeLine(inlineCreate.rowId, 'itemId', created.id)
+    changeLine(inlineCreate.rowId, 'itemSearch', inventoryItemLabel(created))
+    setInlineCreate(null)
+    return created
+  }
   async function submit(event) {
     event.preventDefault(); const value = draft.value
     if (!suppliers.some((supplier) => supplier.id === value.supplierId) || !value.purchaseDate) return setError('Choose an active supplier and purchase date.')
@@ -77,8 +86,14 @@ export function InventoryPurchaseDialog({ account, suppliers, items, onClose, on
         <label className="form-field"><span>External reference <small>Optional</small></span><input value={draft.value.supplierReference} onChange={(event) => change('supplierReference', event.target.value)} placeholder="Supplier invoice, PO, or integration ID" /></label>
       </div>
       <section className="purchase-lines-editor"><header><div><strong>Purchase lines</strong><span>All values are IDR acquisition evidence.</span></div><button className="secondary-button" type="button" onClick={() => change('lines', [...draft.value.lines, { rowId: crypto.randomUUID(), itemId: '', quantity: '1', unitPrice: '', notes: '' }])}><Plus size={15} />Add line</button></header>
-        {draft.value.lines.map((line, index) => { const item = items.find((candidate) => candidate.id === line.itemId); const lineTotal = (Number(line.quantity) || 0) * (Number(line.unitPrice) || 0); return <div className="purchase-line-editor" key={line.rowId}>
-          <label className="form-field"><span>Inventory item <b className="required-mark">*</b></span><select value={line.itemId} onChange={(event) => changeLine(line.rowId, 'itemId', event.target.value)}><option value="">Choose item</option>{items.map((candidate) => <option key={candidate.id} value={candidate.id}>{candidate.sku} · {candidate.name}</option>)}</select></label>
+        {draft.value.lines.map((line, index) => { const item = items.find((candidate) => candidate.id === line.itemId); const discovery = discoverPurchaseItems(items, components, line.itemSearch ?? ''); const lineTotal = (Number(line.quantity) || 0) * (Number(line.unitPrice) || 0); return <div className="purchase-line-editor" key={line.rowId}>
+          <div className="purchase-item-discovery"><label className="form-field"><span>Inventory item / SKU <b className="required-mark">*</b></span><input type="search" value={line.itemSearch ?? (item ? inventoryItemLabel(item) : '')} onChange={(event) => { changeLine(line.rowId, 'itemSearch', event.target.value); if (line.itemId) changeLine(line.rowId, 'itemId', '') }} placeholder="Search item, SKU, or Component" autoComplete="off" /></label>
+            <div className="purchase-item-results" role="group" aria-label={`Inventory item options for line ${index + 1}`}>
+              {discovery.itemResults.slice(0, 8).map((candidate) => <button type="button" aria-pressed={candidate.id === line.itemId} className={candidate.id === line.itemId ? 'selected' : ''} key={candidate.id} onClick={() => { changeLine(line.rowId, 'itemId', candidate.id); changeLine(line.rowId, 'itemSearch', inventoryItemLabel(candidate)) }}><strong>{inventoryItemLabel(candidate)}</strong>{candidate.components?.name && <span>Component: {candidate.components.name}</span>}</button>)}
+              {discovery.missingComponents.map((component) => <div className="purchase-missing-item" key={component.id}><span><strong>{component.name}</strong><small>No inventory item configured</small></span><button type="button" onClick={() => setInlineCreate({ rowId: line.rowId, component })}><Plus size={14} />Create inventory item</button></div>)}
+              {!discovery.itemResults.length && !discovery.missingComponents.length && <span className="purchase-item-no-results">No matching active Inventory Item{line.itemSearch ? ' or eligible Component' : ''}.</span>}
+            </div>
+          </div>
           <label className="form-field"><span>Quantity ({item?.unit ?? 'unit'}) <b className="required-mark">*</b></span><input type="number" min="0.0001" step="0.0001" inputMode="decimal" value={line.quantity} onChange={(event) => changeLine(line.rowId, 'quantity', event.target.value)} /></label>
           <label className="form-field"><span>Unit price (IDR) <b className="required-mark">*</b></span><input type="number" min="0" step="0.01" inputMode="decimal" value={line.unitPrice} onChange={(event) => changeLine(line.rowId, 'unitPrice', event.target.value)} /></label>
           <div className="purchase-line-total"><span>Line total</span><strong>{money.format(lineTotal)}</strong></div>
@@ -89,6 +104,7 @@ export function InventoryPurchaseDialog({ account, suppliers, items, onClose, on
       <div className="purchase-total-preview"><span>Purchase total</span><strong>{money.format(purchaseTotal)}</strong><small>Preview only; PostgreSQL derives authoritative totals.</small></div>
       <FormError error={error} />
     </div><footer className="dialog-actions"><button className="draft-reset-button" type="button" onClick={() => draft.resetDraft(initial)} disabled={!draft.hasDraft || busy}><RotateCcw size={15} />Reset draft</button><button className="secondary-button" type="button" onClick={onClose} disabled={busy}>Cancel</button><button className="primary-button" type="submit" disabled={busy}>{busy && <LoaderCircle className="spin" size={17} />}{busy ? 'Creating…' : 'Create purchase'}</button></footer></form>
+    {inlineCreate && <InventoryItemDialog account={account} components={components} initialComponentId={inlineCreate.component.id} draftEntityId={`purchase:${inlineCreate.component.id}`} onClose={() => setInlineCreate(null)} onSave={createInlineItem} />}
   </DialogFrame>
 }
 

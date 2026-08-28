@@ -29,16 +29,27 @@ export function DialogFrame({ icon, kicker, title, description, titleId, busy, o
   </BlockingDialog>
 }
 
-export function InventoryItemDialog({ account, item, components, onClose, onSave }) {
+export function InventoryItemDialog({ account, item, components, initialComponentId = '', draftEntityId, onClose, onSave }) {
   const { user } = useAuth()
-  const initial = { sku: item?.sku ?? '', name: item?.name ?? '', componentId: item?.component_id ?? '', category: item?.category ?? '', unit: item?.unit ?? 'pcs', minimumStock: item?.minimum_stock ?? '', notes: item?.notes ?? '', isActive: item?.is_active ?? true }
-  const draftKey = createDraftKey({ userId: user.id, accountId: account.id, feature: 'inventory-item', entityId: item?.id ?? 'new' })
+  const initialComponent = components.find((component) => component.id === initialComponentId)
+  const initial = { sku: item?.sku ?? '', name: item?.name ?? initialComponent?.name ?? '', componentId: item?.component_id ?? initialComponentId, category: item?.category ?? '', unit: item?.unit ?? '', minimumStock: item?.minimum_stock ?? '', notes: item?.notes ?? '', isActive: item?.is_active ?? true }
+  const draftKey = createDraftKey({ userId: user.id, accountId: account.id, feature: 'inventory-item', entityId: item?.id ?? draftEntityId ?? 'new' })
   const draft = usePersistentDraft({ draftKey, initialValue: initial, validate: (value) => value && typeof value.sku === 'string' && typeof value.name === 'string' && typeof value.isActive === 'boolean' })
   const [error, setError] = useState(null); const [busy, setBusy] = useState(false)
   const change = (field, value) => { draft.updateDraft((current) => ({ ...current, [field]: value })); setError(null) }
+  const changeComponent = (componentId) => {
+    const component = components.find((candidate) => candidate.id === componentId)
+    draft.updateDraft((current) => {
+      const previousComponent = components.find((candidate) => candidate.id === current.componentId)
+      const mayDefaultName = !current.name.trim() || current.name === previousComponent?.name
+      return { ...current, componentId, name: mayDefaultName ? component?.name ?? '' : current.name }
+    })
+    setError(null)
+  }
   async function submit(event) {
     event.preventDefault(); const value = draft.value
     if (!value.sku.trim() || !value.name.trim()) return setError('SKU / inventory code and name are required.')
+    if (!value.unit) return setError('Choose the physical stocking unit.')
     if (!optionalNumberValid(value.minimumStock)) return setError('Minimum stock must be zero or greater with at most four decimal places.')
     setBusy(true)
     try { await onSave(value); draft.clearDraft(); onClose() }
@@ -47,11 +58,11 @@ export function InventoryItemDialog({ account, item, components, onClose, onSave
   }
   return <DialogFrame icon={Boxes} kicker="Inventory master" title={`${item ? 'Edit' : 'Add'} inventory item`} description="Defines what is stocked. Quantity remains exclusively ledger-derived." titleId="inventory-item-title" busy={busy} onClose={onClose}>
     <form className="machine-form" onSubmit={submit} noValidate><div className="machine-form-body"><div className="form-grid">
-      <label className="form-field"><span>SKU / code <b className="required-mark">*</b></span><input value={draft.value.sku} onChange={(event) => change('sku', event.target.value)} autoComplete="off" data-dialog-initial-focus /></label>
-      <label className="form-field"><span>Name <b className="required-mark">*</b></span><input value={draft.value.name} onChange={(event) => change('name', event.target.value)} autoComplete="off" /></label>
-      <label className="form-field"><span>Linked component <small>Optional</small></span><select value={draft.value.componentId} onChange={(event) => change('componentId', event.target.value)}><option value="">No component link</option>{components.map((component) => <option key={component.id} value={component.id}>{component.code} · {component.name}</option>)}</select></label>
+      <label className="form-field form-field-wide"><span>Component <small>Optional for non-machine stock</small></span><select value={draft.value.componentId} onChange={(event) => changeComponent(event.target.value)} data-dialog-initial-focus><option value="">No component link</option>{components.map((component) => <option key={component.id} value={component.id}>{component.name} · {component.code}</option>)}</select><small className="field-hint">Uses the active Component Catalog; this SKU remains a separate inventory record.</small></label>
+      <label className="form-field"><span>SKU <b className="required-mark">*</b></span><input value={draft.value.sku} onChange={(event) => change('sku', event.target.value)} autoComplete="off" /></label>
+      <label className="form-field"><span>Display Name <b className="required-mark">*</b></span><input value={draft.value.name} onChange={(event) => change('name', event.target.value)} autoComplete="off" /></label>
       <label className="form-field"><span>Category <small>Optional</small></span><input value={draft.value.category} onChange={(event) => change('category', event.target.value)} autoComplete="off" /></label>
-      <label className="form-field"><span>Unit <b className="required-mark">*</b></span><select value={draft.value.unit} onChange={(event) => change('unit', event.target.value)}>{units.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
+      <label className="form-field"><span>Unit <b className="required-mark">*</b></span><select value={draft.value.unit} onChange={(event) => change('unit', event.target.value)}><option value="">Choose physical unit</option>{units.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
       <label className="form-field"><span>Minimum stock <small>Optional</small></span><input type="number" min="0" step="0.0001" value={draft.value.minimumStock} onChange={(event) => change('minimumStock', event.target.value)} inputMode="decimal" /></label>
       <label className="form-field form-field-wide"><span>Notes <small>Optional</small></span><textarea rows="3" value={draft.value.notes} onChange={(event) => change('notes', event.target.value)} /></label>
       {item && <label className="master-active-toggle"><input type="checkbox" checked={draft.value.isActive} onChange={(event) => change('isActive', event.target.checked)} /><span><strong>Active</strong><small>Archive to preserve all referenced movement history.</small></span></label>}

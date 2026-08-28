@@ -1,5 +1,5 @@
 import { createElement, useMemo, useState } from 'react'
-import { CalendarCheck2, CheckCircle2, Clock3, Gauge, ListChecks, Printer } from 'lucide-react'
+import { CalendarCheck2, CheckCircle2, Clock3, Gauge, Printer } from 'lucide-react'
 import { PageHeader } from '../components/ui/PageHeader.jsx'
 import { CounterEntryCard } from '../features/counters/CounterEntryCard.jsx'
 import { CounterHistory } from '../features/counters/CounterHistory.jsx'
@@ -76,7 +76,6 @@ export function DailyPage() {
             <SummaryCard icon={Gauge} label="Last Counter" value={formatCounter(summary.lastReading?.reading_value)} detail={summary.lastReading ? 'Latest effective reading' : 'No baseline yet'} tone="blue" />
             <SummaryCard icon={CalendarCheck2} label="Today's Usage" value={summary.todayUsage == null ? '—' : `+${formatCounter(summary.todayUsage)}`} detail={summary.todayEntryCount ? summary.todayUsage == null ? 'Baseline only; no prior delta' : 'Sum of today’s database-derived deltas' : 'No entries today'} tone="green" />
             <SummaryCard icon={Clock3} label="Last Input" value={summary.lastReading ? new Intl.DateTimeFormat('en-GB', { timeZone: timezone, hour: '2-digit', minute: '2-digit' }).format(new Date(summary.lastReading.observed_at)) : '—'} detail={summary.lastReading ? new Intl.DateTimeFormat('en-GB', { timeZone: timezone, dateStyle: 'medium' }).format(new Date(summary.lastReading.observed_at)) : 'No input recorded'} tone="purple" />
-            <SummaryCard icon={ListChecks} label="Today's Entries" value={String(summary.todayEntryCount)} detail="Effective readings in machine timezone" tone="amber" />
           </section>
           <CounterEntryCard key={`${user.id}:${selectedMachine.id}`} accountId={account.id} branchId={branch.id} userId={user.id} machine={selectedMachine} people={peopleState.people} peopleLoading={peopleState.isLoading} peopleError={peopleState.error} lastReading={summary.lastReading} onRecorded={handleRecorded} />
           <CounterHistory history={counterState.history} profiles={counterState.profiles} currentUserId={user?.id} timezone={timezone} isLoading={counterState.isLoading} error={counterState.error} canCorrect={canCorrect} onRefresh={counterState.refresh} onCorrected={handleCorrected} />

@@ -84,6 +84,12 @@ export function InventoryPage() {
   useEffect(() => { refresh() }, [refresh])
   async function completed(message) { setNotice(message); await refresh() }
   async function saveItem(values) { await saveInventoryItem({ accountId: account.id, itemId: workflow.inventoryItemId, values }); await completed('Inventory item saved.') }
+  async function createItemFromPurchase(values) {
+    const item = await saveInventoryItem({ accountId: account.id, itemId: null, values })
+    setData((current) => ({ ...current, items: [...current.items, item].sort((left, right) => left.name.localeCompare(right.name)) }))
+    setNotice('Inventory item created and selected. Purchase draft preserved; stock remains unchanged.')
+    return item
+  }
   async function saveLocation(values) { await saveInventoryLocation({ accountId: account.id, locationId: workflow.locationId, values }); await completed('Inventory location saved.') }
   async function saveSupplier(values) { await saveInventorySupplier({ accountId: account.id, supplierId: workflow.supplierId, values }); await completed('Supplier saved.') }
   async function createPurchase(values, clientRequestId) { await createInventoryPurchase({ accountId: account.id, values, clientRequestId }); await completed('Purchase created. Stock remains unchanged until receiving.') }
@@ -154,7 +160,7 @@ export function InventoryPage() {
     {!loading && canManage && workflow.type === 'supplier:create' && <InventorySupplierDialog account={account} onClose={closeWorkflow} onSave={saveSupplier} />}
     {!loading && canManage && workflow.type === 'supplier:edit' && workflowSupplier && <InventorySupplierDialog account={account} supplier={workflowSupplier} onClose={closeWorkflow} onSave={saveSupplier} />}
     {!loading && canManage && workflow.type === 'supplier:delete' && workflowSupplier && <DeleteInventoryMasterDialog kind="supplier" label={workflowSupplier.name} onClose={closeWorkflow} onDelete={removeMaster} />}
-    {!loading && canManage && workflow.type === 'purchase:create' && <InventoryPurchaseDialog account={account} suppliers={data.suppliers.filter((supplier) => supplier.is_active)} items={activeItems} onClose={closeWorkflow} onCreate={createPurchase} />}
+    {!loading && canManage && workflow.type === 'purchase:create' && <InventoryPurchaseDialog account={account} suppliers={data.suppliers.filter((supplier) => supplier.is_active)} items={activeItems} components={data.components} onClose={closeWorkflow} onCreate={createPurchase} onCreateItem={createItemFromPurchase} />}
     {!loading && workflow.type === 'purchase:detail' && workflowPurchase && <InventoryPurchaseDetailDialog purchase={workflowPurchase} lines={workflowPurchaseLines} canManage={canManage} onClose={closeWorkflow} onReceive={() => openWorkflow('purchase:receive', { purchaseId: workflowPurchase.purchase_id })} onCancel={() => openWorkflow('purchase:cancel', { purchaseId: workflowPurchase.purchase_id })} />}
     {!loading && canManage && workflow.type === 'purchase:receive' && workflowPurchase && <InventoryReceiveDialog account={account} purchase={workflowPurchase} lines={workflowPurchaseLines} locations={activeLocations} people={data.people} onClose={closeWorkflow} onReceive={receivePurchase} />}
     {!loading && canManage && workflow.type === 'purchase:cancel' && workflowPurchase && <CancelInventoryPurchaseDialog account={account} purchase={workflowPurchase} onClose={closeWorkflow} onCancel={cancelPurchase} />}

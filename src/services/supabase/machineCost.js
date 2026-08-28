@@ -1,17 +1,20 @@
 import { supabase } from './client.js'
 
 export async function loadMachineCostPeriod({ accountId, machineId, periodStart, periodEnd }) {
-  const { data, error } = await supabase
-    .rpc('get_machine_economics_period', {
+  const parameters = {
       target_account_id: accountId,
       target_machine_id: machineId,
       target_period_start: periodStart,
       target_period_end: periodEnd,
-    })
-    .single()
+  }
+  const [summary, trend] = await Promise.all([
+    supabase.rpc('get_machine_economics_period', parameters).single(),
+    supabase.rpc('get_machine_cost_daily_trend', parameters),
+  ])
 
-  if (error) throw error
-  return data
+  if (summary.error) throw summary.error
+  if (trend.error) throw trend.error
+  return { ...summary.data, daily_trend: trend.data ?? [] }
 }
 
 export async function loadMachineOperatingCosts({ accountId, machineId }) {
