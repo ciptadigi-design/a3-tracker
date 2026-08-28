@@ -110,8 +110,8 @@ select extensions.is((select branch_only_error_waste from public.get_report_over
 select extensions.is((select report_status from public.get_report_overview('b6100000-0000-4000-8000-000000000001','b6300000-0000-4000-8000-000000000001',null,'2026-08-01','2026-08-31')),'PARTIAL_PRICE','overview completeness exposes no-price machines');
 select extensions.is((select report_status from public.get_report_overview('b6100000-0000-4000-8000-000000000001',null,null,'2025-01-01','2025-01-31')),'NO_COUNTER_DATA','machines without period counter evidence remain explicitly incomplete');
 
-select public.create_machine_operating_cost('b6100000-0000-4000-8000-000000000001','b6400000-0000-4000-8000-000000000001','electricity',10000,'one_time','Report advanced fixture','b7300000-0000-4000-8000-000000000001','2026-08-18 10:00+07',null,null,null,null,null,'manual');
 select public.set_machine_economics_advanced_enabled('b6100000-0000-4000-8000-000000000001',true);
+select public.create_machine_operating_cost('b6100000-0000-4000-8000-000000000001','b6400000-0000-4000-8000-000000000001','electricity',10000,'one_time','Report advanced fixture','b7300000-0000-4000-8000-000000000001','2026-08-18 10:00+07',null,null,null,null,null,'manual');
 select extensions.ok((select advanced_enabled and full_machine_operating_cost=12500 and estimated_full_contribution=277500 from public.get_report_machine_economics('b6100000-0000-4000-8000-000000000001',null,'b6400000-0000-4000-8000-000000000001','2026-08-01','2026-08-31')),'Advanced ON exposes separate Full economics without changing Standard');
 
 -- Component, incident, purchasing, receiving, movement, and current-stock projections.

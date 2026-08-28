@@ -105,6 +105,7 @@ begin
       then round(totals.estimated_contribution/totals.estimated_revenue*100,4) end,
     incident_totals.machine_loss,incident_totals.branch_loss,
     case when totals.active_machines=0 then 'NO_DATA'
+      when totals.no_counter_count=totals.active_machines then 'NO_COUNTER_DATA'
       when totals.partial_price_count>0 then 'PARTIAL_PRICE'
       when totals.partial_cost_count>0 then 'PARTIAL_COST'
       when totals.no_counter_count>0 then 'NO_COUNTER_DATA' else 'COMPLETE' end,
