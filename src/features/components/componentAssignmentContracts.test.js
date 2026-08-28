@@ -4,6 +4,8 @@ import {
   activeAssignmentSummary,
   archivedConfigurationActions,
   machineComponentCapabilities,
+  PROFILE_SLOT_CONFLICT,
+  profileRestoreConflict,
 } from "./componentAssignmentContracts.js";
 
 const model = { id: "c1070", name: "C1070" };
@@ -103,5 +105,42 @@ test("operator cannot restructure machine configuration", () => {
       canManage: false,
     }).canRemove,
     false,
+  );
+});
+
+test("profile restore uniqueness collision becomes a safe business conflict", () => {
+  const conflict = profileRestoreConflict({
+    error: {
+      code: "23505",
+      message:
+        'duplicate key value violates unique constraint "machine_model_components_active_slot_key"',
+    },
+    profile: { slot_code: "GEAR" },
+    model,
+  });
+
+  assert.deepEqual(conflict, {
+    code: PROFILE_SLOT_CONFLICT,
+    message:
+      "Cannot restore this profile because an active profile already uses slot code GEAR for C1070.",
+  });
+  assert.doesNotMatch(conflict.message, /machine_model_components|duplicate key|uuid/i);
+});
+
+test("profile restore accepts a future database business code and ignores unexpected errors", () => {
+  assert.equal(
+    profileRestoreConflict({
+      error: { code: PROFILE_SLOT_CONFLICT },
+      profile: { slot_code: "GEAR_TEST" },
+    })?.code,
+    PROFILE_SLOT_CONFLICT,
+  );
+  assert.equal(
+    profileRestoreConflict({
+      error: { code: "42501" },
+      profile: { slot_code: "GEAR" },
+      model,
+    }),
+    null,
   );
 });

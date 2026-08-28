@@ -10,6 +10,11 @@ const dialog = readFileSync(
   new URL("./MachineComponentDialog.jsx", import.meta.url),
   "utf8",
 );
+const styles = readFileSync(new URL("../../App.css", import.meta.url), "utf8");
+const service = readFileSync(
+  new URL("../../services/supabase/components.js", import.meta.url),
+  "utf8",
+);
 
 test("Machine Components exposes explicit add, sync, remove, and restore language", () => {
   for (const label of [
@@ -38,4 +43,37 @@ test("machine-specific add uses BlockingDialog with accessible dismissal and bus
 test("zero configuration state does not imply fabricated lifecycle", () => {
   assert.match(page, /No components configured for this machine/);
   assert.match(page, /No lifecycle or inventory movement was fabricated/);
+});
+
+test("profile Restore remains callable, compact, and reports success", () => {
+  assert.match(page, /onClick=\{\(\) => restoreProfile\(profile\)\}/);
+  assert.match(page, /const restoreAction = [^\n]+className="secondary-button compact-action"/);
+  assert.match(page, /aria-label=\{`Restore \$\{profile\.components\?\.name\} \$\{profile\.slot_code\}`\}/);
+  assert.match(page, /Model Profile restored\. Eligible machines were synchronized/);
+  assert.match(page, /disabled=\{busy\}/);
+});
+
+test("known profile restore conflict is contextual and never renders raw database details", () => {
+  assert.match(page, /profileRestoreConflict/);
+  assert.match(page, /className="profile-restore-conflict" role="alert" aria-live="assertive"/);
+  assert.match(page, /Profile could not be restored\./);
+  assert.match(service, /error\?\.code === '23505' && action === 'restore'/);
+  assert.match(service, /conflict\.code = 'PROFILE_SLOT_CONFLICT'/);
+  assert.doesNotMatch(page, /machine_model_components_active_slot_key|duplicate key value/);
+});
+
+test("Catalog action hierarchy keeps every action callable and accessible", () => {
+  assert.match(page, /onClick=\{\(\) => open\('profile-assign', component\.id\)\}/);
+  assert.match(page, /secondary-button compact-action catalog-edit-action/);
+  assert.match(page, /onClick=\{\(\) => open\('component-edit', component\.id\)\}/);
+  assert.match(page, /secondary-button compact-action compact-icon-action/);
+  assert.match(page, /aria-label=\{`Archive component \$\{component\.name\}`\}/);
+  assert.match(page, /onClick=\{\(\) => restoreComponent\(component\)\}/);
+});
+
+test("shared compact actions preserve content width and responsive wrapping", () => {
+  assert.match(styles, /\.compact-action \{[^}]*width: fit-content;[^}]*min-height: 32px/);
+  assert.match(styles, /\.compact-icon-action \{ width: 32px; padding: 0; \}/);
+  assert.match(styles, /\.compact-catalog-actions \{[^}]*flex-wrap: wrap/);
+  assert.match(styles, /\.machine-component-toolbar \{[^}]*flex-wrap: wrap/);
 });

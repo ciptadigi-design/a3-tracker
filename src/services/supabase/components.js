@@ -101,6 +101,11 @@ export async function saveProfile({ accountId, modelId, profile, values }) {
 
 export async function setProfileStatus({ accountId, profileId, action, clientRequestId }) {
   const { data, error } = await supabase.rpc('manage_machine_component_profile', { target_account_id: accountId, target_profile_id: profileId, target_action: action, target_client_request_id: clientRequestId })
+  if (error?.code === '23505' && action === 'restore') {
+    const conflict = new Error('Profile slot conflict')
+    conflict.code = 'PROFILE_SLOT_CONFLICT'
+    throw conflict
+  }
   if (error) throw error
   return data
 }

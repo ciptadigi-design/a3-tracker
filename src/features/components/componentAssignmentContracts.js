@@ -38,3 +38,16 @@ export function archivedConfigurationActions({ isActive, canManage }) {
   if (!canManage) return [];
   return isActive ? ["edit", "archive"] : ["restore"];
 }
+
+export const PROFILE_SLOT_CONFLICT = "PROFILE_SLOT_CONFLICT";
+
+export function profileRestoreConflict({ error, profile, model }) {
+  if (![PROFILE_SLOT_CONFLICT, "23505"].includes(error?.code)) return null;
+
+  const slotCode = profile?.slot_code || "this slot";
+  const modelLabel = model?.name ? ` for ${model.name}` : " for this machine model";
+  return {
+    code: PROFILE_SLOT_CONFLICT,
+    message: `Cannot restore this profile because an active profile already uses slot code ${slotCode}${modelLabel}.`,
+  };
+}

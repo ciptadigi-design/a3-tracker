@@ -13,7 +13,7 @@ import { ReplacementHistory } from '../features/components/ReplacementHistory.js
 import { ComponentIntelligenceDialog } from '../features/components/ComponentIntelligenceDialog.jsx'
 import { ComponentChannelMarker } from '../features/components/ComponentChannelMarker.jsx'
 import { lifecycleActionFor } from '../features/components/lifecycleActions.js'
-import { activeAssignmentSummary, machineComponentCapabilities } from '../features/components/componentAssignmentContracts.js'
+import { activeAssignmentSummary, machineComponentCapabilities, profileRestoreConflict } from '../features/components/componentAssignmentContracts.js'
 import { useComponentWorkflowState } from '../features/components/useComponentWorkflowState.js'
 import { createUIStateKey } from '../features/uiState/uiStateKeys.js'
 import { usePersistentUIState } from '../features/uiState/usePersistentUIState.js'
@@ -58,7 +58,7 @@ function MachineComponentsPanel({ machines, lifecycles, exclusions, profiles, co
   const currentCounter = rows.find((row) => row.latest_effective_counter != null)?.latest_effective_counter
 
   return <>
-    <div className="model-selector-row lifecycle-machine-selector"><label><span>Physical machine</span><select value={selectedMachine?.id ?? ''} onChange={(event) => onMachineChange(event.target.value)}>{machines.map((machine) => <option key={machine.id} value={machine.id}>{machine.machine_code} · {machine.display_name}</option>)}</select></label><div><strong>{rows.length}</strong><span>component slots · {initialized} initialized</span></div>{canManage && selectedMachine && <div className="machine-component-toolbar"><button className="secondary-button" type="button" onClick={onAdd}><Plus size={15} />Add Component</button><button className="secondary-button" type="button" onClick={onSync} disabled={busy}><RefreshCcw className={busy ? 'spin' : ''} size={15} />Sync Model Profile</button></div>}</div>
+    <div className="model-selector-row lifecycle-machine-selector"><label><span>Physical machine</span><select value={selectedMachine?.id ?? ''} onChange={(event) => onMachineChange(event.target.value)}>{machines.map((machine) => <option key={machine.id} value={machine.id}>{machine.machine_code} · {machine.display_name}</option>)}</select></label><div><strong>{rows.length}</strong><span>component slots · {initialized} initialized</span></div>{canManage && selectedMachine && <div className="machine-component-toolbar"><button className="secondary-button compact-action" type="button" onClick={onAdd} disabled={busy}><Plus size={15} />Add Component</button><button className="secondary-button compact-action" type="button" onClick={onSync} disabled={busy}><RefreshCcw className={busy ? 'spin' : ''} size={15} />Sync Model Profile</button></div>}</div>
     {exclusions.filter((item) => item.machine_id === selectedMachine?.id).map((exclusion) => {
       const profile = profiles.find((item) => item.id === exclusion.model_component_profile_id)
       const component = components.find((item) => item.id === profile?.component_id)
@@ -103,6 +103,7 @@ export function ComponentsPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [notice, setNotice] = useState(null)
+  const [restoreConflict, setRestoreConflict] = useState(null)
   const [confirm, setConfirm] = useState(null)
   const [busy, setBusy] = useState(false)
   const viewKey = createUIStateKey({ userId: user.id, accountId: account.id, feature: 'components-view', entityId: 'active' })
@@ -206,11 +207,17 @@ export function ComponentsPage() {
 
   async function restoreProfile(profile) {
     setBusy(true)
+    setError(null)
+    setRestoreConflict(null)
     try {
       await setProfileStatus({ accountId: account.id, profileId: profile.id, action: 'restore', clientRequestId: crypto.randomUUID() })
       await refresh()
       setNotice('Model Profile restored. Eligible machines were synchronized; explicit machine exclusions still win.')
-    } catch (mutationError) { setError(mutationError) } finally { setBusy(false) }
+    } catch (mutationError) {
+      const conflict = profileRestoreConflict({ error: mutationError, profile, model: selectedModel })
+      if (conflict) setRestoreConflict(conflict)
+      else setError(mutationError)
+    } finally { setBusy(false) }
   }
 
   async function savedMachineComponent(values) {
@@ -280,23 +287,23 @@ export function ComponentsPage() {
       {view.tab === 'profiles' && <>
         <div className="model-selector-row"><label><span>Machine model</span><select value={selectedModel?.id ?? ''} onChange={(event) => setView((current) => ({ ...current, modelId: event.target.value }))}>{data.models.map((model) => <option key={model.id} value={model.id}>{model.manufacturers?.name} · {model.name}</option>)}</select></label><div><strong>{effective.filter((profile) => profile.is_active).length}</strong><span>active profiles</span></div></div>
         <div className="profile-list-tools"><div className="machine-view-tabs record-tabs"><button className={!view.showArchived ? 'selected' : ''} onClick={() => setView((current) => ({ ...current, showArchived: false }))}>Active <span>{effective.filter((profile) => profile.is_active).length}</span></button><button className={view.showArchived ? 'selected' : ''} onClick={() => setView((current) => ({ ...current, showArchived: true }))}>Archived <span>{effective.filter((profile) => !profile.is_active).length}</span></button></div></div>
+        {restoreConflict && <div className="profile-restore-conflict" role="alert" aria-live="assertive"><span><strong>Profile could not be restored.</strong>{restoreConflict.message}</span><button className="secondary-button compact-action" type="button" onClick={() => setRestoreConflict(null)}>Close</button></div>}
         {density === 'detailed' && <div className="component-table-head"><span>Component / slot</span><span>Tracking</span><span>Baseline</span><span>Adaptive</span><span>Actions</span></div>}
         <div className={`component-list ${density === 'compact' ? 'compact-profile-grid' : ''}`}>{visibleProfiles.map((profile) => {
           const intelligence = data.intelligence.find((item) => item.effective_profile_id === profile.id)
-          const actions = canManage && (profile.is_active
-            ? <><button onClick={() => open('profile-edit', profile.id)} aria-label={`Edit ${profile.components?.name}`}><Edit3 size={16} /></button><button onClick={() => setConfirm({ kind: 'profile', item: profile })} aria-label={`Archive ${profile.components?.name} ${profile.slot_code}`}><Archive size={16} /></button></>
-            : <button onClick={() => restoreProfile(profile)} aria-label={`Restore ${profile.components?.name} ${profile.slot_code}`}><RotateCcw size={16} />Restore</button>)
+          const activeActions = canManage && profile.is_active && <><button onClick={() => open('profile-edit', profile.id)} aria-label={`Edit ${profile.components?.name}`} disabled={busy}><Edit3 size={16} /></button><button onClick={() => setConfirm({ kind: 'profile', item: profile })} aria-label={`Archive ${profile.components?.name} ${profile.slot_code}`} disabled={busy}><Archive size={16} /></button></>
+          const restoreAction = canManage && !profile.is_active && <button className="secondary-button compact-action" type="button" onClick={() => restoreProfile(profile)} aria-label={`Restore ${profile.components?.name} ${profile.slot_code}`} disabled={busy}><RotateCcw size={14} />Restore</button>
           return <article className={density === 'compact' ? 'compact-profile-item' : 'component-row'} key={profile.id}>
             {density === 'compact' ? <>
-              <div className="compact-item-heading"><strong><ComponentChannelMarker slotCode={profile.slot_code} code={profile.components?.code} name={profile.components?.name} />{profile.components?.name}<code>{profile.slot_code}</code></strong><div className="compact-context-actions">{actions}</div></div>
+              <div className="compact-item-heading"><strong><ComponentChannelMarker slotCode={profile.slot_code} code={profile.components?.code} name={profile.components?.name} />{profile.components?.name}<code>{profile.slot_code}</code></strong>{activeActions && <div className="compact-context-actions">{activeActions}</div>}</div>
               <strong className="compact-baseline">{profile.baseline_expected_clicks?.toLocaleString() ?? 'Reference only'}<small> expected clicks</small></strong>
-              <div className="compact-profile-meta"><span className="tracking-pill">{trackingLabels[profile.tracking_method]}</span>{intelligence && profile.is_active && <button className={profile.adaptive_enabled ? 'adaptive-intelligence-badge adaptive-on' : 'adaptive-intelligence-badge adaptive-off'} type="button" onClick={() => open('intelligence-view', profile.id)} aria-label={`View intelligence for ${profile.components?.name}`}><BarChart3 size={12} />Adaptive · {intelligence.usable_samples}</button>}</div>
+              <div className="compact-profile-meta"><span className="tracking-pill">{trackingLabels[profile.tracking_method]}</span>{restoreAction}{intelligence && profile.is_active && <button className={profile.adaptive_enabled ? 'adaptive-intelligence-badge adaptive-on' : 'adaptive-intelligence-badge adaptive-off'} type="button" onClick={() => open('intelligence-view', profile.id)} aria-label={`View intelligence for ${profile.components?.name}`}><BarChart3 size={12} />Adaptive · {intelligence.usable_samples}</button>}</div>
             </> : <>
               <div className="component-identity"><span className="component-icon"><Boxes size={18} /></span><div><strong><ComponentChannelMarker slotCode={profile.slot_code} code={profile.components?.code} name={profile.components?.name} />{profile.components?.name}</strong><code>{profile.slot_code}</code></div></div>
               <span className="tracking-pill">{trackingLabels[profile.tracking_method]}</span>
               <div className="component-baseline"><strong>{profile.baseline_expected_clicks?.toLocaleString() ?? 'Reference only'}</strong><span>expected clicks</span></div>
               <div className="adaptive-intelligence-cell"><span className={profile.adaptive_enabled ? 'adaptive-on' : 'adaptive-off'}>{profile.is_active ? (profile.adaptive_enabled ? `${intelligence?.confidence_label === 'no_data' ? 'No Data' : `${intelligence?.confidence_label ?? '—'} · ${intelligence?.usable_samples ?? 0}`}` : 'Disabled') : 'Archived'}</span>{intelligence && profile.is_active && <button type="button" onClick={() => open('intelligence-view', profile.id)}><BarChart3 size={13} />View Intelligence</button>}</div>
-              <div className="row-actions">{actions}</div>
+              <div className="row-actions">{activeActions}{restoreAction}</div>
             </>}
           </article>
         })}</div>
@@ -309,9 +316,9 @@ export function ComponentsPage() {
           const assignmentSummary = assignments.get(component.id) ?? { models: [], slotCount: 0 }
           const summaryLabel = assignmentSummary.slotCount ? `${assignmentSummary.models.length} model${assignmentSummary.models.length === 1 ? '' : 's'} · ${assignmentSummary.slotCount} slot${assignmentSummary.slotCount === 1 ? '' : 's'}` : 'Not assigned'
           const actions = canManage && (component.is_active ? <>
-            <button className="primary-button assign-model-button" onClick={() => open('profile-assign', component.id)}><Link2 size={15} />Assign to Model</button>
-            {component.account_id === account.id && <><button className="secondary-button" onClick={() => open('component-edit', component.id)}><Edit3 size={15} />Edit</button><button className="secondary-button icon-only-action" onClick={() => setConfirm({ kind: 'component', item: component })} aria-label={`Archive ${component.name}`}><Archive size={15} /></button></>}
-          </> : component.account_id === account.id && <button className="secondary-button" onClick={() => restoreComponent(component)}><RotateCcw size={15} />Restore</button>)
+            <button className="primary-button assign-model-button" onClick={() => open('profile-assign', component.id)} disabled={busy}><Link2 size={15} />Assign to Model</button>
+            {component.account_id === account.id && <><button className="secondary-button compact-action catalog-edit-action" onClick={() => open('component-edit', component.id)} disabled={busy}><Edit3 size={14} />Edit</button><button className="secondary-button compact-action compact-icon-action" onClick={() => setConfirm({ kind: 'component', item: component })} aria-label={`Archive component ${component.name}`} title={`Archive ${component.name}`} disabled={busy}><Archive size={15} /></button></>}
+          </> : component.account_id === account.id && <button className="secondary-button compact-action" type="button" onClick={() => restoreComponent(component)} disabled={busy}><RotateCcw size={14} />Restore</button>)
           return <article className={`catalog-card ${density === 'compact' ? 'catalog-card-compact' : ''}`} key={component.id}>{density === 'compact' ? <>
             <div className="compact-item-heading"><h3><ComponentChannelMarker code={component.code} name={component.name} />{component.name}</h3><span className={component.account_id ? 'scope-pill custom' : 'scope-pill'}>{component.account_id ? 'Workspace' : 'Shared'}</span></div>
             <div className={assignmentSummary.slotCount ? 'compact-assignment-status assigned' : 'compact-assignment-status'}><Link2 size={13} /><span>{summaryLabel}</span></div>
