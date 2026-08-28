@@ -4,6 +4,7 @@ import { PageHeader } from '../components/ui/PageHeader.jsx'
 import { useAuth } from '../features/auth/useAuth.js'
 import { useTenant } from '../features/account/useTenant.js'
 import { machineCostPeriodPresets, resolveMachineCostPeriod, validMachineCostFilters } from '../features/machineCost/machineCostPeriods.js'
+import { componentCompositionPresentation, costPerClickPresentation, costStatusPresentation, counterEvidencePresentation, inventoryContextPresentation, knownConsumptionPresentation, purchaseContextPresentation } from '../features/machineCost/machineCostPresentation.js'
 import { createUIStateKey } from '../features/uiState/uiStateKeys.js'
 import { usePersistentUIState } from '../features/uiState/usePersistentUIState.js'
 import { loadMachineCostPeriod } from '../services/supabase/machineCost.js'
@@ -11,14 +12,6 @@ import { loadMachines } from '../services/supabase/machines.js'
 
 const idr = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 2 })
 const number = new Intl.NumberFormat('en-US', { maximumFractionDigits: 4 })
-
-const statusCopy = {
-  COMPLETE: ['Complete', 'Known inventory-backed consumption has complete cost evidence.'],
-  PARTIAL: ['Partial', 'Known cost is shown, but one or more consumption events have unavailable cost.'],
-  NO_CONSUMPTION: ['No consumption', 'Counter evidence is available and no component consumption was recorded.'],
-  INSUFFICIENT_COUNTER_DATA: ['Counter evidence incomplete', 'A start or end boundary reading is missing, so clicks and cost per click are unavailable.'],
-  NO_DATA: ['No data', 'No counter or component-consumption evidence is available for this period.'],
-}
 
 function currency(value) { return idr.format(Number(value ?? 0)) }
 function formatNumber(value) { return value == null ? 'Unavailable' : number.format(Number(value)) }
@@ -29,14 +22,15 @@ function SummaryCard({ icon, label, value, hint, tone = 'blue' }) {
 }
 
 function CostStatus({ summary }) {
-  const [label, description] = statusCopy[summary.cost_status] ?? statusCopy.NO_DATA
+  const [label, description] = costStatusPresentation(summary)
+  const counter = counterEvidencePresentation(summary)
   const Icon = ['COMPLETE', 'NO_CONSUMPTION'].includes(summary.cost_status) ? CheckCircle2 : AlertCircle
-  return <section className={`machine-cost-status status-${summary.cost_status.toLowerCase()}`} aria-live="polite"><Icon size={18} /><div><strong>{label}</strong><span>{description}</span>{summary.total_consumption_events > 0 && <small>{summary.known_consumption_events} of {summary.total_consumption_events} events have known cost · {summary.consumption_event_coverage_percent ?? 0}% event coverage</small>}</div></section>
+  return <section className={`machine-cost-status status-${summary.cost_status.toLowerCase()}`} aria-live="polite"><Icon size={18} /><div><strong>{label}</strong><span>{description}</span>{summary.counter_status !== 'COMPLETE' && <small>{counter.hint}</small>}{summary.total_consumption_events > 0 && <small>{summary.known_consumption_events} of {summary.total_consumption_events} events have known cost · {summary.consumption_event_coverage_percent ?? 0}% event coverage</small>}</div></section>
 }
 
 function ComponentBreakdown({ rows, partial }) {
   return <section className="machine-cost-panel glass-surface"><header><div><span className="card-kicker">Composition</span><h2>Component consumption</h2></div>{partial && <span className="machine-cost-partial"><AlertCircle size={13} />Known cost only</span>}</header>
-    {!rows.length ? <div className="machine-cost-empty"><Boxes size={24} /><strong>No component consumption in this period.</strong><span>The engine will show replacement consumption here when operational events occur.</span></div> : <div className="machine-cost-breakdown">{rows.map((row) => <article key={row.component_id}><div className="machine-cost-breakdown-label"><strong>{row.component_name}</strong><span>{row.component_category} · {row.total_events} event{row.total_events === 1 ? '' : 's'}{row.unknown_cost_events ? ` · ${row.unknown_cost_events} unknown` : ''}</span></div><div className="machine-cost-bar" role="meter" aria-label={`${row.component_name}: ${row.known_cost_percent}% of known cost`} aria-valuemin="0" aria-valuemax="100" aria-valuenow={Number(row.known_cost_percent)}><span style={{ width: `${Math.min(100, Number(row.known_cost_percent))}%` }} /></div><div><strong>{currency(row.known_consumption_cost)}</strong><span>{Number(row.known_cost_percent).toFixed(2)}%</span></div></article>)}</div>}
+    {!rows.length ? <div className="machine-cost-empty"><Boxes size={24} /><strong>No component consumption in this period.</strong><span>The engine will show replacement consumption here when operational events occur.</span></div> : <div className="machine-cost-breakdown">{rows.map((row) => { const display = componentCompositionPresentation(row, currency); return <article key={row.component_id}><div className="machine-cost-breakdown-label"><strong>{row.component_name}</strong><span>{row.component_category} · {display.meta}</span></div>{display.showPercent ? <div className="machine-cost-bar" role="meter" aria-label={`${row.component_name}: ${row.known_cost_percent}% of known cost`} aria-valuemin="0" aria-valuemax="100" aria-valuenow={Number(row.known_cost_percent)}><span style={{ width: `${Math.min(100, Number(row.known_cost_percent))}%` }} /></div> : <div className="machine-cost-bar machine-cost-bar-unknown" aria-label={`${row.component_name}: cost basis unknown`}><span /></div>}<div><strong>{display.value}</strong>{display.showPercent && <span>{Number(row.known_cost_percent).toFixed(2)}% of known cost</span>}</div></article> })}</div>}
   </section>
 }
 
@@ -86,6 +80,11 @@ export function MachineCostPage() {
 
   const counterHint = summary?.counter_status === 'COMPLETE' ? `${formatNumber(summary.start_counter)} → ${formatNumber(summary.end_counter)}` : 'Boundary evidence unavailable'
   const partial = summary?.consumption_status === 'PARTIAL'
+  const counterDisplay = summary ? counterEvidencePresentation(summary) : null
+  const consumptionDisplay = summary ? knownConsumptionPresentation(summary, currency) : null
+  const costPerClickDisplay = summary ? costPerClickPresentation(summary, currency) : null
+  const inventoryDisplay = summary ? inventoryContextPresentation(summary) : null
+  const purchaseDisplay = purchaseContextPresentation()
 
   return <div className="page-stack machine-cost-page">
     <PageHeader eyebrow="Operational economics" title="Machine Cost" description="Component-consumption cost follows physical usage. Purchase timing, inventory balance, and lifecycle performance remain separate evidence." />
@@ -101,15 +100,15 @@ export function MachineCostPage() {
     {loading ? <div className="machine-loading-state glass-surface"><RefreshCcw className="spin" size={24} /><strong>Loading machine cost evidence…</strong><span>Reading counters, FIFO allocations, and lifecycle facts.</span></div> : !selectedMachine ? <div className="machine-empty-state glass-surface"><span className="empty-machine-icon"><Printer size={38} /></span><h3>No active machine in this branch</h3><p>Add or activate a machine before querying operational component cost.</p></div> : summary && <>
       <CostStatus summary={summary} />
       <section className="machine-cost-summary-grid">
-        <SummaryCard icon={Gauge} label="Total Clicks" value={formatNumber(summary.total_clicks)} hint={counterHint} />
-        <SummaryCard icon={CircleDollarSign} label={partial ? 'Known Consumption Cost' : 'Component Consumption Cost'} value={currency(summary.known_consumption_cost)} hint={`${summary.total_consumption_events} event${summary.total_consumption_events === 1 ? '' : 's'} · issue/replacement period`} tone="purple" />
-        <SummaryCard icon={BarChart3} label={partial ? 'Known Cost / Click' : 'Component Cost / Click'} value={summary.known_component_cost_per_click == null ? 'Unavailable' : currency(summary.known_component_cost_per_click)} hint={Number(summary.total_clicks) === 0 ? 'Valid zero clicks; division unavailable' : 'Known consumption ÷ period clicks'} tone="green" />
+        <SummaryCard icon={Gauge} label="Total Clicks" value={formatNumber(summary.total_clicks)} hint={summary.counter_status === 'COMPLETE' ? counterHint : counterDisplay.hint} />
+        <SummaryCard icon={CircleDollarSign} label={partial ? 'Known Consumption Cost' : 'Component Consumption Cost'} value={consumptionDisplay.value} hint={consumptionDisplay.hint} tone="purple" />
+        <SummaryCard icon={BarChart3} label={partial ? 'Known Cost / Click' : 'Component Cost / Click'} value={costPerClickDisplay.value} hint={costPerClickDisplay.hint} tone="green" />
         <SummaryCard icon={AlertCircle} label="Unknown Cost Events" value={formatNumber(summary.unknown_consumption_events)} hint={summary.unknown_consumption_events ? 'Excluded from known cost—not treated as zero' : 'No missing consumption cost evidence'} tone="warning" />
       </section>
       <ComponentBreakdown rows={summary.component_breakdown ?? []} partial={partial} />
       <section className="machine-cost-context-grid">
-        <article className="machine-cost-context-card glass-surface"><ShoppingCart size={19} /><div><span>Purchase Cost · Account</span><strong>{currency(summary.purchase_cost_context)}</strong><small>Acquisition value purchased in this period. Never included in machine cost/click.</small></div></article>
-        <article className="machine-cost-context-card glass-surface"><Package size={19} /><div><span>Ending Inventory Cost Basis · Branch</span><strong>{currency(summary.ending_known_inventory_cost_context)}</strong><small>{formatNumber(summary.ending_known_inventory_quantity_context)} known-cost qty · {formatNumber(summary.ending_unknown_inventory_quantity_context)} unknown-cost qty</small></div></article>
+        <article className="machine-cost-context-card glass-surface"><ShoppingCart size={19} /><div><span>{purchaseDisplay.label}</span><strong>{currency(summary.purchase_cost_context)}</strong><small>{purchaseDisplay.hint}</small></div></article>
+        <article className="machine-cost-context-card glass-surface"><Package size={19} /><div><span>{inventoryDisplay.label}</span><strong>{currency(summary.ending_known_inventory_cost_context)}</strong><small>{inventoryDisplay.hint}</small><dl><div><dt>Known-cost qty</dt><dd>{formatNumber(summary.ending_known_inventory_quantity_context)}</dd></div><div><dt>Unknown-cost qty</dt><dd>{formatNumber(summary.ending_unknown_inventory_quantity_context)}</dd></div></dl></div></article>
       </section>
       <LifecycleEvidence rows={summary.realized_lifecycle_evidence ?? []} />
     </>}

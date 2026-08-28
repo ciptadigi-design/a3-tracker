@@ -29,7 +29,8 @@ insert into public.branches(id,account_id,code,name) values
 ('c3000000-0000-4000-8000-000000000001','c1000000-0000-4000-8000-000000000001','A','Branch A'),
 ('c3000000-0000-4000-8000-000000000002','c1000000-0000-4000-8000-000000000002','B','Branch B');
 insert into public.operational_people(id,account_id,name,linked_user_id,code) values
-('c3100000-0000-4000-8000-000000000001','c1000000-0000-4000-8000-000000000001','M2.4B Owner PIC','c0000000-0000-4000-8000-000000000001','OWNER');
+('c3100000-0000-4000-8000-000000000001','c1000000-0000-4000-8000-000000000001','M2.4B Owner PIC','c0000000-0000-4000-8000-000000000001','OWNER'),
+('c3100000-0000-4000-8000-000000000002','c1000000-0000-4000-8000-000000000001','M2.5A Operational PIC',null,'OPS-PIC');
 
 insert into public.machines(id,account_id,branch_id,machine_model_id,machine_code,display_name) values
 ('c4000000-0000-4000-8000-000000000001','c1000000-0000-4000-8000-000000000001','c3000000-0000-4000-8000-000000000001','51000000-0000-0000-0000-000000000001','M24B-OWNER','Owner Machine'),
@@ -170,6 +171,16 @@ select extensions.is((select inventory_consumption_cost from public.component_re
 select extensions.is((select realized_lifecycle_cost from public.component_lifecycle_costs where lifecycle_id=(select previous_lifecycle_id from public.component_replacement_events where client_request_id='c9000000-0000-4000-8000-000000000022')),2650000::numeric,'closed lifecycle realizes its installation consumption cost');
 select extensions.is((select realized_cost_per_click from public.component_lifecycle_costs where lifecycle_id=(select previous_lifecycle_id from public.component_replacement_events where client_request_id='c9000000-0000-4000-8000-000000000022')),12619.0476::numeric,'closed lifecycle derives realized cost per click from actual usage');
 select extensions.ok((select installed_component_cost=2650000 and realized_cost_per_click is null from public.component_lifecycle_costs where lifecycle_id=(select new_lifecycle_id from public.component_replacement_events where client_request_id='c9000000-0000-4000-8000-000000000022')),'active lifecycle exposes installed cost without premature realized cost per click');
+select extensions.lives_ok($$select public.replace_machine_component(
+  'c1000000-0000-4000-8000-000000000001','c4000000-0000-4000-8000-000000000001',
+  (select new_lifecycle_id from public.component_replacement_events where client_request_id='c9000000-0000-4000-8000-000000000022'),
+  1210,'2026-08-25','preventive','fair',false,'c3100000-0000-4000-8000-000000000002',null,
+  'Operational person selector','c9000000-0000-4000-8000-000000000023','inventory','c8100000-0000-4000-8000-000000000001',
+  'c8000000-0000-4000-8000-000000000001',1,null)$$,'unlinked active operational person can be the physical PIC');
+select extensions.is((select performed_by_user_id from public.component_replacement_events where client_request_id='c9000000-0000-4000-8000-000000000023'),null::uuid,'operational PIC is not conflated with an authenticated user');
+select extensions.is((select performed_by_name_snapshot from public.component_replacement_events where client_request_id='c9000000-0000-4000-8000-000000000023'),'M2.5A Operational PIC','replacement preserves operational PIC snapshot');
+select extensions.is((select operational_person_id from public.inventory_movements where client_request_id='c9000000-0000-4000-8000-000000000023'),'c3100000-0000-4000-8000-000000000002'::uuid,'inventory issue references selected operational person directly');
+select extensions.is((select operational_person_name_snapshot from public.inventory_movements where client_request_id='c9000000-0000-4000-8000-000000000023'),'M2.5A Operational PIC','inventory issue preserves the same immutable PIC snapshot');
 select extensions.lives_ok($$update public.inventory_items set is_active=false where id='c8100000-0000-4000-8000-000000000001'$$,'replacement-referenced item can be safely archived');
 select extensions.lives_ok($$update public.inventory_locations set is_active=false where id='c8000000-0000-4000-8000-000000000001'$$,'replacement-referenced location can be safely archived');
 select extensions.is((select inventory_item_name from public.component_replacement_history where previous_lifecycle_id='c7000000-0000-4000-8000-000000000001'),'Corona Cyan','archive preserves replacement inventory history');

@@ -1,20 +1,22 @@
 import { supabase } from './client.js'
 import { loadMachines } from './machines.js'
+import { projectCurrentComponentCards } from '../../features/components/componentCardProjection.js'
 
 export async function loadMachineComponentLifecycles({ accountId }) {
-  const [machines, healthResult, historyResult, membersResult, itemsResult, locationsResult, balancesResult] = await Promise.all([
+  const [machines, healthResult, historyResult, peopleResult, itemsResult, locationsResult, balancesResult] = await Promise.all([
     loadMachines({ accountId }),
     supabase
       .from('machine_component_health')
       .select('*')
       .eq('account_id', accountId)
+      .in('lifecycle_status', ['unknown', 'active'])
       .order('display_order'),
     supabase
       .from('component_replacement_history')
       .select('*')
       .eq('account_id', accountId)
       .order('replaced_at', { ascending: false }),
-    supabase.rpc('get_account_member_profiles', { target_account_id: accountId }),
+    supabase.from('operational_people').select('id,account_id,name,code,linked_user_id,is_active').eq('account_id', accountId).order('name'),
     supabase.from('inventory_items').select('id,account_id,component_id,sku,name,unit,is_active').eq('account_id', accountId).eq('is_active', true).order('name'),
     supabase.from('inventory_locations').select('id,account_id,branch_id,code,name,is_active').eq('account_id', accountId).eq('is_active', true).order('name'),
     supabase.from('inventory_stock_balances').select('account_id,inventory_item_id,location_id,quantity').eq('account_id', accountId),
@@ -22,15 +24,15 @@ export async function loadMachineComponentLifecycles({ accountId }) {
 
   if (healthResult.error) throw healthResult.error
   if (historyResult.error) throw historyResult.error
-  if (membersResult.error) throw membersResult.error
+  if (peopleResult.error) throw peopleResult.error
   if (itemsResult.error) throw itemsResult.error
   if (locationsResult.error) throw locationsResult.error
   if (balancesResult.error) throw balancesResult.error
   return {
     machines,
-    lifecycles: (healthResult.data ?? []).filter((row) => row.component_code !== 'TEST_COMPONENT' && row.slot_code !== 'TEST_COMPONENT'),
+    lifecycles: projectCurrentComponentCards(healthResult.data ?? []),
     replacementHistory: historyResult.data ?? [],
-    members: membersResult.data ?? [],
+    operationalPeople: peopleResult.data ?? [],
     inventoryItems: itemsResult.data ?? [],
     inventoryLocations: locationsResult.data ?? [],
     inventoryBalances: balancesResult.data ?? [],
@@ -52,7 +54,7 @@ export async function initializeComponentLifecycle({ accountId, machineId, profi
   return data
 }
 
-export async function replaceComponentLifecycle({ accountId, machineId, lifecycleId, replacementCounter, replacedAt, reason, condition, includeLearning, performedByUserId, performedByName, notes, clientRequestId, inventorySource, inventoryItemId, inventoryLocationId, inventoryQuantity, externalInventoryReason }) {
+export async function replaceComponentLifecycle({ accountId, machineId, lifecycleId, replacementCounter, replacedAt, reason, condition, includeLearning, performedByPersonId, performedByName, notes, clientRequestId, inventorySource, inventoryItemId, inventoryLocationId, inventoryQuantity, externalInventoryReason }) {
   const { data, error } = await supabase.rpc('replace_machine_component', {
     target_account_id: accountId,
     target_machine_id: machineId,
@@ -62,7 +64,7 @@ export async function replaceComponentLifecycle({ accountId, machineId, lifecycl
     target_replacement_reason: reason,
     target_condition_at_removal: condition,
     target_include_in_adaptive_learning: includeLearning,
-    target_performed_by_user_id: performedByUserId,
+    target_performed_by_user_id: performedByPersonId,
     target_performed_by_name_snapshot: performedByName,
     target_notes: notes?.trim() || null,
     target_client_request_id: clientRequestId,
