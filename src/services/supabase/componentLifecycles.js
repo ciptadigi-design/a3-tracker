@@ -3,10 +3,10 @@ import { loadMachines } from './machines.js'
 import { projectCurrentComponentCards } from '../../features/components/componentCardProjection.js'
 
 export async function loadMachineComponentLifecycles({ accountId }) {
-  const [machines, healthResult, historyResult, peopleResult, itemsResult, locationsResult, balancesResult] = await Promise.all([
+  const [machines, healthResult, historyResult, peopleResult, itemsResult, locationsResult, balancesResult, exclusionsResult] = await Promise.all([
     loadMachines({ accountId }),
     supabase
-      .from('machine_component_health')
+      .from('machine_component_configuration')
       .select('*')
       .eq('account_id', accountId)
       .in('lifecycle_status', ['unknown', 'active'])
@@ -20,6 +20,7 @@ export async function loadMachineComponentLifecycles({ accountId }) {
     supabase.from('inventory_items').select('id,account_id,component_id,sku,name,unit,is_active').eq('account_id', accountId).eq('is_active', true).order('name'),
     supabase.from('inventory_locations').select('id,account_id,branch_id,code,name,is_active').eq('account_id', accountId).eq('is_active', true).order('name'),
     supabase.from('inventory_stock_balances').select('account_id,inventory_item_id,location_id,quantity').eq('account_id', accountId),
+    supabase.from('machine_component_profile_exclusions').select('id,account_id,machine_id,model_component_profile_id,reason,excluded_at').eq('account_id', accountId).is('cleared_at', null),
   ])
 
   if (healthResult.error) throw healthResult.error
@@ -28,6 +29,7 @@ export async function loadMachineComponentLifecycles({ accountId }) {
   if (itemsResult.error) throw itemsResult.error
   if (locationsResult.error) throw locationsResult.error
   if (balancesResult.error) throw balancesResult.error
+  if (exclusionsResult.error) throw exclusionsResult.error
   return {
     machines,
     lifecycles: projectCurrentComponentCards(healthResult.data ?? []),
@@ -36,6 +38,7 @@ export async function loadMachineComponentLifecycles({ accountId }) {
     inventoryItems: itemsResult.data ?? [],
     inventoryLocations: locationsResult.data ?? [],
     inventoryBalances: balancesResult.data ?? [],
+    exclusions: exclusionsResult.data ?? [],
   }
 }
 

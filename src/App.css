@@ -593,6 +593,12 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .component-empty { min-height: 240px; display: grid; place-items: center; color: var(--text-muted); }.component-dialog { width: min(820px,100%); }.threshold-grid { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 12px; }.checkbox-field { flex-direction: row; align-items: center; align-self: end; min-height: 46px; }.checkbox-field input { width: 18px; min-height: 18px; }.form-field-wide { grid-column: 1/-1; }
 
 .lifecycle-machine-selector { margin-bottom: 14px; }
+.machine-component-toolbar { margin-left: auto; display: flex; flex-direction: row !important; gap: 8px !important; }
+.machine-component-toolbar button,.machine-component-exclusion button { white-space: nowrap; }
+.machine-component-exclusion { margin: 12px 0; padding: 12px 14px; display: flex; align-items: center; justify-content: space-between; gap: 12px; border: 1px dashed var(--border-strong); border-radius: 14px; background: var(--surface-muted); color: var(--text-muted); font-size: 12px; }
+.lifecycle-card h3 code,.compact-profile-item strong code { display: block; margin-top: 2px; color: var(--text-muted); font-size: 9px; font-weight: 700; overflow-wrap: anywhere; }
+.component-empty { align-content: center; gap: 8px; text-align: center; }
+.component-empty > div { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
 .lifecycle-counter-banner { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; padding: 12px 16px; border: 1px solid var(--border-subtle); border-radius: 16px; background: var(--blue-soft); }
 .lifecycle-counter-banner > span { display: flex; align-items: center; gap: 8px; color: var(--blue); font-size: 10px; font-weight: 750; text-transform: uppercase; letter-spacing: .05em; }
 .lifecycle-counter-banner strong { margin-left: auto; font-size: 17px; }.lifecycle-counter-banner small { color: var(--text-muted); font-size: 9px; }
@@ -912,6 +918,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 }
 
 @media (max-width: 760px) {
+  .machine-component-toolbar,.machine-component-exclusion { width: 100%; flex-direction: column !important; align-items: stretch !important; }
   .machine-cost-filters { grid-template-columns: minmax(0,1fr); padding: 13px; }
   .machine-cost-filters .machine-cost-period-readout { grid-column: auto; }
   .machine-cost-summary-grid, .machine-cost-context-grid { grid-template-columns: minmax(0,1fr); }

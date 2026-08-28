@@ -19,7 +19,7 @@ function initialValues({ profile, model, initialComponent }) {
       watchThreshold: String(profile.watch_threshold_percent),
       warningThreshold: String(profile.warning_threshold_percent),
       criticalThreshold: String(profile.critical_threshold_percent),
-      notes: profile.notes ?? '',
+      notes: profile.notes ?? '', clientRequestId: crypto.randomUUID(),
     }
   }
   return {
@@ -34,7 +34,7 @@ function initialValues({ profile, model, initialComponent }) {
     watchThreshold: '15',
     warningThreshold: '5',
     criticalThreshold: '0',
-    notes: '',
+    notes: '', clientRequestId: crypto.randomUUID(),
   }
 }
 

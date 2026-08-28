@@ -16,7 +16,7 @@ function formatCounter(value) {
 export function InitializeLifecycleDialog({ account, machine, lifecycle, onClose, onInitialize }) {
   const { user } = useAuth()
   const { value, updateDraft, clearDraft, resetDraft, hasDraft, wasRestored } = usePersistentDraft({
-    draftKey: createDraftKey({ userId: user.id, accountId: account.id, branchId: machine.branch_id, feature: 'component-lifecycle-initialize', entityId: lifecycle.lifecycle_id }),
+    draftKey: createDraftKey({ userId: user.id, accountId: account.id, branchId: machine.branch_id, feature: 'component-lifecycle-initialize', entityId: lifecycle.assignment_id }),
     initialValue: blank,
     metadata: { lifecycleUpdatedAt: lifecycle.updated_at },
     validate: validDraft,
