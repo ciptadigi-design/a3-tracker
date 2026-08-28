@@ -23,7 +23,7 @@ insert into public.inventory_locations(id,account_id,branch_id,code,name) values
 ('f5000000-0000-4000-8000-000000000001','f1000000-0000-4000-8000-000000000001','f3000000-0000-4000-8000-000000000001','WH','Warehouse'),
 ('f5000000-0000-4000-8000-000000000002','f1000000-0000-4000-8000-000000000001','f3000000-0000-4000-8000-000000000001','FLOOR','Machine Area');
 insert into public.inventory_items(id,account_id,sku,name,unit) values
-('f6000000-0000-4000-8000-000000000001','f1000000-0000-4000-8000-000000000001','FIFO','FIFO Part','pcs'),
+('f6000000-0000-4000-8000-000000000001','f1000000-0000-4000-8000-000000000001',null,'FIFO Part','pcs'),
 ('f6000000-0000-4000-8000-000000000002','f1000000-0000-4000-8000-000000000001','UNKNOWN','Unknown Part','pcs'),
 ('f6000000-0000-4000-8000-000000000003','f1000000-0000-4000-8000-000000000001','MAINT','Maintenance Part','pcs');
 insert into public.inventory_suppliers(id,account_id,supplier_code,name) values
@@ -35,7 +35,7 @@ select set_config('request.jwt.claim.sub','f0000000-0000-4000-8000-000000000001'
 select extensions.lives_ok($$select public.create_inventory_purchase_auto(
   'f1000000-0000-4000-8000-000000000001','f7000000-0000-4000-8000-000000000001','2026-07-01',null,'IDR',null,
   '[{"inventory_item_id":"f6000000-0000-4000-8000-000000000001","quantity":"2","unit_price":"2500000"}]',
-  'f8000000-0000-4000-8000-000000000001')$$,'first auto-numbered purchase succeeds');
+  'f8000000-0000-4000-8000-000000000001')$$,'first auto-numbered purchase succeeds for a NULL-SKU FIFO item');
 select extensions.lives_ok($$select public.create_inventory_purchase_auto(
   'f1000000-0000-4000-8000-000000000001','f7000000-0000-4000-8000-000000000001','2026-07-02','INV-2','IDR',null,
   '[{"inventory_item_id":"f6000000-0000-4000-8000-000000000001","quantity":"3","unit_price":"2650000"}]',

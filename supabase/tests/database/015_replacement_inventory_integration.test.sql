@@ -69,7 +69,7 @@ insert into public.inventory_locations(id,account_id,branch_id,code,name,is_acti
 ('c8000000-0000-4000-8000-000000000002','c1000000-0000-4000-8000-000000000001','c3000000-0000-4000-8000-000000000001','OLD','Archived Cabinet',false),
 ('c8000000-0000-4000-8000-000000000003','c1000000-0000-4000-8000-000000000002','c3000000-0000-4000-8000-000000000002','OTHER','Other Warehouse',true);
 insert into public.inventory_items(id,account_id,component_id,sku,name,unit,is_active) values
-('c8100000-0000-4000-8000-000000000001','c1000000-0000-4000-8000-000000000001','53000000-0000-0000-0000-000000000001','COR-C','Corona Cyan','pcs',true),
+('c8100000-0000-4000-8000-000000000001','c1000000-0000-4000-8000-000000000001','53000000-0000-0000-0000-000000000001',null,'Corona Cyan','pcs',true),
 ('c8100000-0000-4000-8000-000000000002','c1000000-0000-4000-8000-000000000001','53000000-0000-0000-0000-000000000002','COR-M','Corona Magenta','pcs',true),
 ('c8100000-0000-4000-8000-000000000003','c1000000-0000-4000-8000-000000000001','53000000-0000-0000-0000-000000000003','COR-Y','Corona Yellow','pcs',true),
 ('c8100000-0000-4000-8000-000000000004','c1000000-0000-4000-8000-000000000001','53000000-0000-0000-0000-000000000004','COR-K','Corona Black','pcs',true),
@@ -108,7 +108,7 @@ select extensions.is((select count(*)::int from public.component_replacement_eve
 select extensions.is((select count(*)::int from public.inventory_movements where client_request_id='c9000000-0000-4000-8000-000000000009'),0,'insufficient stock creates no issue');
 select extensions.is((select count(*)::int from public.counter_readings where client_request_id='c9000000-0000-4000-8000-000000000009'),0,'insufficient stock creates no counter reading');
 
-select extensions.lives_ok($$select public.replace_machine_component('c1000000-0000-4000-8000-000000000001','c4000000-0000-4000-8000-000000000001','c7000000-0000-4000-8000-000000000001',1000,'2026-08-20','normal_eol','worn',true,'c0000000-0000-4000-8000-000000000001','M2.4B Owner PIC','Owner inventory issue','c9000000-0000-4000-8000-000000000011','inventory','c8100000-0000-4000-8000-000000000001','c8000000-0000-4000-8000-000000000001',1,null)$$,'owner inventory-backed replacement succeeds');
+select extensions.lives_ok($$select public.replace_machine_component('c1000000-0000-4000-8000-000000000001','c4000000-0000-4000-8000-000000000001','c7000000-0000-4000-8000-000000000001',1000,'2026-08-20','normal_eol','worn',true,'c0000000-0000-4000-8000-000000000001','M2.4B Owner PIC','Owner inventory issue','c9000000-0000-4000-8000-000000000011','inventory','c8100000-0000-4000-8000-000000000001','c8000000-0000-4000-8000-000000000001',1,null)$$,'owner inventory-backed replacement succeeds with a NULL-SKU item');
 select extensions.is((select inventory_source::text from public.component_replacement_events where client_request_id='c9000000-0000-4000-8000-000000000011'),'inventory','replacement records inventory source');
 select extensions.is((select count(*)::int from public.inventory_movements where client_request_id='c9000000-0000-4000-8000-000000000011' and movement_type='issue'),1,'successful replacement creates exactly one issue');
 select extensions.is((select quantity from public.inventory_movements where client_request_id='c9000000-0000-4000-8000-000000000011'),-1::numeric,'issue quantity is signed negative');

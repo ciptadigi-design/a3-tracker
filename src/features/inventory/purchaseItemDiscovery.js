@@ -1,9 +1,7 @@
+export { inventoryItemLabel } from './inventoryItemPresentation.js'
+
 function normalized(value) {
   return String(value ?? '').trim().toLocaleLowerCase()
-}
-
-export function inventoryItemLabel(item) {
-  return `${item.sku} · ${item.name}`
 }
 
 export function discoverPurchaseItems(items, components, query) {

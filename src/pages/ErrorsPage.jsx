@@ -25,10 +25,15 @@ export function ErrorsPage({ navigate }) {
   const machinesState = useMachines(account.id, branch.id)
   const incidentState = useOperationalIncidents(account.id, branch.id)
   const [success, setSuccess] = useState(null)
+  const [machineFilter, setMachineFilter] = useState('all')
   const workflowKey = createUIStateKey({ userId: user.id, accountId: account.id, branchId: branch.id, feature: 'operational-incident-workflow', entityId: 'active' })
   const workflow = usePersistentUIState({ uiStateKey: workflowKey, initialValue: emptyWorkflow, validate: isIncidentWorkflow })
   const timezone = branch.timezone || account.default_timezone || 'Asia/Jakarta'
-  const validIncidents = useMemo(() => incidentState.incidents.filter((incident) => incident.status !== 'voided'), [incidentState.incidents])
+  const selectedMachine = machinesState.machines.find((machine) => machine.id === machineFilter)
+  const effectiveMachineFilter = machineFilter === 'branch' || selectedMachine ? machineFilter : 'all'
+  const filteredIncidents = useMemo(() => incidentState.incidents.filter((incident) => effectiveMachineFilter === 'all'
+    || (effectiveMachineFilter === 'branch' ? incident.machine_id == null : incident.machine_id === effectiveMachineFilter)), [incidentState.incidents, effectiveMachineFilter])
+  const validIncidents = useMemo(() => filteredIncidents.filter((incident) => incident.status !== 'voided'), [filteredIncidents])
   const summary = useMemo(() => validIncidents.reduce((totals, incident) => ({
     count: totals.count + 1,
     material: totals.material + Number(incident.material_loss),
@@ -43,6 +48,7 @@ export function ErrorsPage({ navigate }) {
   }
 
   const isReady = !incidentState.isLoading && !machinesState.isLoading
+  const scopeDescription = selectedMachine ? `${selectedMachine.machine_code} · all history` : effectiveMachineFilter === 'branch' ? 'Branch / No specific machine · all history' : 'All assessed operational loss in this branch · all history'
   const addAction = <button className="primary-button" type="button" onClick={() => workflow.setUIState({ type: 'create' })} disabled={!isReady}><ClipboardPlus size={18} /> Log error baru</button>
 
   return (
@@ -52,14 +58,16 @@ export function ErrorsPage({ navigate }) {
 
       <section className="incident-domain-note"><AlertTriangle size={18} /><div><strong>Operational incident scope</strong><span>Jenis “Mesin” berarti kesalahan setting atau penggunaan mesin dalam proses produksi—bukan C-xxxx, kerusakan hardware, atau diagnosis service.</span></div></section>
 
+      <section className="incident-scope-filter glass-surface" aria-label="Error scope filters"><label><span>Machine</span><select value={effectiveMachineFilter} onChange={(event) => setMachineFilter(event.target.value)}><option value="all">All Machines / Branch</option><option value="branch">Branch / No specific machine</option>{machinesState.machines.filter((machine) => machine.is_active).map((machine) => <option key={machine.id} value={machine.id}>{machine.machine_code} · {machine.display_name}</option>)}</select></label><p>These totals cover all recorded history. Match both Machine and period when reconciling with Machine Cost.</p></section>
+
       <section className="incident-summary-grid" aria-label="Ringkasan kerugian branch aktif">
         <SummaryCard icon={ReceiptText} label="Total Incident" value={String(summary.count)} detail="Open + resolved; voided tidak dihitung" tone="blue" />
         <SummaryCard icon={Boxes} label="Rugi Bahan" value={formatRupiah(summary.material)} detail="Semua record valid pada branch" tone="amber" />
         <SummaryCard icon={HandCoins} label="Rugi Jasa" value={formatRupiah(summary.service)} detail="Semua record valid pada branch" tone="purple" />
-        <SummaryCard icon={AlertTriangle} label="Assessed Loss" value={formatRupiah(summary.assessed)} detail="(Bahan + jasa) × multiplier" tone="green" />
+        <SummaryCard icon={AlertTriangle} label="Assessed Loss" value={formatRupiah(summary.assessed)} detail={scopeDescription} tone="green" />
       </section>
 
-      <IncidentHistory incidents={incidentState.incidents} machines={machinesState.machines} timezone={timezone} isLoading={incidentState.isLoading} error={incidentState.error} onRefresh={incidentState.refresh} onOpen={(incidentId) => navigate(`/errors/${incidentId}`)} />
+      <IncidentHistory incidents={filteredIncidents} machines={machinesState.machines} timezone={timezone} isLoading={incidentState.isLoading} error={incidentState.error} onRefresh={incidentState.refresh} onOpen={(incidentId) => navigate(`/errors/${incidentId}`)} />
 
       {workflow.value.type === 'create' && isReady && <IncidentFormDialog account={account} branch={branch} machines={machinesState.machines} members={incidentState.members} onClose={workflow.clearUIState} onSave={handleCreate} />}
     </div>

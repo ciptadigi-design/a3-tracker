@@ -7,6 +7,7 @@ import { usePersistentDraft } from '../drafts/usePersistentDraft.js'
 import { learningDefault, removalConditions, replacementReasons } from './componentReplacement.js'
 import { resolveReplacementInventorySource } from './lifecycleActions.js'
 import { formatCounterInput, normalizeCounterInput, resolveReplacementPic } from './replacementForm.js'
+import { inventoryItemLabel } from '../inventory/inventoryItemPresentation.js'
 
 function localDateTime() {
   const now = new Date(Date.now() - new Date().getTimezoneOffset() * 60_000)
@@ -139,7 +140,7 @@ export function ReplaceComponentDialog({ account, machine, lifecycle, operationa
           </div>
           {inventorySource === 'inventory' && <>
             <div className="form-grid replacement-inventory-fields">
-              <label className="form-field"><span>Inventory Item *</span><select value={value.inventoryItemId ?? ''} onChange={(event) => updateDraft((current) => ({ ...current, inventoryItemId: event.target.value, inventoryLocationId: '' }))}><option value="">Select matching item</option>{eligibleItems.map((item) => <option key={item.id} value={item.id}>{item.name} · {item.sku}</option>)}</select><small>{eligibleItems.length ? `Only items explicitly linked to ${lifecycle.component_name}.` : `No active Inventory Item is linked to ${lifecycle.component_name}.`}</small></label>
+              <label className="form-field"><span>Inventory Item *</span><select value={value.inventoryItemId ?? ''} onChange={(event) => updateDraft((current) => ({ ...current, inventoryItemId: event.target.value, inventoryLocationId: '' }))}><option value="">Select matching item</option>{eligibleItems.map((item) => <option key={item.id} value={item.id}>{inventoryItemLabel(item)}</option>)}</select><small>{eligibleItems.length ? `Only items explicitly linked to ${lifecycle.component_name}.` : `No active Inventory Item is linked to ${lifecycle.component_name}.`}</small></label>
               <label className="form-field"><span>Stock Location *</span><select value={value.inventoryLocationId ?? ''} onChange={(event) => change('inventoryLocationId', event.target.value)}><option value="">Select physical location</option>{inventoryLocations.map((location) => { const stock = selectedInventoryItem ? Number(inventoryBalances.find((balance) => balance.inventory_item_id === selectedInventoryItem.id && balance.location_id === location.id)?.quantity ?? 0) : 0; return <option key={location.id} value={location.id}>{location.name} · {number(stock)} {selectedInventoryItem?.unit ?? ''}</option> })}</select></label>
               <label className="form-field replacement-quantity-field"><span>Quantity Used *</span><input type="number" min="0.0001" step="0.0001" value={value.inventoryQuantity ?? '1'} onChange={(event) => change('inventoryQuantity', event.target.value)} /><small>{selectedInventoryItem?.unit ?? 'Select an item first'}</small></label>
             </div>

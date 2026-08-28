@@ -14,11 +14,18 @@ test('Add Item exposes eligible Component Catalog choices without raw identifier
   assert.doesNotMatch(itemDialog, />{component\.id}</)
 })
 
-test('Component defaults only Display Name while SKU and physical unit remain explicit', () => {
+test('Component defaults Display Name, keeps SKU optional, and leaves physical unit explicit', () => {
   assert.match(itemDialog, /name: item\?\.name \?\? initialComponent\?\.name \?\? ''/)
   assert.match(itemDialog, /sku: item\?\.sku \?\? ''/)
   assert.match(itemDialog, /unit: item\?\.unit \?\? ''/)
+  assert.match(itemDialog, /<span>SKU <small>Optional<\/small><\/span>/)
+  assert.match(itemDialog, /Optional internal\/vendor stock code\./)
+  assert.doesNotMatch(itemDialog, /SKU \*/)
   assert.match(itemDialog, /Choose physical unit/)
+})
+
+test('zero inventory balance is presented as Out of Stock', () => {
+  assert.match(inventoryPage, /Number\(total\) <= 0\) return \{ key: 'out', label: 'Out of Stock' \}/)
 })
 
 test('Purchase discovery supports item, SKU, and Component with nested item creation', () => {

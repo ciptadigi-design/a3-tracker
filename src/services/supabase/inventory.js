@@ -1,6 +1,6 @@
 import { supabase } from './client.js'
 
-const itemFields = 'id,account_id,component_id,sku,name,category,unit,minimum_stock,notes,is_active,created_at,updated_at,archived_at,components(id,account_id,code,name,category)'
+const itemFields = 'id,account_id,component_id,sku,name,category,unit,minimum_stock,notes,is_active,is_canonical,created_at,updated_at,archived_at,components(id,account_id,code,name,category)'
 const locationFields = 'id,account_id,branch_id,code,name,notes,is_active,created_at,updated_at,archived_at,branches(id,code,name)'
 const supplierFields = 'id,account_id,supplier_code,name,contact_person,phone,email,address,notes,is_active,created_at,updated_at,archived_at'
 
@@ -93,7 +93,7 @@ export async function cancelInventoryPurchase({ accountId, purchaseId, reason, c
 
 export async function saveInventoryItem({ accountId, itemId, values }) {
   const payload = {
-    component_id: values.componentId || null, sku: values.sku.trim(), name: values.name.trim(),
+    component_id: values.componentId || null, sku: optional(values.sku), name: values.name.trim(),
     category: optional(values.category), unit: values.unit, minimum_stock: values.minimumStock === '' ? null : values.minimumStock,
     notes: optional(values.notes), is_active: values.isActive,
   }

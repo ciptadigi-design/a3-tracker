@@ -37,7 +37,7 @@ insert into public.inventory_locations(id,account_id,branch_id,code,name) values
 ('e5000000-0000-4000-8000-000000000002','e1000000-0000-4000-8000-000000000001',null,'FLOOR','Machine Floor'),
 ('e5000000-0000-4000-8000-000000000003','e1000000-0000-4000-8000-000000000002','e3000000-0000-4000-8000-000000000002','OTHER','Other Warehouse');
 insert into public.inventory_items(id,account_id,sku,name,unit) values
-('e6000000-0000-4000-8000-000000000001','e1000000-0000-4000-8000-000000000001','TON-C','Toner Cyan','bottle'),
+('e6000000-0000-4000-8000-000000000001','e1000000-0000-4000-8000-000000000001',null,'Toner Cyan','bottle'),
 ('e6000000-0000-4000-8000-000000000002','e1000000-0000-4000-8000-000000000001','DRUM-C','Drum Cyan','pcs'),
 ('e6000000-0000-4000-8000-000000000003','e1000000-0000-4000-8000-000000000001','ARCH','Archived Part','pcs'),
 ('e6000000-0000-4000-8000-000000000004','e1000000-0000-4000-8000-000000000002','OTHER','Other Item','pcs');
@@ -58,7 +58,7 @@ select extensions.lives_ok($$select public.create_inventory_purchase(
   'e1000000-0000-4000-8000-000000000001','e7000000-0000-4000-8000-000000000001','PUR-2026-0001','2026-08-27',
   'INV-100','IDR','Initial purchase',
   '[{"inventory_item_id":"e6000000-0000-4000-8000-000000000001","quantity":"10","unit_price":"2850000","notes":"Toner"},{"inventory_item_id":"e6000000-0000-4000-8000-000000000002","quantity":"2","unit_price":"1200000"}]'::jsonb,
-  'e8000000-0000-4000-8000-000000000001')$$,'owner creates purchase atomically');
+  'e8000000-0000-4000-8000-000000000001')$$,'owner creates purchase atomically with a NULL-SKU line');
 select extensions.is((select status::text from public.inventory_purchases where purchase_number='PUR-2026-0001'),'draft','new purchase is draft and receivable');
 select extensions.is((select line_count from public.inventory_purchase_summary where purchase_number='PUR-2026-0001'),2,'purchase has both lines');
 select extensions.is((select purchase_total from public.inventory_purchase_summary where purchase_number='PUR-2026-0001'),30900000::numeric,'database derives purchase total');
@@ -90,7 +90,7 @@ select extensions.lives_ok($$select public.receive_inventory_purchase(
   'e1000000-0000-4000-8000-000000000001',(select id from public.inventory_purchases where purchase_number='PUR-2026-0001'),
   'e5000000-0000-4000-8000-000000000001','2026-08-27 12:00+07','e4000000-0000-4000-8000-000000000001','First partial',
   jsonb_build_array(jsonb_build_object('purchase_line_id',(select id from public.inventory_purchase_lines where inventory_item_id='e6000000-0000-4000-8000-000000000001' and purchase_id=(select id from public.inventory_purchases where purchase_number='PUR-2026-0001')),'quantity','6')),
-  'e9000000-0000-4000-8000-000000000001')$$,'partial receipt succeeds atomically');
+  'e9000000-0000-4000-8000-000000000001')$$,'partial receipt succeeds atomically for a NULL-SKU item');
 select extensions.is((select status::text from public.inventory_purchases where purchase_number='PUR-2026-0001'),'partially_received','partial receipt updates purchase status');
 select extensions.is((select received_quantity from public.inventory_purchase_line_status where inventory_item_id='e6000000-0000-4000-8000-000000000001' and purchase_id=(select id from public.inventory_purchases where purchase_number='PUR-2026-0001')),6::numeric,'partial received quantity derives from receipt lines');
 select extensions.is((select remaining_quantity from public.inventory_purchase_line_status where inventory_item_id='e6000000-0000-4000-8000-000000000001' and purchase_id=(select id from public.inventory_purchases where purchase_number='PUR-2026-0001')),4::numeric,'partial remaining quantity is correct');

@@ -108,7 +108,7 @@ export function IncidentDetailPage({ incidentId, navigate }) {
         <DetailItem icon={UserRound} label="Konsumen" value={incident.customer_name_snapshot || 'Tidak dicatat'} />
         <DetailItem icon={ReceiptText} label="Produk" value={incident.product_name_snapshot || 'Tidak dicatat'} />
         <DetailItem icon={Tag} label="Kategori / Jenis" value={`${categoryLabels[incident.category]} · ${incidentTypeLabels[incident.incident_type]}`} hint="Mesin = operational usage, bukan technical fault" />
-        <DetailItem icon={Printer} label="Machine" value={machine ? `${machine.display_name} · ${machine.machine_code}` : 'Tidak terkait machine'} />
+        <DetailItem icon={Printer} label="Machine" value={machine ? `${machine.machine_code} · ${machine.display_name}` : 'Branch / No specific machine'} />
         <DetailItem icon={Gauge} label="Qty affected" value={incident.qty_affected == null ? 'Tidak dicatat' : String(incident.qty_affected)} />
         <DetailItem icon={UserRound} label="PIC terlibat" value={incident.responsible_name_snapshot || 'Tidak dicatat'} hint={incident.responsible_user_id ? 'Linked account member + snapshot' : 'Snapshot name'} />
         <DetailItem icon={Boxes} label="Rugi bahan" value={formatRupiah(incident.material_loss)} />
