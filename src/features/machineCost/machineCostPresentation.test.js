@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { componentCompositionPresentation, costPerClickPresentation, costStatusPresentation, counterEvidencePresentation, economicsStatusPresentation, inventoryContextPresentation, knownConsumptionPresentation, purchaseContextPresentation } from './machineCostPresentation.js'
+import { componentCompositionPresentation, costPerClickPresentation, costStatusPresentation, counterEvidencePresentation, economicsStatusPresentation, inventoryContextPresentation, knownConsumptionPresentation, primaryCostPerClickPresentation, purchaseContextPresentation, summaryStatusPresentation } from './machineCostPresentation.js'
 
 const money = (value) => `Rp${Number(value)}`
 
@@ -22,10 +22,10 @@ test('mixed known and unknown consumption labels the known portion', () => {
   assert.deepEqual(knownConsumptionPresentation({ known_consumption_cost: 5700000, known_consumption_events: 2, unknown_consumption_events: 1 }, money), { value: 'Rp5700000 known', hint: '2 known · 1 unknown' })
 })
 
-test('missing counter boundaries explain start, end, and both cases', () => {
+test('legacy incomplete statuses remain intelligible while NO_DATA follows event semantics', () => {
   assert.match(counterEvidencePresentation({ counter_status: 'INSUFFICIENT_START' }).hint, /Start-of-period/)
   assert.match(counterEvidencePresentation({ counter_status: 'INSUFFICIENT_END' }).hint, /End-of-period/)
-  assert.match(counterEvidencePresentation({ counter_status: 'NO_DATA' }).hint, /No start or end/)
+  assert.match(counterEvidencePresentation({ counter_status: 'NO_DATA' }).hint, /No effective Total Impressions reading/)
 })
 
 test('zero clicks are distinct from incomplete evidence', () => {
@@ -41,11 +41,31 @@ test('unknown-only component composition reports replacement and unknown basis',
 })
 
 test('purchase and inventory context retain separate presentation semantics', () => {
-  assert.match(purchaseContextPresentation().hint, /does not enter machine cost\/click until the stock is consumed/)
+  assert.match(purchaseContextPresentation().hint, /does not become machine cost until consumed/)
   assert.equal(inventoryContextPresentation({ ending_unknown_inventory_quantity_context: 3 }).label, 'Known Inventory Cost Basis · Branch')
   assert.equal(inventoryContextPresentation({ ending_unknown_inventory_quantity_context: 0 }).label, 'Ending Inventory Cost Basis · Branch')
 })
 test('machine economics completeness remains explicit', () => {
   assert.match(economicsStatusPresentation({ economics_status: 'PARTIAL' })[1], /excludes/)
   assert.match(economicsStatusPresentation({ economics_status: 'INSUFFICIENT_COUNTER_DATA' })[1], /cannot be calculated/)
+})
+
+test('primary Cost / Click presents the standard numerator without accounting jargon', () => {
+  assert.deepEqual(primaryCostPerClickPresentation({ known_standard_cost_per_click: 604, total_clicks: 30000, counter_status: 'COMPLETE', unknown_evidence_events: 0 }, money), {
+    value: 'Rp604',
+    hint: 'Component consumption + Error/Waste ÷ clicks',
+  })
+})
+
+test('primary Cost / Click qualifies partial evidence without treating it as zero', () => {
+  assert.deepEqual(primaryCostPerClickPresentation({ known_standard_cost_per_click: 1.17, total_clicks: 1709, counter_status: 'COMPLETE', unknown_consumption_events: 1, unknown_error_waste_events: 0 }, money), {
+    value: 'Rp1.17 known',
+    hint: 'Known costs only · 1 unknown component event',
+  })
+  assert.deepEqual(summaryStatusPresentation({ counter_status: 'COMPLETE', unknown_evidence_events: 1 }), ['Partial cost data', 'warning'])
+})
+
+test('summary status distinguishes no counter data and no consumption', () => {
+  assert.deepEqual(summaryStatusPresentation({ counter_status: 'NO_DATA' }), ['No counter data', 'neutral'])
+  assert.deepEqual(summaryStatusPresentation({ counter_status: 'COMPLETE', unknown_evidence_events: 0, total_consumption_events: 0, error_waste_events: 0 }), ['No consumption', 'neutral'])
 })

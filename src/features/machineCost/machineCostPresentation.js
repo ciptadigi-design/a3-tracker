@@ -2,11 +2,11 @@ const plural = (count, singular, pluralForm = `${singular}s`) => `${count} ${cou
 
 export function counterEvidencePresentation(summary) {
   switch (summary?.counter_status) {
-    case 'COMPLETE': return { label: 'Counter evidence complete', hint: 'Start and end boundary readings are available.' }
+    case 'COMPLETE': return { label: 'Counter data complete', hint: 'Effective Daily Counter usage is available for this period.' }
     case 'INSUFFICIENT_START': return { label: 'Start boundary missing', hint: 'Start-of-period counter evidence is missing.' }
     case 'INSUFFICIENT_END': return { label: 'End boundary missing', hint: 'End-of-period counter evidence is missing.' }
-    case 'NO_DATA': return { label: 'No counter data', hint: 'No start or end boundary reading exists for this period.' }
-    default: return { label: 'Counter evidence unavailable', hint: 'Boundary evidence is unavailable.' }
+    case 'NO_DATA': return { label: 'No counter data', hint: 'No effective Total Impressions reading exists in this period.' }
+    default: return { label: 'Counter data unavailable', hint: 'Counter data is unavailable.' }
   }
 }
 
@@ -51,6 +51,33 @@ export function costPerClickPresentation(summary, formatCurrency) {
   return { value: 'Unavailable', hint: counterEvidencePresentation(summary).hint }
 }
 
+export function primaryCostPerClickPresentation(summary, formatCurrency) {
+  const unknownComponents = Number(summary?.unknown_consumption_events ?? 0)
+  const unknownWaste = Number(summary?.unknown_error_waste_events ?? 0)
+  if (summary?.known_standard_cost_per_click != null) {
+    const unknown = unknownComponents + unknownWaste
+    return {
+      value: unknown > 0 ? `${formatCurrency(summary.known_standard_cost_per_click)} known` : formatCurrency(summary.known_standard_cost_per_click),
+      hint: unknownComponents > 0
+        ? `Known costs only · ${plural(unknownComponents, 'unknown component event')}`
+        : unknownWaste > 0
+          ? `Known costs only · ${plural(unknownWaste, 'unpriced Error/Waste event')}`
+          : 'Component consumption + Error/Waste ÷ clicks',
+    }
+  }
+  if (Number(summary?.total_clicks) === 0 && summary?.counter_status === 'COMPLETE') {
+    return { value: 'Unavailable', hint: 'Clicks are zero, so Cost / Click cannot be calculated.' }
+  }
+  return { value: 'Unavailable', hint: counterEvidencePresentation(summary).hint }
+}
+
+export function summaryStatusPresentation(summary) {
+  if (summary?.counter_status !== 'COMPLETE') return ['No counter data', 'neutral']
+  if (Number(summary?.unknown_evidence_events ?? 0) > 0) return ['Partial cost data', 'warning']
+  if (Number(summary?.total_consumption_events ?? 0) === 0 && Number(summary?.error_waste_events ?? 0) === 0) return ['No consumption', 'neutral']
+  return ['Complete', 'success']
+}
+
 export function componentCompositionPresentation(row, formatCurrency) {
   const total = Number(row.total_events ?? 0)
   const unknown = Number(row.unknown_cost_events ?? 0)
@@ -73,6 +100,6 @@ export function inventoryContextPresentation(summary) {
 export function purchaseContextPresentation() {
   return {
     label: 'Purchase Cost · Account',
-    hint: 'Value of inventory purchased during this period. It does not enter machine cost/click until the stock is consumed.',
+    hint: 'Inventory acquired during the selected period. It does not become machine cost until consumed.',
   }
 }

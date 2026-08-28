@@ -46,5 +46,5 @@ export function validMachineCostFilters(value) {
     && (value.machineId === null || typeof value.machineId === 'string')
     && typeof value.customStart === 'string'
     && typeof value.customEnd === 'string'
-    && (value.view == null || ['summary', 'operating'].includes(value.view)))
+    && (value.view == null || ['summary', 'details', 'operating'].includes(value.view)))
 }

@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { AlertCircle, BarChart3, Boxes, CalendarRange, CheckCircle2, CircleDollarSign, Gauge, Package, Printer, RefreshCcw, ShoppingCart } from 'lucide-react'
+import { AlertCircle, BarChart3, Boxes, CalendarRange, CircleDollarSign, Gauge, Package, Printer, RefreshCcw, ShoppingCart } from 'lucide-react'
 import { PageHeader } from '../components/ui/PageHeader.jsx'
 import { useAuth } from '../features/auth/useAuth.js'
 import { useTenant } from '../features/account/useTenant.js'
 import { machineCostPeriodPresets, resolveMachineCostPeriod, validMachineCostFilters } from '../features/machineCost/machineCostPeriods.js'
-import { componentCompositionPresentation, costPerClickPresentation, counterEvidencePresentation, economicsStatusPresentation, inventoryContextPresentation, knownConsumptionPresentation, purchaseContextPresentation } from '../features/machineCost/machineCostPresentation.js'
+import { componentCompositionPresentation, costPerClickPresentation, counterEvidencePresentation, inventoryContextPresentation, knownConsumptionPresentation, primaryCostPerClickPresentation, purchaseContextPresentation, summaryStatusPresentation } from '../features/machineCost/machineCostPresentation.js'
 import { OperatingCostDialog } from '../features/machineCost/OperatingCostDialog.jsx'
 import { OperatingCostsPanel } from '../features/machineCost/OperatingCostsPanel.jsx'
 import { VoidOperatingCostDialog } from '../features/machineCost/VoidOperatingCostDialog.jsx'
@@ -24,11 +24,9 @@ function SummaryCard({ icon, label, value, hint, tone = 'blue' }) {
   return <article className="machine-cost-summary-card glass-surface"><span className={`machine-cost-summary-icon tone-${tone}`}><Icon size={20} /></span><div><span>{label}</span><strong>{value}</strong><small>{hint}</small></div></article>
 }
 
-function CostStatus({ summary }) {
-  const [label, description] = economicsStatusPresentation(summary)
-  const counter = counterEvidencePresentation(summary)
-  const Icon = summary.economics_status === 'COMPLETE' ? CheckCircle2 : AlertCircle
-  return <section className={`machine-cost-status status-${summary.economics_status.toLowerCase()}`} aria-live="polite"><Icon size={18} /><div><strong>{label}</strong><span>{description}</span>{summary.counter_status !== 'COMPLETE' && <small>{counter.hint}</small>}{summary.unknown_evidence_events > 0 && <small>{summary.unknown_evidence_events} unpriced evidence event{summary.unknown_evidence_events === 1 ? '' : 's'} excluded from known cost</small>}</div></section>
+function SummaryStatusBadge({ summary }) {
+  const [label, tone] = summaryStatusPresentation(summary)
+  return <span className={`machine-cost-status-badge tone-${tone}`} role="status">{label}</span>
 }
 
 function ComponentBreakdown({ rows, partial }) {
@@ -95,11 +93,11 @@ export function MachineCostPage() {
   async function saveOperatingCost(values) { await createMachineOperatingCost({ accountId: account.id, machineId: selectedMachine.id, values }); await Promise.all([refresh(), refreshCosts()]) }
   async function voidOperatingCost(reason) { await voidMachineOperatingCost({ costId: voidTarget.id, reason, clientRequestId: crypto.randomUUID() }); await Promise.all([refresh(), refreshCosts()]) }
 
-  const counterHint = summary?.counter_status === 'COMPLETE' ? `${formatNumber(summary.start_counter)} → ${formatNumber(summary.end_counter)}` : 'Boundary evidence unavailable'
   const partial = summary?.consumption_status === 'PARTIAL'
   const counterDisplay = summary ? counterEvidencePresentation(summary) : null
   const consumptionDisplay = summary ? knownConsumptionPresentation(summary, currency) : null
   const costPerClickDisplay = summary ? costPerClickPresentation(summary, currency) : null
+  const primaryCostPerClickDisplay = summary ? primaryCostPerClickPresentation(summary, currency) : null
   const inventoryDisplay = summary ? inventoryContextPresentation(summary) : null
   const purchaseDisplay = purchaseContextPresentation()
   const canManageCosts = ['owner', 'admin'].includes(membership?.role)
@@ -107,7 +105,7 @@ export function MachineCostPage() {
   const activeTab = filters.view ?? 'summary'
 
   return <div className="page-stack machine-cost-page">
-    <PageHeader eyebrow="Operational economics" title="Machine Cost" description="Component-consumption cost follows physical usage. Purchase timing, inventory balance, and lifecycle performance remain separate evidence." />
+    <PageHeader eyebrow="Operational economics" title="Machine Cost" description="Recorded clicks, consumed component cost, and assessed Error / Waste for the selected period." />
     <section className="machine-cost-filters glass-surface" aria-label="Machine cost filters">
       <label><span>Machine</span><select value={selectedMachine?.id ?? ''} onChange={(event) => setFilters((current) => ({ ...current, machineId: event.target.value }))} disabled={!machines.length}><option value="">{machines.length ? 'Select machine' : 'No active machines'}</option>{machines.map((machine) => <option key={machine.id} value={machine.id}>{machine.machine_code} · {machine.display_name}</option>)}</select></label>
       <label><span>Period</span><select value={filters.preset} onChange={(event) => setFilters((current) => ({ ...current, preset: event.target.value }))}>{machineCostPeriodPresets.map((preset) => <option value={preset.id} key={preset.id}>{preset.label}</option>)}</select></label>
@@ -116,25 +114,22 @@ export function MachineCostPage() {
       <button className="secondary-button" type="button" onClick={refresh} disabled={loading || !selectedMachine || !validPeriod} aria-label="Refresh machine cost"><RefreshCcw size={15} />Refresh</button>
     </section>
 
-    <nav className="machine-cost-tabs" aria-label="Machine economics sections"><button type="button" className={activeTab === 'summary' ? 'active' : ''} onClick={() => setFilters((current) => ({ ...current, view: 'summary' }))}>Summary</button><button type="button" className={activeTab === 'operating' ? 'active' : ''} onClick={() => setFilters((current) => ({ ...current, view: 'operating' }))}>Operating Costs</button></nav>
+    <div className="machine-cost-section-nav"><nav className="machine-cost-tabs" aria-label="Machine cost sections" role="tablist"><button type="button" role="tab" aria-selected={activeTab === 'summary'} className={activeTab === 'summary' ? 'active' : ''} onClick={() => setFilters((current) => ({ ...current, view: 'summary' }))}>Summary</button><button type="button" role="tab" aria-selected={activeTab === 'details'} className={activeTab === 'details' ? 'active' : ''} onClick={() => setFilters((current) => ({ ...current, view: 'details' }))}>Cost Details</button><button type="button" role="tab" aria-selected={activeTab === 'operating'} className={activeTab === 'operating' ? 'active' : ''} onClick={() => setFilters((current) => ({ ...current, view: 'operating' }))}>Operating Costs</button></nav>{summary && activeTab !== 'operating' && <SummaryStatusBadge summary={summary} />}</div>
 
     {error && <div className="inline-error" role="alert">{error.message}</div>}
-    {activeTab === 'operating' && selectedMachine ? <><OperatingCostsPanel costs={costWorkspace.costs} canManage={canManageCosts} enabled={advancedEnabled} onAdd={() => setCostDialog(true)} onVoid={setVoidTarget} />{costError && <div className="inline-error" role="alert">{costError.message}</div>}</> : loading ? <div className="machine-loading-state glass-surface"><RefreshCcw className="spin" size={24} /><strong>Loading machine economics evidence…</strong><span>Reading counters, component consumption, and assessed error/waste.</span></div> : !selectedMachine ? <div className="machine-empty-state glass-surface"><span className="empty-machine-icon"><Printer size={38} /></span><h3>No active machine in this branch</h3><p>Add or activate a machine before querying operational component cost.</p></div> : summary && <>
-      <CostStatus summary={summary} />
+    {activeTab === 'operating' && selectedMachine ? <><OperatingCostsPanel costs={costWorkspace.costs} canManage={canManageCosts} enabled={advancedEnabled} onAdd={() => setCostDialog(true)} onVoid={setVoidTarget} />{costError && <div className="inline-error" role="alert">{costError.message}</div>}</> : loading ? <div className="machine-loading-state glass-surface"><RefreshCcw className="spin" size={24} /><strong>Loading machine cost evidence…</strong><span>Reading effective counter usage, component consumption, and assessed Error / Waste.</span></div> : !selectedMachine ? <div className="machine-empty-state glass-surface"><span className="empty-machine-icon"><Printer size={38} /></span><h3>No active machine in this branch</h3><p>Add or activate a machine before querying operational component cost.</p></div> : summary && activeTab === 'summary' ? <>
+      {summary.counter_status !== 'COMPLETE' && <section className="machine-cost-action-message" role="status"><AlertCircle size={17} /><div><strong>No Counter Data</strong><span>{counterDisplay.hint} Cost / Click is unavailable.</span></div></section>}
       <section className="machine-economics-summary-grid">
-        <SummaryCard icon={Gauge} label="Total Clicks" value={formatNumber(summary.total_clicks)} hint={summary.counter_status === 'COMPLETE' ? counterHint : counterDisplay.hint} />
-        <SummaryCard icon={Boxes} label={partial ? 'Known Component Consumption' : 'Component Consumption'} value={consumptionDisplay.value} hint={consumptionDisplay.hint} tone="purple" />
-        <SummaryCard icon={AlertCircle} label="Error / Waste Cost" value={summary.error_waste_events > 0 && summary.known_error_waste_events === 0 ? '—' : currency(summary.known_error_waste_cost)} hint={`${summary.known_error_waste_events} priced · ${summary.unknown_error_waste_events} unpriced`} tone="warning" />
-        <SummaryCard icon={CircleDollarSign} label="Standard Machine Cost" value={currency(summary.known_standard_machine_cost)} hint="Component Consumption + assessed Error / Waste" tone="purple" />
-        <SummaryCard icon={BarChart3} label="Standard Cost / Click" value={summary.known_standard_cost_per_click == null ? 'Unavailable' : currency(summary.known_standard_cost_per_click)} hint={summary.known_standard_cost_per_click == null ? counterDisplay.hint : 'Standard Machine Cost ÷ valid clicks'} tone="green" />
-        <SummaryCard icon={CheckCircle2} label="Data Status" value={economicsStatusPresentation(summary)[0]} hint={economicsStatusPresentation(summary)[1]} tone={summary.economics_status === 'COMPLETE' ? 'green' : 'warning'} />
+        <SummaryCard icon={Gauge} label="Total Clicks" value={formatNumber(summary.total_clicks)} hint={summary.counter_status === 'COMPLETE' ? 'Effective Daily Counter usage in this period' : counterDisplay.hint} />
+        <SummaryCard icon={Boxes} label="Component Consumption" value={consumptionDisplay.value} hint={consumptionDisplay.hint} tone="purple" />
+        <SummaryCard icon={AlertCircle} label="Error / Waste" value={summary.error_waste_events > 0 && summary.known_error_waste_events === 0 ? '—' : currency(summary.known_error_waste_cost)} hint={`${summary.known_error_waste_events} assessed · ${summary.unknown_error_waste_events} unpriced`} tone="warning" />
+        <SummaryCard icon={BarChart3} label="Cost / Click" value={primaryCostPerClickDisplay.value} hint={primaryCostPerClickDisplay.hint} tone="green" />
       </section>
-      <section className="machine-cost-panel glass-surface"><header><div><span className="card-kicker">Standard</span><h2>Standard Machine Cost</h2><p>Purchase Cost, remaining Inventory, completed lifecycle evidence, and Advanced Operating Costs remain outside this total.</p></div></header><div className="machine-economics-layers"><div><span>Component Consumption</span><strong>{currency(summary.known_component_consumption_cost)}</strong></div><div><span>Error / Waste</span><strong>{currency(summary.known_error_waste_cost)}</strong></div><div className="total"><span>Standard Machine Cost</span><strong>{currency(summary.known_standard_machine_cost)}</strong></div><div className="total"><span>Standard Cost / Click</span><strong>{summary.known_standard_cost_per_click == null ? 'Unavailable' : currency(summary.known_standard_cost_per_click)}</strong></div></div></section>
       {advancedEnabled && <section className="machine-cost-panel glass-surface advanced-economics-panel"><header><div><span className="card-kicker">Advanced</span><h2>Advanced Operating Costs</h2><p>Full economics is shown separately. Standard Machine Cost keeps the same meaning.</p></div></header><div className="machine-economics-layers"><div><span>Advanced Operating Costs</span><strong>{currency(summary.known_advanced_operating_cost)}</strong><small>{summary.operating_cost_records ? `${summary.operating_cost_records} posted period record${summary.operating_cost_records === 1 ? '' : 's'}` : 'No advanced operating costs recorded for this period.'}</small></div><div><span>Standard Machine Cost</span><strong>{currency(summary.known_standard_machine_cost)}</strong></div><div className="total"><span>Full Machine Operating Cost</span><strong>{currency(summary.known_full_machine_operating_cost)}</strong></div><div className="total"><span>Full Operating Cost / Click</span><strong>{summary.known_full_operating_cost_per_click == null ? 'Unavailable' : currency(summary.known_full_operating_cost_per_click)}</strong></div></div></section>}
-      <section className="machine-cost-summary-grid">
-        <SummaryCard icon={CircleDollarSign} label={partial ? 'Known Consumption Cost' : 'Component Consumption Cost'} value={consumptionDisplay.value} hint={consumptionDisplay.hint} tone="purple" />
-        <SummaryCard icon={BarChart3} label={partial ? 'Known Cost / Click' : 'Component Cost / Click'} value={costPerClickDisplay.value} hint={costPerClickDisplay.hint} tone="green" />
-        <SummaryCard icon={AlertCircle} label="Unknown Cost Events" value={formatNumber(summary.unknown_consumption_events)} hint={summary.unknown_consumption_events ? 'Excluded from known cost—not treated as zero' : 'No missing consumption cost evidence'} tone="warning" />
+    </> : summary && activeTab === 'details' ? <>
+      <section className="machine-cost-context-grid">
+        <article className="machine-cost-context-card glass-surface"><CircleDollarSign size={19} /><div><span>Component Cost / Click</span><strong>{costPerClickDisplay.value}</strong><small>{costPerClickDisplay.hint}</small><dl><div><dt>Unknown component events</dt><dd>{formatNumber(summary.unknown_consumption_events)}</dd></div><div><dt>Unpriced Error / Waste</dt><dd>{formatNumber(summary.unknown_error_waste_events)}</dd></div></dl></div></article>
+        <article className="machine-cost-context-card glass-surface"><AlertCircle size={19} /><div><span>Cost Evidence</span><strong>{summary.unknown_evidence_events ? 'Partial' : 'Complete'}</strong><small>{summary.unknown_evidence_events ? `${summary.unknown_evidence_events} event${summary.unknown_evidence_events === 1 ? '' : 's'} remain explicitly unknown and are not treated as zero.` : 'No unknown cost evidence in this period.'}</small></div></article>
       </section>
       <ComponentBreakdown rows={summary.component_breakdown ?? []} partial={partial} />
       <section className="machine-cost-context-grid">
@@ -142,7 +137,7 @@ export function MachineCostPage() {
         <article className="machine-cost-context-card glass-surface"><Package size={19} /><div><span>{inventoryDisplay.label}</span><strong>{currency(summary.ending_known_inventory_cost_context)}</strong><small>{inventoryDisplay.hint}</small><dl><div><dt>Known-cost qty</dt><dd>{formatNumber(summary.ending_known_inventory_quantity_context)}</dd></div><div><dt>Unknown-cost qty</dt><dd>{formatNumber(summary.ending_unknown_inventory_quantity_context)}</dd></div></dl></div></article>
       </section>
       <LifecycleEvidence rows={summary.realized_lifecycle_evidence ?? []} />
-    </>}
+    </> : null}
     {costDialog && selectedMachine && advancedEnabled && <OperatingCostDialog account={account} branch={branch} machine={selectedMachine} people={costWorkspace.people} onClose={() => setCostDialog(false)} onSave={saveOperatingCost} />}
     {voidTarget && <VoidOperatingCostDialog cost={voidTarget} onClose={() => setVoidTarget(null)} onVoid={voidOperatingCost} />}
   </div>
