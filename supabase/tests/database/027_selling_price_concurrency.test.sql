@@ -43,6 +43,8 @@ select extensions.is(extensions.dblink_send_query('m25c_price_2',$$select price.
   'd6100000-0000-4000-8000-000000000001','d6400000-0000-4000-8000-000000000001',850,'2026-08-16 00:00+07',null,'d6500000-0000-4000-8000-000000000002') price$$),1,'second simultaneous price change starts');
 select extensions.ok((select id is not null from extensions.dblink_get_result('m25c_price_1') as result(id uuid)),'first simultaneous price succeeds');
 select extensions.ok((select id is not null from extensions.dblink_get_result('m25c_price_2') as result(id uuid)),'second simultaneous price succeeds after serialization');
+select extensions.is((select count(*)::int from extensions.dblink_get_result('m25c_price_1',false) as result(id uuid)),0,'first simultaneous result stream is drained');
+select extensions.is((select count(*)::int from extensions.dblink_get_result('m25c_price_2',false) as result(id uuid)),0,'second simultaneous result stream is drained');
 select extensions.is((select count(*)::int from public.machine_selling_prices where machine_id='d6400000-0000-4000-8000-000000000001' and status='posted'),2,'serialized distinct changes preserve two non-overlapping evidence starts');
 select extensions.is((select effective_to from public.machine_selling_price_history where machine_id='d6400000-0000-4000-8000-000000000001' and price_per_click=800),'2026-08-15 17:00+00'::timestamptz,'derived first interval closes exactly at concurrent later start');
 
@@ -56,6 +58,8 @@ select extensions.is(extensions.dblink_send_query('m25c_price_2',$$select price.
 select extensions.ok((select id is not null from extensions.dblink_get_result('m25c_price_1') as result(id uuid)),'first boundary request succeeds');
 select extensions.is((select count(*)::int from extensions.dblink_get_result('m25c_price_2',false) as result(id uuid)),0,'contradictory boundary request returns no row');
 select extensions.ok(position('active selling price already starts' in extensions.dblink_error_message('m25c_price_2'))>0,'contradictory boundary request is database-rejected');
+select extensions.is((select count(*)::int from extensions.dblink_get_result('m25c_price_1',false) as result(id uuid)),0,'first boundary result stream is drained');
+select extensions.is((select count(*)::int from extensions.dblink_get_result('m25c_price_2',false) as result(id uuid)),0,'rejected boundary result stream is drained');
 select extensions.is((select count(*)::int from public.machine_selling_prices where machine_id='d6400000-0000-4000-8000-000000000002'),1,'boundary race leaves one active price');
 
 -- Identical same-key retry returns the same evidence after waiting.
@@ -68,6 +72,8 @@ select extensions.is(extensions.dblink_send_query('m25c_price_2',$$select price.
 create temporary table identical_retry_ids(id uuid);
 insert into identical_retry_ids select id from extensions.dblink_get_result('m25c_price_1') as result(id uuid);
 select extensions.is((select id from extensions.dblink_get_result('m25c_price_2') as result(id uuid)),(select id from identical_retry_ids),'identical concurrent retry returns the existing row');
+select extensions.is((select count(*)::int from extensions.dblink_get_result('m25c_price_1',false) as result(id uuid)),0,'first identical retry result stream is drained');
+select extensions.is((select count(*)::int from extensions.dblink_get_result('m25c_price_2',false) as result(id uuid)),0,'second identical retry result stream is drained');
 select extensions.is((select count(*)::int from public.machine_selling_prices where machine_id='d6400000-0000-4000-8000-000000000003'),1,'identical retry creates one row');
 
 -- Same key with changed payload is rejected after serialization.
@@ -80,6 +86,8 @@ select extensions.is(extensions.dblink_send_query('m25c_price_2',$$select price.
 select extensions.ok((select id is not null from extensions.dblink_get_result('m25c_price_1') as result(id uuid)),'first conflicting-key request succeeds');
 select extensions.is((select count(*)::int from extensions.dblink_get_result('m25c_price_2',false) as result(id uuid)),0,'changed-payload retry returns no row');
 select extensions.ok(position('client request id was already used' in extensions.dblink_error_message('m25c_price_2'))>0,'changed-payload concurrent retry is rejected');
+select extensions.is((select count(*)::int from extensions.dblink_get_result('m25c_price_1',false) as result(id uuid)),0,'first conflicting retry result stream is drained');
+select extensions.is((select count(*)::int from extensions.dblink_get_result('m25c_price_2',false) as result(id uuid)),0,'rejected conflicting retry result stream is drained');
 select extensions.is((select count(*)::int from public.machine_selling_prices where machine_id='d6400000-0000-4000-8000-000000000004'),1,'conflicting retry leaves one immutable row');
 
 select extensions.dblink_disconnect('m25c_price_1'); select extensions.dblink_disconnect('m25c_price_2');
