@@ -75,7 +75,7 @@ export async function setComponentStatus({ accountId, componentId, action, clien
 
 function profilePayload(values) {
   return {
-    component_id: values.componentId, slot_code: values.slotCode.trim().toUpperCase().replace(/[^A-Z0-9]+/g, '_').replace(/^_|_$/g, ''),
+    component_id: values.componentId, slot_code: values.slotCode.trim().toUpperCase(),
     display_order: Number(values.displayOrder), tracking_method: values.trackingMethod,
     baseline_expected_clicks: values.baselineExpectedClicks === '' ? null : Number(values.baselineExpectedClicks),
     adaptive_enabled: values.adaptiveEnabled,

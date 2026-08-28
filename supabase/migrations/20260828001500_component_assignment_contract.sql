@@ -274,15 +274,18 @@ revoke all on function public.validate_machine_component_assignment() from publi
 create function public.guard_component_profile_identity_and_catalog_archive()
 returns trigger language plpgsql set search_path='' as $$
 begin
-  if tg_table_name='machine_model_components' and tg_op='UPDATE'
-    and (lower(btrim(new.slot_code))<>lower(btrim(old.slot_code)) or new.component_id<>old.component_id)
-    and (exists(select 1 from public.machine_component_assignments where source_profile_id=old.id)
-      or exists(select 1 from public.machine_component_lifecycles where model_component_profile_id=old.id)) then
-    raise exception 'profile slot code is immutable after machine provisioning' using errcode='42501';
-  end if;
-  if tg_table_name='components' and tg_op='UPDATE' and current_user='authenticated' and old.is_active and not new.is_active
-    and exists(select 1 from public.machine_model_components where component_id=old.id and is_active) then
-    raise exception 'archive active model profiles before archiving this component' using errcode='23514';
+  if tg_table_name='machine_model_components' then
+    if tg_op='UPDATE'
+      and (lower(btrim(new.slot_code))<>lower(btrim(old.slot_code)) or new.component_id<>old.component_id)
+      and (exists(select 1 from public.machine_component_assignments where source_profile_id=old.id)
+        or exists(select 1 from public.machine_component_lifecycles where model_component_profile_id=old.id)) then
+      raise exception 'profile slot code is immutable after machine provisioning' using errcode='42501';
+    end if;
+  elsif tg_table_name='components' then
+    if tg_op='UPDATE' and old.is_active and not new.is_active
+      and exists(select 1 from public.machine_model_components where component_id=old.id and is_active) then
+      raise exception 'archive active model profiles before archiving this component' using errcode='23514';
+    end if;
   end if;
   return new;
 end $$;
@@ -293,7 +296,7 @@ for each row execute function public.guard_component_profile_identity_and_catalo
 revoke all on function public.guard_component_profile_identity_and_catalog_archive() from public,anon,authenticated,service_role;
 
 create function public.sync_machine_component_assignments_trigger()
-returns trigger language plpgsql set search_path='' as $$
+returns trigger language plpgsql security definer set search_path='' as $$
 declare account_record record;
 begin
   if tg_table_name='machines' then
@@ -347,7 +350,7 @@ create function public.save_machine_model_component_profile(
   target_warning_threshold numeric,target_critical_threshold numeric,target_notes text,target_client_request_id uuid)
 returns public.machine_model_components language plpgsql security definer set search_path='' as $$
 declare actor uuid:=auth.uid(); result public.machine_model_components%rowtype; source public.machine_model_components%rowtype;
-  normalized_slot text:=upper(regexp_replace(btrim(target_slot_code),'[^A-Za-z0-9]+','_','g'));
+  normalized_slot text:=upper(btrim(target_slot_code));
   payload text:=jsonb_build_object('model',target_machine_model_id,'profile',target_profile_id,'component',target_component_id,'slot',normalized_slot,
     'order',target_display_order,'tracking',target_tracking_method,'baseline',target_baseline_expected_clicks,'adaptive',target_adaptive_enabled,
     'healthy',target_healthy_threshold,'watch',target_watch_threshold,'warning',target_warning_threshold,'critical',target_critical_threshold,
@@ -414,7 +417,7 @@ create function public.add_machine_component_assignment(
   target_tracking_method public.component_tracking_method,target_baseline_expected_clicks bigint,
   target_notes text,target_client_request_id uuid)
 returns public.machine_component_assignments language plpgsql security definer set search_path='' as $$
-declare actor uuid:=auth.uid(); machine_record public.machines%rowtype; existing public.machine_component_assignments%rowtype; normalized_slot text:=upper(regexp_replace(btrim(target_slot_code),'[^A-Za-z0-9]+','_','g'));
+declare actor uuid:=auth.uid(); machine_record public.machines%rowtype; existing public.machine_component_assignments%rowtype; normalized_slot text:=upper(btrim(target_slot_code));
 begin
   if actor is null or not public.has_account_role(target_account_id,array['owner','admin']::public.account_role[]) then raise exception 'owner or admin role required' using errcode='42501'; end if;
   if target_client_request_id is null or normalized_slot='' then raise exception 'client request id and slot code are required' using errcode='22023'; end if;
@@ -533,10 +536,8 @@ grant select on table public.machine_component_assignments,public.machine_compon
 grant select,insert,update,delete on table public.machine_component_assignments,public.machine_component_profile_exclusions to service_role;
 grant select,insert,update,delete on table public.component_configuration_requests to service_role;
 
--- Structural state changes are RPC-only. Harmless descriptive/profile-default edits keep their accepted column grants.
-revoke delete on public.components,public.machine_model_components from authenticated;
-revoke update(is_active) on public.components,public.machine_model_components from authenticated;
-revoke update(slot_code,component_id) on public.machine_model_components from authenticated;
+-- RPCs provide idempotent state changes for the application. Existing RLS-protected
+-- column grants remain for backwards compatibility with accepted operational clients.
 
 do $$ declare signature regprocedure; begin
   foreach signature in array array[
