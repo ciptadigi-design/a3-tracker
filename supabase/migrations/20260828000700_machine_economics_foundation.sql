@@ -181,7 +181,7 @@ returns table (
   known_machine_operating_cost numeric,known_machine_operating_cost_per_click numeric,economics_status public.machine_economics_status,
   unknown_evidence_events integer,machine_economics_breakdown jsonb
 ) language plpgsql stable security definer set search_path='' as $$
-declare base record; v_op_records integer:=0; v_op_cost numeric(30,2):=0; v_op_breakdown jsonb:='[]';
+declare base record; v_op_records integer:=0; v_op_cost numeric(30,2):=0; v_op_breakdown jsonb:='[]'::jsonb;
   v_error_events integer:=0; v_known_error_events integer:=0; v_unknown_error_events integer:=0; v_error_cost numeric(30,2):=0;
   v_machine_cost numeric(30,2):=0; v_machine_cpc numeric(30,4); v_status public.machine_economics_status; v_breakdown jsonb;
 begin
