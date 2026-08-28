@@ -27,6 +27,37 @@ export async function loadMachineOperatingCosts({ accountId, machineId }) {
   return { costs: costs.data ?? [], people: people.data ?? [] }
 }
 
+export async function loadMachineSellingPrices({ accountId, machineId }) {
+  const { data, error } = await supabase.from('machine_selling_price_history').select('*')
+    .eq('account_id', accountId).eq('machine_id', machineId)
+    .order('effective_from', { ascending: false }).order('created_at', { ascending: false })
+  if (error) throw error
+  return data ?? []
+}
+
+export async function createMachineSellingPrice({ accountId, machineId, values }) {
+  const { data, error } = await supabase.rpc('create_machine_selling_price', {
+    target_account_id: accountId,
+    target_machine_id: machineId,
+    target_price_per_click: values.pricePerClick,
+    target_effective_from: values.effectiveFrom,
+    target_notes: values.notes || null,
+    target_client_request_id: values.clientRequestId,
+  })
+  if (error) throw error
+  return data
+}
+
+export async function voidMachineSellingPrice({ priceId, reason, clientRequestId }) {
+  const { data, error } = await supabase.rpc('void_machine_selling_price', {
+    target_price_id: priceId,
+    target_reason: reason,
+    target_client_request_id: clientRequestId,
+  })
+  if (error) throw error
+  return data
+}
+
 export async function createMachineOperatingCost({ accountId, machineId, values }) {
   const { data, error } = await supabase.rpc('create_machine_operating_cost', {
     target_account_id: accountId,

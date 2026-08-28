@@ -6,10 +6,10 @@ const page = fs.readFileSync(new URL('../../pages/MachineCostPage.jsx', import.m
 const css = fs.readFileSync(new URL('../../App.css', import.meta.url), 'utf8')
 const service = fs.readFileSync(new URL('../../services/supabase/machineCost.js', import.meta.url), 'utf8')
 
-test('Summary uses a responsive 2 by 2 primary grid and retains four intended cards', () => {
+test('Summary uses responsive 2 by N Cost and Business grids with eight intended cards', () => {
   assert.match(css, /\.machine-economics-summary-grid[^\n]+grid-template-columns: repeat\(2,minmax\(0,1fr\)\)/)
   assert.match(css, /@media \(max-width: 760px\)[\s\S]+\.machine-economics-summary-grid[^\n]+grid-template-columns: minmax\(0,1fr\)/)
-  assert.equal((page.match(/<SummaryCard/g) ?? []).length, 4)
+  assert.equal((page.match(/<SummaryCard/g) ?? []).length, 8)
 })
 
 test('daily operational chart presents only daily clicks', () => {

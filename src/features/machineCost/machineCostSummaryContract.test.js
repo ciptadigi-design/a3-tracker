@@ -5,11 +5,14 @@ import { readFileSync } from 'node:fs'
 const page = readFileSync(new URL('../../pages/MachineCostPage.jsx', import.meta.url), 'utf8')
 const summaryMarkup = page.slice(page.indexOf("summary && activeTab === 'summary'"), page.indexOf('{costDialog'))
 
-test('default Summary contains exactly the four launch-facing KPI labels', () => {
+test('default Summary preserves four Cost KPIs and adds four Business KPIs', () => {
   for (const label of ['Total Clicks', 'Component Consumption', 'Error / Waste', 'Cost / Click']) {
     assert.match(summaryMarkup, new RegExp(`label="${label.replace('/', '\\/')}"`))
   }
-  assert.equal((summaryMarkup.match(/<SummaryCard/g) ?? []).length, 4)
+  for (const label of ['Selling Price / Click', 'Estimated Revenue', 'Contribution / Click', 'Estimated Contribution']) {
+    assert.match(summaryMarkup, new RegExp(`label="${label.replace('/', '\\/')}"`))
+  }
+  assert.equal((summaryMarkup.match(/<SummaryCard/g) ?? []).length, 8)
 })
 
 test('default Summary removes redundant standalone KPI cards', () => {

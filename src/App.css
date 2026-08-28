@@ -779,6 +779,9 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .machine-cost-tabs button { min-height: 34px; padding: 0 15px; color: var(--text-muted); border: 0; border-radius: 9px; background: transparent; font-size: 9px; font-weight: 730; cursor: pointer; }
 .machine-cost-tabs button.active { color: var(--blue); background: var(--surface-solid); box-shadow: var(--shadow-soft); }
 .machine-economics-summary-grid { min-width: 0; display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; }
+.machine-cost-summary-heading { min-width: 0; display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin: 3px 2px -3px; }
+.machine-cost-summary-heading small { color: var(--text-muted); font-size: 8px; line-height: 1.4; text-align: right; }
+.business-summary-grid { padding-bottom: 2px; }
 .machine-economics-layers { min-width: 0; display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 10px; padding-top: 14px; }
 .machine-economics-layers > div { min-width: 0; display: grid; gap: 5px; padding: 13px; border: 1px solid var(--border-subtle); border-radius: 13px; background: var(--surface-muted); }
 .machine-economics-layers span { color: var(--text-muted); font-size: 8px; }
@@ -825,7 +828,26 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .machine-cost-summary-card > div { min-width: 0; display: grid; gap: 4px; }
 .machine-cost-summary-card div > span { color: var(--text-muted); font-size: 8px; font-weight: 780; letter-spacing: .06em; text-transform: uppercase; }
 .machine-cost-summary-card strong { overflow-wrap: anywhere; font-size: clamp(16px,1.7vw,21px); line-height: 1.2; letter-spacing: -.025em; }
+.machine-cost-summary-card em { color: var(--green); font-size: 9px; font-style: normal; font-weight: 760; }
 .machine-cost-summary-card small { color: var(--text-soft); font-size: 8px; line-height: 1.45; }
+.machine-cost-card-actions { display: flex; flex-wrap: wrap; gap: 8px; padding-top: 3px; }
+.machine-cost-card-actions button { padding: 0; color: var(--blue); border: 0; background: transparent; font: inherit; font-size: 9px; font-weight: 760; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+.machine-cost-card-actions button:focus-visible { border-radius: 3px; outline: 2px solid var(--blue); outline-offset: 3px; }
+.selling-price-dialog { width: min(720px,100%); }
+.selling-price-form-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+.selling-price-history-dialog { width: min(920px,100%); }
+.selling-price-history-body { overflow-y: auto; }
+.selling-price-history-list { min-width: 0; display: grid; gap: 9px; }
+.selling-price-history-list article { min-width: 0; display: grid; grid-template-columns: minmax(190px,1.1fr) minmax(145px,.75fr) minmax(180px,1fr) auto; align-items: center; gap: 12px; padding: 13px; border: 1px solid var(--border-subtle); border-radius: 13px; background: var(--surface-muted); }
+.selling-price-history-list article > div { min-width: 0; display: grid; gap: 4px; }
+.selling-price-history-list strong,.selling-price-history-list span,.selling-price-history-list small { overflow-wrap: anywhere; }
+.selling-price-history-list strong { font-size: 11px; }.selling-price-history-list span,.selling-price-history-list small { color: var(--text-muted); font-size: 8px; line-height: 1.45; }
+.selling-price-history-list .is-voided { opacity: .7; }
+.selling-price-status { width: fit-content; padding: 4px 7px; border-radius: 99px; font-weight: 760; }
+.selling-price-status.status-posted { color: var(--green); background: color-mix(in srgb,var(--green) 10%,transparent); }
+.selling-price-status.status-voided { color: var(--warning); background: color-mix(in srgb,var(--warning) 10%,transparent); }
+.selling-price-void-form { display: grid; gap: 10px; margin-top: 14px; padding: 14px; border: 1px solid color-mix(in srgb,var(--warning) 25%,var(--border-subtle)); border-radius: 14px; background: color-mix(in srgb,var(--warning) 7%,var(--surface-solid)); }
+.selling-price-void-form > div:last-child { display: flex; justify-content: flex-end; gap: 8px; }
 .machine-cost-panel { min-width: 0; padding: 21px; border-radius: 23px; }
 .machine-cost-panel > header { min-width: 0; display: flex; align-items: center; justify-content: space-between; gap: 14px; padding-bottom: 16px; border-bottom: 1px solid var(--border-subtle); }
 .machine-cost-panel h2 { margin: 5px 0 0; font-size: 19px; letter-spacing: -.035em; }
@@ -905,7 +927,10 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   .replacement-dialog-actions,.replacement-dialog-actions > div { width: 100%; }
   .replacement-dialog-actions { display: grid; grid-template-columns: minmax(0,1fr); }
   .replacement-dialog-actions > div { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); }
-  .machine-economics-summary-grid,.machine-economics-layers,.operating-cost-form-grid,.operating-cost-list > article { grid-template-columns: minmax(0,1fr); }
+  .machine-economics-summary-grid,.machine-economics-layers,.operating-cost-form-grid,.operating-cost-list > article,.selling-price-form-grid,.selling-price-history-list article { grid-template-columns: minmax(0,1fr); }
+  .machine-cost-summary-heading { align-items: flex-start; flex-direction: column; gap: 3px; }
+  .machine-cost-summary-heading small { text-align: left; }
+  .selling-price-history-list article .secondary-button { width: 100%; }
   .machine-cost-tabs { width: 100%; }
   .machine-cost-tabs button { flex: 1; }
   .machine-cost-section-nav { align-items: stretch; flex-direction: column; }

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { AlertCircle, BarChart3, Boxes, CalendarRange, Gauge, Printer, RefreshCcw } from 'lucide-react'
+import { AlertCircle, BarChart3, Boxes, CalendarRange, CircleDollarSign, Gauge, HandCoins, Printer, RefreshCcw, TrendingUp } from 'lucide-react'
 import { PageHeader } from '../components/ui/PageHeader.jsx'
 import { useAuth } from '../features/auth/useAuth.js'
 import { useTenant } from '../features/account/useTenant.js'
@@ -7,11 +7,14 @@ import { machineCostPeriodPresets, resolveMachineCostPeriod, validMachineCostFil
 import { counterEvidencePresentation, knownConsumptionPresentation, primaryCostPerClickPresentation, summaryStatusPresentation } from '../features/machineCost/machineCostPresentation.js'
 import { OperatingCostDialog } from '../features/machineCost/OperatingCostDialog.jsx'
 import { OperatingCostsPanel } from '../features/machineCost/OperatingCostsPanel.jsx'
+import { SellingPriceDialog } from '../features/machineCost/SellingPriceDialog.jsx'
+import { SellingPriceHistoryDialog } from '../features/machineCost/SellingPriceHistoryDialog.jsx'
 import { VoidOperatingCostDialog } from '../features/machineCost/VoidOperatingCostDialog.jsx'
 import { formatDailyClicks, hasDailyClickActivity, normalizeDailyTrend } from '../features/machineCost/dailyTrendModel.js'
 import { createUIStateKey } from '../features/uiState/uiStateKeys.js'
 import { usePersistentUIState } from '../features/uiState/usePersistentUIState.js'
-import { createMachineOperatingCost, loadMachineCostPeriod, loadMachineOperatingCosts, voidMachineOperatingCost } from '../services/supabase/machineCost.js'
+import { contributionPerClickPresentation, contributionPresentation, revenuePresentation, sellingPriceCardPresentation } from '../features/machineCost/sellingPriceModel.js'
+import { createMachineOperatingCost, createMachineSellingPrice, loadMachineCostPeriod, loadMachineOperatingCosts, loadMachineSellingPrices, voidMachineOperatingCost, voidMachineSellingPrice } from '../services/supabase/machineCost.js'
 import { loadMachines } from '../services/supabase/machines.js'
 
 const idr = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 2 })
@@ -20,9 +23,9 @@ const number = new Intl.NumberFormat('en-US', { maximumFractionDigits: 4 })
 function currency(value) { return idr.format(Number(value ?? 0)) }
 function formatNumber(value) { return value == null ? 'Unavailable' : number.format(Number(value)) }
 
-function SummaryCard({ icon, label, value, hint, tone = 'blue' }) {
+function SummaryCard({ icon, label, value, hint, tone = 'blue', actions, secondary }) {
   const Icon = icon
-  return <article className="machine-cost-summary-card glass-surface"><span className={`machine-cost-summary-icon tone-${tone}`}><Icon size={20} /></span><div><span>{label}</span><strong>{value}</strong><small>{hint}</small></div></article>
+  return <article className="machine-cost-summary-card glass-surface"><span className={`machine-cost-summary-icon tone-${tone}`}><Icon size={20} /></span><div><span>{label}</span><strong>{value}</strong>{secondary && <em>{secondary}</em>}<small>{hint}</small>{actions && <div className="machine-cost-card-actions">{actions}</div>}</div></article>
 }
 
 function SummaryStatusBadge({ summary }) {
@@ -85,6 +88,10 @@ export function MachineCostPage() {
   const [costError, setCostError] = useState(null)
   const [costDialog, setCostDialog] = useState(false)
   const [voidTarget, setVoidTarget] = useState(null)
+  const [sellingPrices, setSellingPrices] = useState([])
+  const [priceError, setPriceError] = useState(null)
+  const [priceDialog, setPriceDialog] = useState(false)
+  const [priceHistoryDialog, setPriceHistoryDialog] = useState(false)
   const selectedMachine = machines.find((machine) => machine.id === filters.machineId) ?? machines[0] ?? null
   const timezone = selectedMachine?.timezone || branch?.timezone || account.default_timezone || 'Asia/Jakarta'
   const resolvedPeriod = useMemo(() => resolveMachineCostPeriod({ preset: filters.preset, timezone, customStart: filters.customStart, customEnd: filters.customEnd }), [filters.customEnd, filters.customStart, filters.preset, timezone])
@@ -121,18 +128,31 @@ export function MachineCostPage() {
   }, [account.id, selectedMachine])
   useEffect(() => { refreshCosts() }, [refreshCosts])
 
+  const refreshSellingPrices = useCallback(async () => {
+    if (!selectedMachine) return setSellingPrices([])
+    try { setPriceError(null); setSellingPrices(await loadMachineSellingPrices({ accountId: account.id, machineId: selectedMachine.id })) }
+    catch (loadError) { setPriceError(loadError) }
+  }, [account.id, selectedMachine])
+  useEffect(() => { refreshSellingPrices() }, [refreshSellingPrices])
+
   async function saveOperatingCost(values) { await createMachineOperatingCost({ accountId: account.id, machineId: selectedMachine.id, values }); await Promise.all([refresh(), refreshCosts()]) }
   async function voidOperatingCost(reason) { await voidMachineOperatingCost({ costId: voidTarget.id, reason, clientRequestId: crypto.randomUUID() }); await Promise.all([refresh(), refreshCosts()]) }
+  async function saveSellingPrice(values) { await createMachineSellingPrice({ accountId: account.id, machineId: selectedMachine.id, values }); await Promise.all([refresh(), refreshSellingPrices()]) }
+  async function voidSellingPrice(price, reason) { await voidMachineSellingPrice({ priceId: price.id, reason, clientRequestId: crypto.randomUUID() }); await Promise.all([refresh(), refreshSellingPrices()]) }
 
   const counterDisplay = summary ? counterEvidencePresentation(summary) : null
   const consumptionDisplay = summary ? knownConsumptionPresentation(summary, currency) : null
   const primaryCostPerClickDisplay = summary ? primaryCostPerClickPresentation(summary, currency) : null
   const canManageCosts = ['owner', 'admin'].includes(membership?.role)
+  const sellingPriceDisplay = summary ? sellingPriceCardPresentation(summary, currency) : null
+  const revenueDisplay = summary ? revenuePresentation(summary, currency, formatNumber) : null
+  const contributionDisplay = summary ? contributionPresentation(summary, currency) : null
+  const contributionPerClickDisplay = summary ? contributionPerClickPresentation(summary, currency) : null
   const advancedEnabled = Boolean(summary?.advanced_machine_economics_enabled ?? account.machine_economics_advanced_enabled)
   const activeTab = filters.view === 'operating' ? 'operating' : 'summary'
 
   return <div className="page-stack machine-cost-page">
-    <PageHeader eyebrow="Operational economics" title="Machine Cost" description="Recorded clicks, consumed component cost, and assessed Error / Waste for the selected period." />
+    <PageHeader eyebrow="Operational economics" title="Machine Cost" description="Recorded clicks, tracked machine cost, utilization revenue, and contribution for the selected period." />
     <section className="machine-cost-filters glass-surface" aria-label="Machine cost filters">
       <label><span>Machine</span><select value={selectedMachine?.id ?? ''} onChange={(event) => setFilters((current) => ({ ...current, machineId: event.target.value }))} disabled={!machines.length}><option value="">{machines.length ? 'Select machine' : 'No active machines'}</option>{machines.map((machine) => <option key={machine.id} value={machine.id}>{machine.machine_code} · {machine.display_name}</option>)}</select></label>
       <label><span>Period</span><select value={filters.preset} onChange={(event) => setFilters((current) => ({ ...current, preset: event.target.value }))}>{machineCostPeriodPresets.map((preset) => <option value={preset.id} key={preset.id}>{preset.label}</option>)}</select></label>
@@ -146,16 +166,27 @@ export function MachineCostPage() {
     {error && <div className="inline-error" role="alert">{error.message}</div>}
     {activeTab === 'operating' && selectedMachine ? <><OperatingCostsPanel costs={costWorkspace.costs} canManage={canManageCosts} enabled={advancedEnabled} onAdd={() => setCostDialog(true)} onVoid={setVoidTarget} />{costError && <div className="inline-error" role="alert">{costError.message}</div>}</> : loading ? <div className="machine-loading-state glass-surface"><RefreshCcw className="spin" size={24} /><strong>Loading machine cost evidence…</strong><span>Reading effective counter usage, component consumption, and assessed Error / Waste.</span></div> : !selectedMachine ? <div className="machine-empty-state glass-surface"><span className="empty-machine-icon"><Printer size={38} /></span><h3>No active machine in this branch</h3><p>Add or activate a machine before querying operational component cost.</p></div> : summary && activeTab === 'summary' ? <>
       {summary.counter_status !== 'COMPLETE' && <section className="machine-cost-action-message" role="status"><AlertCircle size={17} /><div><strong>No Counter Data</strong><span>{counterDisplay.hint} Cost / Click is unavailable.</span></div></section>}
+      {priceError && <div className="inline-error" role="alert">{priceError.message}</div>}
+      <div className="machine-cost-summary-heading"><span className="card-kicker">Cost</span><small>Database-derived operational cost evidence</small></div>
       <section className="machine-economics-summary-grid">
         <SummaryCard icon={Gauge} label="Total Clicks" value={formatNumber(summary.total_clicks)} hint={summary.counter_status === 'COMPLETE' ? 'Effective Daily Counter usage in this period' : counterDisplay.hint} />
         <SummaryCard icon={Boxes} label="Component Consumption" value={consumptionDisplay.value} hint={consumptionDisplay.hint} tone="purple" />
         <SummaryCard icon={AlertCircle} label="Error / Waste" value={summary.error_waste_events > 0 && summary.known_error_waste_events === 0 ? '—' : currency(summary.known_error_waste_cost)} hint={`${summary.known_error_waste_events} assessed · ${summary.unknown_error_waste_events} unpriced`} tone="warning" />
         <SummaryCard icon={BarChart3} label="Cost / Click" value={primaryCostPerClickDisplay.value} hint={primaryCostPerClickDisplay.hint} tone="green" />
       </section>
+      <div className="machine-cost-summary-heading"><span className="card-kicker">Business</span><small>Machine utilization revenue and contribution, not invoice revenue or net profit</small></div>
+      <section className="machine-economics-summary-grid business-summary-grid">
+        <SummaryCard icon={CircleDollarSign} label="Selling Price / Click" value={sellingPriceDisplay.value} hint={sellingPriceDisplay.hint} tone="purple" actions={<>{canManageCosts && <button type="button" onClick={() => setPriceDialog(true)}>{summary.current_selling_price_per_click ? 'Change' : 'Set selling price'}</button>}{sellingPrices.length > 0 && <button type="button" onClick={() => setPriceHistoryDialog(true)}>History</button>}</>} />
+        <SummaryCard icon={TrendingUp} label="Estimated Revenue" value={revenueDisplay.value} hint={`${revenueDisplay.hint} Utilization revenue, not invoiced sales.`} tone="green" />
+        <SummaryCard icon={HandCoins} label="Contribution / Click" value={contributionPerClickDisplay.value} hint={contributionPerClickDisplay.hint} tone="blue" />
+        <SummaryCard icon={HandCoins} label="Estimated Contribution" value={contributionDisplay.value} secondary={contributionDisplay.margin == null ? null : `Margin ${number.format(contributionDisplay.margin)}%`} hint={contributionDisplay.hint} tone="green" />
+      </section>
       <DailyTrendChart rows={summary.daily_trend ?? []} />
-      {advancedEnabled && <section className="machine-cost-panel glass-surface advanced-economics-panel"><header><div><span className="card-kicker">Advanced</span><h2>Advanced Operating Costs</h2><p>Full economics is shown separately. Standard Machine Cost keeps the same meaning.</p></div></header><div className="machine-economics-layers"><div><span>Advanced Operating Costs</span><strong>{currency(summary.known_advanced_operating_cost)}</strong><small>{summary.operating_cost_records ? `${summary.operating_cost_records} posted period record${summary.operating_cost_records === 1 ? '' : 's'}` : 'No advanced operating costs recorded for this period.'}</small></div><div><span>Standard Machine Cost</span><strong>{currency(summary.known_standard_machine_cost)}</strong></div><div className="total"><span>Full Machine Operating Cost</span><strong>{currency(summary.known_full_machine_operating_cost)}</strong></div><div className="total"><span>Full Operating Cost / Click</span><strong>{summary.known_full_operating_cost_per_click == null ? 'Unavailable' : currency(summary.known_full_operating_cost_per_click)}</strong></div></div></section>}
+      {advancedEnabled && <section className="machine-cost-panel glass-surface advanced-economics-panel"><header><div><span className="card-kicker">Advanced</span><h2>Full Machine Economics</h2><p>Full economics is shown separately. Standard Machine Cost and Standard Contribution keep the same meaning.</p></div></header><div className="machine-economics-layers"><div><span>Advanced Operating Costs</span><strong>{currency(summary.known_advanced_operating_cost)}</strong><small>{summary.operating_cost_records ? `${summary.operating_cost_records} posted period record${summary.operating_cost_records === 1 ? '' : 's'}` : 'No advanced operating costs recorded for this period.'}</small></div><div><span>Standard Machine Cost</span><strong>{currency(summary.known_standard_machine_cost)}</strong></div><div className="total"><span>Full Machine Operating Cost</span><strong>{currency(summary.known_full_machine_operating_cost)}</strong></div><div className="total"><span>Full Operating Cost / Click</span><strong>{summary.known_full_operating_cost_per_click == null ? 'Unavailable' : currency(summary.known_full_operating_cost_per_click)}</strong></div><div className="total"><span>Full Contribution</span><strong>{summary.estimated_full_contribution == null ? 'Unavailable' : currency(summary.estimated_full_contribution)}</strong><small>{summary.full_contribution_margin_percent == null ? 'Complete price coverage is required.' : `Margin ${number.format(Number(summary.full_contribution_margin_percent))}%`}</small></div><div className="total"><span>Full Contribution / Click</span><strong>{summary.full_contribution_per_click == null ? 'Unavailable' : currency(summary.full_contribution_per_click)}</strong></div></div></section>}
     </> : null}
     {costDialog && selectedMachine && advancedEnabled && <OperatingCostDialog account={account} branch={branch} machine={selectedMachine} people={costWorkspace.people} onClose={() => setCostDialog(false)} onSave={saveOperatingCost} />}
     {voidTarget && <VoidOperatingCostDialog cost={voidTarget} onClose={() => setVoidTarget(null)} onVoid={voidOperatingCost} />}
+    {priceDialog && selectedMachine && <SellingPriceDialog account={account} branch={branch} machine={selectedMachine} timezone={timezone} hasPrice={Boolean(summary?.current_selling_price_per_click)} onClose={() => setPriceDialog(false)} onSave={saveSellingPrice} />}
+    {priceHistoryDialog && selectedMachine && <SellingPriceHistoryDialog machine={selectedMachine} timezone={timezone} prices={sellingPrices} canManage={canManageCosts} onClose={() => setPriceHistoryDialog(false)} onVoid={voidSellingPrice} />}
   </div>
 }
