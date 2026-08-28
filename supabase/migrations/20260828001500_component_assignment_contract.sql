@@ -282,7 +282,7 @@ begin
       raise exception 'profile slot code is immutable after machine provisioning' using errcode='42501';
     end if;
   elsif tg_table_name='components' then
-    if tg_op='UPDATE' and old.is_active and not new.is_active
+    if tg_op='UPDATE' and current_user='authenticated' and old.is_active and not new.is_active
       and exists(select 1 from public.machine_model_components where component_id=old.id and is_active) then
       raise exception 'archive active model profiles before archiving this component' using errcode='23514';
     end if;

@@ -93,8 +93,7 @@ select extensions.throws_ok($$select public.remove_machine_component_assignment(
 select extensions.lives_ok($$select public.manage_machine_component_profile('e0100000-0000-4000-8000-000000000001','e0700000-0000-4000-8000-000000000002','restore','e0900000-0000-4000-8000-000000000006')$$,'profile restore succeeds');
 select extensions.is((select status::text from public.machine_component_assignments where machine_id='e0800000-0000-4000-8000-000000000001' and source_profile_id='e0700000-0000-4000-8000-000000000002'),'configured','restore reuses retired assignment');
 select extensions.lives_ok($$select public.manage_machine_component_profile('e0100000-0000-4000-8000-000000000001','e0700000-0000-4000-8000-000000000002','archive','e0900000-0000-4000-8000-000000000014')$$,'profile can be archived again safely');
-insert into public.machine_model_components(id,account_id,machine_model_id,component_id,slot_code,tracking_method,baseline_expected_clicks) values
-('e0700000-0000-4000-8000-000000000004','e0100000-0000-4000-8000-000000000001','e0500000-0000-4000-8000-000000000001','e0600000-0000-4000-8000-000000000001','GEAR-B','counter_based',160000);
+select extensions.lives_ok($$select public.save_machine_model_component_profile('e0100000-0000-4000-8000-000000000001','e0500000-0000-4000-8000-000000000001',null,'e0600000-0000-4000-8000-000000000001','GEAR-B',4,'counter_based',160000,true,30,15,5,0,null,'e0900000-0000-4000-8000-000000000017')$$,'conflicting active slot fixture is created through the authorized RPC');
 select extensions.throws_ok($$select public.manage_machine_component_profile('e0100000-0000-4000-8000-000000000001','e0700000-0000-4000-8000-000000000002','restore','e0900000-0000-4000-8000-000000000015')$$,'23505',null,'restore rejects an active slot-code conflict');
 
 select set_config('request.jwt.claim.sub','e0000000-0000-4000-8000-000000000002',true);
