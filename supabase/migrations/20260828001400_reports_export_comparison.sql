@@ -153,7 +153,7 @@ create or replace function public.get_report_machine_comparison(
     ranked.total_clicks,ranked.standard_cost_per_click,ranked.error_waste_cost,ranked.estimated_machine_revenue,
     ranked.estimated_standard_contribution,ranked.standard_contribution_margin_percent,
     ranked.revenue_status,ranked.standard_economics_status,ranked.standard_contribution_status,ranked.comparison_status,
-    case when ranked.comparison_status='COMPLETE' and ranked.estimated_standard_contribution is not null then ranked.raw_rank end
+    case when ranked.comparison_status='COMPLETE' and ranked.estimated_standard_contribution is not null then ranked.raw_rank end as contribution_rank
   from ranked order by contribution_rank nulls last,ranked.branch_name,ranked.machine_code,ranked.machine_id;
 $$;
 
