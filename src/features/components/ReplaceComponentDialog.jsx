@@ -1,10 +1,11 @@
 import { useMemo, useState } from 'react'
-import { Boxes, Gauge, LoaderCircle, MapPin, RefreshCcw, RotateCcw, UserRound, X } from 'lucide-react'
+import { AlertTriangle, Boxes, Gauge, LoaderCircle, MapPin, RefreshCcw, RotateCcw, UserRound, X } from 'lucide-react'
 import { BlockingDialog } from '../../components/ui/BlockingDialog.jsx'
 import { useAuth } from '../auth/useAuth.js'
 import { createDraftKey } from '../drafts/draftKeys.js'
 import { usePersistentDraft } from '../drafts/usePersistentDraft.js'
 import { learningDefault, removalConditions, replacementReasons } from './componentReplacement.js'
+import { resolveReplacementInventorySource } from './lifecycleActions.js'
 
 function localDateTime() {
   const now = new Date(Date.now() - new Date().getTimezoneOffset() * 60_000)
@@ -49,7 +50,7 @@ export function ReplaceComponentDialog({ account, machine, lifecycle, members, c
     includeLearning: true,
     notes: '',
     clientRequestId: crypto.randomUUID(),
-    inventorySource: '',
+    inventorySource: 'inventory',
     inventoryItemId: '',
     inventoryLocationId: '',
     inventoryQuantity: '1',
@@ -71,7 +72,7 @@ export function ReplaceComponentDialog({ account, machine, lifecycle, members, c
   const manualPic = value.performedBy === 'manual'
   const selectedMember = members.find((member) => member.user_id === value.performedBy)
   const performerName = manualPic ? value.manualPic.trim() : selectedMember?.display_name ?? currentProfile?.display_name ?? user.email ?? 'User'
-  const inventorySource = value.inventorySource ?? ''
+  const inventorySource = resolveReplacementInventorySource(value.inventorySource)
   const eligibleItems = inventoryItems.filter((item) => item.component_id === lifecycle.component_id)
   const selectedInventoryItem = eligibleItems.find((item) => item.id === (value.inventoryItemId ?? '')) ?? null
   const selectedInventoryLocation = inventoryLocations.find((location) => location.id === (value.inventoryLocationId ?? '')) ?? null
@@ -142,14 +143,15 @@ export function ReplaceComponentDialog({ account, machine, lifecycle, members, c
     <form className="machine-form" onSubmit={submit}>
       <div className="machine-form-body">
         {wasRestored && <div className="draft-restored-status">Unsaved replacement draft restored</div>}
+        <div className="replacement-purpose"><RefreshCcw size={17} /><span><strong>Install a new component and record the physical replacement.</strong> The current lifecycle will close only after confirmation.</span></div>
         <div className="replacement-counter-context"><div><span>Latest recorded counter</span><strong>{number(lifecycle.latest_effective_counter)}</strong><small>Read from effective Daily Counter</small></div><label className="form-field"><span>Current physical counter *</span><input data-dialog-initial-focus inputMode="numeric" value={value.physicalCounter} onChange={(event) => change('physicalCounter', event.target.value)} /></label></div>
         <div className="replacement-preview"><span className="replacement-preview-icon"><Gauge size={19} /></span><div><span>Installed counter</span><strong>{number(lifecycle.installed_counter)}</strong></div><div><span>{lifecycle.tracking_method === 'consumption_based' ? 'Actual yield preview' : 'Actual usage preview'}</span><strong>{number(actualUsage)}</strong></div><div><span>Expected at install</span><strong>{number(lifecycle.expected_at_install)}</strong></div><div><span>Performance</span><strong>{performance == null ? '—' : `${performance.toFixed(1)}%`}</strong></div></div>
         <div className="form-grid"><label className="form-field"><span>Replacement date & time *</span><input type="datetime-local" value={value.replacedAt} onChange={(event) => change('replacedAt', event.target.value)} /></label><label className="form-field"><span>PIC / performed by *</span><select value={value.performedBy} onChange={(event) => change('performedBy', event.target.value)}>{members.map((member) => <option key={member.user_id} value={member.user_id}>{member.display_name}</option>)}<option value="manual">Manual PIC…</option></select></label>{manualPic && <label className="form-field form-field-wide"><span>Manual PIC name *</span><div className="input-with-icon"><UserRound size={16} /><input value={value.manualPic} onChange={(event) => change('manualPic', event.target.value)} placeholder="Nama pelaksana" /></div></label>}<label className="form-field"><span>Replacement reason *</span><select value={value.reason} onChange={(event) => changeReason(event.target.value)}>{replacementReasons.map((reason) => <option key={reason.value} value={reason.value}>{reason.label}</option>)}</select></label><label className="form-field"><span>Condition at removal *</span><select value={value.condition} onChange={(event) => change('condition', event.target.value)}>{removalConditions.map((condition) => <option key={condition.value} value={condition.value}>{condition.label}</option>)}</select></label></div>
         <section className="replacement-inventory-section" aria-labelledby="replacement-inventory-title">
           <div className="replacement-section-heading"><span className="replacement-preview-icon"><Boxes size={18} /></span><div><strong id="replacement-inventory-title">Inventory Source</strong><small>Record where the physical replacement came from.</small></div></div>
           <div className="replacement-source-options" role="radiogroup" aria-label="Inventory source">
-            <label className={inventorySource === 'inventory' ? 'selected' : ''}><input type="radio" name="inventory-source" checked={inventorySource === 'inventory'} onChange={() => change('inventorySource', 'inventory')} /><span><strong>Ambil dari Inventory</strong><small>Post an atomic stock issue with this replacement.</small></span></label>
-            <label className={inventorySource === 'external_untracked' ? 'selected' : ''}><input type="radio" name="inventory-source" checked={inventorySource === 'external_untracked'} onChange={() => change('inventorySource', 'external_untracked')} /><span><strong>Stok eksternal / belum tercatat</strong><small>Record the source explicitly without creating stock movement.</small></span></label>
+            <label className={inventorySource === 'inventory' ? 'selected' : ''}><input type="radio" name="inventory-source" checked={inventorySource === 'inventory'} onChange={() => change('inventorySource', 'inventory')} /><span><strong>Inventory</strong><small>Use tracked stock and record the issue automatically.</small></span></label>
+            <label className={inventorySource === 'external_untracked' ? 'selected' : ''}><input type="radio" name="inventory-source" checked={inventorySource === 'external_untracked'} onChange={() => change('inventorySource', 'external_untracked')} /><span><strong>External / Untracked</strong><small>Use only when the component is outside tracked Inventory.</small></span></label>
           </div>
           {inventorySource === 'inventory' && <>
             <div className="form-grid replacement-inventory-fields">
@@ -159,7 +161,7 @@ export function ReplaceComponentDialog({ account, machine, lifecycle, members, c
             </div>
             {selectedInventoryItem && selectedInventoryLocation && <div className="replacement-stock-preview"><div><span>Current stock</span><strong>{number(availableQuantity)} {selectedInventoryItem.unit}</strong></div><div><span>Used</span><strong>{Number.isFinite(inventoryQuantity) ? `-${number(inventoryQuantity)}` : '—'} {selectedInventoryItem.unit}</strong></div><div className={afterQuantity < 0 ? 'stock-preview-negative' : ''}><span>After replacement</span><strong>{afterQuantity == null ? '—' : number(afterQuantity)} {selectedInventoryItem.unit}</strong></div></div>}
           </>}
-          {inventorySource === 'external_untracked' && <label className="form-field"><span>External stock reason *</span><textarea rows="2" value={value.externalInventoryReason ?? ''} onChange={(event) => change('externalInventoryReason', event.target.value)} placeholder="Contoh: Teknisi membawa sparepart" /></label>}
+          {inventorySource === 'external_untracked' && <><div className="replacement-external-warning"><AlertTriangle size={17} /><span>This component is not being consumed from tracked Inventory. Stock will not decrease and acquisition cost may remain unknown.</span></div><label className="form-field"><span>External stock reason *</span><textarea rows="2" value={value.externalInventoryReason ?? ''} onChange={(event) => change('externalInventoryReason', event.target.value)} placeholder="Example: Technician supplied the component" required /></label></>}
         </section>
         <label className="replacement-learning-toggle"><input type="checkbox" checked={value.includeLearning} onChange={(event) => change('includeLearning', event.target.checked)} /><span><strong>Include in adaptive learning</strong><small>Preserve this completed lifecycle as an eligible sample for database-derived intelligence.</small></span></label>
         <label className="form-field"><span>Notes {value.reason === 'other' ? '*' : ''}</span><textarea rows="3" value={value.notes} onChange={(event) => change('notes', event.target.value)} placeholder="Replacement context, observed condition, or reason detail" /></label>

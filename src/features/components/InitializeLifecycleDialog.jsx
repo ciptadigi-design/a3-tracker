@@ -59,10 +59,11 @@ export function InitializeLifecycleDialog({ account, machine, lifecycle, onClose
   }
 
   return <BlockingDialog className="machine-dialog component-dialog lifecycle-dialog glass-surface" backdropClassName="machine-dialog-backdrop" labelledBy="lifecycle-dialog-title" onClose={onClose} busy={saving}>
-    <header className="dialog-header"><div className="dialog-heading"><span className="dialog-icon"><Gauge size={22} /></span><div><span className="card-kicker">Active component lifecycle</span><h2 id="lifecycle-dialog-title">Initialize Lifecycle</h2><p>{lifecycle.component_name} · {machine.machine_code}</p></div></div><button className="icon-button" type="button" onClick={onClose} disabled={saving} aria-label="Close lifecycle form"><X size={19} /></button></header>
+    <header className="dialog-header"><div className="dialog-heading"><span className="dialog-icon"><Gauge size={22} /></span><div><span className="card-kicker">Start lifecycle tracking</span><h2 id="lifecycle-dialog-title">Initialize Lifecycle</h2><p>{lifecycle.component_name} · {machine.machine_code}</p></div></div><button className="icon-button" type="button" onClick={onClose} disabled={saving} aria-label="Close initialization form"><X size={19} /></button></header>
     <form className="machine-form" onSubmit={submit}>
       <div className="machine-form-body">
         {wasRestored && <div className="draft-restored-status">Unsaved initialization draft restored</div>}
+        <div className="initialization-purpose"><Gauge size={17} /><span><strong>Start tracking a component that is already installed. Inventory will not change.</strong> Initialization does not mean a new component is being installed.</span></div>
         <div className="lifecycle-context"><div><span>Component</span><strong>{lifecycle.component_name}</strong></div><div><span>Machine</span><strong>{machine.machine_code}</strong></div><div><span>Current recorded counter</span><strong>{formatCounter(lifecycle.latest_effective_counter)}</strong></div></div>
         <fieldset className="initialization-choice"><legend>What is known?</legend><label className={value.mode === 'manual_historical' ? 'selected' : ''}><input type="radio" name="mode" checked={value.mode === 'manual_historical'} onChange={() => change('mode', 'manual_historical')} /><span><strong>Known last replacement counter</strong><small>Reconstruct usage from a trustworthy historical counter.</small></span></label><label className={value.mode === 'tracking_start' ? 'selected' : ''}><input type="radio" name="mode" checked={value.mode === 'tracking_start'} onChange={() => change('mode', 'tracking_start')} /><span><strong>Initialize as of current counter</strong><small>This starts tracking from now and does not reconstruct previous component usage. It does not mean the component is physically new.</small></span></label></fieldset>
         {value.mode === 'manual_historical' && <div className="form-grid"><label className="form-field"><span>Known replacement counter *</span><input inputMode="numeric" value={value.installedCounter} onChange={(event) => change('installedCounter', event.target.value)} placeholder="e.g. 1,405,775" /></label><label className="form-field"><span>Known replacement date</span><input type="date" value={value.installedDate} onChange={(event) => change('installedDate', event.target.value)} /></label></div>}
@@ -73,4 +74,3 @@ export function InitializeLifecycleDialog({ account, machine, lifecycle, onClose
     </form>
   </BlockingDialog>
 }
-
