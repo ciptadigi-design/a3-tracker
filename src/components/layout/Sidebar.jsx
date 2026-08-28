@@ -9,7 +9,7 @@ const navigation = [
   { path: '/machine-cost', label: 'Machine Cost', icon: CircleDollarSign, active: true },
   { path: '/errors', label: 'Errors', icon: AlertTriangle, active: true },
   { path: '/maintenance', label: 'Maintenance', icon: Wrench },
-  { path: '/reports', label: 'Reports', icon: BarChart3 },
+  { path: '/reports', label: 'Reports', icon: BarChart3, active: true },
 ]
 
 function NavLink({ item, path, navigate }) {

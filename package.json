@@ -9,6 +9,7 @@
     "lint": "eslint .",
     "test:component-ux": "node --test src/features/components/*.test.js",
     "test:machine-cost-ui": "node --test src/features/machineCost/*.test.js",
+    "test:reports-ui": "node --test src/features/reports/*.test.js",
     "test:inventory-ui": "node --test src/features/inventory/*.test.js",
     "test:error-ui": "node --test src/features/incidents/*.test.js",
     "test:daily-ui": "node --test src/features/counters/*.test.js",
