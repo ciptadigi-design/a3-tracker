@@ -66,6 +66,7 @@ insert into public.counter_readings(id,account_id,machine_id,counter_type_id,rea
 
 set local role authenticated;
 select set_config('request.jwt.claim.sub','a5000000-0000-4000-8000-000000000001',true);
+
 select public.create_inventory_purchase_auto('a5100000-0000-4000-8000-000000000001','a5800000-0000-4000-8000-000000000001',
   '2026-07-10',null,'IDR',null,'[{"inventory_item_id":"a5700000-0000-4000-8000-000000000001","quantity":"2","unit_price":"2650000"}]',
   'a5c00000-0000-4000-8000-000000000001');
@@ -94,6 +95,51 @@ insert into public.counter_readings(id,account_id,machine_id,counter_type_id,rea
 
 set local role authenticated;
 select set_config('request.jwt.claim.sub','a5000000-0000-4000-8000-000000000001',true);
+
+select public.create_machine_operating_cost('a5100000-0000-4000-8000-000000000001','a5400000-0000-4000-8000-000000000001',
+  'external_technician',500000,'one_time','Technician labor only','b5b00000-0000-4000-8000-000000000001','2026-08-10 09:00+07',null,null,
+  'a5500000-0000-4000-8000-000000000001','SERVICE-10','Inventory parts excluded','manual');
+select public.create_machine_operating_cost('a5100000-0000-4000-8000-000000000001','a5400000-0000-4000-8000-000000000001',
+  'service_contract',3100000,'daily_proration_v1','August service contract','b5b00000-0000-4000-8000-000000000002',null,'2026-08-01','2026-08-31',
+  null,'CONTRACT-AUG',null,'manual');
+select public.create_machine_operating_cost('a5100000-0000-4000-8000-000000000001','a5400000-0000-4000-8000-000000000002',
+  'electricity',10000,'one_time','Timezone boundary allocation','b5b00000-0000-4000-8000-000000000003','2026-07-31 17:30+00',null,null,null,null,null,'manual');
+select public.create_machine_operating_cost('a5100000-0000-4000-8000-000000000001','a5400000-0000-4000-8000-000000000001',
+  'calibration',50000,'one_time','Voided correction fixture','b5b00000-0000-4000-8000-000000000004','2026-08-12 09:00+07',null,null,null,null,null,'manual');
+select public.void_machine_operating_cost((select id from public.machine_operating_costs where client_request_id='b5b00000-0000-4000-8000-000000000004'),
+  'Duplicate invoice','b5b00000-0000-4000-8000-000000000005');
+
+select public.create_operational_incident('a5100000-0000-4000-8000-000000000001','a5300000-0000-4000-8000-000000000001',
+  '2026-08-11 11:00+07','kualitas','human','Explicit material waste','b5c00000-0000-4000-8000-000000000001',
+  'a5400000-0000-4000-8000-000000000001',null,null,null,5,null,'Operator',100000,0,null,null,null);
+select public.create_operational_incident('a5100000-0000-4000-8000-000000000001','a5300000-0000-4000-8000-000000000001',
+  '2026-08-12 11:00+07','prosedur','machine_operation','Unpriced reprint evidence','b5c00000-0000-4000-8000-000000000002',
+  'a5400000-0000-4000-8000-000000000001',null,null,null,2,null,'Operator',0,0,null,null,null);
+
+select extensions.is((select known_operating_cost from public.get_machine_economics_period('a5100000-0000-4000-8000-000000000001','a5400000-0000-4000-8000-000000000001','2026-08-01','2026-08-10')),1500000::numeric,'partial period daily-prorates 10 of 31 days and includes one-time cost');
+select extensions.is((select known_operating_cost from public.get_machine_economics_period('a5100000-0000-4000-8000-000000000001','a5400000-0000-4000-8000-000000000001','2026-08-01','2026-08-31')),3600000::numeric,'full period includes full service contract and one-time cost');
+select extensions.is((select known_operating_cost from public.get_machine_economics_period('a5100000-0000-4000-8000-000000000001','a5400000-0000-4000-8000-000000000001','2026-08-01','2026-08-27')),3200000::numeric,'voided record is excluded from period operating cost');
+select extensions.is((select operating_cost_records from public.get_machine_economics_period('a5100000-0000-4000-8000-000000000001','a5400000-0000-4000-8000-000000000001','2026-08-01','2026-08-27')),2,'only posted overlapping operating records count');
+select extensions.is((select jsonb_array_length(operating_cost_breakdown) from public.get_machine_economics_period('a5100000-0000-4000-8000-000000000001','a5400000-0000-4000-8000-000000000001','2026-08-01','2026-08-27')),2,'category breakdown remains composable');
+select extensions.is((select known_error_waste_cost from public.get_machine_economics_period('a5100000-0000-4000-8000-000000000001','a5400000-0000-4000-8000-000000000001','2026-08-01','2026-08-27')),100000::numeric,'only explicit incident monetary evidence becomes error/waste cost');
+select extensions.is((select unknown_error_waste_events from public.get_machine_economics_period('a5100000-0000-4000-8000-000000000001','a5400000-0000-4000-8000-000000000001','2026-08-01','2026-08-27')),1,'zero-loss incident remains unpriced evidence rather than arbitrary money');
+select extensions.is((select known_machine_operating_cost from public.get_machine_economics_period('a5100000-0000-4000-8000-000000000001','a5400000-0000-4000-8000-000000000001','2026-08-01','2026-08-27')),8600000::numeric,'machine economics adds M2.5A consumption, operating cost, and error/waste exactly once');
+select extensions.is((select known_machine_operating_cost_per_click from public.get_machine_economics_period('a5100000-0000-4000-8000-000000000001','a5400000-0000-4000-8000-000000000001','2026-08-01','2026-08-27')),17200::numeric,'broader known cost per click uses valid M2.5A click volume');
+select extensions.is((select economics_status::text from public.get_machine_economics_period('a5100000-0000-4000-8000-000000000001','a5400000-0000-4000-8000-000000000001','2026-08-01','2026-08-27')),'PARTIAL','unknown component and incident evidence keeps economics partial');
+select extensions.is((select known_operating_cost from public.get_machine_economics_period('a5100000-0000-4000-8000-000000000001','a5400000-0000-4000-8000-000000000002','2026-08-01','2026-08-01')),10000::numeric,'one-time attribution respects machine operational timezone boundary');
+select extensions.ok((select known_machine_operating_cost_per_click is null from public.get_machine_economics_period('a5100000-0000-4000-8000-000000000001','a5400000-0000-4000-8000-000000000002','2026-08-01','2026-08-01')),'zero clicks never produce broader cost per click');
+select extensions.is((select known_operating_cost from public.get_machine_economics_period('a5100000-0000-4000-8000-000000000001','a5400000-0000-4000-8000-000000000001','2026-07-15','2026-08-15')),2000000::numeric,'cross-month query deterministically prorates overlapping August coverage');
+select extensions.is((select known_machine_operating_cost from public.get_machine_economics_period('a5100000-0000-4000-8000-000000000001','a5400000-0000-4000-8000-000000000007','2026-08-01','2026-08-27')),0::numeric,'valid clicks with no consumption or operating evidence remain a genuine zero');
+select extensions.is((select known_machine_operating_cost_per_click from public.get_machine_economics_period('a5100000-0000-4000-8000-000000000001','a5400000-0000-4000-8000-000000000007','2026-08-01','2026-08-27')),0::numeric,'zero economics with positive clicks produces valid zero cost per click');
+select extensions.is((select economics_status::text from public.get_machine_economics_period('a5100000-0000-4000-8000-000000000001','a5400000-0000-4000-8000-000000000003','2026-08-01','2026-08-27')),'INSUFFICIENT_COUNTER_DATA','missing start boundary remains explicit in economics');
+select extensions.is((select economics_status::text from public.get_machine_economics_period('a5100000-0000-4000-8000-000000000001','a5400000-0000-4000-8000-000000000005','2026-08-01','2026-08-27')),'NO_DATA','machine with no clicks or economics remains NO_DATA');
+select extensions.is((select count(*)::int from pg_enum value join pg_type type on type.oid=value.enumtypid where type.typname='machine_operating_cost_category'),11,'controlled category architecture includes all initial codes');
+select extensions.is((select format_type(attribute.atttypid,attribute.atttypmod) from pg_attribute attribute where attribute.attrelid='public.machine_operating_costs'::regclass and attribute.attname='amount'),'numeric(30,2)','financial authority uses fixed PostgreSQL NUMERIC precision');
+select extensions.is((select purchase_cost_context from public.get_machine_economics_period('a5100000-0000-4000-8000-000000000001','a5400000-0000-4000-8000-000000000001','2026-07-01','2026-07-31')),5300000::numeric,'purchase remains context and is not added to machine operating cost');
+select extensions.is((select known_machine_operating_cost from public.get_machine_economics_period('a5100000-0000-4000-8000-000000000001','a5400000-0000-4000-8000-000000000001','2026-08-20','2026-08-27')),3450000::numeric,'realized lifecycle cost and inventory context are excluded from economics total');
+select extensions.lives_ok($$select public.create_machine_operating_cost('a5100000-0000-4000-8000-000000000001','a5400000-0000-4000-8000-000000000001','external_technician',500000,'one_time','Technician labor only','b5b00000-0000-4000-8000-000000000001','2026-08-10 09:00+07',null,null,'a5500000-0000-4000-8000-000000000001','SERVICE-10','Inventory parts excluded','manual')$$,'identical create retry is idempotent');
+select extensions.throws_ok($$select public.create_machine_operating_cost('a5100000-0000-4000-8000-000000000001','a5400000-0000-4000-8000-000000000001','external_technician',600000,'one_time','Technician labor only','b5b00000-0000-4000-8000-000000000001','2026-08-10 09:00+07',null,null,'a5500000-0000-4000-8000-000000000001','SERVICE-10','Inventory parts excluded','manual')$$,'23505',null,'changed create retry payload is rejected');
+select extensions.lives_ok($$select public.void_machine_operating_cost((select id from public.machine_operating_costs where client_request_id='b5b00000-0000-4000-8000-000000000004'),'Duplicate invoice','b5b00000-0000-4000-8000-000000000005')$$,'identical void retry is idempotent');
 
 select extensions.is((select resolved_timezone from public.get_machine_cost_period('a5100000-0000-4000-8000-000000000001','a5400000-0000-4000-8000-000000000001','2026-08-01','2026-08-27')),'Asia/Jakarta','machine timezone overrides branch timezone');
 select extensions.is((select period_start_at from public.get_machine_cost_period('a5100000-0000-4000-8000-000000000001','a5400000-0000-4000-8000-000000000001','2026-08-01','2026-08-27')),'2026-07-31 17:00+00'::timestamptz,'local start date resolves to timezone-safe boundary');
@@ -132,11 +178,16 @@ select extensions.ok((select total_clicks is null from public.get_machine_cost_p
 
 select set_config('request.jwt.claim.sub','a5000000-0000-4000-8000-000000000002',true);
 select extensions.lives_ok($$select public.get_machine_cost_period('a5100000-0000-4000-8000-000000000001','a5400000-0000-4000-8000-000000000001','2026-08-01','2026-08-27')$$,'technician can read machine cost evidence');
+select extensions.lives_ok($$select public.get_machine_economics_period('a5100000-0000-4000-8000-000000000001','a5400000-0000-4000-8000-000000000001','2026-08-01','2026-08-27')$$,'technician can read machine economics');
+select extensions.throws_ok($$select public.create_machine_operating_cost('a5100000-0000-4000-8000-000000000001','a5400000-0000-4000-8000-000000000001','labor',100,'one_time','Denied','b5b00000-0000-4000-8000-000000000010','2026-08-10',null,null,null,null,null,'manual')$$,'42501',null,'technician cannot create operating cost');
+select extensions.throws_ok($$update public.machine_operating_costs set description='tampered' where client_request_id='b5b00000-0000-4000-8000-000000000001'$$,'42501',null,'direct posted-cost mutation is denied');
 select extensions.is((select count(*)::int from public.machine_component_consumption_events where account_id='a5100000-0000-4000-8000-000000000001'),3,'technician can read intended tenant cost events');
 select set_config('request.jwt.claim.sub','a5000000-0000-4000-8000-000000000003',true);
 select extensions.throws_ok($$select public.get_machine_cost_period('a5100000-0000-4000-8000-000000000001','a5400000-0000-4000-8000-000000000001','2026-08-01','2026-08-27')$$,'42501',null,'suspended member cannot read machine cost RPC');
 select set_config('request.jwt.claim.sub','a5000000-0000-4000-8000-000000000004',true);
 select extensions.throws_ok($$select public.get_machine_cost_period('a5100000-0000-4000-8000-000000000001','a5400000-0000-4000-8000-000000000001','2026-08-01','2026-08-27')$$,'42501',null,'cross-account machine cost is denied');
+select extensions.throws_ok($$select public.get_machine_economics_period('a5100000-0000-4000-8000-000000000001','a5400000-0000-4000-8000-000000000001','2026-08-01','2026-08-27')$$,'42501',null,'cross-account machine economics is denied');
+select extensions.is((select count(*)::int from public.machine_operating_costs where account_id='a5100000-0000-4000-8000-000000000001'),0,'cross-account operating cost rows are isolated');
 select extensions.is((select count(*)::int from public.machine_component_consumption_events where account_id='a5100000-0000-4000-8000-000000000001'),0,'cross-account cost view is isolated by RLS');
 reset role;
 
@@ -144,6 +195,7 @@ select extensions.ok((select count(*)=1 from pg_indexes where schemaname='public
 select extensions.ok((select count(*)=1 from pg_indexes where schemaname='public' and indexname='component_replacement_events_machine_history_idx'),'consumption period query reuses machine history index');
 set local role anon;
 select extensions.throws_ok($$select public.get_machine_cost_period('a5100000-0000-4000-8000-000000000001','a5400000-0000-4000-8000-000000000001','2026-08-27','2026-08-01')$$,'42501',null,'unauthenticated direct call is denied before period validation');
+select extensions.throws_ok($$select public.get_machine_economics_period('a5100000-0000-4000-8000-000000000001','a5400000-0000-4000-8000-000000000001','2026-08-01','2026-08-27')$$,'42501',null,'anonymous machine economics is denied');
 reset role;
 
 select * from extensions.finish();

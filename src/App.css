@@ -766,6 +766,28 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 
 /* M2.5A machine component-consumption cost engine */
 .machine-cost-page { min-width: 0; }
+.machine-cost-tabs { width: fit-content; max-width: 100%; display: flex; gap: 4px; padding: 4px; border: 1px solid var(--border-subtle); border-radius: 13px; background: var(--surface-muted); }
+.machine-cost-tabs button { min-height: 34px; padding: 0 15px; color: var(--text-muted); border: 0; border-radius: 9px; background: transparent; font-size: 9px; font-weight: 730; cursor: pointer; }
+.machine-cost-tabs button.active { color: var(--blue); background: var(--surface-solid); box-shadow: var(--shadow-soft); }
+.machine-economics-summary-grid { min-width: 0; display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 12px; }
+.machine-economics-layers { min-width: 0; display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 10px; padding-top: 14px; }
+.machine-economics-layers > div { min-width: 0; display: grid; gap: 5px; padding: 13px; border: 1px solid var(--border-subtle); border-radius: 13px; background: var(--surface-muted); }
+.machine-economics-layers span { color: var(--text-muted); font-size: 8px; }
+.machine-economics-layers strong { overflow-wrap: anywhere; font-size: 13px; }
+.machine-economics-layers .total { color: var(--blue); border-color: rgba(72,118,255,.25); background: var(--blue-soft); }
+.machine-cost-double-count-warning { display: grid; gap: 4px; padding: 12px 14px; color: var(--warning); border: 1px solid rgba(235,163,40,.24); border-radius: 13px; background: rgba(235,163,40,.08); }
+.machine-cost-double-count-warning strong { font-size: 10px; }
+.machine-cost-double-count-warning span { color: var(--text-soft); font-size: 9px; line-height: 1.5; }
+.operating-cost-dialog { width: min(820px,100%); }
+.operating-cost-form-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+.operating-cost-panel > header p { max-width: 620px; margin: 4px 0 0; color: var(--text-muted); font-size: 9px; }
+.operating-cost-list { min-width: 0; display: grid; gap: 8px; padding-top: 14px; }
+.operating-cost-list > article { min-width: 0; display: grid; grid-template-columns: minmax(170px,1.3fr) minmax(150px,1fr) minmax(150px,.8fr) auto; align-items: center; gap: 12px; padding: 12px; border: 1px solid var(--border-subtle); border-radius: 13px; background: var(--surface-muted); }
+.operating-cost-list > article > div { min-width: 0; display: grid; gap: 3px; }
+.operating-cost-list strong,.operating-cost-list span { overflow-wrap: anywhere; }
+.operating-cost-list strong { font-size: 10px; }.operating-cost-list span,.operating-cost-list small { color: var(--text-muted); font-size: 8px; }
+.operating-cost-list > article > div:last-child { justify-items: end; }
+.operating-cost-list .is-voided { opacity: .68; }
 .machine-cost-filters { min-width: 0; display: grid; grid-template-columns: minmax(190px,1.35fr) minmax(140px,.8fr) minmax(220px,1fr) auto; align-items: end; gap: 10px; padding: 16px; border-radius: 20px; }
 .machine-cost-filters > label { min-width: 0; display: grid; gap: 6px; }
 .machine-cost-filters > label > span { color: var(--text-muted); font-size: 9px; font-weight: 780; letter-spacing: .06em; text-transform: uppercase; }
@@ -833,6 +855,9 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   .machine-cost-summary-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
   .machine-cost-filters { grid-template-columns: repeat(2,minmax(0,1fr)); }
   .machine-cost-filters .machine-cost-period-readout { grid-column: 1 / -2; }
+  .machine-economics-summary-grid,.machine-economics-layers { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .operating-cost-list > article { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .operating-cost-list > article > div:last-child { justify-items: start; }
 }
 
 @media (max-width: 860px) {
@@ -858,6 +883,10 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   .replacement-dialog-actions,.replacement-dialog-actions > div { width: 100%; }
   .replacement-dialog-actions { display: grid; grid-template-columns: minmax(0,1fr); }
   .replacement-dialog-actions > div { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .machine-economics-summary-grid,.machine-economics-layers,.operating-cost-form-grid,.operating-cost-list > article { grid-template-columns: minmax(0,1fr); }
+  .machine-cost-tabs { width: 100%; }
+  .machine-cost-tabs button { flex: 1; }
+  .operating-cost-panel > header { align-items: stretch; }
 }
 
 @media (max-width: 430px) {

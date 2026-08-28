@@ -45,5 +45,6 @@ export function validMachineCostFilters(value) {
     && machineCostPeriodPresets.some((preset) => preset.id === value.preset)
     && (value.machineId === null || typeof value.machineId === 'string')
     && typeof value.customStart === 'string'
-    && typeof value.customEnd === 'string')
+    && typeof value.customEnd === 'string'
+    && (value.view == null || ['summary', 'operating'].includes(value.view)))
 }

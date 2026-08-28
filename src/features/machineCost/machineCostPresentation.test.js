@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { componentCompositionPresentation, costPerClickPresentation, costStatusPresentation, counterEvidencePresentation, inventoryContextPresentation, knownConsumptionPresentation, purchaseContextPresentation } from './machineCostPresentation.js'
+import { componentCompositionPresentation, costPerClickPresentation, costStatusPresentation, counterEvidencePresentation, economicsStatusPresentation, inventoryContextPresentation, knownConsumptionPresentation, purchaseContextPresentation } from './machineCostPresentation.js'
 
 const money = (value) => `Rp${Number(value)}`
 
@@ -44,4 +44,8 @@ test('purchase and inventory context retain separate presentation semantics', ()
   assert.match(purchaseContextPresentation().hint, /does not enter machine cost\/click until the stock is consumed/)
   assert.equal(inventoryContextPresentation({ ending_unknown_inventory_quantity_context: 3 }).label, 'Known Inventory Cost Basis · Branch')
   assert.equal(inventoryContextPresentation({ ending_unknown_inventory_quantity_context: 0 }).label, 'Ending Inventory Cost Basis · Branch')
+})
+test('machine economics completeness remains explicit', () => {
+  assert.match(economicsStatusPresentation({ economics_status: 'PARTIAL' })[1], /excludes/)
+  assert.match(economicsStatusPresentation({ economics_status: 'INSUFFICIENT_COUNTER_DATA' })[1], /cannot be calculated/)
 })

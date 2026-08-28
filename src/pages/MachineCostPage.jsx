@@ -4,10 +4,13 @@ import { PageHeader } from '../components/ui/PageHeader.jsx'
 import { useAuth } from '../features/auth/useAuth.js'
 import { useTenant } from '../features/account/useTenant.js'
 import { machineCostPeriodPresets, resolveMachineCostPeriod, validMachineCostFilters } from '../features/machineCost/machineCostPeriods.js'
-import { componentCompositionPresentation, costPerClickPresentation, costStatusPresentation, counterEvidencePresentation, inventoryContextPresentation, knownConsumptionPresentation, purchaseContextPresentation } from '../features/machineCost/machineCostPresentation.js'
+import { componentCompositionPresentation, costPerClickPresentation, counterEvidencePresentation, economicsStatusPresentation, inventoryContextPresentation, knownConsumptionPresentation, purchaseContextPresentation } from '../features/machineCost/machineCostPresentation.js'
+import { OperatingCostDialog } from '../features/machineCost/OperatingCostDialog.jsx'
+import { OperatingCostsPanel } from '../features/machineCost/OperatingCostsPanel.jsx'
+import { VoidOperatingCostDialog } from '../features/machineCost/VoidOperatingCostDialog.jsx'
 import { createUIStateKey } from '../features/uiState/uiStateKeys.js'
 import { usePersistentUIState } from '../features/uiState/usePersistentUIState.js'
-import { loadMachineCostPeriod } from '../services/supabase/machineCost.js'
+import { createMachineOperatingCost, loadMachineCostPeriod, loadMachineOperatingCosts, voidMachineOperatingCost } from '../services/supabase/machineCost.js'
 import { loadMachines } from '../services/supabase/machines.js'
 
 const idr = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 2 })
@@ -22,10 +25,10 @@ function SummaryCard({ icon, label, value, hint, tone = 'blue' }) {
 }
 
 function CostStatus({ summary }) {
-  const [label, description] = costStatusPresentation(summary)
+  const [label, description] = economicsStatusPresentation(summary)
   const counter = counterEvidencePresentation(summary)
-  const Icon = ['COMPLETE', 'NO_CONSUMPTION'].includes(summary.cost_status) ? CheckCircle2 : AlertCircle
-  return <section className={`machine-cost-status status-${summary.cost_status.toLowerCase()}`} aria-live="polite"><Icon size={18} /><div><strong>{label}</strong><span>{description}</span>{summary.counter_status !== 'COMPLETE' && <small>{counter.hint}</small>}{summary.total_consumption_events > 0 && <small>{summary.known_consumption_events} of {summary.total_consumption_events} events have known cost · {summary.consumption_event_coverage_percent ?? 0}% event coverage</small>}</div></section>
+  const Icon = summary.economics_status === 'COMPLETE' ? CheckCircle2 : AlertCircle
+  return <section className={`machine-cost-status status-${summary.economics_status.toLowerCase()}`} aria-live="polite"><Icon size={18} /><div><strong>{label}</strong><span>{description}</span>{summary.counter_status !== 'COMPLETE' && <small>{counter.hint}</small>}{summary.unknown_evidence_events > 0 && <small>{summary.unknown_evidence_events} unpriced evidence event{summary.unknown_evidence_events === 1 ? '' : 's'} excluded from known cost</small>}</div></section>
 }
 
 function ComponentBreakdown({ rows, partial }) {
@@ -42,13 +45,17 @@ function LifecycleEvidence({ rows }) {
 
 export function MachineCostPage() {
   const { user } = useAuth()
-  const { account, branch } = useTenant()
+  const { account, branch, membership } = useTenant()
   const filterKey = createUIStateKey({ userId: user.id, accountId: account.id, branchId: branch?.id, feature: 'machine-cost-filters', entityId: 'workspace' })
-  const { value: filters, setUIState: setFilters } = usePersistentUIState({ uiStateKey: filterKey, initialValue: { machineId: null, preset: 'this_month', customStart: '', customEnd: '' }, validate: validMachineCostFilters })
+  const { value: filters, setUIState: setFilters } = usePersistentUIState({ uiStateKey: filterKey, initialValue: { machineId: null, preset: 'this_month', customStart: '', customEnd: '', view: 'summary' }, validate: validMachineCostFilters })
   const [machines, setMachines] = useState([])
   const [summary, setSummary] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [costWorkspace, setCostWorkspace] = useState({ costs: [], people: [] })
+  const [costError, setCostError] = useState(null)
+  const [costDialog, setCostDialog] = useState(false)
+  const [voidTarget, setVoidTarget] = useState(null)
   const selectedMachine = machines.find((machine) => machine.id === filters.machineId) ?? machines[0] ?? null
   const timezone = selectedMachine?.timezone || branch?.timezone || account.default_timezone || 'Asia/Jakarta'
   const resolvedPeriod = useMemo(() => resolveMachineCostPeriod({ preset: filters.preset, timezone, customStart: filters.customStart, customEnd: filters.customEnd }), [filters.customEnd, filters.customStart, filters.preset, timezone])
@@ -78,6 +85,16 @@ export function MachineCostPage() {
 
   useEffect(() => { refresh() }, [refresh])
 
+  const refreshCosts = useCallback(async () => {
+    if (!selectedMachine) return setCostWorkspace({ costs: [], people: [] })
+    try { setCostError(null); setCostWorkspace(await loadMachineOperatingCosts({ accountId: account.id, machineId: selectedMachine.id })) }
+    catch (loadError) { setCostError(loadError) }
+  }, [account.id, selectedMachine])
+  useEffect(() => { refreshCosts() }, [refreshCosts])
+
+  async function saveOperatingCost(values) { await createMachineOperatingCost({ accountId: account.id, machineId: selectedMachine.id, values }); await Promise.all([refresh(), refreshCosts()]) }
+  async function voidOperatingCost(reason) { await voidMachineOperatingCost({ costId: voidTarget.id, reason, clientRequestId: crypto.randomUUID() }); await Promise.all([refresh(), refreshCosts()]) }
+
   const counterHint = summary?.counter_status === 'COMPLETE' ? `${formatNumber(summary.start_counter)} → ${formatNumber(summary.end_counter)}` : 'Boundary evidence unavailable'
   const partial = summary?.consumption_status === 'PARTIAL'
   const counterDisplay = summary ? counterEvidencePresentation(summary) : null
@@ -85,6 +102,8 @@ export function MachineCostPage() {
   const costPerClickDisplay = summary ? costPerClickPresentation(summary, currency) : null
   const inventoryDisplay = summary ? inventoryContextPresentation(summary) : null
   const purchaseDisplay = purchaseContextPresentation()
+  const canManageCosts = ['owner', 'admin'].includes(membership?.role)
+  const activeTab = filters.view ?? 'summary'
 
   return <div className="page-stack machine-cost-page">
     <PageHeader eyebrow="Operational economics" title="Machine Cost" description="Component-consumption cost follows physical usage. Purchase timing, inventory balance, and lifecycle performance remain separate evidence." />
@@ -96,9 +115,18 @@ export function MachineCostPage() {
       <button className="secondary-button" type="button" onClick={refresh} disabled={loading || !selectedMachine || !validPeriod} aria-label="Refresh machine cost"><RefreshCcw size={15} />Refresh</button>
     </section>
 
+    <nav className="machine-cost-tabs" aria-label="Machine economics sections"><button type="button" className={activeTab === 'summary' ? 'active' : ''} onClick={() => setFilters((current) => ({ ...current, view: 'summary' }))}>Summary</button><button type="button" className={activeTab === 'operating' ? 'active' : ''} onClick={() => setFilters((current) => ({ ...current, view: 'operating' }))}>Operating Costs</button></nav>
+
     {error && <div className="inline-error" role="alert">{error.message}</div>}
-    {loading ? <div className="machine-loading-state glass-surface"><RefreshCcw className="spin" size={24} /><strong>Loading machine cost evidence…</strong><span>Reading counters, FIFO allocations, and lifecycle facts.</span></div> : !selectedMachine ? <div className="machine-empty-state glass-surface"><span className="empty-machine-icon"><Printer size={38} /></span><h3>No active machine in this branch</h3><p>Add or activate a machine before querying operational component cost.</p></div> : summary && <>
+    {activeTab === 'operating' && selectedMachine ? <><OperatingCostsPanel costs={costWorkspace.costs} canManage={canManageCosts} onAdd={() => setCostDialog(true)} onVoid={setVoidTarget} />{costError && <div className="inline-error" role="alert">{costError.message}</div>}</> : loading ? <div className="machine-loading-state glass-surface"><RefreshCcw className="spin" size={24} /><strong>Loading machine economics evidence…</strong><span>Reading counters, FIFO allocations, operating costs, and incident loss.</span></div> : !selectedMachine ? <div className="machine-empty-state glass-surface"><span className="empty-machine-icon"><Printer size={38} /></span><h3>No active machine in this branch</h3><p>Add or activate a machine before querying operational component cost.</p></div> : summary && <>
       <CostStatus summary={summary} />
+      <section className="machine-economics-summary-grid">
+        <SummaryCard icon={CircleDollarSign} label="Known Machine Operating Cost" value={currency(summary.known_machine_operating_cost)} hint="Component consumption + operating costs + known error/waste" tone="purple" />
+        <SummaryCard icon={BarChart3} label="Known Machine Cost / Click" value={summary.known_machine_operating_cost_per_click == null ? 'Unavailable' : currency(summary.known_machine_operating_cost_per_click)} hint={summary.known_machine_operating_cost_per_click == null ? counterDisplay.hint : 'Known Machine Operating Cost ÷ valid clicks'} tone="green" />
+        <SummaryCard icon={Boxes} label="Other Operating Cost" value={currency(summary.known_operating_cost)} hint={`${summary.operating_cost_records} posted record${summary.operating_cost_records === 1 ? '' : 's'} allocated to period`} />
+        <SummaryCard icon={AlertCircle} label="Error / Waste Cost" value={summary.error_waste_events > 0 && summary.known_error_waste_events === 0 ? '—' : currency(summary.known_error_waste_cost)} hint={`${summary.known_error_waste_events} priced · ${summary.unknown_error_waste_events} unpriced`} tone="warning" />
+      </section>
+      <section className="machine-cost-panel glass-surface"><header><div><span className="card-kicker">Machine Operating Cost</span><h2>Economic layers</h2><p>Purchase, ending Inventory, and completed lifecycle evidence remain outside this total.</p></div></header><div className="machine-economics-layers"><div><span>Component Consumption</span><strong>{currency(summary.known_consumption_cost)}</strong></div><div><span>Operating Costs</span><strong>{currency(summary.known_operating_cost)}</strong></div><div><span>Error / Waste</span><strong>{currency(summary.known_error_waste_cost)}</strong></div><div className="total"><span>Known Machine Operating Cost</span><strong>{currency(summary.known_machine_operating_cost)}</strong></div></div></section>
       <section className="machine-cost-summary-grid">
         <SummaryCard icon={Gauge} label="Total Clicks" value={formatNumber(summary.total_clicks)} hint={summary.counter_status === 'COMPLETE' ? counterHint : counterDisplay.hint} />
         <SummaryCard icon={CircleDollarSign} label={partial ? 'Known Consumption Cost' : 'Component Consumption Cost'} value={consumptionDisplay.value} hint={consumptionDisplay.hint} tone="purple" />
@@ -112,5 +140,7 @@ export function MachineCostPage() {
       </section>
       <LifecycleEvidence rows={summary.realized_lifecycle_evidence ?? []} />
     </>}
+    {costDialog && selectedMachine && <OperatingCostDialog account={account} branch={branch} machine={selectedMachine} people={costWorkspace.people} onClose={() => setCostDialog(false)} onSave={saveOperatingCost} />}
+    {voidTarget && <VoidOperatingCostDialog cost={voidTarget} onClose={() => setVoidTarget(null)} onVoid={voidOperatingCost} />}
   </div>
 }
