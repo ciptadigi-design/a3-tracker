@@ -27,7 +27,7 @@ export async function loadTenantContext(userId) {
   const [accountsResult, branchesResult] = await Promise.all([
     supabase
       .from('accounts')
-      .select('id, code, name, default_timezone, status')
+      .select('id, code, name, default_timezone, status, machine_economics_advanced_enabled')
       .in('id', accountIds)
       .eq('status', 'active')
       .order('name'),
@@ -48,4 +48,13 @@ export async function loadTenantContext(userId) {
     accounts: accountsResult.data ?? [],
     branches: branchesResult.data ?? [],
   }
+}
+
+export async function setMachineEconomicsAdvancedEnabled({ accountId, enabled }) {
+  const { data, error } = await supabase.rpc('set_machine_economics_advanced_enabled', {
+    target_account_id: accountId,
+    target_enabled: enabled,
+  })
+  if (error) throw error
+  return data
 }

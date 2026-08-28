@@ -24,7 +24,7 @@ function quantityValid(value) {
 
 export function DialogFrame({ icon, kicker, title, description, titleId, busy, onClose, children }) {
   return <BlockingDialog className="machine-dialog inventory-dialog glass-surface" backdropClassName="machine-dialog-backdrop" labelledBy={titleId} onClose={onClose} busy={busy}>
-    <header className="dialog-header"><div className="dialog-heading"><span className="dialog-icon">{createElement(icon, { size: 22 })}</span><div><span className="card-kicker">{kicker}</span><h2 id={titleId}>{title}</h2><p>{description}</p></div></div><button className="icon-button" type="button" onClick={onClose} disabled={busy} aria-label="Close form"><X size={19} /></button></header>
+    <header className="dialog-header"><div className="dialog-heading"><span className="dialog-icon">{createElement(icon, { size: 22 })}</span><div><span className="card-kicker">{kicker}</span><h2 id={titleId}>{title}</h2><p>{description}</p></div></div><button className="icon-button" type="button" onClick={onClose} disabled={busy} aria-label="Close dialog"><X size={19} /></button></header>
     {children}
   </BlockingDialog>
 }

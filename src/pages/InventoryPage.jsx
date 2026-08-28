@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Archive, ArrowDownToLine, ArrowRightLeft, ArrowUpFromLine, Boxes, Edit3, History, MapPin, Package, PackagePlus, Plus, RefreshCcw, Scale, ShieldCheck, ShoppingCart, Trash2 } from 'lucide-react'
+import { Archive, ArrowDownToLine, ArrowRightLeft, ArrowUpFromLine, Boxes, Edit3, Eye, History, MapPin, Package, PackagePlus, Plus, RefreshCcw, Scale, ShieldCheck, ShoppingCart, Trash2 } from 'lucide-react'
 import { PageHeader } from '../components/ui/PageHeader.jsx'
 import { ComponentChannelMarker } from '../features/components/ComponentChannelMarker.jsx'
 import { useAuth } from '../features/auth/useAuth.js'
@@ -10,6 +10,7 @@ import { DeleteInventoryMasterDialog, InventoryItemDialog, InventoryLocationDial
 import { CancelInventoryPurchaseDialog, InventoryPurchaseDetailDialog, InventoryPurchaseDialog, InventoryReceiveDialog, InventorySupplierDialog } from '../features/inventory/PurchasingDialogs.jsx'
 import { PurchasingPanel } from '../features/inventory/PurchasingPanel.jsx'
 import { useInventoryWorkflowState } from '../features/inventory/useInventoryWorkflowState.js'
+import { InventoryMovementDetailDialog } from '../features/inventory/InventoryMovementDetailDialog.jsx'
 import { adjustInventoryStock, cancelInventoryPurchase, createInventoryPurchase, deleteInventoryItem, deleteInventoryLocation, deleteInventorySupplier, initializeInventoryStock, loadInventory, receiveInventoryPurchase, saveInventoryItem, saveInventoryLocation, saveInventorySupplier, transferInventoryStock } from '../services/supabase/inventory.js'
 
 const tabs = [
@@ -53,7 +54,7 @@ function StockPanel({ data, showArchived, canManage, onEdit, onDelete, onOpening
   </>
 }
 
-function MovementPanel({ data, account }) {
+function MovementPanel({ data, account, onView }) {
   const [filters, setFilters] = useState({ item: '', location: '', type: '' })
   const filtered = data.movements.filter((row) => (!filters.item || row.inventory_item_id === filters.item) && (!filters.location || row.location_id === filters.location) && (!filters.type || row.movement_type === filters.type))
   const formatter = useMemo(() => new Intl.DateTimeFormat('id-ID', { timeZone: account.default_timezone || 'Asia/Jakarta', dateStyle: 'medium', timeStyle: 'short' }), [account.default_timezone])
@@ -61,7 +62,7 @@ function MovementPanel({ data, account }) {
     <div className="movement-filter-bar" aria-label="Movement filters"><label><span>Item</span><select value={filters.item} onChange={(event) => setFilters((current) => ({ ...current, item: event.target.value }))}><option value="">All items</option>{data.items.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label><label><span>Location</span><select value={filters.location} onChange={(event) => setFilters((current) => ({ ...current, location: event.target.value }))}><option value="">All locations</option>{data.locations.map((location) => <option key={location.id} value={location.id}>{location.name}</option>)}</select></label><label><span>Movement type</span><select value={filters.type} onChange={(event) => setFilters((current) => ({ ...current, type: event.target.value }))}><option value="">All types</option>{Object.entries(movementLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label></div>
     {filtered.length === 0 ? <div className="inventory-empty"><History size={25} /><strong>No movements match this view.</strong><span>Posted opening balances, adjustments, and transfers appear chronologically.</span></div> : <div className="inventory-movement-list">{filtered.map((row) => {
       const positive = Number(row.quantity) > 0
-      return <article key={row.movement_id}><span className={`movement-direction ${positive ? 'movement-in' : 'movement-out'}`}>{positive ? <ArrowDownToLine size={17} /> : <ArrowUpFromLine size={17} />}</span><div className="movement-primary"><strong><ComponentChannelMarker code={row.sku} name={row.item_name} />{row.item_name}</strong><span>{movementLabels[row.movement_type]}</span></div><div><span>Quantity</span><strong className={positive ? 'quantity-positive' : 'quantity-negative'}>{positive ? '+' : ''}{quantity(row.quantity)} {row.unit_snapshot}</strong></div><div><span>Location</span><strong>{row.location_name}</strong></div><div><span>PIC</span><strong>{row.operational_person_name_snapshot}</strong></div><div><span>Time</span><strong>{formatter.format(new Date(row.occurred_at))}</strong></div><details><summary>Details</summary><div><span>Reason: {row.reason || '—'}</span><span>Notes: {row.notes || '—'}</span><span>Entered by: {row.created_by_name_snapshot}</span><span>Reference: {row.reference_type === 'component_replacement' ? 'Component Replacement' : row.reference_type === 'purchase_receipt' ? 'Purchase Receipt' : row.reference_type.replaceAll('_', ' ')}</span>{row.reference_type === 'component_replacement' && <><span>Machine: {row.replacement_machine_code} · {row.replacement_machine_name}</span><span>Component: {row.replacement_component_name}</span></>}{row.reference_type === 'purchase_receipt' && <><span>Supplier: {row.receipt_supplier_name}</span><span>Purchase: {row.receipt_purchase_number}</span><span>Receipt: {row.receipt_number}</span><span>Unit price: {new Intl.NumberFormat('id-ID', { style: 'currency', currency: row.receipt_currency_code }).format(Number(row.receipt_unit_price))} / {row.unit_snapshot}</span></>}{row.movement_type === 'transfer_out' && <span>Cost basis: Preserved in destination FIFO layers</span>}{row.cost_layer_count > 0 && <><span>Cost layers: {row.cost_layer_count}</span><span>Allocated cost: {row.cost_is_complete ? idr.format(Number(row.allocated_cost)) : `${idr.format(Number(row.allocated_cost))} known + ${quantity(row.unknown_cost_quantity)} ${row.unit_snapshot} unknown`}</span></>}</div></details></article>
+      return <article key={row.movement_id}><span className={`movement-direction ${positive ? 'movement-in' : 'movement-out'}`}>{positive ? <ArrowDownToLine size={17} /> : <ArrowUpFromLine size={17} />}</span><div className="movement-primary"><strong><ComponentChannelMarker code={row.sku} name={row.item_name} />{row.item_name}</strong><span>{movementLabels[row.movement_type]}</span></div><div><span>Quantity</span><strong className={positive ? 'quantity-positive' : 'quantity-negative'}>{positive ? '+' : ''}{quantity(row.quantity)} {row.unit_snapshot}</strong></div><div><span>Location</span><strong>{row.location_name}</strong></div><div><span>PIC</span><strong>{row.operational_person_name_snapshot}</strong></div><div><span>Time</span><strong>{formatter.format(new Date(row.occurred_at))}</strong></div><button className="movement-detail-action" type="button" onClick={() => onView(row)} aria-label="View movement details" title="View movement details"><Eye size={16} /></button></article>
     })}</div>}
   </>
 }
@@ -107,11 +108,13 @@ export function InventoryPage() {
   const workflowSupplier = data.suppliers.find((supplier) => supplier.id === workflow.supplierId) ?? null
   const workflowPurchase = data.purchases.find((purchase) => purchase.purchase_id === workflow.purchaseId) ?? null
   const workflowPurchaseLines = data.purchaseLines.filter((line) => line.purchase_id === workflow.purchaseId)
+  const workflowMovement = data.movements.find((movement) => movement.movement_id === workflow.movementId) ?? null
+  const relatedMovement = workflowMovement?.transfer_id ? data.movements.find((movement) => movement.transfer_id === workflowMovement.transfer_id && movement.movement_id !== workflowMovement.movement_id) ?? null : null
 
   useEffect(() => {
     if (loading || error || !workflow.type) return
     let staleMessage = null
-    if (!canManage && workflow.type !== 'purchase:detail') staleMessage = 'The saved Inventory workflow was closed because your current role cannot manage inventory.'
+    if (!canManage && !['purchase:detail', 'movement:detail'].includes(workflow.type)) staleMessage = 'The saved Inventory workflow was closed because your current role cannot manage inventory.'
     else if ((workflow.type.startsWith('item:') && workflow.type !== 'item:create') && !workflowItem) staleMessage = 'The saved inventory item workflow is no longer available and was closed safely.'
     else if (workflow.type.startsWith('item:') && workflow.entityActiveAtOpen === true && !workflowItem?.is_active) staleMessage = 'The saved inventory item workflow was closed because the item was archived.'
     else if ((workflow.type.startsWith('location:') && workflow.type !== 'location:create') && !workflowLocation) staleMessage = 'The saved inventory location workflow is no longer available and was closed safely.'
@@ -120,9 +123,10 @@ export function InventoryPage() {
     else if ((workflow.type.startsWith('supplier:') && workflow.type !== 'supplier:create') && !workflowSupplier) staleMessage = 'The saved supplier workflow is no longer available and was closed safely.'
     else if (workflow.type.startsWith('supplier:') && workflow.entityActiveAtOpen === true && !workflowSupplier?.is_active) staleMessage = 'The saved supplier workflow was closed because the supplier was archived.'
     else if ((workflow.type.startsWith('purchase:') && workflow.type !== 'purchase:create') && !workflowPurchase) staleMessage = 'The saved purchase workflow is no longer available and was closed safely.'
+    else if (workflow.type === 'movement:detail' && !workflowMovement) staleMessage = 'The saved movement detail is no longer available and was closed safely.'
     else if (workflow.type === 'purchase:receive' && ['received', 'cancelled'].includes(workflowPurchase?.status)) staleMessage = 'The saved receiving workflow was closed because the purchase is no longer receivable.'
     if (staleMessage) { closeWorkflow(); setNotice(staleMessage) }
-  }, [canManage, closeWorkflow, error, loading, workflow.entityActiveAtOpen, workflow.type, workflowItem, workflowLocation, workflowPurchase, workflowSupplier])
+  }, [canManage, closeWorkflow, error, loading, workflow.entityActiveAtOpen, workflow.type, workflowItem, workflowLocation, workflowMovement, workflowPurchase, workflowSupplier])
 
   const movementKind = workflow.type?.startsWith('stock:') ? workflow.type.slice('stock:'.length) : null
   return <div className="page-stack inventory-page">
@@ -135,7 +139,7 @@ export function InventoryPage() {
       {canManage && ['stock', 'locations'].includes(viewState.value.tab) && <div className="inventory-record-toggle"><button className={!viewState.value.showArchived ? 'selected' : ''} onClick={() => viewState.setUIState((current) => ({ ...current, showArchived: false }))}>Active</button><button className={viewState.value.showArchived ? 'selected' : ''} onClick={() => viewState.setUIState((current) => ({ ...current, showArchived: true }))}>Archived</button></div>}
       <div className="inventory-content">{loading ? <div className="inventory-empty"><RefreshCcw className="spin" size={25} /><strong>Loading inventory ledger…</strong></div> : !error && <>
         {viewState.value.tab === 'stock' && <StockPanel data={data} showArchived={viewState.value.showArchived} canManage={canManage} onEdit={(item) => openWorkflow('item:edit', { inventoryItemId: item.id, entityActiveAtOpen: item.is_active })} onDelete={(item) => openWorkflow('item:delete', { inventoryItemId: item.id, entityActiveAtOpen: item.is_active })} onOpening={(item) => openWorkflow('stock:opening', { inventoryItemId: item.id, entityActiveAtOpen: true })} onAdjust={(item) => openWorkflow('stock:adjustment', { inventoryItemId: item.id, entityActiveAtOpen: true })} onTransfer={(item) => openWorkflow('stock:transfer', { inventoryItemId: item.id, entityActiveAtOpen: true })} />}
-        {viewState.value.tab === 'movements' && <MovementPanel data={data} account={account} />}
+        {viewState.value.tab === 'movements' && <MovementPanel data={data} account={account} onView={(movement) => openWorkflow('movement:detail', { movementId: movement.movement_id })} />}
         {viewState.value.tab === 'purchasing' && <PurchasingPanel userId={user.id} account={account} data={data} canManage={canManage} onCreateSupplier={() => openWorkflow('supplier:create')} onEditSupplier={(supplier) => openWorkflow('supplier:edit', { supplierId: supplier.id, entityActiveAtOpen: supplier.is_active })} onDeleteSupplier={(supplier) => openWorkflow('supplier:delete', { supplierId: supplier.id, entityActiveAtOpen: supplier.is_active })} onCreatePurchase={() => openWorkflow('purchase:create')} onOpenPurchase={(purchase) => openWorkflow('purchase:detail', { purchaseId: purchase.purchase_id })} />}
         {viewState.value.tab === 'locations' && <LocationsPanel locations={data.locations} showArchived={viewState.value.showArchived} canManage={canManage} onEdit={(location) => openWorkflow('location:edit', { locationId: location.id, entityActiveAtOpen: location.is_active })} onDelete={(location) => openWorkflow('location:delete', { locationId: location.id, entityActiveAtOpen: location.is_active })} />}
       </>}</div>
@@ -154,5 +158,6 @@ export function InventoryPage() {
     {!loading && workflow.type === 'purchase:detail' && workflowPurchase && <InventoryPurchaseDetailDialog purchase={workflowPurchase} lines={workflowPurchaseLines} canManage={canManage} onClose={closeWorkflow} onReceive={() => openWorkflow('purchase:receive', { purchaseId: workflowPurchase.purchase_id })} onCancel={() => openWorkflow('purchase:cancel', { purchaseId: workflowPurchase.purchase_id })} />}
     {!loading && canManage && workflow.type === 'purchase:receive' && workflowPurchase && <InventoryReceiveDialog account={account} purchase={workflowPurchase} lines={workflowPurchaseLines} locations={activeLocations} people={data.people} onClose={closeWorkflow} onReceive={receivePurchase} />}
     {!loading && canManage && workflow.type === 'purchase:cancel' && workflowPurchase && <CancelInventoryPurchaseDialog account={account} purchase={workflowPurchase} onClose={closeWorkflow} onCancel={cancelPurchase} />}
+    {!loading && workflow.type === 'movement:detail' && workflowMovement && <InventoryMovementDetailDialog movement={workflowMovement} relatedMovement={relatedMovement} timezone={account.default_timezone} onClose={closeWorkflow} />}
   </div>
 }

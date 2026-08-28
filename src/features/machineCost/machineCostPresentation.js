@@ -25,11 +25,11 @@ export function costStatusPresentation(summary) {
 
 export function economicsStatusPresentation(summary) {
   switch (summary?.economics_status) {
-    case 'COMPLETE': return ['Complete economics evidence', 'All attributable component, operating, and error/waste evidence has known cost.']
-    case 'PARTIAL': return ['Partial economics evidence', 'Known Machine Operating Cost excludes one or more unpriced consumption or error/waste events.']
-    case 'INSUFFICIENT_COUNTER_DATA': return ['Insufficient counter data', 'Operating evidence is available, but Machine Operating Cost / Click cannot be calculated.']
-    case 'NO_DATA': return ['No machine economics data', 'No relevant click or attributable cost evidence exists for this period.']
-    default: return ['Economics evidence unavailable', 'Machine economics status is unavailable.']
+    case 'COMPLETE': return ['Standard economics complete', 'Counter, component consumption, and error/waste evidence is complete.']
+    case 'PARTIAL': return ['Standard economics partial', 'Standard Machine Cost excludes one or more unpriced consumption or error/waste events.']
+    case 'INSUFFICIENT_COUNTER_DATA': return ['Insufficient counter data', 'Standard cost evidence is available, but Standard Cost / Click cannot be calculated.']
+    case 'NO_DATA': return ['No Standard economics data', 'No relevant click, component consumption, or error/waste evidence exists for this period.']
+    default: return ['Standard economics unavailable', 'Standard economics status is unavailable.']
   }
 }
 

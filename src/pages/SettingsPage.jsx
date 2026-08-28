@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Archive, Edit3, Factory, Plus, RefreshCcw, ShieldCheck, Trash2, UserRound, Workflow } from 'lucide-react'
+import { Archive, CircleDollarSign, Edit3, Factory, LoaderCircle, Plus, RefreshCcw, ShieldCheck, Trash2, UserRound, Workflow } from 'lucide-react'
 import { PageHeader } from '../components/ui/PageHeader.jsx'
 import { useTenant } from '../features/account/useTenant.js'
 import { useAuth } from '../features/auth/useAuth.js'
@@ -7,6 +7,7 @@ import { createUIStateKey } from '../features/uiState/uiStateKeys.js'
 import { usePersistentUIState } from '../features/uiState/usePersistentUIState.js'
 import { DeleteMasterDialog, MasterRecordDialog } from '../features/operationalMasters/MasterRecordDialog.jsx'
 import { deleteMachineModel, deleteManufacturer, deleteOperationalPerson, loadOperationalMasters, saveMachineModel, saveManufacturer, saveOperationalPerson } from '../services/supabase/operationalMasters.js'
+import { setMachineEconomicsAdvancedEnabled } from '../services/supabase/tenant.js'
 
 const sections = [
   { id: 'people', label: 'Operators / PIC', icon: UserRound },
@@ -16,7 +17,7 @@ const sections = [
 
 export function SettingsPage() {
   const { user } = useAuth()
-  const { account, branch, membership } = useTenant()
+  const { account, branch, membership, refresh: refreshTenant } = useTenant()
   const canManage = membership?.role === 'owner' || membership?.role === 'admin'
   const stateKey = createUIStateKey({ userId: user.id, accountId: account.id, branchId: branch?.id, feature: 'operational-masters', entityId: 'section' })
   const sectionState = usePersistentUIState({ uiStateKey: stateKey, initialValue: { section: 'people' }, validate: (value) => sections.some((item) => item.id === value?.section) })
@@ -25,6 +26,8 @@ export function SettingsPage() {
   const [error, setError] = useState(null)
   const [dialog, setDialog] = useState(null)
   const [success, setSuccess] = useState(null)
+  const [featureBusy, setFeatureBusy] = useState(false)
+  const [featureError, setFeatureError] = useState(null)
 
   const refresh = useCallback(async () => {
     setLoading(true); setError(null)
@@ -57,10 +60,29 @@ export function SettingsPage() {
     await refresh()
   }
 
+  async function changeAdvancedEconomics(event) {
+    const enabled = event.target.checked
+    setFeatureBusy(true); setFeatureError(null); setSuccess(null)
+    try {
+      await setMachineEconomicsAdvancedEnabled({ accountId: account.id, enabled })
+      await refreshTenant()
+      setSuccess(`Advanced Operating Costs ${enabled ? 'enabled' : 'disabled'}. Historical evidence was not changed.`)
+    } catch (changeError) { setFeatureError(changeError) }
+    finally { setFeatureBusy(false) }
+  }
+
   return <div className="page-stack settings-page">
     <PageHeader eyebrow={`${account.name} · Settings`} title="Operational masters" description="Manage the people and machine catalog used by daily operational workflows." action={canManage ? <button className="primary-button" type="button" onClick={() => setDialog({ type: 'form', record: null })}><Plus size={17} />Add {kind === 'person' ? 'operator' : kind}</button> : null} />
     {!canManage && <div className="permission-banner"><ShieldCheck size={18} /><span>Your {membership?.role} role can read active master data but cannot manage it.</span></div>}
     {success && <div className="success-banner" role="status"><span>{success}</span><button type="button" onClick={() => setSuccess(null)}>Dismiss</button></div>}
+    <section className="machine-economics-setting glass-surface" aria-labelledby="machine-economics-setting-title">
+      <span className="settings-feature-icon"><CircleDollarSign size={20} /></span>
+      <div><span className="card-kicker">Machine Economics</span><h2 id="machine-economics-setting-title">Advanced Operating Costs</h2><p>Include separately tracked operating costs such as electricity, manpower, service allocation, depreciation, and lease in Full Machine Economics.</p><small>Standard Machine Cost always uses component consumption and assessed error/waste.</small></div>
+      <label className="feature-switch"><input type="checkbox" role="switch" checked={Boolean(account.machine_economics_advanced_enabled)} onChange={changeAdvancedEconomics} disabled={!canManage || featureBusy} /><span aria-hidden="true" /><strong>{account.machine_economics_advanced_enabled ? 'On' : 'Off'}</strong></label>
+      {featureBusy && <span className="settings-feature-busy" role="status"><LoaderCircle className="spin" size={15} />Saving…</span>}
+      {featureError && <div className="inline-error" role="alert">{featureError.message}</div>}
+      {!canManage && <small className="settings-feature-readonly">Owner or Admin permission is required to change this setting.</small>}
+    </section>
     <section className="master-management glass-surface">
       <div className="master-tabs" role="tablist" aria-label="Operational master sections">{sections.map((item) => <button key={item.id} type="button" role="tab" aria-selected={section === item.id} className={section === item.id ? 'selected' : ''} onClick={() => sectionState.setUIState({ section: item.id })}><item.icon size={16} />{item.label}</button>)}</div>
       <header className="master-toolbar"><div><span className="card-kicker">Workspace directory</span><h2>{title}</h2><p>{section === 'people' ? 'Selectable operational people for Daily and future workflows.' : 'Shared platform definitions are protected; workspace records are manageable here.'}</p></div><button className="icon-button" type="button" onClick={refresh} disabled={loading} aria-label={`Refresh ${title}`}><RefreshCcw className={loading ? 'spin' : ''} size={17} /></button></header>

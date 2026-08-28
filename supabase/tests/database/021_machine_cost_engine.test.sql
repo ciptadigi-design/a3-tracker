@@ -20,9 +20,9 @@ insert into auth.users(id,aud,role,email,encrypted_password,email_confirmed_at,r
 ('a5000000-0000-4000-8000-000000000003','authenticated','authenticated','m25a-suspended@test.invalid','',now(),'{}','{"display_name":"M25A Suspended"}',now(),now()),
 ('a5000000-0000-4000-8000-000000000004','authenticated','authenticated','m25a-other@test.invalid','',now(),'{}','{"display_name":"M25A Other"}',now(),now());
 
-insert into public.accounts(id,code,name,default_timezone) values
-('a5100000-0000-4000-8000-000000000001','M25A','M2.5A Account','Asia/Jakarta'),
-('a5100000-0000-4000-8000-000000000002','M25B','Other Account','Asia/Jakarta');
+insert into public.accounts(id,code,name,default_timezone,machine_economics_advanced_enabled) values
+('a5100000-0000-4000-8000-000000000001','M25A','M2.5A Account','Asia/Jakarta',true),
+('a5100000-0000-4000-8000-000000000002','M25B','Other Account','Asia/Jakarta',false);
 insert into public.account_memberships(id,account_id,user_id,role,status,accepted_at) values
 ('a5200000-0000-4000-8000-000000000001','a5100000-0000-4000-8000-000000000001','a5000000-0000-4000-8000-000000000001','owner','active',now()),
 ('a5200000-0000-4000-8000-000000000002','a5100000-0000-4000-8000-000000000001','a5000000-0000-4000-8000-000000000002','technician','active',now()),
@@ -125,6 +125,10 @@ select extensions.is((select known_error_waste_cost from public.get_machine_econ
 select extensions.is((select unknown_error_waste_events from public.get_machine_economics_period('a5100000-0000-4000-8000-000000000001','a5400000-0000-4000-8000-000000000001','2026-08-01','2026-08-27')),1,'zero-loss incident remains unpriced evidence rather than arbitrary money');
 select extensions.is((select known_machine_operating_cost from public.get_machine_economics_period('a5100000-0000-4000-8000-000000000001','a5400000-0000-4000-8000-000000000001','2026-08-01','2026-08-27')),8600000::numeric,'machine economics adds M2.5A consumption, operating cost, and error/waste exactly once');
 select extensions.is((select known_machine_operating_cost_per_click from public.get_machine_economics_period('a5100000-0000-4000-8000-000000000001','a5400000-0000-4000-8000-000000000001','2026-08-01','2026-08-27')),17200::numeric,'broader known cost per click uses valid M2.5A click volume');
+select extensions.is((select known_standard_machine_cost from public.get_machine_economics_period('a5100000-0000-4000-8000-000000000001','a5400000-0000-4000-8000-000000000001','2026-08-01','2026-08-27')),5400000::numeric,'Standard Machine Cost adds only component consumption and assessed error/waste');
+select extensions.is((select known_standard_cost_per_click from public.get_machine_economics_period('a5100000-0000-4000-8000-000000000001','a5400000-0000-4000-8000-000000000001','2026-08-01','2026-08-27')),10800::numeric,'Standard Cost / Click uses valid clicks and never includes advanced costs');
+select extensions.is((select known_full_machine_operating_cost from public.get_machine_economics_period('a5100000-0000-4000-8000-000000000001','a5400000-0000-4000-8000-000000000001','2026-08-01','2026-08-27')),8600000::numeric,'Full Machine Operating Cost adds Advanced Operating Costs once');
+select extensions.is((select known_full_operating_cost_per_click from public.get_machine_economics_period('a5100000-0000-4000-8000-000000000001','a5400000-0000-4000-8000-000000000001','2026-08-01','2026-08-27')),17200::numeric,'Full Operating Cost / Click coexists with Standard Cost / Click');
 select extensions.is((select economics_status::text from public.get_machine_economics_period('a5100000-0000-4000-8000-000000000001','a5400000-0000-4000-8000-000000000001','2026-08-01','2026-08-27')),'PARTIAL','unknown component and incident evidence keeps economics partial');
 select extensions.is((select known_operating_cost from public.get_machine_economics_period('a5100000-0000-4000-8000-000000000001','a5400000-0000-4000-8000-000000000002','2026-08-01','2026-08-01')),10000::numeric,'one-time attribution respects machine operational timezone boundary');
 select extensions.ok((select known_machine_operating_cost_per_click is null from public.get_machine_economics_period('a5100000-0000-4000-8000-000000000001','a5400000-0000-4000-8000-000000000002','2026-08-01','2026-08-01')),'zero clicks never produce broader cost per click');

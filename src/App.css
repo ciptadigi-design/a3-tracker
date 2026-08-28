@@ -377,6 +377,11 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .counter-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 15px; }
 
 .master-management { overflow: hidden; border-radius: 28px; }
+.machine-economics-setting { min-width: 0; display: grid; grid-template-columns: auto minmax(0,1fr) auto; align-items: center; gap: 14px; padding: 19px 21px; border-radius: 22px; }
+.settings-feature-icon { width: 42px; height: 42px; display: grid; place-items: center; color: var(--blue); border-radius: 13px; background: var(--blue-soft); }
+.machine-economics-setting > div { min-width: 0; }.machine-economics-setting h2 { margin: 4px 0; font-size: 17px; }.machine-economics-setting p { max-width: 760px; margin: 0; color: var(--text-muted); font-size: 9px; line-height: 1.55; }.machine-economics-setting small { color: var(--text-muted); font-size: 8px; line-height: 1.45; }
+.feature-switch { display: grid; grid-template-columns: 42px auto; align-items: center; gap: 8px; cursor: pointer; }.feature-switch input { position: absolute; width: 1px; height: 1px; opacity: 0; }.feature-switch > span { width: 42px; height: 24px; position: relative; border: 1px solid var(--border-subtle); border-radius: 99px; background: var(--surface-muted); transition: .18s ease; }.feature-switch > span::after { content: ''; width: 17px; height: 17px; position: absolute; left: 3px; top: 2px; border-radius: 50%; background: var(--text-muted); transition: .18s ease; }.feature-switch input:checked + span { border-color: color-mix(in srgb,var(--green) 40%,transparent); background: color-mix(in srgb,var(--green) 18%,var(--surface-muted)); }.feature-switch input:checked + span::after { left: 20px; background: var(--green); }.feature-switch input:focus-visible + span { outline: 3px solid color-mix(in srgb,var(--blue) 28%,transparent); outline-offset: 2px; }.feature-switch input:disabled + span { opacity: .55; cursor: not-allowed; }.feature-switch strong { font-size: 9px; text-transform: uppercase; }
+.machine-economics-setting > .inline-error,.settings-feature-readonly { grid-column: 2 / -1; }.settings-feature-busy { display: inline-flex; align-items: center; gap: 6px; color: var(--text-muted); font-size: 8px; }
 .master-tabs { display: flex; gap: 8px; padding: 16px 20px; border-bottom: 1px solid var(--border-subtle); overflow-x: auto; }
 .master-tabs button { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 14px; color: var(--text-muted); background: transparent; border: 1px solid transparent; border-radius: 12px; white-space: nowrap; cursor: pointer; }
 .master-tabs button.selected { color: var(--text); background: var(--blue-soft); border-color: color-mix(in srgb, var(--blue) 28%, transparent); }
@@ -769,12 +774,14 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .machine-cost-tabs { width: fit-content; max-width: 100%; display: flex; gap: 4px; padding: 4px; border: 1px solid var(--border-subtle); border-radius: 13px; background: var(--surface-muted); }
 .machine-cost-tabs button { min-height: 34px; padding: 0 15px; color: var(--text-muted); border: 0; border-radius: 9px; background: transparent; font-size: 9px; font-weight: 730; cursor: pointer; }
 .machine-cost-tabs button.active { color: var(--blue); background: var(--surface-solid); box-shadow: var(--shadow-soft); }
-.machine-economics-summary-grid { min-width: 0; display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 12px; }
+.machine-economics-summary-grid { min-width: 0; display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 12px; }
 .machine-economics-layers { min-width: 0; display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 10px; padding-top: 14px; }
 .machine-economics-layers > div { min-width: 0; display: grid; gap: 5px; padding: 13px; border: 1px solid var(--border-subtle); border-radius: 13px; background: var(--surface-muted); }
 .machine-economics-layers span { color: var(--text-muted); font-size: 8px; }
 .machine-economics-layers strong { overflow-wrap: anywhere; font-size: 13px; }
+.machine-economics-layers small { color: var(--text-muted); font-size: 8px; line-height: 1.45; }
 .machine-economics-layers .total { color: var(--blue); border-color: rgba(72,118,255,.25); background: var(--blue-soft); }
+.advanced-economics-panel { border: 1px solid color-mix(in srgb,var(--blue) 22%,var(--border-subtle)); }
 .machine-cost-double-count-warning { display: grid; gap: 4px; padding: 12px 14px; color: var(--warning); border: 1px solid rgba(235,163,40,.24); border-radius: 13px; background: rgba(235,163,40,.08); }
 .machine-cost-double-count-warning strong { font-size: 10px; }
 .machine-cost-double-count-warning span { color: var(--text-soft); font-size: 9px; line-height: 1.5; }
@@ -788,6 +795,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .operating-cost-list strong { font-size: 10px; }.operating-cost-list span,.operating-cost-list small { color: var(--text-muted); font-size: 8px; }
 .operating-cost-list > article > div:last-child { justify-items: end; }
 .operating-cost-list .is-voided { opacity: .68; }
+.advanced-feature-disabled { display: flex; align-items: flex-start; gap: 12px; margin-top: 14px; padding: 15px; color: var(--text-muted); border: 1px solid var(--border-subtle); border-radius: 14px; background: var(--surface-muted); }.advanced-feature-disabled > svg { flex: 0 0 auto; color: var(--blue); }.advanced-feature-disabled > div { display: grid; gap: 5px; }.advanced-feature-disabled strong { color: var(--text); font-size: 11px; }.advanced-feature-disabled span,.advanced-feature-disabled small { font-size: 9px; line-height: 1.5; }
 .machine-cost-filters { min-width: 0; display: grid; grid-template-columns: minmax(190px,1.35fr) minmax(140px,.8fr) minmax(220px,1fr) auto; align-items: end; gap: 10px; padding: 16px; border-radius: 20px; }
 .machine-cost-filters > label { min-width: 0; display: grid; gap: 6px; }
 .machine-cost-filters > label > span { color: var(--text-muted); font-size: 9px; font-weight: 780; letter-spacing: .06em; text-transform: uppercase; }
@@ -1062,8 +1070,9 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .movement-direction { width: 32px; height: 32px; display: grid; place-items: center; border-radius: 10px; }.movement-in { color: var(--green); background: rgba(33,164,107,.1); }.movement-out { color: var(--danger); background: rgba(217,71,71,.09); }
 .inventory-movement-list article > div { min-width: 0; display: grid; gap: 3px; }.inventory-movement-list article > div > span { overflow: hidden; color: var(--text-muted); font-size: 8px; text-overflow: ellipsis; white-space: nowrap; }.inventory-movement-list article > div > strong { overflow: hidden; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
 .quantity-positive { color: var(--green); }.quantity-negative { color: var(--danger); }
-.inventory-movement-list details { position: relative; }.inventory-movement-list details > summary { color: var(--blue); cursor: pointer; font-size: 9px; font-weight: 750; }
-.inventory-movement-list details > div { position: absolute; z-index: 3; right: 0; top: 24px; width: min(280px,80vw); display: grid; gap: 7px; padding: 12px; border: 1px solid var(--border-subtle); border-radius: 12px; background: var(--surface-solid); box-shadow: var(--shadow); font-size: 9px; }
+.movement-detail-action { width: 32px; height: 32px; display: grid; place-items: center; color: var(--blue); cursor: pointer; border: 1px solid var(--border-subtle); border-radius: 10px; background: var(--surface-solid); }.movement-detail-action:hover { border-color: color-mix(in srgb,var(--blue) 35%,var(--border-subtle)); background: var(--blue-soft); }.movement-detail-action:focus-visible { outline: 3px solid color-mix(in srgb,var(--blue) 25%,transparent); outline-offset: 2px; }
+.movement-detail { min-height: 0; }.movement-detail-hero { display: grid; gap: 4px; margin-bottom: 14px; padding: 13px; border-radius: 13px; background: var(--blue-soft); }.movement-detail-hero span { color: var(--text-muted); font-size: 8px; text-transform: uppercase; }.movement-detail-hero strong { color: var(--blue); font-size: 14px; }
+.movement-detail-sections { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; }.movement-detail-sections > section { min-width: 0; padding: 14px; border: 1px solid var(--border-subtle); border-radius: 14px; background: var(--surface-muted); }.movement-detail-sections h3 { margin: 0 0 10px; color: var(--text-muted); font-size: 9px; letter-spacing: .08em; text-transform: uppercase; }.movement-detail-sections dl { display: grid; gap: 9px; margin: 0; }.movement-detail-sections dl > div { min-width: 0; display: grid; grid-template-columns: minmax(110px,.65fr) minmax(0,1fr); gap: 12px; padding-top: 9px; border-top: 1px solid var(--border-subtle); }.movement-detail-sections dl > div:first-child { padding-top: 0; border-top: 0; }.movement-detail-sections dt { color: var(--text-muted); font-size: 8px; }.movement-detail-sections dd { margin: 0; overflow-wrap: anywhere; font-size: 9px; font-weight: 700; }
 .inventory-location-list { display: grid; gap: 8px; }.inventory-location-list > article { min-width: 0; display: grid; grid-template-columns: auto minmax(0,1fr) auto auto; align-items: center; gap: 12px; padding: 13px 14px; border: 1px solid var(--border-subtle); border-radius: 15px; background: var(--surface-muted); }
 .inventory-location-list article > div:nth-child(2) { min-width: 0; display: grid; gap: 4px; }.inventory-location-list article > div:nth-child(2) strong { font-size: 11px; }.inventory-location-list article > div:nth-child(2) span, .inventory-location-list article > div:nth-child(2) small { overflow-wrap: anywhere; color: var(--text-muted); font-size: 9px; }
 .inventory-dialog { width: min(800px,100%); }.ledger-notice { display: flex; align-items: center; gap: 9px; margin-bottom: 16px; padding: 11px 12px; color: var(--blue); border: 1px solid color-mix(in srgb, var(--blue) 15%, transparent); border-radius: 12px; background: var(--blue-soft); font-size: 9px; line-height: 1.45; }
@@ -1125,7 +1134,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   .movement-filter-bar { grid-template-columns: minmax(0,1fr); }
   .inventory-movement-list > article { grid-template-columns: 34px minmax(0,1fr) auto; align-items: start; padding: 13px; }
   .inventory-movement-list > article > div:nth-of-type(2) { grid-column: 2; }.inventory-movement-list > article > div:nth-of-type(3), .inventory-movement-list > article > div:nth-of-type(4), .inventory-movement-list > article > div:nth-of-type(5) { display: grid; grid-column: 2; }
-  .inventory-movement-list details { grid-column: 3; grid-row: 1; }.inventory-movement-list details > div { position: fixed; left: 18px; right: 18px; top: auto; bottom: calc(18px + env(safe-area-inset-bottom)); width: auto; }
+  .movement-detail-action { grid-column: 3; grid-row: 1; }
   .inventory-location-list > article { grid-template-columns: auto minmax(0,1fr) auto; }.inventory-location-list .scope-pill { grid-column: 2; }.inventory-location-list .inventory-row-actions { grid-column: 2 / -1; }
   .inventory-section-toolbar { align-items: stretch; flex-direction: column; }.inventory-section-toolbar > button { width: 100%; justify-content: center; }
   .purchase-list > article { grid-template-columns: minmax(0,1fr) auto; gap: 8px 12px; }.purchase-list > article > div:nth-child(2), .purchase-list > article > div:nth-child(4), .purchase-list > article > div:nth-child(5) { display: grid; grid-column: 1; }.purchase-list > article > .purchase-status { grid-column: 1; }.purchase-list > article > button { grid-column: 2; grid-row: 1; }
@@ -1137,4 +1146,9 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   .purchase-detail-summary { grid-template-columns: minmax(0,1fr); }.purchase-detail-lines dl { grid-template-columns: repeat(2,minmax(0,1fr)); }
   .receipt-lines dl { grid-template-columns: repeat(2,minmax(0,1fr)); }.receipt-lines dl > label { grid-column: 1 / -1; }
   .inventory-cost-history > div { grid-template-columns: minmax(0,1fr); }
+  .movement-detail-sections { grid-template-columns: minmax(0,1fr); }.movement-detail-sections dl > div { grid-template-columns: minmax(0,1fr); gap: 4px; }
+}
+
+@media (max-width: 680px) {
+  .machine-economics-setting { grid-template-columns: auto minmax(0,1fr); align-items: start; padding: 16px; }.machine-economics-setting .feature-switch { grid-column: 2; justify-self: start; margin-top: 4px; }.machine-economics-setting > .inline-error,.settings-feature-readonly,.settings-feature-busy { grid-column: 1 / -1; }
 }

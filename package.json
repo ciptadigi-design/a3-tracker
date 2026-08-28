@@ -9,6 +9,7 @@
     "lint": "eslint .",
     "test:component-ux": "node --test src/features/components/*.test.js",
     "test:machine-cost-ui": "node --test src/features/machineCost/*.test.js",
+    "test:inventory-ui": "node --test src/features/inventory/*.test.js",
     "preview": "vite preview"
   },
   "dependencies": {
