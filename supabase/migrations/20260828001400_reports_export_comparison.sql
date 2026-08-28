@@ -18,6 +18,7 @@ begin
   perform * from public.resolve_operational_report_scope(
     target_account_id,target_branch_id,target_machine_id,target_period_start,target_period_end
   );
+  v_duration:=target_period_end-target_period_start+1;
   if target_period_preset not in ('today','this_week','this_month','last_month','this_year','custom') then
     raise exception 'valid report period preset is required' using errcode='22023';
   end if;
