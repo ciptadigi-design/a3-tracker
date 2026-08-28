@@ -117,25 +117,25 @@ select public.create_operational_incident('a5100000-0000-4000-8000-000000000001'
   'a5400000-0000-4000-8000-000000000001',null,null,null,2,null,'Operator',0,0,null,null,null);
 
 select public.create_operational_incident('a5100000-0000-4000-8000-000000000001','a5300000-0000-4000-8000-000000000001',
-  '2026-09-05 11:00+07','kualitas','human','Selected machine material loss A','b5c00000-0000-4000-8000-000000000010',
+  '2026-06-05 11:00+07','kualitas','human','Selected machine material loss A','b5c00000-0000-4000-8000-000000000010',
   'a5400000-0000-4000-8000-000000000001',null,null,null,1,null,'Operator',9000,0,null,null,null);
 select public.create_operational_incident('a5100000-0000-4000-8000-000000000001','a5300000-0000-4000-8000-000000000001',
-  '2026-09-06 11:00+07','kualitas','human','Selected machine material loss B','b5c00000-0000-4000-8000-000000000011',
+  '2026-06-06 11:00+07','kualitas','human','Selected machine material loss B','b5c00000-0000-4000-8000-000000000011',
   'a5400000-0000-4000-8000-000000000001',null,null,null,1,null,'Operator',2000,0,null,null,null);
 select public.create_operational_incident('a5100000-0000-4000-8000-000000000001','a5300000-0000-4000-8000-000000000001',
-  '2026-09-07 11:00+07','prosedur','human','Branch-only assessed loss','b5c00000-0000-4000-8000-000000000012',
+  '2026-06-07 11:00+07','prosedur','human','Branch-only assessed loss','b5c00000-0000-4000-8000-000000000012',
   null,null,null,null,1,null,'Operator',9000,0,null,null,null);
 select public.create_operational_incident('a5100000-0000-4000-8000-000000000001','a5300000-0000-4000-8000-000000000001',
-  '2026-09-08 11:00+07','prosedur','human','Different machine assessed loss','b5c00000-0000-4000-8000-000000000013',
+  '2026-06-08 11:00+07','prosedur','human','Different machine assessed loss','b5c00000-0000-4000-8000-000000000013',
   'a5400000-0000-4000-8000-000000000002',null,null,null,1,null,'Operator',5000,0,null,null,null);
 select public.create_operational_incident('a5100000-0000-4000-8000-000000000001','a5300000-0000-4000-8000-000000000001',
-  '2026-09-09 11:00+07','prosedur','human','Voided selected-machine loss','b5c00000-0000-4000-8000-000000000014',
+  '2026-06-09 11:00+07','prosedur','human','Voided selected-machine loss','b5c00000-0000-4000-8000-000000000014',
   'a5400000-0000-4000-8000-000000000001',null,null,null,1,null,'Operator',6000,0,null,null,null);
 select public.void_operational_incident(
   (select id from public.operational_incidents where client_request_id='b5c00000-0000-4000-8000-000000000014'),
   'Duplicate test incident');
 select public.create_operational_incident('a5100000-0000-4000-8000-000000000001','a5300000-0000-4000-8000-000000000001',
-  '2026-10-01 11:00+07','prosedur','human','Outside-period selected-machine loss','b5c00000-0000-4000-8000-000000000015',
+  '2026-07-01 11:00+07','prosedur','human','Outside-period selected-machine loss','b5c00000-0000-4000-8000-000000000015',
   'a5400000-0000-4000-8000-000000000001',null,null,null,1,null,'Operator',7000,0,null,null,null);
 
 select extensions.is((select known_operating_cost from public.get_machine_economics_period('a5100000-0000-4000-8000-000000000001','a5400000-0000-4000-8000-000000000001','2026-08-01','2026-08-10')),1500000::numeric,'partial period daily-prorates 10 of 31 days and includes one-time cost');
@@ -145,8 +145,8 @@ select extensions.is((select operating_cost_records from public.get_machine_econ
 select extensions.is((select jsonb_array_length(operating_cost_breakdown) from public.get_machine_economics_period('a5100000-0000-4000-8000-000000000001','a5400000-0000-4000-8000-000000000001','2026-08-01','2026-08-27')),2,'category breakdown remains composable');
 select extensions.is((select known_error_waste_cost from public.get_machine_economics_period('a5100000-0000-4000-8000-000000000001','a5400000-0000-4000-8000-000000000001','2026-08-01','2026-08-27')),100000::numeric,'only explicit incident monetary evidence becomes error/waste cost');
 select extensions.is((select unknown_error_waste_events from public.get_machine_economics_period('a5100000-0000-4000-8000-000000000001','a5400000-0000-4000-8000-000000000001','2026-08-01','2026-08-27')),1,'zero-loss incident remains unpriced evidence rather than arbitrary money');
-select extensions.is((select known_error_waste_cost from public.get_machine_economics_period('a5100000-0000-4000-8000-000000000001','a5400000-0000-4000-8000-000000000001','2026-09-01','2026-09-30')),11000::numeric,'same-machine assessed incidents sum to Rp11k while branch-only, other-machine, voided, and outside-period incidents are excluded');
-select extensions.is((select known_error_waste_events from public.get_machine_economics_period('a5100000-0000-4000-8000-000000000001','a5400000-0000-4000-8000-000000000001','2026-09-01','2026-09-30')),2,'only the two explicit selected-machine incidents count as known Error/Waste evidence');
+select extensions.is((select known_error_waste_cost from public.get_machine_economics_period('a5100000-0000-4000-8000-000000000001','a5400000-0000-4000-8000-000000000001','2026-06-01','2026-06-30')),11000::numeric,'same-machine assessed incidents sum to Rp11k while branch-only, other-machine, voided, and outside-period incidents are excluded');
+select extensions.is((select known_error_waste_events from public.get_machine_economics_period('a5100000-0000-4000-8000-000000000001','a5400000-0000-4000-8000-000000000001','2026-06-01','2026-06-30')),2,'only the two explicit selected-machine incidents count as known Error/Waste evidence');
 select extensions.is((select known_machine_operating_cost from public.get_machine_economics_period('a5100000-0000-4000-8000-000000000001','a5400000-0000-4000-8000-000000000001','2026-08-01','2026-08-27')),8600000::numeric,'machine economics adds M2.5A consumption, operating cost, and error/waste exactly once');
 select extensions.is((select known_machine_operating_cost_per_click from public.get_machine_economics_period('a5100000-0000-4000-8000-000000000001','a5400000-0000-4000-8000-000000000001','2026-08-01','2026-08-27')),17200::numeric,'broader known cost per click uses valid M2.5A click volume');
 select extensions.is((select known_standard_machine_cost from public.get_machine_economics_period('a5100000-0000-4000-8000-000000000001','a5400000-0000-4000-8000-000000000001','2026-08-01','2026-08-27')),5400000::numeric,'Standard Machine Cost adds only component consumption and assessed error/waste');
