@@ -131,9 +131,9 @@ select extensions.ok((select previous_period_start='2026-08-03' and previous_per
   where metric_code='TOTAL_CLICKS'),'This Week compares with the previous Monday-through-Sunday week');
 select extensions.throws_ok($$select public.get_report_period_comparison('b6100000-0000-4000-8000-000000000001',null,null,'2026-08-01','2026-08-31','invalid')$$,'22023',null,'unknown comparison preset is rejected by PostgreSQL');
 select extensions.is((select current_value from public.get_report_period_comparison('b6100000-0000-4000-8000-000000000001',null,'b6400000-0000-4000-8000-000000000001','2026-08-10','2026-08-20','custom') where metric_code='TOTAL_CLICKS'),350::numeric,'comparison current clicks reuse effective counter usage and local operational dates');
-select extensions.ok((select delta_percent is null and delta_status='NO_COMPARISON'
+select extensions.ok((select delta_percent is null and delta_status='NEW'
   from public.get_report_period_comparison('b6100000-0000-4000-8000-000000000001',null,'b6400000-0000-4000-8000-000000000001','2026-08-10','2026-08-20','custom')
-  where metric_code='TOTAL_CLICKS'),'invalid previous denominator never emits NaN, Infinity, or a fabricated percentage');
+  where metric_code='TOTAL_CLICKS'),'zero previous denominator with positive current value returns NEW without NaN, Infinity, or a fabricated percentage');
 select extensions.is((select current_evidence_status from public.get_report_period_comparison('b6100000-0000-4000-8000-000000000001','b6300000-0000-4000-8000-000000000001',null,'2026-08-01','2026-08-31','this_month') where metric_code='ESTIMATED_MACHINE_REVENUE'),'PARTIAL_PRICE','period comparison preserves partial price evidence across machines');
 select extensions.is((select current_evidence_status from public.get_report_period_comparison('b6100000-0000-4000-8000-000000000001',null,'b6400000-0000-4000-8000-000000000001','2026-08-01','2026-08-31','this_month') where metric_code='ESTIMATED_CONTRIBUTION'),'PARTIAL_COST','period comparison preserves unknown FIFO cost qualification');
 
