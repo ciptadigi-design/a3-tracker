@@ -52,6 +52,7 @@ export function BlockingDialog({
     function handleKeyDown(event) {
       if (!isTopmost(token)) return
       if (event.key === 'Escape' && !busyRef.current) {
+        if (event.target instanceof HTMLElement && event.target.getAttribute('role') === 'combobox' && event.target.getAttribute('aria-expanded') === 'true') return
         event.preventDefault()
         event.stopImmediatePropagation()
         onCloseRef.current()

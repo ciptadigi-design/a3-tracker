@@ -18,8 +18,8 @@ test('unknown-only consumption never appears as zero monetary cost', () => {
   assert.match(result.hint, /unknown acquisition cost/)
 })
 
-test('mixed known and unknown consumption labels the known portion', () => {
-  assert.deepEqual(knownConsumptionPresentation({ known_consumption_cost: 5700000, known_consumption_events: 2, unknown_consumption_events: 1 }, money), { value: 'Rp5700000 known', hint: '2 known · 1 unknown' })
+test('mixed known and unknown consumption keeps evidence separate from currency', () => {
+  assert.deepEqual(knownConsumptionPresentation({ known_consumption_cost: 5700000, known_consumption_events: 2, unknown_consumption_events: 1 }, money), { value: 'Rp5700000', hint: '2 component costs available · 1 cost unknown' })
 })
 
 test('legacy incomplete statuses remain intelligible while NO_DATA follows event semantics', () => {
@@ -59,8 +59,8 @@ test('primary Cost / Click presents the standard numerator without accounting ja
 
 test('primary Cost / Click qualifies partial evidence without treating it as zero', () => {
   assert.deepEqual(primaryCostPerClickPresentation({ known_standard_cost_per_click: 1.17, total_clicks: 1709, counter_status: 'COMPLETE', unknown_consumption_events: 1, unknown_error_waste_events: 0 }, money), {
-    value: 'Rp1.17 known',
-    hint: 'Known costs only · 1 unknown component event',
+    value: 'Rp1.17',
+    hint: 'Based on available cost evidence · 1 component cost unknown',
   })
   assert.deepEqual(summaryStatusPresentation({ counter_status: 'COMPLETE', unknown_evidence_events: 1 }), ['Partial cost data', 'warning'])
 })

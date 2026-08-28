@@ -41,7 +41,7 @@ export function knownConsumptionPresentation(summary, formatCurrency) {
     value: '—',
     hint: `${plural(unknownEvents, 'consumption event')} ${unknownEvents === 1 ? 'has' : 'have'} unknown acquisition cost.`,
   }
-  if (unknownEvents > 0) return { value: `${formatCurrency(knownCost)} known`, hint: `${knownEvents} known · ${unknownEvents} unknown` }
+  if (unknownEvents > 0) return { value: formatCurrency(knownCost), hint: `${plural(knownEvents, 'component cost')} available · ${plural(unknownEvents, 'cost')} unknown` }
   return { value: formatCurrency(knownCost), hint: summary?.total_consumption_events ? `${plural(summary.total_consumption_events, 'replacement')}` : 'No component consumption occurred.' }
 }
 
@@ -55,13 +55,12 @@ export function primaryCostPerClickPresentation(summary, formatCurrency) {
   const unknownComponents = Number(summary?.unknown_consumption_events ?? 0)
   const unknownWaste = Number(summary?.unknown_error_waste_events ?? 0)
   if (summary?.known_standard_cost_per_click != null) {
-    const unknown = unknownComponents + unknownWaste
     return {
-      value: unknown > 0 ? `${formatCurrency(summary.known_standard_cost_per_click)} known` : formatCurrency(summary.known_standard_cost_per_click),
+      value: formatCurrency(summary.known_standard_cost_per_click),
       hint: unknownComponents > 0
-        ? `Known costs only · ${plural(unknownComponents, 'unknown component event')}`
+        ? `Based on available cost evidence · ${plural(unknownComponents, 'component cost')} unknown`
         : unknownWaste > 0
-          ? `Known costs only · ${plural(unknownWaste, 'unpriced Error/Waste event')}`
+          ? `Based on available cost evidence · ${plural(unknownWaste, 'Error / Waste cost')} unknown`
           : 'Component consumption + Error/Waste ÷ clicks',
     }
   }
@@ -84,7 +83,7 @@ export function componentCompositionPresentation(row, formatCurrency) {
   const known = Math.max(0, total - unknown)
   const knownCost = Number(row.known_consumption_cost ?? 0)
   if (unknown > 0 && knownCost === 0) return { value: 'Cost basis unknown', meta: plural(total, 'replacement'), showPercent: false }
-  if (unknown > 0) return { value: `${formatCurrency(knownCost)} known`, meta: `${known} known · ${unknown} unknown`, showPercent: true }
+  if (unknown > 0) return { value: formatCurrency(knownCost), meta: `${known} costed · ${unknown} cost unknown`, showPercent: true }
   return { value: formatCurrency(knownCost), meta: plural(total, 'replacement'), showPercent: true }
 }
 

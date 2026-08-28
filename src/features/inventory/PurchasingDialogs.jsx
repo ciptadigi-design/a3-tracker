@@ -56,13 +56,18 @@ export function InventoryPurchaseDialog({ account, suppliers, items, components,
   const draft = usePersistentDraft({ draftKey, initialValue: initial, validate: (value) => value && typeof value.supplierId === 'string' && Array.isArray(value.lines) })
   const requestId = useRef(crypto.randomUUID()); const [busy, setBusy] = useState(false); const [error, setError] = useState(null)
   const [inlineCreate, setInlineCreate] = useState(null)
+  const [openItemPicker, setOpenItemPicker] = useState(null)
+  const [highlightedItems, setHighlightedItems] = useState({})
   const change = (field, value) => { draft.updateDraft((current) => ({ ...current, [field]: value })); setError(null) }
   const changeLine = (rowId, field, value) => { draft.updateDraft((current) => ({ ...current, lines: current.lines.map((line) => line.rowId === rowId ? { ...line, [field]: value } : line) })); setError(null) }
+  const selectLineItem = (rowId, item) => {
+    draft.updateDraft((current) => ({ ...current, lines: current.lines.map((line) => line.rowId === rowId ? { ...line, itemId: item.id, itemSearch: inventoryItemLabel(item) } : line) }))
+    setOpenItemPicker(null); setError(null)
+  }
   const purchaseTotal = draft.value.lines.reduce((total, line) => total + (Number(line.quantity) || 0) * (Number(line.unitPrice) || 0), 0)
   async function createInlineItem(values) {
     const created = await onCreateItem(values)
-    changeLine(inlineCreate.rowId, 'itemId', created.id)
-    changeLine(inlineCreate.rowId, 'itemSearch', inventoryItemLabel(created))
+    selectLineItem(inlineCreate.rowId, created)
     setInlineCreate(null)
     return created
   }
@@ -86,18 +91,22 @@ export function InventoryPurchaseDialog({ account, suppliers, items, components,
         <label className="form-field"><span>External reference <small>Optional</small></span><input value={draft.value.supplierReference} onChange={(event) => change('supplierReference', event.target.value)} placeholder="Supplier invoice, PO, or integration ID" /></label>
       </div>
       <section className="purchase-lines-editor"><header><div><strong>Purchase lines</strong><span>All values are IDR acquisition evidence.</span></div><button className="secondary-button" type="button" onClick={() => change('lines', [...draft.value.lines, { rowId: crypto.randomUUID(), itemId: '', quantity: '1', unitPrice: '', notes: '' }])}><Plus size={15} />Add line</button></header>
-        {draft.value.lines.map((line, index) => { const item = items.find((candidate) => candidate.id === line.itemId); const discovery = discoverPurchaseItems(items, components, line.itemSearch ?? ''); const lineTotal = (Number(line.quantity) || 0) * (Number(line.unitPrice) || 0); return <div className="purchase-line-editor" key={line.rowId}>
-          <div className="purchase-item-discovery"><label className="form-field"><span>Inventory item / SKU <b className="required-mark">*</b></span><input type="search" value={line.itemSearch ?? (item ? inventoryItemLabel(item) : '')} onChange={(event) => { changeLine(line.rowId, 'itemSearch', event.target.value); if (line.itemId) changeLine(line.rowId, 'itemId', '') }} placeholder="Search item, SKU, or Component" autoComplete="off" /></label>
-            <div className="purchase-item-results" role="group" aria-label={`Inventory item options for line ${index + 1}`}>
-              {discovery.itemResults.slice(0, 8).map((candidate) => <button type="button" aria-pressed={candidate.id === line.itemId} className={candidate.id === line.itemId ? 'selected' : ''} key={candidate.id} onClick={() => { changeLine(line.rowId, 'itemId', candidate.id); changeLine(line.rowId, 'itemSearch', inventoryItemLabel(candidate)) }}><strong>{inventoryItemLabel(candidate)}</strong>{candidate.components?.name && <span>Component: {candidate.components.name}</span>}</button>)}
+        {draft.value.lines.map((line, index) => { const item = items.find((candidate) => candidate.id === line.itemId); const discovery = discoverPurchaseItems(items, components, line.itemSearch ?? ''); const visibleItems = discovery.itemResults.slice(0, 8); const highlightedIndex = Math.min(highlightedItems[line.rowId] ?? 0, Math.max(0, visibleItems.length - 1)); const listboxId = `purchase-item-options-${line.rowId}`; const lineTotal = (Number(line.quantity) || 0) * (Number(line.unitPrice) || 0); return <div className="purchase-line-editor" key={line.rowId}>
+          <div className="purchase-item-discovery" onFocusCapture={() => setOpenItemPicker(line.rowId)} onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) setOpenItemPicker(null) }}><label className="form-field"><span>Inventory item / SKU <b className="required-mark">*</b></span><input type="search" role="combobox" aria-autocomplete="list" aria-expanded={openItemPicker === line.rowId} aria-controls={listboxId} aria-activedescendant={openItemPicker === line.rowId && visibleItems[highlightedIndex] ? `${listboxId}-${visibleItems[highlightedIndex].id}` : undefined} value={line.itemSearch ?? (item ? inventoryItemLabel(item) : '')} onFocus={() => setOpenItemPicker(line.rowId)} onChange={(event) => { changeLine(line.rowId, 'itemSearch', event.target.value); if (line.itemId) changeLine(line.rowId, 'itemId', ''); setHighlightedItems((current) => ({ ...current, [line.rowId]: 0 })); setOpenItemPicker(line.rowId) }} onKeyDown={(event) => {
+            if (event.key === 'Escape') { event.preventDefault(); setOpenItemPicker(null); return }
+            if (event.key === 'ArrowDown' || event.key === 'ArrowUp') { event.preventDefault(); setOpenItemPicker(line.rowId); setHighlightedItems((current) => { const currentIndex = Math.min(current[line.rowId] ?? 0, Math.max(0, visibleItems.length - 1)); const next = event.key === 'ArrowDown' ? Math.min(visibleItems.length - 1, currentIndex + (openItemPicker === line.rowId ? 1 : 0)) : Math.max(0, currentIndex - 1); return { ...current, [line.rowId]: next } }); return }
+            if (event.key === 'Enter' && openItemPicker === line.rowId && visibleItems[highlightedIndex]) { event.preventDefault(); selectLineItem(line.rowId, visibleItems[highlightedIndex]) }
+          }} placeholder="Search item, SKU, or Component..." autoComplete="off" /></label>
+            {openItemPicker === line.rowId && <div className="purchase-item-results" id={listboxId} role="listbox" aria-label={`Inventory item options for line ${index + 1}`}>
+              {visibleItems.map((candidate, candidateIndex) => <button type="button" role="option" aria-selected={candidate.id === line.itemId} className={candidateIndex === highlightedIndex ? 'highlighted' : ''} id={`${listboxId}-${candidate.id}`} key={candidate.id} onMouseDown={(event) => event.preventDefault()} onMouseEnter={() => setHighlightedItems((current) => ({ ...current, [line.rowId]: candidateIndex }))} onClick={() => selectLineItem(line.rowId, candidate)}><strong>{inventoryItemLabel(candidate)}</strong>{candidate.components?.name && <span>Component: {candidate.components.name}</span>}</button>)}
               {discovery.missingComponents.map((component) => <div className="purchase-missing-item" key={component.id}><span><strong>{component.name}</strong><small>No inventory item configured</small></span><button type="button" onClick={() => setInlineCreate({ rowId: line.rowId, component })}><Plus size={14} />Create inventory item</button></div>)}
               {!discovery.itemResults.length && !discovery.missingComponents.length && <span className="purchase-item-no-results">No matching active Inventory Item{line.itemSearch ? ' or eligible Component' : ''}.</span>}
-            </div>
+            </div>}
           </div>
           <label className="form-field"><span>Quantity ({item?.unit ?? 'unit'}) <b className="required-mark">*</b></span><input type="number" min="0.0001" step="0.0001" inputMode="decimal" value={line.quantity} onChange={(event) => changeLine(line.rowId, 'quantity', event.target.value)} /></label>
           <label className="form-field"><span>Unit price (IDR) <b className="required-mark">*</b></span><input type="number" min="0" step="0.01" inputMode="decimal" value={line.unitPrice} onChange={(event) => changeLine(line.rowId, 'unitPrice', event.target.value)} /></label>
           <div className="purchase-line-total"><span>Line total</span><strong>{money.format(lineTotal)}</strong></div>
-          <button className="icon-button" type="button" disabled={draft.value.lines.length === 1} onClick={() => change('lines', draft.value.lines.filter((candidate) => candidate.rowId !== line.rowId))} aria-label={`Remove purchase line ${index + 1}`}><Trash2 size={16} /></button>
+          <button className="icon-button purchase-line-remove" type="button" disabled={draft.value.lines.length === 1} onClick={() => change('lines', draft.value.lines.filter((candidate) => candidate.rowId !== line.rowId))} aria-label={`Remove purchase line ${index + 1}`}><Trash2 size={16} /></button>
         </div> })}
       </section>
       <label className="form-field"><span>Purchase notes <small>Optional</small></span><textarea rows="2" value={draft.value.notes} onChange={(event) => change('notes', event.target.value)} /></label>

@@ -3,8 +3,7 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 
 const page = readFileSync(new URL('../../pages/MachineCostPage.jsx', import.meta.url), 'utf8')
-const summaryMarkup = page.slice(page.indexOf("activeTab === 'summary'"), page.indexOf(": summary && activeTab === 'details'"))
-const detailsMarkup = page.slice(page.indexOf("activeTab === 'details'"), page.indexOf('{costDialog'))
+const summaryMarkup = page.slice(page.indexOf("summary && activeTab === 'summary'"), page.indexOf('{costDialog'))
 
 test('default Summary contains exactly the four launch-facing KPI labels', () => {
   for (const label of ['Total Clicks', 'Component Consumption', 'Error / Waste', 'Cost / Click']) {
@@ -20,16 +19,22 @@ test('default Summary removes redundant standalone KPI cards', () => {
   assert.doesNotMatch(summaryMarkup, /label="Standard Machine Cost"/)
 })
 
-test('Cost Details retains audit evidence while Operating Costs remains a separate tab', () => {
-  for (const evidence of ['Component Cost / Click', 'Unknown component events', 'purchaseDisplay', 'inventoryDisplay', 'ComponentBreakdown', 'LifecycleEvidence']) {
-    assert.match(detailsMarkup, new RegExp(evidence))
+test('analytical Cost Details content is removed while Operating Costs remains separate', () => {
+  for (const removed of ['Cost Details', 'Cost Evidence', 'ComponentBreakdown', 'Component consumption', 'Known Inventory Cost Basis', 'Purchase Cost', 'Completed lifecycles', 'LifecycleEvidence']) {
+    assert.doesNotMatch(page, new RegExp(removed))
   }
-  assert.match(page, />Cost Details</)
   assert.match(page, />Operating Costs</)
+})
+
+test('primary partial-cost currencies never receive a known suffix', () => {
+  assert.doesNotMatch(summaryMarkup, /\$\{[^}]+\} known/)
+  assert.match(summaryMarkup, /consumptionDisplay\.value/)
+  assert.match(summaryMarkup, /primaryCostPerClickDisplay\.value/)
+  assert.match(page, /SummaryStatusBadge/)
 })
 
 test('tabs expose semantic selection state', () => {
   assert.match(page, /role="tablist"/)
-  assert.equal((page.match(/role="tab"/g) ?? []).length, 3)
+  assert.equal((page.match(/role="tab"/g) ?? []).length, 2)
   assert.match(page, /aria-selected=/)
 })
