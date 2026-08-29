@@ -29,6 +29,21 @@ insert into public.operational_people(id,account_id,name,code) values
 insert into public.inventory_locations(id,account_id,branch_id,code,name) values
 ('f4600000-0000-4000-8000-000000000003','f4100000-0000-4000-8000-000000000002','f4300000-0000-4000-8000-000000000002','OTHER','Other Account Location');
 
+-- M2.7B legacy-fixture continuity: scoped memberships and Operational People
+-- are explicitly assigned to the fixture branches that were account-wide before M2.7B.
+insert into public.account_membership_branches (account_id, membership_id, branch_id, assigned_by, updated_by)
+select membership.account_id, membership.id, branch.id, membership.created_by, membership.created_by
+from public.account_memberships membership
+join public.branches branch on branch.account_id = membership.account_id
+where membership.role <> 'owner'
+on conflict (membership_id, branch_id) do update set is_active = true;
+
+insert into public.operational_person_branches (account_id, operational_person_id, branch_id, assigned_by, updated_by)
+select person.account_id, person.id, branch.id, person.created_by, person.created_by
+from public.operational_people person
+join public.branches branch on branch.account_id = person.account_id
+on conflict (operational_person_id, branch_id) do update set is_active = true;
+
 set local role anon;
 select extensions.throws_ok('select * from public.inventory_items','42501',null,'anonymous cannot read inventory items');
 select extensions.throws_ok($$select public.initialize_inventory_stock('f4100000-0000-4000-8000-000000000001','f4500000-0000-4000-8000-000000000001','f4600000-0000-4000-8000-000000000001',1,now(),'f4400000-0000-4000-8000-000000000001',null,'f4700000-0000-4000-8000-000000000001')$$,'42501',null,'anonymous cannot initialize stock');

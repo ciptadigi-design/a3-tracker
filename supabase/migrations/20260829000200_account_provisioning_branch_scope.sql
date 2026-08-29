@@ -265,7 +265,10 @@ create or replace function public.manage_account_membership(
 ) returns public.account_memberships language plpgsql security definer set search_path='' as $$
 declare actor_id uuid:=auth.uid(); current_membership public.account_memberships%rowtype; result public.account_memberships%rowtype;
 begin
-  if actor_id is null or not public.can_manage_account_governance(target_account_id) then
+  if actor_id is null then
+    raise exception 'authentication required' using errcode='42501';
+  end if;
+  if not public.can_manage_account_governance(target_account_id) then
     raise exception 'workspace owner required' using errcode='42501'; end if;
   perform 1 from public.accounts where id=target_account_id for update;
   if not found then raise exception 'account not found' using errcode='P0002'; end if;
@@ -325,8 +328,9 @@ begin
   update public.profiles set username=target_username,display_name=btrim(target_display_name) where user_id=target_user_id;
   result:=public.manage_account_membership(target_account_id,target_user_id,target_role,target_status);
   membership_id:=result.id;
-  update public.account_membership_branches set is_active=false,updated_at=statement_timestamp(),updated_by=auth.uid()
-    where account_id=target_account_id and membership_id=result.id and is_active and not(branch_id=any(normalized_branches));
+  update public.account_membership_branches assignment set is_active=false,updated_at=statement_timestamp(),updated_by=auth.uid()
+    where assignment.account_id=target_account_id and assignment.membership_id=result.id and assignment.is_active
+      and not(assignment.branch_id=any(normalized_branches));
   insert into public.account_membership_branches(account_id,membership_id,branch_id,assigned_by,updated_by)
     select target_account_id,result.id,id,auth.uid(),auth.uid() from unnest(normalized_branches) branch(id)
     on conflict(membership_id,branch_id) do update set is_active=true,updated_at=statement_timestamp(),updated_by=auth.uid();
@@ -543,6 +547,11 @@ grant execute on function public.manage_workspace_settings(uuid,text,text,uuid),
 create or replace function public.enforce_branch_mutation_scope()
 returns trigger language plpgsql security definer set search_path='' as $$
 begin
+  if new.branch_id is not null and not exists(
+    select 1 from public.branches branch where branch.id=new.branch_id and branch.account_id=new.account_id
+  ) then
+    raise exception 'branch does not belong to account' using errcode='23503';
+  end if;
   if auth.uid() is not null and not public.can_access_operational_scope(new.account_id,new.branch_id) then
     raise exception 'branch access required' using errcode='42501';
   end if;

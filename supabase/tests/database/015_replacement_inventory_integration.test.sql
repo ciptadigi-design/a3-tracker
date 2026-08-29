@@ -87,6 +87,21 @@ insert into public.inventory_movements(id,account_id,inventory_item_id,location_
 ('c8200000-0000-4000-8000-000000000004','c1000000-0000-4000-8000-000000000001','c8100000-0000-4000-8000-000000000004','c8000000-0000-4000-8000-000000000001','opening_balance',2,'pcs','2026-08-10','Opening PIC','opening_balance','c8300000-0000-4000-8000-000000000004','c0000000-0000-4000-8000-000000000001','M24B Owner'),
 ('c8200000-0000-4000-8000-000000000005','c1000000-0000-4000-8000-000000000001','c8100000-0000-4000-8000-000000000007','c8000000-0000-4000-8000-000000000001','opening_balance',2,'bottle','2026-08-10','Opening PIC','opening_balance','c8300000-0000-4000-8000-000000000005','c0000000-0000-4000-8000-000000000001','M24B Owner');
 
+-- M2.7B legacy-fixture continuity: scoped memberships and Operational People
+-- are explicitly assigned to the fixture branches that were account-wide before M2.7B.
+insert into public.account_membership_branches (account_id, membership_id, branch_id, assigned_by, updated_by)
+select membership.account_id, membership.id, branch.id, membership.created_by, membership.created_by
+from public.account_memberships membership
+join public.branches branch on branch.account_id = membership.account_id
+where membership.role <> 'owner'
+on conflict (membership_id, branch_id) do update set is_active = true;
+
+insert into public.operational_person_branches (account_id, operational_person_id, branch_id, assigned_by, updated_by)
+select person.account_id, person.id, branch.id, person.created_by, person.created_by
+from public.operational_people person
+join public.branches branch on branch.account_id = person.account_id
+on conflict (operational_person_id, branch_id) do update set is_active = true;
+
 set local role anon;
 select extensions.throws_ok($$select public.replace_machine_component('c1000000-0000-4000-8000-000000000001','c4000000-0000-4000-8000-000000000001','c7000000-0000-4000-8000-000000000001',1000,'2026-08-20','normal_eol','worn',true,null,'Anonymous',null,'c9000000-0000-4000-8000-000000000001','external_untracked',null,null,null,'External')$$,'42501',null,'anonymous replacement denied');
 reset role;

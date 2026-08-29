@@ -115,6 +115,21 @@ values
   ('84000000-0000-4000-8000-000000000001', '81000000-0000-0000-0000-000000000001', '83000000-0000-0000-0000-000000000001', '51000000-0000-0000-0000-000000000001', 'M22-A-01', 'M2.2 Account A Machine', '80000000-0000-0000-0000-000000000001', '80000000-0000-0000-0000-000000000001'),
   ('84000000-0000-4000-8000-000000000002', '81000000-0000-0000-0000-000000000002', '83000000-0000-0000-0000-000000000002', '51000000-0000-0000-0000-000000000001', 'M22-B-01', 'M2.2 Account B Machine', '80000000-0000-0000-0000-000000000006', '80000000-0000-0000-0000-000000000006');
 
+-- M2.7B legacy-fixture continuity: scoped memberships and Operational People
+-- are explicitly assigned to the fixture branches that were account-wide before M2.7B.
+insert into public.account_membership_branches (account_id, membership_id, branch_id, assigned_by, updated_by)
+select membership.account_id, membership.id, branch.id, membership.created_by, membership.created_by
+from public.account_memberships membership
+join public.branches branch on branch.account_id = membership.account_id
+where membership.role <> 'owner'
+on conflict (membership_id, branch_id) do update set is_active = true;
+
+insert into public.operational_person_branches (account_id, operational_person_id, branch_id, assigned_by, updated_by)
+select person.account_id, person.id, branch.id, person.created_by, person.created_by
+from public.operational_people person
+join public.branches branch on branch.account_id = person.account_id
+on conflict (operational_person_id, branch_id) do update set is_active = true;
+
 set local role anon;
 select extensions.throws_ok(
   'select * from public.operational_incidents', '42501', null,

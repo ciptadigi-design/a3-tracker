@@ -225,6 +225,21 @@ values
   ('30000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000001', 'A-MAIN', 'Account A Main', '00000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000001'),
   ('30000000-0000-0000-0000-000000000002', '10000000-0000-0000-0000-000000000002', 'B-MAIN', 'Account B Main', '00000000-0000-0000-0000-000000000005', '00000000-0000-0000-0000-000000000005');
 
+-- M2.7B legacy-fixture continuity: scoped memberships and Operational People
+-- are explicitly assigned to the fixture branches that were account-wide before M2.7B.
+insert into public.account_membership_branches (account_id, membership_id, branch_id, assigned_by, updated_by)
+select membership.account_id, membership.id, branch.id, membership.created_by, membership.created_by
+from public.account_memberships membership
+join public.branches branch on branch.account_id = membership.account_id
+where membership.role <> 'owner'
+on conflict (membership_id, branch_id) do update set is_active = true;
+
+insert into public.operational_person_branches (account_id, operational_person_id, branch_id, assigned_by, updated_by)
+select person.account_id, person.id, branch.id, person.created_by, person.created_by
+from public.operational_people person
+join public.branches branch on branch.account_id = person.account_id
+on conflict (operational_person_id, branch_id) do update set is_active = true;
+
 set local role anon;
 select extensions.throws_ok(
   'select * from public.accounts', '42501', null,
@@ -291,10 +306,10 @@ reset role;
 
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000002', true);
-select extensions.lives_ok(
+select extensions.throws_ok(
   $$insert into public.branches (account_id, code, name)
     values ('10000000-0000-0000-0000-000000000001', 'ADMIN-CREATE', 'Admin Create')$$,
-  'admin can create a branch in their account'
+  '42501', null, 'admin cannot administer branches in their account'
 );
 select extensions.throws_ok(
   $$insert into public.branches (account_id, code, name)

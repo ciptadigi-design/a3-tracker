@@ -50,6 +50,21 @@ insert into public.machine_component_lifecycles(id,account_id,branch_id,machine_
 ('96000000-0000-0000-0000-000000000008','91000000-0000-0000-0000-000000000001','93000000-0000-0000-0000-000000000001','94000000-0000-0000-0000-000000000001','54000000-0000-0000-0000-000000000008','53000000-0000-0000-0000-000000000008','DEVELOPER_M','active',950000,'2025-12-01','tracking_start',100000,100000),
 ('96000000-0000-0000-0000-000000000009','91000000-0000-0000-0000-000000000001','93000000-0000-0000-0000-000000000001','94000000-0000-0000-0000-000000000002','54000000-0000-0000-0000-000000000001','53000000-0000-0000-0000-000000000001','CHARGING_CORONA_C','active',650000,'2025-12-01','tracking_start',40000,40000);
 
+-- M2.7B legacy-fixture continuity: scoped memberships and Operational People
+-- are explicitly assigned to the fixture branches that were account-wide before M2.7B.
+insert into public.account_membership_branches (account_id, membership_id, branch_id, assigned_by, updated_by)
+select membership.account_id, membership.id, branch.id, membership.created_by, membership.created_by
+from public.account_memberships membership
+join public.branches branch on branch.account_id = membership.account_id
+where membership.role <> 'owner'
+on conflict (membership_id, branch_id) do update set is_active = true;
+
+insert into public.operational_person_branches (account_id, operational_person_id, branch_id, assigned_by, updated_by)
+select person.account_id, person.id, branch.id, person.created_by, person.created_by
+from public.operational_people person
+join public.branches branch on branch.account_id = person.account_id
+on conflict (operational_person_id, branch_id) do update set is_active = true;
+
 set local role anon;
 select extensions.throws_ok($$select public.replace_machine_component('91000000-0000-0000-0000-000000000001','94000000-0000-0000-0000-000000000001','96000000-0000-0000-0000-000000000001',1000000,'2026-02-01','normal_eol','worn',null,null,'Anon',null,'97000000-0000-0000-0000-000000000001','external_untracked',null,null,null,'Regression fixture')$$,'42501',null,'anonymous replacement denied');
 reset role;

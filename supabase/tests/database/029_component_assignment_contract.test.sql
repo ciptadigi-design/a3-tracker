@@ -53,6 +53,21 @@ insert into public.machine_model_components(id,account_id,machine_model_id,compo
 insert into public.machine_component_lifecycles(id,account_id,branch_id,machine_id,model_component_profile_id,component_id,slot_code,status,installation_source,baseline_expected_clicks_snapshot,expected_at_install) values
 ('e0850000-0000-4000-8000-000000000001','e0100000-0000-4000-8000-000000000001','e0300000-0000-4000-8000-000000000001','e0800000-0000-4000-8000-000000000002','e0700000-0000-4000-8000-000000000003','e0600000-0000-4000-8000-000000000001','GEAR-C','unknown','legacy_import',150000,150000);
 
+-- M2.7B legacy-fixture continuity: scoped memberships and Operational People
+-- are explicitly assigned to the fixture branches that were account-wide before M2.7B.
+insert into public.account_membership_branches (account_id, membership_id, branch_id, assigned_by, updated_by)
+select membership.account_id, membership.id, branch.id, membership.created_by, membership.created_by
+from public.account_memberships membership
+join public.branches branch on branch.account_id = membership.account_id
+where membership.role <> 'owner'
+on conflict (membership_id, branch_id) do update set is_active = true;
+
+insert into public.operational_person_branches (account_id, operational_person_id, branch_id, assigned_by, updated_by)
+select person.account_id, person.id, branch.id, person.created_by, person.created_by
+from public.operational_people person
+join public.branches branch on branch.account_id = person.account_id
+on conflict (operational_person_id, branch_id) do update set is_active = true;
+
 set local role authenticated;
 select set_config('request.jwt.claim.sub','e0000000-0000-4000-8000-000000000001',true);
 select extensions.lives_ok($$select public.save_machine_model_component_profile('e0100000-0000-4000-8000-000000000001','e0500000-0000-4000-8000-000000000001',null,'e0600000-0000-4000-8000-000000000002','ROLLER-P',4,'counter_based',90000,true,30,15,5,0,'Profile retry','e0900000-0000-4000-8000-000000000011')$$,'owner creates profile through idempotent RPC');

@@ -135,6 +135,21 @@ insert into public.machines(id,account_id,branch_id,machine_model_id,machine_cod
 values('b4000000-0000-0000-0000-000000000025','b1000000-0000-0000-0000-000000000001','b3000000-0000-0000-0000-000000000001','51000000-0000-0000-0000-000000000001','M23D-TONER','M23D Toner Dataset');
 select pg_temp.add_adaptive_samples('b4000000-0000-0000-0000-000000000025','54000000-0000-0000-0000-000000000025',array[13500,13800,13900,14000,14200,14500]);
 
+-- M2.7B legacy-fixture continuity: scoped memberships and Operational People
+-- are explicitly assigned to the fixture branches that were account-wide before M2.7B.
+insert into public.account_membership_branches (account_id, membership_id, branch_id, assigned_by, updated_by)
+select membership.account_id, membership.id, branch.id, membership.created_by, membership.created_by
+from public.account_memberships membership
+join public.branches branch on branch.account_id = membership.account_id
+where membership.role <> 'owner'
+on conflict (membership_id, branch_id) do update set is_active = true;
+
+insert into public.operational_person_branches (account_id, operational_person_id, branch_id, assigned_by, updated_by)
+select person.account_id, person.id, branch.id, person.created_by, person.created_by
+from public.operational_people person
+join public.branches branch on branch.account_id = person.account_id
+on conflict (operational_person_id, branch_id) do update set is_active = true;
+
 set local role authenticated;
 select set_config('request.jwt.claim.sub','b0000000-0000-0000-0000-000000000001',true);
 select extensions.ok((select recommendation_state='no_data' and usable_samples=0 and observed_expected_life is null and confidence_label='no_data' and confidence_score=0 from public.component_adaptive_intelligence where account_id='b1000000-0000-0000-0000-000000000001' and slot_code='CHARGING_CORONA_M'),'zero samples produce intentional no-data state');

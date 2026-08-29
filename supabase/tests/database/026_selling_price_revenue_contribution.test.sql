@@ -69,6 +69,21 @@ insert into public.operational_incidents(account_id,branch_id,machine_id,occurre
 ('d5100000-0000-4000-8000-000000000001','d5300000-0000-4000-8000-000000000001',null,'2026-08-12 11:00+07','kualitas','human',11000,'Branch-only assessed waste','d5700000-0000-4000-8000-000000000002','d5000000-0000-4000-8000-000000000001','d5000000-0000-4000-8000-000000000001'),
 ('d5100000-0000-4000-8000-000000000001','d5300000-0000-4000-8000-000000000001','d5400000-0000-4000-8000-000000000001','2026-08-13 10:00+07','kualitas','human',0,'Unknown machine waste cost','d5700000-0000-4000-8000-000000000003','d5000000-0000-4000-8000-000000000001','d5000000-0000-4000-8000-000000000001');
 
+-- M2.7B legacy-fixture continuity: scoped memberships and Operational People
+-- are explicitly assigned to the fixture branches that were account-wide before M2.7B.
+insert into public.account_membership_branches (account_id, membership_id, branch_id, assigned_by, updated_by)
+select membership.account_id, membership.id, branch.id, membership.created_by, membership.created_by
+from public.account_memberships membership
+join public.branches branch on branch.account_id = membership.account_id
+where membership.role <> 'owner'
+on conflict (membership_id, branch_id) do update set is_active = true;
+
+insert into public.operational_person_branches (account_id, operational_person_id, branch_id, assigned_by, updated_by)
+select person.account_id, person.id, branch.id, person.created_by, person.created_by
+from public.operational_people person
+join public.branches branch on branch.account_id = person.account_id
+on conflict (operational_person_id, branch_id) do update set is_active = true;
+
 set local role authenticated;
 select set_config('request.jwt.claim.sub','d5000000-0000-4000-8000-000000000001',true);
 select public.create_machine_selling_price('d5100000-0000-4000-8000-000000000001','d5400000-0000-4000-8000-000000000001',800,'2026-08-01 00:00+07','Initial price','d5800000-0000-4000-8000-000000000001');

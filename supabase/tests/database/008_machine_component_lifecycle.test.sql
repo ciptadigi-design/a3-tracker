@@ -41,6 +41,21 @@ insert into public.counter_readings(id,account_id,machine_id,counter_type_id,rea
 insert into public.machine_component_lifecycles(id,account_id,branch_id,machine_id,model_component_profile_id,component_id,slot_code,status,installation_source,baseline_expected_clicks_snapshot,expected_at_install,notes) values
 ('86000000-0000-0000-0000-000000000001','81000000-0000-0000-0000-000000000001','83000000-0000-0000-0000-000000000001','84000000-0000-0000-0000-000000000001','54000000-0000-0000-0000-000000000006','53000000-0000-0000-0000-000000000006','CLEANING_UNIT','unknown','legacy_import',200000,200000,'sentinel');
 
+-- M2.7B legacy-fixture continuity: scoped memberships and Operational People
+-- are explicitly assigned to the fixture branches that were account-wide before M2.7B.
+insert into public.account_membership_branches (account_id, membership_id, branch_id, assigned_by, updated_by)
+select membership.account_id, membership.id, branch.id, membership.created_by, membership.created_by
+from public.account_memberships membership
+join public.branches branch on branch.account_id = membership.account_id
+where membership.role <> 'owner'
+on conflict (membership_id, branch_id) do update set is_active = true;
+
+insert into public.operational_person_branches (account_id, operational_person_id, branch_id, assigned_by, updated_by)
+select person.account_id, person.id, branch.id, person.created_by, person.created_by
+from public.operational_people person
+join public.branches branch on branch.account_id = person.account_id
+on conflict (operational_person_id, branch_id) do update set is_active = true;
+
 set local role anon;
 select extensions.throws_ok('select * from public.machine_component_lifecycles','42501',null,'anonymous lifecycle read denied');
 select extensions.throws_ok($$select public.initialize_machine_component_lifecycle('81000000-0000-0000-0000-000000000001','84000000-0000-0000-0000-000000000001','54000000-0000-0000-0000-000000000006',null,null,'86000000-0000-0000-0000-000000000011',null)$$,'42501',null,'anonymous initialization denied');
