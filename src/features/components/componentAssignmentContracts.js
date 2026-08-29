@@ -23,12 +23,16 @@ export function activeAssignmentSummary({
 }
 
 function normalizedSlot(profile) {
-  return profile.slot_code.trim().toLocaleLowerCase("en-US");
+  if (typeof profile?.slot_code !== "string") return null;
+  const slot = profile.slot_code.trim();
+  return slot ? slot.toLocaleLowerCase("en-US") : null;
 }
 
 function effectiveProfilePrecedence(profile, accountId) {
-  const parsedMilliseconds = Date.parse(profile.created_at);
-  const fractionalSeconds = profile.created_at.match(/\.(\d+)/)?.[1] ?? "";
+  const createdAt =
+    typeof profile?.created_at === "string" ? profile.created_at : "";
+  const parsedMilliseconds = Date.parse(createdAt);
+  const fractionalSeconds = createdAt.match(/\.(\d+)/)?.[1] ?? "";
   const subMillisecondMicros = Number(
     fractionalSeconds.padEnd(6, "0").slice(3, 6),
   );
@@ -37,7 +41,7 @@ function effectiveProfilePrecedence(profile, accountId) {
     Number.isNaN(parsedMilliseconds)
       ? 0
       : parsedMilliseconds * 1000 + subMillisecondMicros,
-    profile.id,
+    typeof profile?.id === "string" ? profile.id : "",
   ];
 }
 
@@ -59,19 +63,28 @@ function hasHigherPrecedence(candidate, current, accountId) {
 // archived workspace row intentionally shadows the shared default.
 export function effectiveProfiles(profiles, accountId, modelId) {
   const bySlot = new Map();
-  for (const profile of profiles.filter(
+  const candidates = Array.isArray(profiles) ? profiles : [];
+  for (const profile of candidates.filter(
     (item) =>
-      item.machine_model_id === modelId &&
+      item?.machine_model_id === modelId &&
       (item.account_id == null || item.account_id === accountId),
   )) {
     const slot = normalizedSlot(profile);
+    if (!slot) continue;
     const current = bySlot.get(slot);
     if (!current || hasHigherPrecedence(profile, current, accountId))
       bySlot.set(slot, profile);
   }
   return [...bySlot.values()].sort(
-    (a, b) =>
-      a.display_order - b.display_order || a.slot_code.localeCompare(b.slot_code),
+    (a, b) => {
+      const aOrder = Number.isFinite(Number(a.display_order))
+        ? Number(a.display_order)
+        : Number.MAX_SAFE_INTEGER;
+      const bOrder = Number.isFinite(Number(b.display_order))
+        ? Number(b.display_order)
+        : Number.MAX_SAFE_INTEGER;
+      return aOrder - bOrder || String(a.slot_code).localeCompare(String(b.slot_code));
+    },
   );
 }
 

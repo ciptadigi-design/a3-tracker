@@ -172,6 +172,77 @@ test("effective profile recency preserves PostgreSQL microsecond ordering", () =
   assert.equal(effective[0].is_active, true);
 });
 
+test("DEV REST projection without created_at cannot crash effective resolution", () => {
+  const effective = effectiveProfiles(
+    [
+      {
+        id: "54000000-0000-0000-0000-000000000020",
+        account_id: null,
+        machine_model_id: "c1070",
+        slot_code: "GEAR",
+        display_order: 20,
+        is_active: true,
+      },
+      {
+        id: "93328b69-30e7-41fb-a2f9-527e0a5bc558",
+        account_id: "account",
+        machine_model_id: "c1070",
+        slot_code: "GEAR",
+        display_order: 0,
+        is_active: true,
+      },
+      {
+        id: "0175db65-e32c-4d35-a4df-007e422939ab",
+        account_id: "account",
+        machine_model_id: "c1070",
+        slot_code: "GEAR_TEST",
+        display_order: 0,
+        is_active: false,
+      },
+    ],
+    "account",
+    "c1070",
+  );
+
+  assert.deepEqual(
+    effective.map(({ id, slot_code, is_active }) => ({
+      id,
+      slot_code,
+      is_active,
+    })),
+    [
+      {
+        id: "93328b69-30e7-41fb-a2f9-527e0a5bc558",
+        slot_code: "GEAR",
+        is_active: true,
+      },
+      {
+        id: "0175db65-e32c-4d35-a4df-007e422939ab",
+        slot_code: "GEAR_TEST",
+        is_active: false,
+      },
+    ],
+  );
+});
+
+test("effective resolver safely ignores malformed collections and slot identities", () => {
+  assert.deepEqual(effectiveProfiles(undefined, "account", "c1070"), []);
+  assert.deepEqual(effectiveProfiles(null, "account", "c1070"), []);
+  assert.deepEqual(effectiveProfiles({}, "account", "c1070"), []);
+  assert.deepEqual(
+    effectiveProfiles(
+      [
+        null,
+        { machine_model_id: "c1070", slot_code: null },
+        { machine_model_id: "c1070", slot_code: "  " },
+      ],
+      "account",
+      "c1070",
+    ),
+    [],
+  );
+});
+
 test("archived Catalog/Profile cards expose Restore only to managers", () => {
   assert.deepEqual(
     archivedConfigurationActions({ isActive: false, canManage: true }),

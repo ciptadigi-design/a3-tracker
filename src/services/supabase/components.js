@@ -5,7 +5,10 @@ const componentFields = 'id, account_id, code, name, category, description, manu
 const profileFields = `id, account_id, machine_model_id, component_id, slot_code, display_order, tracking_method,
 baseline_expected_clicks, adaptive_enabled, healthy_threshold_percent, watch_threshold_percent,
 warning_threshold_percent, critical_threshold_percent, notes, is_active, archived_at, updated_at,
+created_at,
 components (${componentFields})`
+
+const rows = (value) => Array.isArray(value) ? value : []
 
 export async function loadComponentFoundation({ accountId } = {}) {
   const [manufacturers, models, components, profiles, intelligence, samples] = await Promise.all([
@@ -22,8 +25,8 @@ export async function loadComponentFoundation({ accountId } = {}) {
   ])
   for (const result of [manufacturers, models, components, profiles, intelligence, samples]) if (result.error) throw result.error
   return {
-    manufacturers: manufacturers.data ?? [], models: models.data ?? [], components: components.data ?? [], profiles: profiles.data ?? [],
-    intelligence: intelligence.data ?? [], intelligenceSamples: samples.data ?? [],
+    manufacturers: rows(manufacturers.data), models: rows(models.data), components: rows(components.data), profiles: rows(profiles.data),
+    intelligence: rows(intelligence.data), intelligenceSamples: rows(samples.data),
   }
 }
 

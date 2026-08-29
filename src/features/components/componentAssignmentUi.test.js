@@ -33,6 +33,25 @@ test("archived configuration uses Restore and slot codes remain visible", () => 
   assert.match(page, /assignmentSummary\.slotCount/);
 });
 
+test("all three Components tabs retain renderable page sections", () => {
+  for (const label of [
+    "Machine Components",
+    "Model Profiles",
+    "Component Catalog",
+  ])
+    assert.match(page, new RegExp(label));
+  assert.match(page, /view\.tab === 'machine' && <MachineComponentsPanel/);
+  assert.match(page, /view\.tab === 'profiles' && <>/);
+  assert.match(page, /view\.tab === 'catalog' && <>/);
+});
+
+test("profile payload includes resolver recency and load failures keep a safe page state", () => {
+  assert.match(service, /created_at,/);
+  assert.match(page, /Components could not be loaded\./);
+  assert.match(page, /role="alert"/);
+  assert.doesNotMatch(page, /\{error\.message\}/);
+});
+
 test("machine-specific add uses BlockingDialog with accessible dismissal and busy state", () => {
   assert.match(dialog, /BlockingDialog/);
   assert.match(dialog, /aria-label="Close machine component form"/);
