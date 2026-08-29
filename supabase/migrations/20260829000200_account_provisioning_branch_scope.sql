@@ -179,6 +179,7 @@ returns boolean language sql stable security definer set search_path='' as $$
             )
         )
       )
+  )
 $$;
 
 create or replace function public.can_access_operational_scope(target_account_id uuid,target_branch_id uuid)
