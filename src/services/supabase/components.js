@@ -1,4 +1,5 @@
 import { supabase } from './client.js'
+export { effectiveProfiles } from '../../features/components/componentAssignmentContracts.js'
 
 const componentFields = 'id, account_id, code, name, category, description, manufacturer_id, part_number, default_tracking_method, is_active, archived_at, updated_at'
 const profileFields = `id, account_id, machine_model_id, component_id, slot_code, display_order, tracking_method,
@@ -38,15 +39,6 @@ export async function adoptIntelligenceRecommendation({ accountId, profileId, ba
   })
   if (error) throw error
   return data
-}
-
-export function effectiveProfiles(profiles, accountId, modelId) {
-  const bySlot = new Map()
-  profiles.filter((item) => item.machine_model_id === modelId && item.account_id == null)
-    .forEach((item) => bySlot.set(item.slot_code.toUpperCase(), item))
-  profiles.filter((item) => item.machine_model_id === modelId && item.account_id === accountId)
-    .forEach((item) => bySlot.set(item.slot_code.toUpperCase(), item))
-  return [...bySlot.values()].sort((a, b) => a.display_order - b.display_order || a.slot_code.localeCompare(b.slot_code))
 }
 
 const optional = (value) => value?.trim() || null

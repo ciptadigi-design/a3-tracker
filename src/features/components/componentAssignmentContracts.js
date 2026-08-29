@@ -22,9 +22,66 @@ export function activeAssignmentSummary({
   return result;
 }
 
+function normalizedSlot(profile) {
+  return profile.slot_code.trim().toLocaleLowerCase("en-US");
+}
+
+function effectiveProfilePrecedence(profile, accountId) {
+  const parsedMilliseconds = Date.parse(profile.created_at);
+  const fractionalSeconds = profile.created_at.match(/\.(\d+)/)?.[1] ?? "";
+  const subMillisecondMicros = Number(
+    fractionalSeconds.padEnd(6, "0").slice(3, 6),
+  );
+  return [
+    profile.account_id === accountId ? 1 : 0,
+    Number.isNaN(parsedMilliseconds)
+      ? 0
+      : parsedMilliseconds * 1000 + subMillisecondMicros,
+    profile.id,
+  ];
+}
+
+function hasHigherPrecedence(candidate, current, accountId) {
+  const candidateRank = effectiveProfilePrecedence(candidate, accountId);
+  const currentRank = effectiveProfilePrecedence(current, accountId);
+  return (
+    candidateRank[0] > currentRank[0] ||
+    (candidateRank[0] === currentRank[0] &&
+      (candidateRank[1] > currentRank[1] ||
+        (candidateRank[1] === currentRank[1] &&
+          candidateRank[2].localeCompare(currentRank[2]) > 0)))
+  );
+}
+
+// Keep this resolver aligned with sync_machine_component_assignments_internal:
+// normalized slot, workspace over shared, then newest created row and UUID.
+// Activity is evaluated only after the effective row has been selected, so an
+// archived workspace row intentionally shadows the shared default.
+export function effectiveProfiles(profiles, accountId, modelId) {
+  const bySlot = new Map();
+  for (const profile of profiles.filter(
+    (item) =>
+      item.machine_model_id === modelId &&
+      (item.account_id == null || item.account_id === accountId),
+  )) {
+    const slot = normalizedSlot(profile);
+    const current = bySlot.get(slot);
+    if (!current || hasHigherPrecedence(profile, current, accountId))
+      bySlot.set(slot, profile);
+  }
+  return [...bySlot.values()].sort(
+    (a, b) =>
+      a.display_order - b.display_order || a.slot_code.localeCompare(b.slot_code),
+  );
+}
+
 export function machineComponentCapabilities({ assignment, canManage }) {
   return {
-    canRemove: Boolean(canManage && assignment?.lifecycle_status === "unknown"),
+    canRemove: Boolean(
+      canManage &&
+        assignment?.lifecycle_status === "unknown" &&
+        assignment?.lifecycle_id == null,
+    ),
     canInitialize: Boolean(
       canManage &&
         assignment?.lifecycle_status === "unknown" &&
