@@ -17,10 +17,10 @@ export async function loadMachineCostPeriod({ accountId, machineId, periodStart,
   return { ...summary.data, daily_trend: trend.data ?? [] }
 }
 
-export async function loadMachineOperatingCosts({ accountId, machineId }) {
+export async function loadMachineOperatingCosts({ accountId, machineId, branchId }) {
   const [costs, people] = await Promise.all([
     supabase.from('machine_operating_cost_history').select('*').eq('account_id', accountId).eq('machine_id', machineId).order('created_at', { ascending: false }),
-    supabase.from('operational_people').select('id,name,is_active').eq('account_id', accountId).order('name'),
+    supabase.from('operational_people').select('id,name,is_active,operational_person_branches!inner(branch_id,is_active)').eq('account_id', accountId).eq('operational_person_branches.branch_id', branchId).eq('operational_person_branches.is_active', true).order('name'),
   ])
   if (costs.error) throw costs.error
   if (people.error) throw people.error

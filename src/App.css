@@ -275,6 +275,10 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .form-field input:disabled, .form-field select:disabled { opacity: 0.58; cursor: not-allowed; }
 .form-field > small { color: var(--text-muted); font-size: 9px; line-height: 1.45; }
 .form-field-wide { grid-column: 1 / -1; }
+.branch-checklist { border: 1px solid var(--border-subtle); border-radius: 14px; padding: 12px; display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 9px; }
+.branch-checklist legend { padding: 0 6px; color: var(--text-soft); font-size: 11px; font-weight: 700; }
+.branch-checklist label { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.branch-checklist input { width: auto; }
 .locked-field { display: flex; align-items: center; gap: 9px; color: var(--text-soft); font-size: 12px; }
 .locked-field > span { min-width: 0; overflow-wrap: anywhere; }
 .field-error { display: flex; align-items: center; gap: 5px; color: var(--danger) !important; font-size: 10px !important; font-weight: 600 !important; }
@@ -1325,6 +1329,9 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   .report-action-bar { align-items: stretch; flex-direction: column; }.report-action-bar > div { width: 100%; }.report-action-bar button { flex: 1; }.report-period-comparison > div { grid-template-columns: repeat(2,minmax(0,1fr)); }.report-metric-select { width: 100%; }
 }
 @media (max-width: 520px) {
+  .branch-checklist { grid-template-columns: 1fr; }
+  .member-directory-list article { grid-template-columns: auto minmax(0,1fr) auto; }
+  .member-directory-list article > .scope-pill { display: none; }
   .report-filter-bar { grid-template-columns: minmax(0,1fr); }.report-filter-bar > *,.report-period { grid-column: 1; }.report-kpi-grid,.report-kpi-grid.compact,.report-period-comparison > div,.report-error-summary { grid-template-columns: minmax(0,1fr); }.report-table-row { grid-template-columns: minmax(0,1fr) !important; }.report-inline-filters { flex-direction: column; }.report-inline-filters label { width: 100%; }.report-detail-body dl > div { grid-template-columns: minmax(0,1fr); gap: 4px; }.report-tabs { margin-inline: -2px; }.report-action-bar > div { flex-direction: column; }
 }
 

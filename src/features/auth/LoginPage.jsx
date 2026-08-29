@@ -4,7 +4,7 @@ import { useAuth } from './useAuth.js'
 
 export function LoginPage() {
   const { signIn, configurationError } = useAuth()
-  const [email, setEmail] = useState('')
+  const [identifier, setIdentifier] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -15,9 +15,9 @@ export function LoginPage() {
     setError(null)
     setIsSubmitting(true)
     try {
-      await signIn(email.trim(), password)
-    } catch (signInError) {
-      setError(signInError.message || 'Unable to sign in. Check your credentials and try again.')
+      await signIn(identifier.trim(), password)
+    } catch {
+      setError('Invalid username/email or password.')
     } finally {
       setIsSubmitting(false)
     }
@@ -60,8 +60,8 @@ export function LoginPage() {
 
           <form onSubmit={handleSubmit} className="login-form">
             <label>
-              <span>Email address</span>
-              <input type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@company.com" autoComplete="email" required />
+              <span>Email or username</span>
+              <input type="text" value={identifier} onChange={(event) => setIdentifier(event.target.value)} placeholder="name@example.com or admin.tuparev" autoComplete="username" required />
             </label>
             <label>
               <span>Password</span>

@@ -22,7 +22,7 @@ export function DailyPage() {
   const { user } = useAuth()
   const { account, branch, membership } = useTenant()
   const machinesState = useMachines(account?.id, branch?.id)
-  const peopleState = useOperationalPeople(account?.id)
+  const peopleState = useOperationalPeople(account?.id, branch?.id)
   const activeMachines = useMemo(() => machinesState.machines.filter((machine) => machine.is_active), [machinesState.machines])
   const selectionKey = createUIStateKey({ userId: user?.id, accountId: account?.id, branchId: branch?.id, feature: 'daily-counter', entityId: 'selected-machine' })
   const legacySelectionKey = createDraftKey({ userId: user?.id, accountId: account?.id, branchId: branch?.id, feature: 'daily-counter', entityId: 'selected-machine' })

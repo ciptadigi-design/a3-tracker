@@ -51,7 +51,7 @@ export function MachinesPage({ navigate }) {
     else await refresh()
   }
 
-  const addDisabled = catalog.isLoading || Boolean(catalog.error)
+  const addDisabled = branches.length === 0 || catalog.isLoading || Boolean(catalog.error)
   const addAction = canManage ? <button className="primary-button" type="button" onClick={openCreate} disabled={addDisabled} title={catalog.error ? 'Machine catalog unavailable' : undefined}><Plus size={18} /> {catalog.isLoading ? 'Loading catalog…' : 'Add machine'}</button> : null
 
   return (
@@ -60,6 +60,7 @@ export function MachinesPage({ navigate }) {
       {success && <div className="success-banner" role="status"><CheckCircle2 size={18} /><span>{success}</span><button type="button" onClick={() => setSuccess(null)}>Dismiss</button></div>}
       {!canManage && <div className="permission-banner"><ShieldCheck size={18} /><span>Your {membership?.role ?? 'member'} role has read-only access to machine master data.</span></div>}
       {catalog.error && canManage && <div className="inline-error catalog-error" role="alert"><span>Machine catalog could not be loaded: {catalog.error.message}</span><button className="secondary-button" type="button" onClick={catalog.refresh}>Try again</button></div>}
+      {canManage && branches.length === 0 && <div className="permission-banner"><ShieldCheck size={18} /><span>No branch access assigned. Contact the workspace owner.</span></div>}
 
       <section className="machine-list-card glass-surface">
         <div className="list-toolbar"><div><span className="card-kicker">Machine master</span><h2>{isLoading ? 'Loading machines…' : `${activeMachines.length} active ${activeMachines.length === 1 ? 'machine' : 'machines'}`}</h2></div><button className="icon-button" type="button" onClick={refresh} aria-label="Refresh machines" disabled={isLoading}><RefreshCcw size={17} className={isLoading ? 'spin' : ''} /></button></div>

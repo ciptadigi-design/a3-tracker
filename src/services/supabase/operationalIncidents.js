@@ -13,6 +13,7 @@ const incidentFields = `
   incident_type,
   qty_affected,
   responsible_user_id,
+  responsible_person_id,
   responsible_name_snapshot,
   material_loss,
   service_loss,
@@ -36,7 +37,7 @@ const incidentFields = `
 `
 
 export async function loadOperationalIncidents({ accountId, branchId }) {
-  const [incidentResult, profileResult] = await Promise.all([
+  const [incidentResult, profileResult, peopleResult] = await Promise.all([
     supabase
       .from('operational_incidents')
       .select(incidentFields)
@@ -45,12 +46,14 @@ export async function loadOperationalIncidents({ accountId, branchId }) {
       .order('occurred_at', { ascending: false })
       .order('created_at', { ascending: false }),
     supabase.rpc('get_account_member_profiles', { target_account_id: accountId }),
+    supabase.from('operational_people').select('id,name,is_active,operational_person_branches!inner(branch_id,is_active)').eq('account_id', accountId).eq('is_active', true).eq('operational_person_branches.branch_id', branchId).eq('operational_person_branches.is_active', true).order('name'),
   ])
 
   if (incidentResult.error) throw incidentResult.error
   return {
     incidents: incidentResult.data ?? [],
     members: profileResult.error ? [] : profileResult.data ?? [],
+    people: peopleResult.error ? [] : peopleResult.data ?? [],
   }
 }
 
@@ -74,10 +77,16 @@ export async function loadOperationalIncident({ accountId, incidentId }) {
 
   if (incidentResult.error) throw incidentResult.error
   if (revisionResult.error) throw revisionResult.error
+  let people = []
+  if (incidentResult.data?.branch_id) {
+    const result = await supabase.from('operational_people').select('id,name,is_active,operational_person_branches!inner(branch_id,is_active)').eq('account_id', accountId).eq('operational_person_branches.branch_id', incidentResult.data.branch_id).eq('operational_person_branches.is_active', true).order('name')
+    if (!result.error) people = result.data ?? []
+  }
   return {
     incident: incidentResult.data,
     members: profileResult.error ? [] : profileResult.data ?? [],
     revisions: revisionResult.data ?? [],
+    people,
   }
 }
 

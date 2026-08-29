@@ -2,7 +2,7 @@ import { supabase } from './client.js'
 import { loadMachines } from './machines.js'
 import { projectCurrentComponentCards } from '../../features/components/componentCardProjection.js'
 
-export async function loadMachineComponentLifecycles({ accountId }) {
+export async function loadMachineComponentLifecycles({ accountId, branchId }) {
   const [machines, healthResult, historyResult, peopleResult, itemsResult, locationsResult, balancesResult, exclusionsResult] = await Promise.all([
     loadMachines({ accountId }),
     supabase
@@ -16,7 +16,7 @@ export async function loadMachineComponentLifecycles({ accountId }) {
       .select('*')
       .eq('account_id', accountId)
       .order('replaced_at', { ascending: false }),
-    supabase.from('operational_people').select('id,account_id,name,code,linked_user_id,is_active').eq('account_id', accountId).order('name'),
+    supabase.from('operational_people').select('id,account_id,name,code,linked_user_id,is_active,operational_person_branches!inner(branch_id,is_active)').eq('account_id', accountId).eq('operational_person_branches.branch_id', branchId).eq('operational_person_branches.is_active', true).order('name'),
     supabase.from('inventory_items').select('id,account_id,component_id,sku,name,unit,is_active').eq('account_id', accountId).eq('is_active', true).order('name'),
     supabase.from('inventory_locations').select('id,account_id,branch_id,code,name,is_active').eq('account_id', accountId).eq('is_active', true).order('name'),
     supabase.from('inventory_stock_balances').select('account_id,inventory_item_id,location_id,quantity').eq('account_id', accountId),

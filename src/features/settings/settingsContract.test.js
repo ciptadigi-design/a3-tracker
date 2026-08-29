@@ -13,7 +13,7 @@ test('Settings route and seven-section control-plane IA are active', () => {
   assert.doesNotMatch(app, /'\/settings': \['Settings'/)
   for (const label of ['Workspace', 'Branches', 'Members & Roles', 'Permissions', 'Operations', 'Machine Models', 'Advanced']) assert.match(page, new RegExp(label.replace('&', '\\&')))
   assert.match(sidebar, /Settings, active: true/)
-  assert.match(sidebar, /\['owner', 'admin'\]/)
+  assert.match(sidebar, /\['owner', 'platform_superuser'\]/)
 })
 
 test('Workspace and branch forms preserve drafts, timezone inheritance, and compact mobile actions', () => {

@@ -95,7 +95,7 @@ function ConfirmDialog({ title, message, confirmLabel, onCancel, onConfirm, busy
 
 export function ComponentsPage() {
   const { user } = useAuth()
-  const { account, membership, operationalPermissions } = useTenant()
+  const { account, branch, membership, operationalPermissions } = useTenant()
   const canManage = ['owner', 'admin'].includes(membership?.role)
   const canInitialize = canManage || (membership?.role === 'operator' && operationalPermissions?.operator_can_initialize_component)
   const canReplace = ['owner', 'admin', 'technician'].includes(membership?.role) || (membership?.role === 'operator' && operationalPermissions?.operator_can_replace_component)
@@ -118,7 +118,7 @@ export function ComponentsPage() {
     setLoading(true)
     setError(null)
     try {
-      const [foundation, lifecycleData] = await Promise.all([loadComponentFoundation({ accountId: account.id }), loadMachineComponentLifecycles({ accountId: account.id })])
+      const [foundation, lifecycleData] = await Promise.all([loadComponentFoundation({ accountId: account.id }), loadMachineComponentLifecycles({ accountId: account.id, branchId: branch?.id })])
       setData(foundation)
       setOperational(lifecycleData)
     } catch (loadError) {
@@ -126,16 +126,16 @@ export function ComponentsPage() {
     } finally {
       setLoading(false)
     }
-  }, [account.id])
+  }, [account.id, branch?.id])
 
   useEffect(() => {
     let active = true
-    Promise.all([loadComponentFoundation({ accountId: account.id }), loadMachineComponentLifecycles({ accountId: account.id })])
+    Promise.all([loadComponentFoundation({ accountId: account.id }), loadMachineComponentLifecycles({ accountId: account.id, branchId: branch?.id })])
       .then(([foundation, lifecycleData]) => { if (active) { setData(foundation); setOperational(lifecycleData) } })
       .catch((loadError) => { if (active) setError(loadError) })
       .finally(() => { if (active) setLoading(false) })
     return () => { active = false }
-  }, [account.id])
+  }, [account.id, branch?.id])
 
   const selectedModel = data.models.find((model) => model.id === view.modelId) ?? data.models[0] ?? null
   useEffect(() => {

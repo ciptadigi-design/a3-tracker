@@ -4,6 +4,7 @@ import { loadOperationalIncident, loadOperationalIncidents } from '../../service
 export function useOperationalIncidents(accountId, branchId) {
   const [incidents, setIncidents] = useState([])
   const [members, setMembers] = useState([])
+  const [people, setPeople] = useState([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState(null)
 
@@ -15,6 +16,7 @@ export function useOperationalIncidents(accountId, branchId) {
       const data = await loadOperationalIncidents({ accountId, branchId })
       setIncidents(data.incidents)
       setMembers(data.members)
+      setPeople(data.people)
     } catch (loadError) {
       setError(loadError)
     } finally {
@@ -23,13 +25,14 @@ export function useOperationalIncidents(accountId, branchId) {
   }, [accountId, branchId])
 
   useEffect(() => { refresh() }, [refresh])
-  return { incidents, members, isLoading, error, refresh }
+  return { incidents, members, people, isLoading, error, refresh }
 }
 
 export function useOperationalIncident(accountId, incidentId) {
   const [incident, setIncident] = useState(null)
   const [members, setMembers] = useState([])
   const [revisions, setRevisions] = useState([])
+  const [people, setPeople] = useState([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState(null)
 
@@ -42,6 +45,7 @@ export function useOperationalIncident(accountId, incidentId) {
       setIncident(data.incident)
       setMembers(data.members)
       setRevisions(data.revisions)
+      setPeople(data.people)
       return data.incident
     } catch (loadError) {
       setError(loadError)
@@ -51,5 +55,5 @@ export function useOperationalIncident(accountId, incidentId) {
   }, [accountId, incidentId])
 
   useEffect(() => { refresh() }, [refresh])
-  return { incident, members, revisions, isLoading, error, refresh, setIncident }
+  return { incident, members, people, revisions, isLoading, error, refresh, setIncident }
 }

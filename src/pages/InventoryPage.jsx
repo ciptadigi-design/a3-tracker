@@ -74,7 +74,7 @@ function LocationsPanel({ locations, showArchived, canManage, onEdit, onDelete }
 }
 
 export function InventoryPage() {
-  const { user } = useAuth(); const { account, branches, membership, operationalPermissions } = useTenant()
+  const { user } = useAuth(); const { account, branch, branches, membership, operationalPermissions } = useTenant()
   const canManage = ['owner', 'admin'].includes(membership?.role)
   const canAdjust = canManage || (membership?.role === 'operator' && operationalPermissions?.operator_can_adjust_inventory)
   const canTransfer = canManage || (membership?.role === 'operator' && operationalPermissions?.operator_can_transfer_inventory)
@@ -85,7 +85,7 @@ export function InventoryPage() {
   const { workflow, open: openWorkflow, close: closeWorkflow } = useInventoryWorkflowState({ userId: user.id, accountId: account.id })
   const [data, setData] = useState({ items: [], locations: [], balances: [], totals: [], movements: [], components: [], people: [], suppliers: [], purchases: [], purchaseLines: [], receipts: [], lastPrices: [], costHistory: [], costPositions: [] })
   const [loading, setLoading] = useState(true); const [error, setError] = useState(null); const [notice, setNotice] = useState(null)
-  const refresh = useCallback(async () => { setLoading(true); setError(null); try { setData(await loadInventory({ accountId: account.id, includeArchived: canManage })) } catch (loadError) { setError(loadError) } finally { setLoading(false) } }, [account.id, canManage])
+  const refresh = useCallback(async () => { setLoading(true); setError(null); try { setData(await loadInventory({ accountId: account.id, branchId: branch?.id, includeArchived: canManage })) } catch (loadError) { setError(loadError) } finally { setLoading(false) } }, [account.id, branch?.id, canManage])
   useEffect(() => { refresh() }, [refresh])
   async function completed(message) { setNotice(message); await refresh() }
   async function saveItem(values) { await saveInventoryItem({ accountId: account.id, itemId: workflow.inventoryItemId, values }); await completed('Inventory item saved.') }

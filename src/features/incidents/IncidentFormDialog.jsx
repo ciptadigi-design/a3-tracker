@@ -48,7 +48,7 @@ function createEditDraft(incident) {
     incidentType: incident.incident_type,
     machineId: incident.machine_id ?? '',
     qtyAffected: incident.qty_affected == null ? '' : String(incident.qty_affected),
-    responsibleUserId: incident.responsible_user_id ?? '',
+    responsibleUserId: incident.responsible_person_id ?? '',
     responsibleName: incident.responsible_name_snapshot ?? '',
     materialLoss: String(Number(incident.material_loss)),
     serviceLoss: String(Number(incident.service_loss)),
@@ -90,7 +90,7 @@ function FieldError({ message }) {
   return message ? <small className="field-error"><AlertCircle size={13} />{message}</small> : null
 }
 
-export function IncidentFormDialog({ account, branch, machines, members, incident = null, mode = 'create', onClose, onSave, onLoadLatest }) {
+export function IncidentFormDialog({ account, branch, machines, people, incident = null, mode = 'create', onClose, onSave, onLoadLatest }) {
   const { user } = useAuth()
   const isEdit = mode === 'edit'
   const [draftContext] = useState(() => ({
@@ -140,11 +140,11 @@ export function IncidentFormDialog({ account, branch, machines, members, inciden
   }
 
   function changeResponsible(userId) {
-    const member = members.find((item) => item.user_id === userId)
+    const member = people.find((item) => item.id === userId)
     updateDraft((current) => ({
       ...current,
       responsibleUserId: userId,
-      responsibleName: member?.display_name ?? current.responsibleName,
+      responsibleName: member?.name ?? current.responsibleName,
     }))
     setFormError(null)
   }
@@ -220,7 +220,7 @@ export function IncidentFormDialog({ account, branch, machines, members, inciden
               <label className="form-field"><span>Jenis <RequiredMark /></span><select value={values.incidentType} onChange={(event) => change('incidentType', event.target.value)} aria-invalid={Boolean(errors.incidentType)}><option value="">Pilih jenis</option>{incidentTypes.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}</select><small>“Mesin” berarti kesalahan penggunaan/setting produksi, bukan fault code teknis.</small><FieldError message={errors.incidentType} /></label>
               <label className="form-field"><span>Machine</span><select value={values.machineId} onChange={(event) => change('machineId', event.target.value)}><option value="">Branch / No specific machine</option>{machines.filter((machine) => machine.is_active).map((machine) => <option key={machine.id} value={machine.id}>{machine.machine_code} · {machine.display_name}</option>)}</select><small>Select the production machine explicitly, or keep branch scope when no machine is attributable.</small></label>
               <label className="form-field"><span>Qty Rusak <small>Opsional</small></span><input value={values.qtyAffected} onChange={(event) => changeDigits('qtyAffected', event.target.value)} inputMode="numeric" pattern="[0-9]*" placeholder="0" aria-invalid={Boolean(errors.qtyAffected)} /><FieldError message={errors.qtyAffected} /></label>
-              <label className="form-field"><span>PIC akun <small>Opsional</small></span><select value={values.responsibleUserId} onChange={(event) => changeResponsible(event.target.value)}><option value="">Nama manual / bukan pengguna aplikasi</option>{members.map((member) => <option key={member.user_id} value={member.user_id}>{member.display_name}</option>)}</select></label>
+              <label className="form-field"><span>PIC / Operator <small>Opsional</small></span><select value={values.responsibleUserId} onChange={(event) => changeResponsible(event.target.value)}><option value="">Nama manual / tidak ditetapkan</option>{people.map((person) => <option key={person.id} value={person.id}>{person.name}</option>)}</select></label>
               <label className="form-field"><span>PIC Terlibat <small>Snapshot nama</small></span><input value={values.responsibleName} onChange={(event) => change('responsibleName', event.target.value)} placeholder="Nama PIC saat kejadian" autoComplete="off" /></label>
             </div>
 

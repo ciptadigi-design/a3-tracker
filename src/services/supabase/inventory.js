@@ -6,7 +6,7 @@ const supplierFields = 'id,account_id,supplier_code,name,contact_person,phone,em
 
 function optional(value) { return value?.trim() || null }
 
-export async function loadInventory({ accountId, includeArchived = false }) {
+export async function loadInventory({ accountId, branchId, includeArchived = false }) {
   const itemsQuery = supabase.from('inventory_items').select(itemFields).eq('account_id', accountId).order('name')
   const locationsQuery = supabase.from('inventory_locations').select(locationFields).eq('account_id', accountId).order('name')
   if (!includeArchived) { itemsQuery.eq('is_active', true); locationsQuery.eq('is_active', true) }
@@ -19,7 +19,7 @@ export async function loadInventory({ accountId, includeArchived = false }) {
     supabase.from('inventory_item_totals').select('account_id,inventory_item_id,quantity').eq('account_id', accountId),
     supabase.from('inventory_movement_history').select('*').eq('account_id', accountId).order('occurred_at', { ascending: false }).order('created_at', { ascending: false }).limit(500),
     supabase.from('components').select('id,account_id,code,name,category,is_active').or(`account_id.is.null,account_id.eq.${accountId}`).eq('is_active', true).order('name'),
-    supabase.from('operational_people').select('id,account_id,name,code,is_active').eq('account_id', accountId).eq('is_active', true).order('name'),
+    supabase.from('operational_people').select('id,account_id,name,code,is_active,operational_person_branches!inner(branch_id,is_active)').eq('account_id', accountId).eq('is_active', true).eq('operational_person_branches.branch_id', branchId).eq('operational_person_branches.is_active', true).order('name'),
     suppliersQuery,
     supabase.from('inventory_purchase_summary').select('*').eq('account_id', accountId).order('purchase_date', { ascending: false }).order('created_at', { ascending: false }),
     supabase.from('inventory_purchase_line_status').select('*').eq('account_id', accountId).order('item_name_snapshot'),

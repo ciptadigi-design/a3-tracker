@@ -6,7 +6,7 @@ select extensions.has_table('public','account_operational_permissions','Settings
 select extensions.has_table('public','settings_change_events','Settings changes retain audit evidence');
 select extensions.ok(has_function_privilege('authenticated','public.manage_workspace_settings(uuid,text,text,uuid)','EXECUTE'),'authenticated reaches guarded workspace RPC');
 select extensions.ok(has_function_privilege('authenticated','public.manage_settings_branch(uuid,uuid,text,text,text,text,text,text,uuid)','EXECUTE'),'authenticated reaches guarded branch RPC');
-select extensions.ok(has_function_privilege('authenticated','public.manage_settings_membership(uuid,uuid,account_role,membership_status,uuid)','EXECUTE'),'authenticated reaches guarded membership RPC');
+select extensions.ok(has_function_privilege('authenticated','public.manage_settings_membership(uuid,uuid,account_role,membership_status,uuid[],text,text,uuid)','EXECUTE'),'authenticated reaches guarded membership RPC');
 select extensions.ok(has_function_privilege('authenticated','public.manage_operational_permissions(uuid,boolean,boolean,boolean,boolean,boolean,boolean,boolean,uuid)','EXECUTE'),'authenticated reaches guarded permission RPC');
 select extensions.ok(not has_function_privilege('anon','public.manage_workspace_settings(uuid,text,text,uuid)','EXECUTE'),'anonymous cannot reach workspace RPC');
 select extensions.ok(not has_function_privilege('authenticated','public.set_operational_override(uuid,text)','EXECUTE'),'capability override helper is not client-callable');
@@ -50,10 +50,10 @@ select set_config('request.jwt.claims','{"sub":"a7000000-0000-4000-8000-00000000
 select extensions.ok(not (public.manage_settings_branch('a7100000-0000-4000-8000-000000000001',:'settings_branch_id','archive','JKT2','Jakarta Two',null,null,null,'a7300000-0000-4000-8000-000000000005')).is_active,'branch archives without deletion');
 select extensions.ok((public.manage_settings_branch('a7100000-0000-4000-8000-000000000001',:'settings_branch_id','restore','JKT2','Jakarta Two',null,null,null,'a7300000-0000-4000-8000-000000000006')).is_active,'archived branch restores safely');
 
-select extensions.is((public.manage_settings_membership('a7100000-0000-4000-8000-000000000001','a7000000-0000-4000-8000-000000000003','technician','active','a7300000-0000-4000-8000-000000000007')).role::text,'technician','Owner changes a non-owner role');
-select extensions.is((public.manage_settings_membership('a7100000-0000-4000-8000-000000000001','a7000000-0000-4000-8000-000000000003','technician','suspended','a7300000-0000-4000-8000-000000000008')).status::text,'suspended','Owner suspends a member without deleting membership');
-select extensions.is((public.manage_settings_membership('a7100000-0000-4000-8000-000000000001','a7000000-0000-4000-8000-000000000003','technician','active','a7300000-0000-4000-8000-000000000009')).status::text,'active','Owner reactivates a member');
-select extensions.is((public.manage_settings_membership('a7100000-0000-4000-8000-000000000001','a7000000-0000-4000-8000-000000000003','operator','active','a7300000-0000-4000-8000-000000000014')).role::text,'operator','Owner restores the Operator fixture role');
+select extensions.is((public.manage_settings_membership('a7100000-0000-4000-8000-000000000001','a7000000-0000-4000-8000-000000000003','technician','active',array[:'settings_branch_id']::uuid[],null,'Settings Operator','a7300000-0000-4000-8000-000000000007')).role::text,'technician','Owner changes a non-owner role');
+select extensions.is((public.manage_settings_membership('a7100000-0000-4000-8000-000000000001','a7000000-0000-4000-8000-000000000003','technician','suspended',array[:'settings_branch_id']::uuid[],null,'Settings Operator','a7300000-0000-4000-8000-000000000008')).status::text,'suspended','Owner suspends a member without deleting membership');
+select extensions.is((public.manage_settings_membership('a7100000-0000-4000-8000-000000000001','a7000000-0000-4000-8000-000000000003','technician','active',array[:'settings_branch_id']::uuid[],null,'Settings Operator','a7300000-0000-4000-8000-000000000009')).status::text,'active','Owner reactivates a member');
+select extensions.is((public.manage_settings_membership('a7100000-0000-4000-8000-000000000001','a7000000-0000-4000-8000-000000000003','operator','active',array[:'settings_branch_id']::uuid[],null,'Settings Operator','a7300000-0000-4000-8000-000000000014')).role::text,'operator','Owner restores the Operator fixture role');
 
 select extensions.is((public.manage_operational_permissions('a7100000-0000-4000-8000-000000000001',true,false,true,true,true,true,false,'a7300000-0000-4000-8000-000000000010')).operator_can_create_purchase,true,'Owner updates all operational flags atomically');
 
@@ -71,7 +71,7 @@ select extensions.ok(public.has_operational_capability('a7100000-0000-4000-8000-
 select extensions.ok(not public.has_operational_capability('a7100000-0000-4000-8000-000000000001','create_purchase'),'Technician purchasing remains fixed off');
 
 select set_config('request.jwt.claims','{"sub":"a7000000-0000-4000-8000-000000000002","role":"authenticated"}',true);
-select extensions.throws_ok($$select public.manage_settings_membership('a7100000-0000-4000-8000-000000000001','a7000000-0000-4000-8000-000000000001','admin','active','a7300000-0000-4000-8000-000000000011')$$,'42501',null,'Admin cannot modify an Owner');
+select extensions.throws_ok($$select public.manage_settings_membership('a7100000-0000-4000-8000-000000000001','a7000000-0000-4000-8000-000000000001','admin','active',array[]::uuid[],null,'Settings Owner','a7300000-0000-4000-8000-000000000011')$$,'42501',null,'Admin cannot modify an Owner');
 select extensions.throws_ok($$select public.manage_workspace_settings('a7100000-0000-4000-8000-000000000002','Cross account','Asia/Jakarta','a7300000-0000-4000-8000-000000000012')$$,'42501',null,'cross-account administration is denied');
 
 select set_config('request.jwt.claims','{"sub":"a7000000-0000-4000-8000-000000000001","role":"authenticated"}',true);

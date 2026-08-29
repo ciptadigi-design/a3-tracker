@@ -35,7 +35,7 @@ export function Sidebar({ path, navigate, account, branch, membership }) {
         {navigation.map((item) => <NavLink key={item.path} item={item} path={path} navigate={navigate} />)}
       </nav>
       <nav className="secondary-nav" aria-label="Settings navigation">
-        {['owner', 'admin'].includes(membership?.role) && <NavLink item={{ path: '/settings', label: 'Settings', icon: Settings, active: true }} path={path} navigate={navigate} />}
+        {['owner', 'platform_superuser'].includes(membership?.role) && <NavLink item={{ path: '/settings', label: 'Settings', icon: Settings, active: true }} path={path} navigate={navigate} />}
         <div className="sidebar-footnote"><ClipboardCheck size={15} /> Secure tenant access</div>
       </nav>
     </aside>

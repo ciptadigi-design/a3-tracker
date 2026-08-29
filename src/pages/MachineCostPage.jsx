@@ -123,7 +123,7 @@ export function MachineCostPage() {
 
   const refreshCosts = useCallback(async () => {
     if (!selectedMachine) return setCostWorkspace({ costs: [], people: [] })
-    try { setCostError(null); setCostWorkspace(await loadMachineOperatingCosts({ accountId: account.id, machineId: selectedMachine.id })) }
+    try { setCostError(null); setCostWorkspace(await loadMachineOperatingCosts({ accountId: account.id, machineId: selectedMachine.id, branchId: selectedMachine.branch_id })) }
     catch (loadError) { setCostError(loadError) }
   }, [account.id, selectedMachine])
   useEffect(() => { refreshCosts() }, [refreshCosts])

@@ -6,7 +6,7 @@ import { createDraftKey } from '../drafts/draftKeys.js'
 import { usePersistentDraft } from '../drafts/usePersistentDraft.js'
 
 function initialValues(kind, record) {
-  if (kind === 'person') return { name: record?.name ?? '', code: record?.code ?? '', notes: record?.notes ?? '', isActive: record?.is_active ?? true }
+  if (kind === 'person') return { name: record?.name ?? '', code: record?.code ?? '', notes: record?.notes ?? '', isActive: record?.is_active ?? true, branchIds: record?.operational_person_branches?.filter((item) => item.is_active).map((item) => item.branch_id) ?? [], clientRequestId: crypto.randomUUID() }
   if (kind === 'manufacturer') return { name: record?.name ?? '', code: record?.code ?? '', website: record?.website ?? '', notes: record?.notes ?? '', isActive: record?.is_active ?? true }
   return {
     name: record?.name ?? '', modelCode: record?.model_code ?? '', manufacturerId: record?.manufacturer_id ?? '',
@@ -16,12 +16,12 @@ function initialValues(kind, record) {
 }
 
 function isDraft(value) {
-  return value && typeof value.name === 'string' && typeof value.notes === 'string' && typeof value.isActive === 'boolean'
+  return value && typeof value.name === 'string' && typeof value.notes === 'string' && typeof value.isActive === 'boolean' && (!('branchIds' in value) || Array.isArray(value.branchIds))
 }
 
 const labels = { person: 'PIC / Operator', manufacturer: 'Manufacturer', model: 'Machine model' }
 
-export function MasterRecordDialog({ kind, record, account, manufacturers = [], onClose, onSave }) {
+export function MasterRecordDialog({ kind, record, account, branches = [], manufacturers = [], onClose, onSave }) {
   const { user } = useAuth()
   const serverValues = initialValues(kind, record)
   const draftKey = createDraftKey({ userId: user.id, accountId: account.id, feature: `operational-master-${kind}`, entityId: record?.id ?? 'new' })
@@ -38,6 +38,7 @@ export function MasterRecordDialog({ kind, record, account, manufacturers = [], 
   async function submit(event) {
     event.preventDefault()
     if (!value.name.trim()) return setError('Name is required.')
+    if (kind === 'person' && value.isActive && value.branchIds.length === 0) return setError('Choose at least one Branch for an active PIC / Operator.')
     if (kind !== 'person' && !value.code?.trim() && !value.modelCode?.trim()) return setError('Code is required.')
     if (kind === 'model' && !value.manufacturerId) return setError('Choose a manufacturer.')
     setSaving(true)
@@ -58,6 +59,7 @@ export function MasterRecordDialog({ kind, record, account, manufacturers = [], 
     <form className="machine-form" onSubmit={submit} noValidate><div className="machine-form-body"><div className="form-grid">
       <label className="form-field"><span>Name <b className="required-mark">*</b></span><input value={value.name} onChange={(event) => change('name', event.target.value)} autoComplete="off" /></label>
       {kind === 'person' && <label className="form-field"><span>Code <small>Optional</small></span><input value={value.code} onChange={(event) => change('code', event.target.value)} autoComplete="off" /></label>}
+      {kind === 'person' && <fieldset className="form-field form-field-wide branch-checklist"><legend>Assigned Branches <b className="required-mark">*</b></legend>{branches.filter((branch) => branch.is_active).map((branch) => <label key={branch.id}><input type="checkbox" checked={value.branchIds.includes(branch.id)} onChange={() => change('branchIds', value.branchIds.includes(branch.id) ? value.branchIds.filter((id) => id !== branch.id) : [...value.branchIds, branch.id])} /><span>{branch.name}</span></label>)}</fieldset>}
       {kind === 'manufacturer' && <><label className="form-field"><span>Code <b className="required-mark">*</b></span><input value={value.code} onChange={(event) => change('code', event.target.value)} autoComplete="off" /></label><label className="form-field form-field-wide"><span>Website <small>Optional</small></span><input type="url" value={value.website} onChange={(event) => change('website', event.target.value)} autoComplete="url" /></label></>}
       {kind === 'model' && <><label className="form-field"><span>Model code <b className="required-mark">*</b></span><input value={value.modelCode} onChange={(event) => change('modelCode', event.target.value)} autoComplete="off" /></label><label className="form-field"><span>Manufacturer <b className="required-mark">*</b></span><select value={value.manufacturerId} onChange={(event) => change('manufacturerId', event.target.value)}><option value="">Choose manufacturer</option>{manufacturers.filter((item) => item.is_active).map((item) => <option key={item.id} value={item.id}>{item.name}{item.account_id ? ' · Workspace' : ' · Shared'}</option>)}</select></label><label className="form-field"><span>Category</span><select value={value.machineCategory} onChange={(event) => change('machineCategory', event.target.value)}><option value="digital_a3">Digital A3</option></select></label><label className="form-field"><span>Color capability</span><select value={value.colorCapability} onChange={(event) => change('colorCapability', event.target.value)}><option value="color">Color</option><option value="monochrome">Monochrome</option></select></label><label className="form-field form-field-wide"><span>Description <small>Optional</small></span><textarea rows="3" value={value.description} onChange={(event) => change('description', event.target.value)} /></label></>}
       <label className="form-field form-field-wide"><span>Notes <small>Optional</small></span><textarea rows="3" value={value.notes} onChange={(event) => change('notes', event.target.value)} /></label>

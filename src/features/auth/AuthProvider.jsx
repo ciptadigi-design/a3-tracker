@@ -7,6 +7,7 @@ import { clearUIStateForUser } from '../uiState/uiStateStorage.js'
 export function AuthProvider({ children }) {
   const [session, setSession] = useState(null)
   const [isLoading, setIsLoading] = useState(Boolean(supabase))
+  const [needsPasswordSetup, setNeedsPasswordSetup] = useState(() => /type=(invite|recovery)/.test(window.location.hash + window.location.search))
 
   useEffect(() => {
     if (!supabase) {
@@ -39,10 +40,22 @@ export function AuthProvider({ children }) {
       user: session?.user ?? null,
       isLoading,
       configurationError: supabaseConfigurationError,
-      async signIn(email, password) {
+      needsPasswordSetup,
+      async signIn(identifier, password) {
         if (!supabase) throw new Error(supabaseConfigurationError)
-        const { error } = await supabase.auth.signInWithPassword({ email, password })
+        const { data, error } = await supabase.functions.invoke('auth-login', { body: { identifier, password } })
+        if (error || !data?.access_token || !data?.refresh_token) throw new Error(data?.error || 'Invalid username/email or password.')
+        const result = await supabase.auth.setSession({ access_token: data.access_token, refresh_token: data.refresh_token })
+        if (result.error) throw new Error('Invalid username/email or password.')
+        await supabase.rpc('accept_current_memberships')
+      },
+      async completePasswordSetup(password) {
+        if (!supabase) throw new Error(supabaseConfigurationError)
+        const { error } = await supabase.auth.updateUser({ password })
         if (error) throw error
+        await supabase.rpc('accept_current_memberships')
+        setNeedsPasswordSetup(false)
+        window.history.replaceState({}, '', window.location.pathname)
       },
       async signOut() {
         if (!supabase) return
@@ -52,7 +65,7 @@ export function AuthProvider({ children }) {
         clearUIStateForUser(session?.user?.id)
       },
     }),
-    [isLoading, session],
+    [isLoading, needsPasswordSetup, session],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

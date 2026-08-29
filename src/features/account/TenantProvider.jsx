@@ -41,7 +41,9 @@ export function TenantProvider({ children }) {
   }, [availableBranches])
 
   const branch = availableBranches.find((item) => item.id === selectedBranchId) ?? null
-  const membership = tenantData?.memberships.find((item) => item.account_id === selectedAccountId) ?? null
+  const membership = useMemo(() => tenantData?.memberships.find((item) => item.account_id === selectedAccountId)
+    ?? (tenantData?.isPlatformSuperuser ? { account_id: selectedAccountId, role: 'platform_superuser', status: 'active' } : null),
+  [selectedAccountId, tenantData])
   const operationalPermissions = tenantData?.permissions?.find((item) => item.account_id === selectedAccountId) ?? null
   const value = useMemo(() => ({
     profile: tenantData?.profile ?? null,
@@ -56,6 +58,7 @@ export function TenantProvider({ children }) {
     setSelectedAccountId,
     setSelectedBranchId,
     refresh,
+    isPlatformSuperuser: Boolean(tenantData?.isPlatformSuperuser),
   }), [account, availableBranches, branch, membership, operationalPermissions, refresh, selectedAccountId, selectedBranchId, tenantData])
 
   if (isLoading) return <LoadingScreen label="Loading your account and branches" />

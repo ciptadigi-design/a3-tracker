@@ -1,10 +1,10 @@
 import { supabase } from './client.js'
 
 export async function loadTenantContext(userId) {
-  const [profileResult, membershipResult] = await Promise.all([
+  const [profileResult, membershipResult, platformResult] = await Promise.all([
     supabase
       .from('profiles')
-      .select('user_id, display_name, avatar_path, locale')
+      .select('user_id, display_name, username, avatar_path, locale')
       .eq('user_id', userId)
       .maybeSingle(),
     supabase
@@ -12,16 +12,25 @@ export async function loadTenantContext(userId) {
       .select('id, account_id, role, status')
       .eq('user_id', userId)
       .eq('status', 'active'),
+    supabase.from('platform_user_privileges').select('role,is_active').eq('user_id', userId).eq('is_active', true).maybeSingle(),
   ])
 
   if (profileResult.error) throw profileResult.error
   if (membershipResult.error) throw membershipResult.error
+  if (platformResult.error) throw platformResult.error
 
   const memberships = membershipResult.data ?? []
-  const accountIds = [...new Set(memberships.map((membership) => membership.account_id))]
+  const isPlatformSuperuser = platformResult.data?.role === 'superuser'
+  let accountIds = [...new Set(memberships.map((membership) => membership.account_id))]
+
+  if (isPlatformSuperuser) {
+    const { data, error } = await supabase.from('accounts').select('id').eq('status', 'active')
+    if (error) throw error
+    accountIds = data.map((account) => account.id)
+  }
 
   if (accountIds.length === 0) {
-    return { profile: profileResult.data, memberships: [], accounts: [], branches: [] }
+    return { profile: profileResult.data, memberships: [], accounts: [], branches: [], isPlatformSuperuser }
   }
 
   const [accountsResult, branchesResult, permissionsResult] = await Promise.all([
@@ -53,6 +62,7 @@ export async function loadTenantContext(userId) {
     accounts: accountsResult.data ?? [],
     branches: branchesResult.data ?? [],
     permissions: permissionsResult.data ?? [],
+    isPlatformSuperuser,
   }
 }
 
