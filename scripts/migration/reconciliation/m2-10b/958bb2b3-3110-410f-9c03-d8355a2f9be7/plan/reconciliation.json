@@ -1,0 +1,22 @@
+{
+  "planned": true,
+  "target_preflight_fingerprint": "5bae4aff63e1ab38d59421c0a758406307b8f2d23ed9751e63f724ffea835dfb",
+  "dispositions": {
+    "IMPORT": 476,
+    "MERGE": 1,
+    "SKIP_DUPLICATE": 2,
+    "ARCHIVE_ONLY": 45,
+    "APPROVED_EXCLUDE": 2,
+    "MANUAL_REVIEW": 0
+  },
+  "unresolved_staging_approvals": 0,
+  "operations": {
+    "people": 10,
+    "counters": 179,
+    "lifecycles": 47,
+    "suppliers": 9,
+    "items": 22,
+    "purchases": 161,
+    "incidents": 89
+  }
+}

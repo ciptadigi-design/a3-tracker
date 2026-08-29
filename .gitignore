@@ -11,6 +11,7 @@ node_modules
 dist
 dist-ssr
 *.local
+.migration-private/
 
 # Local environment files (keep the example template tracked)
 .env

@@ -1,0 +1,51 @@
+{
+  "execution_id": "958bb2b3-3110-410f-9c03-d8355a2f9be7",
+  "target_project_ref": "sxitqjxljoqsnpepymrl",
+  "physical_backup": {
+    "available": false,
+    "pitr_enabled": false,
+    "supabase_cli_result": "backups=null; walg_enabled=true"
+  },
+  "method": "logical roles/schema/public-data export plus exact repository schema ledger",
+  "private_backup_directory": ".migration-private/m2-10b/958bb2b3-3110-410f-9c03-d8355a2f9be7",
+  "files": [
+    {
+      "name": "hosted-dev-preimport-roles.sql",
+      "sha256": "0decd601faa70260a3a31e8ce63208cc4c1f99921bc6f3ed4faf1cd980da3a",
+      "mode": "0600"
+    },
+    {
+      "name": "hosted-dev-preimport-schema.sql",
+      "sha256": "6810faf2c2d3c6b303e4fce6119811aab7bb23d8150fefe40d21d635d38cc44c",
+      "mode": "0600"
+    },
+    {
+      "name": "hosted-dev-preimport-public-data.sql",
+      "sha256": "e96bceb76937810ab8f121254f7b6bc641641cc97ec9863bb12b005c31226782",
+      "mode": "0600"
+    },
+    {
+      "name": "legacy-snapshot.json",
+      "sha256": "f23c0a571b2ee66c1ec9f82b613c286acc977396f767c5ffaa70c6553522a178",
+      "mode": "0600"
+    }
+  ],
+  "verification_method": "transactional restore of public-data dump into disposable exact-schema PostgreSQL followed by identity/domain assertions and ROLLBACK",
+  "verification_state": {
+    "account": 1,
+    "branch": 1,
+    "machine": 1,
+    "counters": 3,
+    "people": 3,
+    "assignments": 28,
+    "lifecycles": 30,
+    "replacements": 2,
+    "purchases": 2,
+    "receipts": 2,
+    "movements": 5,
+    "incidents": 2,
+    "graha_operational": 0
+  },
+  "verified": true,
+  "restore_policy": "Stop on bad hosted apply. Restore from this recovery point under controlled procedure; do not delete immutable evidence ad hoc."
+}
