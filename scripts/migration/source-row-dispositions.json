@@ -1,0 +1,3171 @@
+{
+  "source_project": "wtslqxjwjqyjgcapfrrz",
+  "row_count": 526,
+  "counts": {
+    "IMPORT": 475,
+    "MERGE": 1,
+    "SKIP_DUPLICATE": 2,
+    "SKIP_DERIVED": 0,
+    "ARCHIVE_ONLY": 18,
+    "MANUAL_REVIEW": 30
+  },
+  "unexplained_remainder": 0,
+  "rows": [
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "00a459d9-6913-4859-8f02-a4d7fa41dd50",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "0311c7dc-7202-49e3-a42f-7e6921fe8e01",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "06cf935d-e6f1-4dfa-90a4-531152ed9d24",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "078c95df-5f1a-4f76-b37c-a049176b37f1",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "07b4903f-40eb-4389-9c55-e6818249cca6",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "08062681-3c33-4121-8a92-8a0c1ff7092b",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "0909ee3c-b301-4f2d-8cc9-75f22ef31b26",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "090bb7f4-58b8-4e40-8211-9807735853ca",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "09a0a807-84fa-4437-851c-e0167756185c",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "0ab7fff1-3c45-4b91-bd28-f5724080b0b1",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "0ae445dd-a6ec-4963-9700-c8e66181a73b",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "0b2a7474-e3ad-4cd9-9997-e6713604be3f",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "0bf65be9-7247-4b1e-b0eb-d435b9dee7db",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "0e5736e2-5bca-4697-ab23-1a7bca1d913c",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "0fc458d7-1f51-4b73-8308-ca3dd4cd94b9",
+      "disposition": "MERGE",
+      "reason": "SAME_EVENT_HIGH_CONFIDENCE"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "103d8fd6-cb3c-4d5f-9bdc-e3d56420c6c9",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "10bbe4e5-48c3-4978-9348-cbd74e51f6a9",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "115a8452-dfe9-409b-89c9-574e097538be",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "133d0276-f598-4a84-8117-2e60895ef305",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "13608d10-5b19-4d33-8ede-ba0b113403cd",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "1741c630-83ac-49e3-a7b3-d80a1979fff6",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "1774f6ae-9d3e-4744-bf2d-937390377b2d",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "1c20fbf5-c0be-4846-907b-60528477d163",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "204e665d-5b5b-4d12-9b36-fadc5f87ae2c",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "22e3c464-75c6-4275-85e6-de687b375dad",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "22f365b6-7fd9-4697-b5da-074256c1e7f2",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "23632c52-142c-42d4-87fa-30876bbb52bb",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "248efe64-e97e-4800-b129-a398e2a30531",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "27b5fd29-e79c-4654-87c3-7f9314fcdc0c",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "2842b6bc-8060-4f49-b169-8022723424a0",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "2be7d353-de18-4104-a379-8e7ec2db39d1",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "2d7d6f02-c58b-446a-9f5f-6d8edf619a57",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "31e0f800-3736-4bd5-a330-9a1bb05648b8",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "328f70d4-411a-4894-8dc0-d921f0a25162",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "33302802-8af1-44ed-bbdc-2d083c4f7821",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "35c2b856-dacc-4542-abf5-9286eb22b767",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "3646d7ca-6442-4a54-b06c-6f0a01409f6e",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "3737882e-f9e6-4f57-be25-238622a5227a",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "37f63711-8188-4dc2-9a2e-d01fc3a50644",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "38e81a3c-5cde-42be-b11a-98972692bbb2",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "39493359-bc28-46b8-9f61-b762cda17207",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "397dfc71-070d-40e3-b6e9-ca7b65d89ba5",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "3b50c879-0922-4798-8168-a3997b1b6bf4",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "3b991d37-262a-4ada-a585-0f569f353f6a",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "3bea3fb5-b9f5-4649-9e42-39ebf42e6406",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "3c1b8048-afeb-47f2-a2e3-86f9e66bc780",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "402c1dd4-a850-4272-8645-790b9e5daea5",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "419e4a66-2ed0-4d3d-9fe9-8f3ce223ec4b",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "42c5bc15-c60f-4911-aad3-3ceee5e12e55",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "43149caa-10aa-4797-a8b5-1311a5186520",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "44b4524f-9d95-48b8-963e-2703d0a7e349",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "46ef7756-4703-4af1-89ec-d17a0a7fa883",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "4753cbde-54eb-4f85-afd8-bf67874a9bb1",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "476b2285-5220-416c-baf7-bbc56bd19bfb",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "47babadf-a080-416d-a51c-90bfea331e26",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "4805c016-704b-4b28-bf06-1b77cdd28d4c",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "480a8659-ebb9-443f-87c3-13b4e9850493",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "484f52d8-a222-4cb4-9a28-0216fbf97850",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "49fb3861-2aff-4247-b111-eced34471fd4",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "4a2ee27b-6b5d-4004-b982-3562a47b5d0d",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "4f450629-78bb-489c-80e0-f082f65fbf1d",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "4f4b25da-b9c3-4a61-99e1-2d04c1cedb77",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "4f4d449d-5aca-4949-911e-07bda1f24ee6",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "5003d7a2-4f78-42d6-aaf4-881052ac5bf5",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "5069f09b-95cc-4bef-9abb-15417a8c6c43",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "50ab3f4c-9935-4c73-abba-41331bb2c260",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "50e981f1-057b-4d07-85c2-00e29264042f",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "510856de-5869-4b8b-bf66-37cf25849eef",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "51a3e54d-3a26-4a26-b603-b313f2cadfa6",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "5259813c-8cdd-499e-9f02-1d00ed118ce9",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "54da82a6-b723-442c-880f-19215e1f35bb",
+      "disposition": "MANUAL_REVIEW",
+      "reason": "POSSIBLE_DUPLICATE"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "58c13bf3-0c86-463c-a965-3934a44af0dc",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "5abc8323-4e90-464e-a16d-fb5d6d19c2c3",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "5badfd2e-67a5-47c4-8ffa-b5c8a2c0d15e",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "5c747efb-96e2-4918-98cc-074fbfb9f900",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "5e1997e1-1e43-43d7-9cab-8d978d64f793",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "5e5672d3-251f-429e-87ae-da256e357655",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "5eef8d5e-7b7c-4af2-bb2f-c4e344476e8d",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "5f99f017-5e20-4f25-b1b7-c2ae582616b4",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "6448af0d-7b43-4513-beb7-debab6804549",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "6633b22f-6841-419b-b681-edc65c349fd6",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "68e7882e-3553-4035-9c90-471af22e29bb",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "6b11dd4e-e14a-456e-a903-7f49a66a4c8a",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "6c599ef0-9ddb-428e-846d-76973ae1fe9e",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "6ccc2f3c-7924-4a05-a75d-69d34fa85937",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "6dfc8e71-71a6-4d1d-a626-b1cf331ebb97",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "6e116cf3-6cc1-4fc2-92b9-b45a3baa9109",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "6fe6ea81-08c3-4619-86f5-8347ec8d7af6",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "705341d0-7894-4ec2-90c0-eed0e35b6687",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "70dd22d5-542d-432e-9421-40fe0be96b6a",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "72c57329-2e80-4399-8303-4f4e9f812192",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "73774d7b-f2bf-43d3-8baa-f51406cc3aaf",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "76b753d5-b2f1-477a-9fb6-0b8c821914e0",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "7b8d3487-710a-4455-a897-e564f07f7bc1",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "7c00089d-4396-4533-b302-ae25ee238331",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "7d14cc7a-5001-44f0-881b-0ba35e9ecc60",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "7dcb1c43-4f18-4498-ba40-a395ad28da39",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "7f6a5163-2a32-4bca-935f-53f33e1c049d",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "7ff63948-8d50-4845-ac30-b972b8085791",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "816050d8-9cf5-41d6-9503-0c503a02e78a",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "816895a4-bd1c-48df-a5e9-f63265e0cf87",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "82cb7e67-79f6-454d-89d7-da6dc5bfc57f",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "82d3b425-7273-415d-8c49-338d92405962",
+      "disposition": "MANUAL_REVIEW",
+      "reason": "POSSIBLE_DUPLICATE"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "85b70c2c-b65f-4e0a-90c8-78cce1ad7a46",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "8742a875-9438-4cd2-b360-9e5a74bcd976",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "8b74f500-5fbb-400d-9508-8d7a13034cdc",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "8e67b173-20c4-4c17-a116-31f9c5dd0ae0",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "8fba094e-b396-41cc-a31e-29ad5c758be7",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "90807427-1428-48d7-b7da-692f91538581",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "90a8e747-c073-4c35-9598-be5e32b88e6b",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "92b50878-707c-42b3-8572-b7df1999f0af",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "940ea385-57e6-4d99-b24d-2f32dfc7fcc1",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "942a908c-586e-4396-914f-6902a5631c53",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "967003e6-f544-4e56-baf9-56d1373394ba",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "97053aea-8e31-4eae-98d1-f0cee643b256",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "9811fc03-994b-48f5-98c6-a8a0f1663a5b",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "98b7ab76-fa63-4cf9-946f-7a46b353bfeb",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "99cee115-3825-4d3b-85c8-1c05767078b8",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "9b5bd725-9813-4c20-98cb-7dd2ba4a4a31",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "9b956861-9d88-41b8-9b45-f6d0aa339f32",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "a039bf66-7d1e-4111-bcab-e3413761ed6f",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "a0ecf010-d539-4ad0-9000-26fb2803ee79",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "a13e8346-0d68-45e0-90ff-5941d082d175",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "a29c439f-10cf-41a5-8d11-5be48f018e06",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "a30f3348-d531-410d-be40-4fdf456e13d6",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "a48682bf-b600-4a0c-afee-3fc789b7df79",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "a5c48a2f-9ac0-4c5a-b3c2-f1d6510f3a45",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "aaad7ca2-0548-4d7e-9d3f-bb1229af717f",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "ab224dd5-6934-4715-b3c5-64ab0c34ec7d",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "ac936812-d874-4c5b-a8da-56301a3a9d23",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "ad1740b0-5a8e-4ddf-9b3c-cc3b0eab5194",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "addb386c-62fb-49b4-8d28-ce92610b922d",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "b095ce0d-16a0-4afe-b196-d4f483d39891",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "b34280db-a240-4ac8-9a7e-cdd20237a702",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "b6e26bca-861a-4272-aa83-d21de1e3ea2b",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "b76c8bc0-a068-46d0-84e9-0cc79a8e4456",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "b9de4a21-199e-42dc-b406-4385ae4e809d",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "ba73485f-f855-4565-89e2-011026dbe469",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "bcc5a8c5-3a71-46b9-85fd-4f7764b3a10c",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "bed912e6-b884-4d7e-b4d8-17814651a79d",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "bf83ae0e-4f53-4965-8613-023a672eeb47",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "bfc57b05-2dc1-4f67-bf79-d201d372991b",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "c107e207-02bc-4000-80d0-c764d15aa3bd",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "c14533f9-ef0a-4ca7-9375-e01826f5bc5e",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "c24e63fb-285e-4f5f-a566-d3508cc7adc5",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "c315cb72-f26e-44c1-9ccd-e8ba72b17511",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "c3ae626b-ae26-4537-ae21-93878eec434a",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "c412fe8b-6045-42f8-bc46-734409bbc3bf",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "c7135d63-6b5a-4518-916e-5439ddb655bc",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "c81b47cf-2c78-469e-abe4-ae063757b0c5",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "c826eea3-a78f-4f06-b741-baba365c068f",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "c9a82a2e-cba8-4aba-8336-428b8867e40b",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "cb7401cf-e86a-4fd6-b0a8-aea87c73c8b6",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "cc955061-191e-4e55-8e9e-5fbab25b72cf",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "cd272d98-e134-40bd-88fd-3fdfcde70b52",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "d258b53b-a816-4682-9c87-c9e40e521ce1",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "d67b19ae-9ca5-4f55-a24d-ca929c9c1d8e",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "d7426e9d-f9f9-4f59-85d3-980ee1ef3b3d",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "d7450f83-5766-4d63-a5af-4a414f92faa8",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "d9c28c70-3a24-49ab-84e5-8828b70bdf0f",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "d9f664b2-f295-4341-b93a-2849fbccb7dd",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "daef2785-515a-4257-855b-309baaef6466",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "e13a261d-d383-4381-b1f0-8adbee30c8af",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "e52172c3-8e11-4b85-8bc7-ac676607df8b",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "e577e95a-dd73-45d1-8c9b-d937df85cef6",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "e60efded-e657-4409-bfcb-702cb2e0d3e9",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "e63ee99a-cc2e-4262-8ab0-b79d127136d8",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "e6e83645-f9e4-4540-bed4-0b594809fb14",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "e9733428-df12-4f9a-bf5f-c97bb23a8f75",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "ea8aaafc-a3a0-4042-9de6-97b47abffca5",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "ea9807cb-ba2f-4d6b-bbf2-716eefce1923",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "eba0027d-bdd7-4d6f-997d-9ff6c23d8b23",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "ee99ede3-a511-4e08-a6e5-fdfebf1a20a8",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "f21dfb8d-e5eb-498d-be10-44f071eda7a3",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "f2955e7c-f470-4bdb-b8e7-8f40e5fac9ac",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "f2a42175-9fdc-4513-96f4-4052a89f23a3",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "f3be5239-d37b-4996-bc4d-5afa69c34d1f",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "f3c9b0f7-fcd2-4bcc-97f6-a2eaa842b8a9",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "f58ba1be-d66e-4786-b954-13410ccefc66",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "f8f61ac3-e948-4ab0-8348-b726d7477dab",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "fcaab5d4-7dbe-4cfb-86fc-4316222ce5d1",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "click_history",
+      "legacy_id": "fe631101-f0ee-41f3-9fcc-22a5b6681765",
+      "disposition": "IMPORT",
+      "reason": "DISTINCT_EVENT"
+    },
+    {
+      "legacy_table": "error_logs",
+      "legacy_id": "005a8902-82c5-4884-9498-afafb6158c69",
+      "disposition": "IMPORT",
+      "reason": "Distinct incident evidence; preserve source loss fields and approved multiplier."
+    },
+    {
+      "legacy_table": "error_logs",
+      "legacy_id": "00a05968-3c47-4889-a4ee-454907a4ca91",
+      "disposition": "IMPORT",
+      "reason": "Distinct incident evidence; preserve source loss fields and approved multiplier."
+    },
+    {
+      "legacy_table": "error_logs",
+      "legacy_id": "04fa396d-a878-4f0f-ae32-1874e92b3c87",
+      "disposition": "IMPORT",
+      "reason": "Distinct incident evidence; preserve source loss fields and approved multiplier."
+    },
+    {
+      "legacy_table": "error_logs",
+      "legacy_id": "050f052b-31b1-479d-a171-93805adabcab",
+      "disposition": "IMPORT",
+      "reason": "Distinct incident evidence; preserve source loss fields and approved multiplier."
+    },
+    {
+      "legacy_table": "error_logs",
+      "legacy_id": "0f4bd39f-68e2-44af-822e-c4735ff87725",
+      "disposition": "IMPORT",
+      "reason": "Distinct incident evidence; preserve source loss fields and approved multiplier."
+    },
+    {
+      "legacy_table": "error_logs",
+      "legacy_id": "0fec4411-8e2a-42e6-bc7f-bc11e8da1535",
+      "disposition": "IMPORT",
+      "reason": "Distinct incident evidence; preserve source loss fields and approved multiplier."
+    },
+    {
+      "legacy_table": "error_logs",
+      "legacy_id": "1724922d-8ca8-4306-a137-3e05b202f7f1",
+      "disposition": "IMPORT",
+      "reason": "Distinct incident evidence; preserve source loss fields and approved multiplier."
+    },
+    {
+      "legacy_table": "error_logs",
+      "legacy_id": "197866d7-e774-4ca8-b244-2c6f26fd22d8",
+      "disposition": "IMPORT",
+      "reason": "Distinct incident evidence; preserve source loss fields and approved multiplier."
+    },
+    {
+      "legacy_table": "error_logs",
+      "legacy_id": "1a2c883e-4b6a-4278-8948-2a8d7ca5b7cc",
+      "disposition": "IMPORT",
+      "reason": "Distinct incident evidence; preserve source loss fields and approved multiplier."
+    },
+    {
+      "legacy_table": "error_logs",
+      "legacy_id": "1b73a5a9-8a4b-480e-950a-24a829c23b87",
+      "disposition": "IMPORT",
+      "reason": "Distinct incident evidence; preserve source loss fields and approved multiplier."
+    },
+    {
+      "legacy_table": "error_logs",
+      "legacy_id": "1cff780f-eb6d-43f0-85a5-14bc2e34b502",
+      "disposition": "IMPORT",
+      "reason": "Distinct incident evidence; preserve source loss fields and approved multiplier."
+    },
+    {
+      "legacy_table": "error_logs",
+      "legacy_id": "1fbc5e71-c009-43c5-95d1-a3542655d445",
+      "disposition": "IMPORT",
+      "reason": "Distinct incident evidence; preserve source loss fields and approved multiplier."
+    },
+    {
+      "legacy_table": "error_logs",
+      "legacy_id": "23fa4d7a-1a24-470b-90f2-2b8a91deeb23",
+      "disposition": "IMPORT",
+      "reason": "Distinct incident evidence; preserve source loss fields and approved multiplier."
+    },
+    {
+      "legacy_table": "error_logs",
+      "legacy_id": "2a91f45a-ac1b-4472-a05b-68ae495702b9",
+      "disposition": "IMPORT",
+      "reason": "Distinct incident evidence; preserve source loss fields and approved multiplier."
+    },
+    {
+      "legacy_table": "error_logs",
+      "legacy_id": "2cbba87e-a31d-49d3-8d81-dcf391efe4fd",
+      "disposition": "IMPORT",
+      "reason": "Distinct incident evidence; preserve source loss fields and approved multiplier."
+    },
+    {
+      "legacy_table": "error_logs",
+      "legacy_id": "316badf2-0d97-4035-bae2-7a8cdd504450",
+      "disposition": "IMPORT",
+      "reason": "Distinct incident evidence; preserve source loss fields and approved multiplier."
+    },
+    {
+      "legacy_table": "error_logs",
+      "legacy_id": "336ca73f-4ca0-4102-b165-f842a870b6d8",
+      "disposition": "IMPORT",
+      "reason": "Distinct incident evidence; preserve source loss fields and approved multiplier."
+    },
+    {
+      "legacy_table": "error_logs",
+      "legacy_id": "340bccc5-51c0-4f2f-9653-5992365e7043",
+      "disposition": "IMPORT",
+      "reason": "Distinct incident evidence; preserve source loss fields and approved multiplier."
+    },
+    {
+      "legacy_table": "error_logs",
+      "legacy_id": "3436509c-f729-4f78-b9b7-33d0d41f6837",
+      "disposition": "SKIP_DUPLICATE",
+      "reason": "Later sub-second byte-equivalent duplicate write."
+    },
+    {
+      "legacy_table": "error_logs",
+      "legacy_id": "382c5f65-a18b-4e63-abf3-4d8a70558954",
+      "disposition": "IMPORT",
+      "reason": "Distinct incident evidence; preserve source loss fields and approved multiplier."
+    },
+    {
+      "legacy_table": "error_logs",
+      "legacy_id": "39a9355a-ad87-4258-ab12-ec9bff14362c",
+      "disposition": "IMPORT",
+      "reason": "Distinct incident evidence; preserve source loss fields and approved multiplier."
+    },
+    {
+      "legacy_table": "error_logs",
+      "legacy_id": "3b9a7a9f-c4b9-4eef-9b21-da378aca5bbc",
+      "disposition": "IMPORT",
+      "reason": "Distinct incident evidence; preserve source loss fields and approved multiplier."
+    },
+    {
+      "legacy_table": "error_logs",
+      "legacy_id": "3e044c17-53f4-4044-911b-13348573d112",
+      "disposition": "IMPORT",
+      "reason": "Distinct incident evidence; preserve source loss fields and approved multiplier."
+    },
+    {
+      "legacy_table": "error_logs",
+      "legacy_id": "3f7a96d0-d39e-4c0a-9ada-9b2d32db25aa",
+      "disposition": "IMPORT",
+      "reason": "Distinct incident evidence; preserve source loss fields and approved multiplier."
+    },
+    {
+      "legacy_table": "error_logs",
+      "legacy_id": "413bda29-7bc5-4477-9677-49358949ad68",
+      "disposition": "IMPORT",
+      "reason": "Distinct incident evidence; preserve source loss fields and approved multiplier."
+    },
+    {
+      "legacy_table": "error_logs",
+      "legacy_id": "4335d1fe-dae4-4c06-9f81-34fdd0907cfc",
+      "disposition": "IMPORT",
+      "reason": "Distinct incident evidence; preserve source loss fields and approved multiplier."
+    },
+    {
+      "legacy_table": "error_logs",
+      "legacy_id": "4a2dee57-f51f-4bb9-b8d8-7b3958170f00",
+      "disposition": "IMPORT",
+      "reason": "Distinct incident evidence; preserve source loss fields and approved multiplier."
+    },
+    {
+      "legacy_table": "error_logs",
+      "legacy_id": "5465f82c-924b-46a3-b477-8b978eb7f514",
+      "disposition": "IMPORT",
+      "reason": "Distinct incident evidence; preserve source loss fields and approved multiplier."
+    },
+    {
+      "legacy_table": "error_logs",
+      "legacy_id": "55e8ddd0-1af1-4d5c-a0f8-e74e63c09a74",
+      "disposition": "IMPORT",
+      "reason": "Distinct incident evidence; preserve source loss fields and approved multiplier."
+    },
+    {
+      "legacy_table": "error_logs",
+      "legacy_id": "5e3abedd-89b5-4648-9416-f497698fe9fa",
+      "disposition": "IMPORT",
+      "reason": "Distinct incident evidence; preserve source loss fields and approved multiplier."
+    },
+    {
+      "legacy_table": "error_logs",
+      "legacy_id": "5e3c81ce-a665-416c-961a-2c9786c26700",
+      "disposition": "IMPORT",
+      "reason": "Distinct incident evidence; preserve source loss fields and approved multiplier."
+    },
+    {
+      "legacy_table": "error_logs",
+      "legacy_id": "60b4b9d3-d987-46ea-a9fc-a710c15be3f4",
+      "disposition": "IMPORT",
+      "reason": "Distinct incident evidence; preserve source loss fields and approved multiplier."
+    },
+    {
+      "legacy_table": "error_logs",
+      "legacy_id": "62e449fb-0a5f-4be3-8592-b4f18f4a4fc5",
+      "disposition": "IMPORT",
+      "reason": "Distinct incident evidence; preserve source loss fields and approved multiplier."
+    },
+    {
+      "legacy_table": "error_logs",
+      "legacy_id": "63759cfa-0212-4dc6-8390-6d3bfc34f9f7",
+      "disposition": "IMPORT",
+      "reason": "Distinct incident evidence; preserve source loss fields and approved multiplier."
+    },
+    {
+      "legacy_table": "error_logs",
+      "legacy_id": "66d03606-d75d-4f79-bbeb-119b9bd4b290",
+      "disposition": "IMPORT",
+      "reason": "Distinct incident evidence; preserve source loss fields and approved multiplier."
+    },
+    {
+      "legacy_table": "error_logs",
+      "legacy_id": "6cabdb9d-876b-44e2-81d7-55b2462848c0",
+      "disposition": "IMPORT",
+      "reason": "Distinct incident evidence; preserve source loss fields and approved multiplier."
+    },
+    {
+      "legacy_table": "error_logs",
+      "legacy_id": "6e126129-c097-4d61-af45-186890387b55",
+      "disposition": "IMPORT",
+      "reason": "Distinct incident evidence; preserve source loss fields and approved multiplier."
+    },
+    {
+      "legacy_table": "error_logs",
+      "legacy_id": "718fe309-3a31-45d5-92c4-232def5ca489",
+      "disposition": "IMPORT",
+      "reason": "Distinct incident evidence; preserve source loss fields and approved multiplier."
+    },
+    {
+      "legacy_table": "error_logs",
+      "legacy_id": "7386dc38-7d51-46a3-b971-7734ebf2fc8f",
+      "disposition": "IMPORT",
+      "reason": "Distinct incident evidence; preserve source loss fields and approved multiplier."
+    },
+    {
+      "legacy_table": "error_logs",
+      "legacy_id": "76c2f97c-cae5-44a8-ac0c-29af462b5994",
+      "disposition": "SKIP_DUPLICATE",
+      "reason": "Later sub-second byte-equivalent duplicate write."
+    },
+    {
+      "legacy_table": "error_logs",
+      "legacy_id": "784b95a4-fafd-4875-9002-932466633cf0",
+      "disposition": "IMPORT",
+      "reason": "Distinct incident evidence; preserve source loss fields and approved multiplier."
+    },
+    {
+      "legacy_table": "error_logs",
+      "legacy_id": "7a3c78c1-f925-4d56-917f-40f375a80278",
+      "disposition": "IMPORT",
+      "reason": "Distinct incident evidence; preserve source loss fields and approved multiplier."
+    },
+    {
+      "legacy_table": "error_logs",
+      "legacy_id": "81e42010-38a2-432b-b34a-9a3a577be4f4",
+      "disposition": "IMPORT",
+      "reason": "Distinct incident evidence; preserve source loss fields and approved multiplier."
+    },
+    {
+      "legacy_table": "error_logs",
+      "legacy_id": "83b86ac9-448b-41aa-8a59-5bec107768a1",
+      "disposition": "IMPORT",
+      "reason": "Distinct incident evidence; preserve source loss fields and approved multiplier."
+    },
+    {
+      "legacy_table": "error_logs",
+      "legacy_id": "85661c2f-f140-442c-9b97-8789da049a2a",
+      "disposition": "IMPORT",
+      "reason": "Distinct incident evidence; preserve source loss fields and approved multiplier."
+    },
+    {
+      "legacy_table": "error_logs",
+      "legacy_id": "8aaec294-09d1-4b8a-b772-98ca0d47600e",
+      "disposition": "IMPORT",
+      "reason": "Distinct incident evidence; preserve source loss fields and approved multiplier."
+    },
+    {
+      "legacy_table": "error_logs",
+      "legacy_id": "918406fb-d7b2-4a86-9b6b-130dbc788486",
+      "disposition": "IMPORT",
+      "reason": "Distinct incident evidence; preserve source loss fields and approved multiplier."
+    },
+    {
+      "legacy_table": "error_logs",
+      "legacy_id": "9405aa37-014c-4889-9f62-b5eed453071d",
+      "disposition": "IMPORT",
+      "reason": "Distinct incident evidence; preserve source loss fields and approved multiplier."
+    },
+    {
+      "legacy_table": "error_logs",
+      "legacy_id": "a12c0aca-3103-41f0-b203-7cc823ff9fd1",
+      "disposition": "IMPORT",
+      "reason": "Distinct incident evidence; preserve source loss fields and approved multiplier."
+    },
+    {
+      "legacy_table": "error_logs",
+      "legacy_id": "a2d7b484-bb88-4e26-9309-30b2b89a58e7",
+      "disposition": "IMPORT",
+      "reason": "Distinct incident evidence; preserve source loss fields and approved multiplier."
+    },
+    {
+      "legacy_table": "error_logs",
+      "legacy_id": "a3a7f582-8ffb-421a-b60a-597ca43aeb1c",
+      "disposition": "IMPORT",
+      "reason": "Distinct incident evidence; preserve source loss fields and approved multiplier."
+    },
+    {
+      "legacy_table": "error_logs",
+      "legacy_id": "a48811c5-0d78-4016-99b1-7aa71f0bd865",
+      "disposition": "IMPORT",
+      "reason": "Distinct incident evidence; preserve source loss fields and approved multiplier."
+    },
+    {
+      "legacy_table": "error_logs",
+      "legacy_id": "a64f13bc-68c8-4c17-8385-4fb821978776",
+      "disposition": "IMPORT",
+      "reason": "Distinct incident evidence; preserve source loss fields and approved multiplier."
+    },
+    {
+      "legacy_table": "error_logs",
+      "legacy_id": "a6851e23-3335-4199-aa0f-dac1c9e1985f",
+      "disposition": "IMPORT",
+      "reason": "Distinct incident evidence; preserve source loss fields and approved multiplier."
+    },
+    {
+      "legacy_table": "error_logs",
+      "legacy_id": "a6cb254b-7efc-48f9-83fe-2665376639ab",
+      "disposition": "IMPORT",
+      "reason": "Distinct incident evidence; preserve source loss fields and approved multiplier."
+    },
+    {
+      "legacy_table": "error_logs",
+      "legacy_id": "a75463fe-29ed-4f78-9530-60e5f300215e",
+      "disposition": "IMPORT",
+      "reason": "Distinct incident evidence; preserve source loss fields and approved multiplier."
+    },
+    {
+      "legacy_table": "error_logs",
+      "legacy_id": "aa35bc82-19e9-4fa9-b015-a93d5960bbf1",
+      "disposition": "IMPORT",
+      "reason": "Distinct incident evidence; preserve source loss fields and approved multiplier."
+    },
+    {
+      "legacy_table": "error_logs",
+      "legacy_id": "b0fe7d1b-e3e0-4a88-87f9-7e1da2e1289a",
+      "disposition": "IMPORT",
+      "reason": "Distinct incident evidence; preserve source loss fields and approved multiplier."
+    },
+    {
+      "legacy_table": "error_logs",
+      "legacy_id": "b267462c-c563-43eb-b942-7be9e058f73c",
+      "disposition": "IMPORT",
+      "reason": "Distinct incident evidence; preserve source loss fields and approved multiplier."
+    },
+    {
+      "legacy_table": "error_logs",
+      "legacy_id": "b2e2d4b8-98ef-4004-bcaa-d8891f924efd",
+      "disposition": "IMPORT",
+      "reason": "Distinct incident evidence; preserve source loss fields and approved multiplier."
+    },
+    {
+      "legacy_table": "error_logs",
+      "legacy_id": "b60f952f-8690-4297-a9f3-f80837e6d827",
+      "disposition": "IMPORT",
+      "reason": "Distinct incident evidence; preserve source loss fields and approved multiplier."
+    },
+    {
+      "legacy_table": "error_logs",
+      "legacy_id": "b79ecad3-16f3-4de4-ac09-6c2c144494ba",
+      "disposition": "IMPORT",
+      "reason": "Distinct incident evidence; preserve source loss fields and approved multiplier."
+    },
+    {
+      "legacy_table": "error_logs",
+      "legacy_id": "b8ac6df7-14d0-4ec6-bd1d-abd92d6c6d6d",
+      "disposition": "IMPORT",
+      "reason": "Distinct incident evidence; preserve source loss fields and approved multiplier."
+    },
+    {
+      "legacy_table": "error_logs",
+      "legacy_id": "b9b5ffeb-ab7e-4946-b516-d325296b3126",
+      "disposition": "IMPORT",
+      "reason": "Distinct incident evidence; preserve source loss fields and approved multiplier."
+    },
+    {
+      "legacy_table": "error_logs",
+      "legacy_id": "bbbaa01f-cbe9-4938-9d49-7a637ab266dd",
+      "disposition": "IMPORT",
+      "reason": "Distinct incident evidence; preserve source loss fields and approved multiplier."
+    },
+    {
+      "legacy_table": "error_logs",
+      "legacy_id": "bc5b6808-39e1-4c24-800a-4b2385ac5545",
+      "disposition": "IMPORT",
+      "reason": "Distinct incident evidence; preserve source loss fields and approved multiplier."
+    },
+    {
+      "legacy_table": "error_logs",
+      "legacy_id": "bdda8c62-5479-44f8-8e31-bfa762b8f313",
+      "disposition": "IMPORT",
+      "reason": "Distinct incident evidence; preserve source loss fields and approved multiplier."
+    },
+    {
+      "legacy_table": "error_logs",
+      "legacy_id": "bdf75015-1af4-4da8-88b9-320ef3d88c36",
+      "disposition": "IMPORT",
+      "reason": "Distinct incident evidence; preserve source loss fields and approved multiplier."
+    },
+    {
+      "legacy_table": "error_logs",
+      "legacy_id": "c0a2912b-0e11-4787-bb40-0f59c1805c7b",
+      "disposition": "IMPORT",
+      "reason": "Distinct incident evidence; preserve source loss fields and approved multiplier."
+    },
+    {
+      "legacy_table": "error_logs",
+      "legacy_id": "c2504a3f-5f6d-4ec4-a78d-9bce64bf60f9",
+      "disposition": "IMPORT",
+      "reason": "Distinct incident evidence; preserve source loss fields and approved multiplier."
+    },
+    {
+      "legacy_table": "error_logs",
+      "legacy_id": "c3d1e0c2-2515-4059-93fb-128d35f9dd2f",
+      "disposition": "IMPORT",
+      "reason": "Distinct incident evidence; preserve source loss fields and approved multiplier."
+    },
+    {
+      "legacy_table": "error_logs",
+      "legacy_id": "c5ed7507-a9c6-414c-8458-3a71fe2b6c86",
+      "disposition": "IMPORT",
+      "reason": "Distinct incident evidence; preserve source loss fields and approved multiplier."
+    },
+    {
+      "legacy_table": "error_logs",
+      "legacy_id": "c72c06dc-ccfa-4240-a27b-41f3c7d5eef5",
+      "disposition": "IMPORT",
+      "reason": "Distinct incident evidence; preserve source loss fields and approved multiplier."
+    },
+    {
+      "legacy_table": "error_logs",
+      "legacy_id": "c900895c-2c80-456a-acf3-fdbc11ca6b8f",
+      "disposition": "IMPORT",
+      "reason": "Distinct incident evidence; preserve source loss fields and approved multiplier."
+    },
+    {
+      "legacy_table": "error_logs",
+      "legacy_id": "c9518142-1a93-4c85-9c03-c5001b8bb646",
+      "disposition": "IMPORT",
+      "reason": "Distinct incident evidence; preserve source loss fields and approved multiplier."
+    },
+    {
+      "legacy_table": "error_logs",
+      "legacy_id": "d25215e9-190f-44cd-a774-987ce41ff6fe",
+      "disposition": "IMPORT",
+      "reason": "Distinct incident evidence; preserve source loss fields and approved multiplier."
+    },
+    {
+      "legacy_table": "error_logs",
+      "legacy_id": "d466dc1c-5c0b-4588-a5c2-fb0427d643ea",
+      "disposition": "IMPORT",
+      "reason": "Distinct incident evidence; preserve source loss fields and approved multiplier."
+    },
+    {
+      "legacy_table": "error_logs",
+      "legacy_id": "e1aaea92-e442-4963-b68e-830c5f734573",
+      "disposition": "IMPORT",
+      "reason": "Distinct incident evidence; preserve source loss fields and approved multiplier."
+    },
+    {
+      "legacy_table": "error_logs",
+      "legacy_id": "e3578b4c-c6aa-46df-b674-58095b110fc0",
+      "disposition": "IMPORT",
+      "reason": "Distinct incident evidence; preserve source loss fields and approved multiplier."
+    },
+    {
+      "legacy_table": "error_logs",
+      "legacy_id": "e3fb2308-a2f0-47e2-8967-e84ca73b234b",
+      "disposition": "IMPORT",
+      "reason": "Distinct incident evidence; preserve source loss fields and approved multiplier."
+    },
+    {
+      "legacy_table": "error_logs",
+      "legacy_id": "e93f8e1a-a581-4fc9-8bfb-9d331cd8c7b4",
+      "disposition": "IMPORT",
+      "reason": "Distinct incident evidence; preserve source loss fields and approved multiplier."
+    },
+    {
+      "legacy_table": "error_logs",
+      "legacy_id": "ec0fef3d-2b9a-439f-9352-309d9f7b3772",
+      "disposition": "IMPORT",
+      "reason": "Distinct incident evidence; preserve source loss fields and approved multiplier."
+    },
+    {
+      "legacy_table": "error_logs",
+      "legacy_id": "eff5ee8f-9e25-4385-8d46-0131efab3e8d",
+      "disposition": "IMPORT",
+      "reason": "Distinct incident evidence; preserve source loss fields and approved multiplier."
+    },
+    {
+      "legacy_table": "error_logs",
+      "legacy_id": "f08320f8-c861-4e56-9df7-d5bfdcc52fff",
+      "disposition": "IMPORT",
+      "reason": "Distinct incident evidence; preserve source loss fields and approved multiplier."
+    },
+    {
+      "legacy_table": "error_logs",
+      "legacy_id": "f0843431-fbc9-4660-9da2-cf054bf859fa",
+      "disposition": "IMPORT",
+      "reason": "Distinct incident evidence; preserve source loss fields and approved multiplier."
+    },
+    {
+      "legacy_table": "error_logs",
+      "legacy_id": "f0ca11d2-6f0d-46b3-baec-b1726590eec4",
+      "disposition": "IMPORT",
+      "reason": "Distinct incident evidence; preserve source loss fields and approved multiplier."
+    },
+    {
+      "legacy_table": "error_logs",
+      "legacy_id": "f631ec89-5539-4031-8ee2-cac6fb36f946",
+      "disposition": "IMPORT",
+      "reason": "Distinct incident evidence; preserve source loss fields and approved multiplier."
+    },
+    {
+      "legacy_table": "error_logs",
+      "legacy_id": "f8778f6b-83dd-4ac4-9e8f-f64eed5debb0",
+      "disposition": "IMPORT",
+      "reason": "Distinct incident evidence; preserve source loss fields and approved multiplier."
+    },
+    {
+      "legacy_table": "error_logs",
+      "legacy_id": "fb968e0f-3768-4187-b7bc-2b232eaa6f11",
+      "disposition": "IMPORT",
+      "reason": "Distinct incident evidence; preserve source loss fields and approved multiplier."
+    },
+    {
+      "legacy_table": "error_logs",
+      "legacy_id": "fdf94dc5-8f15-4540-b44c-6e1268d9f677",
+      "disposition": "IMPORT",
+      "reason": "Distinct incident evidence; preserve source loss fields and approved multiplier."
+    },
+    {
+      "legacy_table": "error_logs",
+      "legacy_id": "fe21fb29-5e35-44b6-8adb-615220cbfc92",
+      "disposition": "IMPORT",
+      "reason": "Distinct incident evidence; preserve source loss fields and approved multiplier."
+    },
+    {
+      "legacy_table": "inventory_parts",
+      "legacy_id": "28",
+      "disposition": "MANUAL_REVIEW",
+      "reason": "Mutable snapshot is not opening stock until physical cutover count and approval."
+    },
+    {
+      "legacy_table": "inventory_parts",
+      "legacy_id": "29",
+      "disposition": "MANUAL_REVIEW",
+      "reason": "Mutable snapshot is not opening stock until physical cutover count and approval."
+    },
+    {
+      "legacy_table": "inventory_parts",
+      "legacy_id": "30",
+      "disposition": "MANUAL_REVIEW",
+      "reason": "Mutable snapshot is not opening stock until physical cutover count and approval."
+    },
+    {
+      "legacy_table": "inventory_parts",
+      "legacy_id": "31",
+      "disposition": "MANUAL_REVIEW",
+      "reason": "Mutable snapshot is not opening stock until physical cutover count and approval."
+    },
+    {
+      "legacy_table": "inventory_parts",
+      "legacy_id": "32",
+      "disposition": "MANUAL_REVIEW",
+      "reason": "Mutable snapshot is not opening stock until physical cutover count and approval."
+    },
+    {
+      "legacy_table": "inventory_parts",
+      "legacy_id": "33",
+      "disposition": "MANUAL_REVIEW",
+      "reason": "Mutable snapshot is not opening stock until physical cutover count and approval."
+    },
+    {
+      "legacy_table": "inventory_parts",
+      "legacy_id": "34",
+      "disposition": "MANUAL_REVIEW",
+      "reason": "Mutable snapshot is not opening stock until physical cutover count and approval."
+    },
+    {
+      "legacy_table": "inventory_parts",
+      "legacy_id": "35",
+      "disposition": "MANUAL_REVIEW",
+      "reason": "Mutable snapshot is not opening stock until physical cutover count and approval."
+    },
+    {
+      "legacy_table": "inventory_parts",
+      "legacy_id": "36",
+      "disposition": "MANUAL_REVIEW",
+      "reason": "Mutable snapshot is not opening stock until physical cutover count and approval."
+    },
+    {
+      "legacy_table": "inventory_parts",
+      "legacy_id": "37",
+      "disposition": "MANUAL_REVIEW",
+      "reason": "Mutable snapshot is not opening stock until physical cutover count and approval."
+    },
+    {
+      "legacy_table": "inventory_parts",
+      "legacy_id": "38",
+      "disposition": "MANUAL_REVIEW",
+      "reason": "Mutable snapshot is not opening stock until physical cutover count and approval."
+    },
+    {
+      "legacy_table": "inventory_parts",
+      "legacy_id": "39",
+      "disposition": "MANUAL_REVIEW",
+      "reason": "Mutable snapshot is not opening stock until physical cutover count and approval."
+    },
+    {
+      "legacy_table": "inventory_parts",
+      "legacy_id": "40",
+      "disposition": "MANUAL_REVIEW",
+      "reason": "Mutable snapshot is not opening stock until physical cutover count and approval."
+    },
+    {
+      "legacy_table": "inventory_parts",
+      "legacy_id": "41",
+      "disposition": "MANUAL_REVIEW",
+      "reason": "Mutable snapshot is not opening stock until physical cutover count and approval."
+    },
+    {
+      "legacy_table": "inventory_parts",
+      "legacy_id": "42",
+      "disposition": "MANUAL_REVIEW",
+      "reason": "Mutable snapshot is not opening stock until physical cutover count and approval."
+    },
+    {
+      "legacy_table": "inventory_parts",
+      "legacy_id": "43",
+      "disposition": "MANUAL_REVIEW",
+      "reason": "Mutable snapshot is not opening stock until physical cutover count and approval."
+    },
+    {
+      "legacy_table": "inventory_parts",
+      "legacy_id": "44",
+      "disposition": "MANUAL_REVIEW",
+      "reason": "Mutable snapshot is not opening stock until physical cutover count and approval."
+    },
+    {
+      "legacy_table": "inventory_parts",
+      "legacy_id": "45",
+      "disposition": "MANUAL_REVIEW",
+      "reason": "Mutable snapshot is not opening stock until physical cutover count and approval."
+    },
+    {
+      "legacy_table": "inventory_parts",
+      "legacy_id": "46",
+      "disposition": "MANUAL_REVIEW",
+      "reason": "Mutable snapshot is not opening stock until physical cutover count and approval."
+    },
+    {
+      "legacy_table": "inventory_parts",
+      "legacy_id": "47",
+      "disposition": "MANUAL_REVIEW",
+      "reason": "Mutable snapshot is not opening stock until physical cutover count and approval."
+    },
+    {
+      "legacy_table": "inventory_parts",
+      "legacy_id": "48",
+      "disposition": "MANUAL_REVIEW",
+      "reason": "Mutable snapshot is not opening stock until physical cutover count and approval."
+    },
+    {
+      "legacy_table": "inventory_parts",
+      "legacy_id": "49",
+      "disposition": "MANUAL_REVIEW",
+      "reason": "Mutable snapshot is not opening stock until physical cutover count and approval."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "148",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "149",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "150",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "151",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "152",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "153",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "154",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "155",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "156",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "157",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "158",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "159",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "160",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "161",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "162",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "163",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "164",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "165",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "166",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "167",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "168",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "169",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "170",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "171",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "172",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "173",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "174",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "175",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "176",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "177",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "178",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "179",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "180",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "181",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "182",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "183",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "184",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "185",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "186",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "187",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "188",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "189",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "190",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "191",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "192",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "193",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "194",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "195",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "196",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "197",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "198",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "199",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "200",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "201",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "202",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "203",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "204",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "205",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "206",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "207",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "208",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "209",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "210",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "211",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "212",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "213",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "214",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "215",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "216",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "217",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "218",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "219",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "220",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "221",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "222",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "223",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "224",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "225",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "226",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "227",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "228",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "229",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "230",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "231",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "232",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "233",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "234",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "235",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "236",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "237",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "238",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "239",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "240",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "241",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "242",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "243",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "244",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "245",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "246",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "247",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "248",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "249",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "250",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "251",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "252",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "253",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "254",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "255",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "256",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "257",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "258",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "259",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "260",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "261",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "262",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "263",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "264",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "265",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "266",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "267",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "268",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "269",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "270",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "271",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "272",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "273",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "274",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "275",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "276",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "277",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "278",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "279",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "280",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "281",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "282",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "283",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "284",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "285",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "286",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "287",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "288",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "289",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "290",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "291",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "293",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "294",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "295",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "296",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "297",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "298",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "299",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "300",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "301",
+      "disposition": "MANUAL_REVIEW",
+      "reason": "Unidentified item must not map arbitrarily."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "302",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "303",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "304",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "305",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "306",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "307",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "308",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "309",
+      "disposition": "IMPORT",
+      "reason": "Historical acquisition evidence only; no receipt, stock movement, or FIFO."
+    },
+    {
+      "legacy_table": "part_replacements",
+      "legacy_id": "009b7eb0-eacc-43b8-bbba-9a0e583612a4",
+      "disposition": "IMPORT",
+      "reason": "Verified boundary participates in a reconstructable interval; never fabricate predecessor start."
+    },
+    {
+      "legacy_table": "part_replacements",
+      "legacy_id": "03662754-3029-4736-9fea-7af3412109bd",
+      "disposition": "IMPORT",
+      "reason": "Verified boundary participates in a reconstructable interval; never fabricate predecessor start."
+    },
+    {
+      "legacy_table": "part_replacements",
+      "legacy_id": "047a86ae-e806-4b5e-9b6d-1dec3c512169",
+      "disposition": "IMPORT",
+      "reason": "Verified boundary participates in a reconstructable interval; never fabricate predecessor start."
+    },
+    {
+      "legacy_table": "part_replacements",
+      "legacy_id": "079453c0-d0db-4c10-87d9-08e14507fb05",
+      "disposition": "IMPORT",
+      "reason": "Verified boundary participates in a reconstructable interval; never fabricate predecessor start."
+    },
+    {
+      "legacy_table": "part_replacements",
+      "legacy_id": "0cf0631d-7a44-49f0-921e-a5f4c9336020",
+      "disposition": "ARCHIVE_ONLY",
+      "reason": "First boundary does not prove predecessor installation."
+    },
+    {
+      "legacy_table": "part_replacements",
+      "legacy_id": "0f5393ef-465d-45b2-96b8-3b22590358b0",
+      "disposition": "IMPORT",
+      "reason": "Verified boundary participates in a reconstructable interval; never fabricate predecessor start."
+    },
+    {
+      "legacy_table": "part_replacements",
+      "legacy_id": "11f68a6a-eb3d-41b2-ad6b-753d2d12ed9a",
+      "disposition": "ARCHIVE_ONLY",
+      "reason": "First boundary does not prove predecessor installation."
+    },
+    {
+      "legacy_table": "part_replacements",
+      "legacy_id": "18cb6cb0-7a72-4b5d-aac8-a8be2264a7e9",
+      "disposition": "IMPORT",
+      "reason": "Verified boundary participates in a reconstructable interval; never fabricate predecessor start."
+    },
+    {
+      "legacy_table": "part_replacements",
+      "legacy_id": "22733d86-a645-46f2-922c-d07a04401450",
+      "disposition": "IMPORT",
+      "reason": "Verified boundary participates in a reconstructable interval; never fabricate predecessor start."
+    },
+    {
+      "legacy_table": "part_replacements",
+      "legacy_id": "2452c8f1-374b-4647-bd8b-8a52b30a6cc1",
+      "disposition": "IMPORT",
+      "reason": "Verified boundary participates in a reconstructable interval; never fabricate predecessor start."
+    },
+    {
+      "legacy_table": "part_replacements",
+      "legacy_id": "2c630ac4-584f-43a1-914f-b703d533aabf",
+      "disposition": "ARCHIVE_ONLY",
+      "reason": "First boundary does not prove predecessor installation."
+    },
+    {
+      "legacy_table": "part_replacements",
+      "legacy_id": "2d4f235b-58f8-486a-9a70-b4b06d85ca00",
+      "disposition": "ARCHIVE_ONLY",
+      "reason": "First boundary does not prove predecessor installation."
+    },
+    {
+      "legacy_table": "part_replacements",
+      "legacy_id": "2fb16092-4494-4682-a365-fb20ae97e88a",
+      "disposition": "MANUAL_REVIEW",
+      "reason": "Component slot is not identified by source evidence."
+    },
+    {
+      "legacy_table": "part_replacements",
+      "legacy_id": "3ad7c893-4f60-4218-ab96-fd809d073b4f",
+      "disposition": "IMPORT",
+      "reason": "Verified boundary participates in a reconstructable interval; never fabricate predecessor start."
+    },
+    {
+      "legacy_table": "part_replacements",
+      "legacy_id": "3b244cbc-9f47-48d0-9250-f36210c49d01",
+      "disposition": "ARCHIVE_ONLY",
+      "reason": "First boundary does not prove predecessor installation."
+    },
+    {
+      "legacy_table": "part_replacements",
+      "legacy_id": "3bc82ad7-7897-4b94-8e35-956018c64b10",
+      "disposition": "IMPORT",
+      "reason": "Verified boundary participates in a reconstructable interval; never fabricate predecessor start."
+    },
+    {
+      "legacy_table": "part_replacements",
+      "legacy_id": "3ce63b01-62da-4af3-aa59-808c9b673e1a",
+      "disposition": "ARCHIVE_ONLY",
+      "reason": "First boundary does not prove predecessor installation."
+    },
+    {
+      "legacy_table": "part_replacements",
+      "legacy_id": "3e92b7f9-ba39-4104-87a9-5e2d0576958a",
+      "disposition": "IMPORT",
+      "reason": "Verified boundary participates in a reconstructable interval; never fabricate predecessor start."
+    },
+    {
+      "legacy_table": "part_replacements",
+      "legacy_id": "41342cc0-fc25-4d14-8bf5-b6b8c5cb21e4",
+      "disposition": "MANUAL_REVIEW",
+      "reason": "Component slot is not identified by source evidence."
+    },
+    {
+      "legacy_table": "part_replacements",
+      "legacy_id": "42b9a43b-6e1b-4398-9cf2-e6712c64a914",
+      "disposition": "IMPORT",
+      "reason": "Verified boundary participates in a reconstructable interval; never fabricate predecessor start."
+    },
+    {
+      "legacy_table": "part_replacements",
+      "legacy_id": "48df5adf-535c-487a-9508-9ec49d392a55",
+      "disposition": "IMPORT",
+      "reason": "Verified boundary participates in a reconstructable interval; never fabricate predecessor start."
+    },
+    {
+      "legacy_table": "part_replacements",
+      "legacy_id": "4dacb3a1-339f-47b4-b740-c0da0973953d",
+      "disposition": "ARCHIVE_ONLY",
+      "reason": "First boundary does not prove predecessor installation."
+    },
+    {
+      "legacy_table": "part_replacements",
+      "legacy_id": "4eb8320e-8d98-4bec-865f-f53a72aafbdc",
+      "disposition": "IMPORT",
+      "reason": "Verified boundary participates in a reconstructable interval; never fabricate predecessor start."
+    },
+    {
+      "legacy_table": "part_replacements",
+      "legacy_id": "59698ddf-5610-40f6-92e0-b56b8d1f24c2",
+      "disposition": "ARCHIVE_ONLY",
+      "reason": "First boundary does not prove predecessor installation."
+    },
+    {
+      "legacy_table": "part_replacements",
+      "legacy_id": "5e5d5c31-467b-4e85-ab5b-e0f864312a30",
+      "disposition": "IMPORT",
+      "reason": "Verified boundary participates in a reconstructable interval; never fabricate predecessor start."
+    },
+    {
+      "legacy_table": "part_replacements",
+      "legacy_id": "61710d6f-78bc-47ff-8f81-25a9d562e0c6",
+      "disposition": "IMPORT",
+      "reason": "Verified boundary participates in a reconstructable interval; never fabricate predecessor start."
+    },
+    {
+      "legacy_table": "part_replacements",
+      "legacy_id": "6309aafa-5a7a-4070-b87a-ebf9da94166b",
+      "disposition": "IMPORT",
+      "reason": "Verified boundary participates in a reconstructable interval; never fabricate predecessor start."
+    },
+    {
+      "legacy_table": "part_replacements",
+      "legacy_id": "6d646a2e-13f1-4cd4-b4d9-dc9ccc9804d1",
+      "disposition": "IMPORT",
+      "reason": "Verified boundary participates in a reconstructable interval; never fabricate predecessor start."
+    },
+    {
+      "legacy_table": "part_replacements",
+      "legacy_id": "6f6ca819-9b89-4738-bb7b-be35d78547cc",
+      "disposition": "IMPORT",
+      "reason": "Verified boundary participates in a reconstructable interval; never fabricate predecessor start."
+    },
+    {
+      "legacy_table": "part_replacements",
+      "legacy_id": "7142cff3-0c11-4599-844e-c4aeaec25391",
+      "disposition": "IMPORT",
+      "reason": "Verified boundary participates in a reconstructable interval; never fabricate predecessor start."
+    },
+    {
+      "legacy_table": "part_replacements",
+      "legacy_id": "71c10b1e-dded-4f9f-a5cd-0bfc865a85fa",
+      "disposition": "IMPORT",
+      "reason": "Verified boundary participates in a reconstructable interval; never fabricate predecessor start."
+    },
+    {
+      "legacy_table": "part_replacements",
+      "legacy_id": "73543d0f-99e5-46b3-a02a-4c84967f6194",
+      "disposition": "MANUAL_REVIEW",
+      "reason": "Component slot is not identified by source evidence."
+    },
+    {
+      "legacy_table": "part_replacements",
+      "legacy_id": "73a0f71a-7c04-42da-bac7-caa6bd3633a3",
+      "disposition": "IMPORT",
+      "reason": "Verified boundary participates in a reconstructable interval; never fabricate predecessor start."
+    },
+    {
+      "legacy_table": "part_replacements",
+      "legacy_id": "79894840-9780-43cb-be14-caed9c4cdcfb",
+      "disposition": "IMPORT",
+      "reason": "Verified boundary participates in a reconstructable interval; never fabricate predecessor start."
+    },
+    {
+      "legacy_table": "part_replacements",
+      "legacy_id": "8299a2cc-ce5f-4f4a-b697-a76024e64f11",
+      "disposition": "IMPORT",
+      "reason": "Verified boundary participates in a reconstructable interval; never fabricate predecessor start."
+    },
+    {
+      "legacy_table": "part_replacements",
+      "legacy_id": "82f33a2c-6c59-4ba3-aa13-43572a84ca30",
+      "disposition": "IMPORT",
+      "reason": "Verified boundary participates in a reconstructable interval; never fabricate predecessor start."
+    },
+    {
+      "legacy_table": "part_replacements",
+      "legacy_id": "872b39c8-15cb-413e-ac8a-d21e4028e9aa",
+      "disposition": "IMPORT",
+      "reason": "Verified boundary participates in a reconstructable interval; never fabricate predecessor start."
+    },
+    {
+      "legacy_table": "part_replacements",
+      "legacy_id": "87d242ed-fea9-4e06-8c3e-68fd7927a461",
+      "disposition": "IMPORT",
+      "reason": "Verified boundary participates in a reconstructable interval; never fabricate predecessor start."
+    },
+    {
+      "legacy_table": "part_replacements",
+      "legacy_id": "89681135-1fa8-47e2-8ef0-42e92a6af319",
+      "disposition": "IMPORT",
+      "reason": "Verified boundary participates in a reconstructable interval; never fabricate predecessor start."
+    },
+    {
+      "legacy_table": "part_replacements",
+      "legacy_id": "96d5e2d7-d3c6-4d7a-a99c-e32f0f2bdeab",
+      "disposition": "IMPORT",
+      "reason": "Verified boundary participates in a reconstructable interval; never fabricate predecessor start."
+    },
+    {
+      "legacy_table": "part_replacements",
+      "legacy_id": "9c7c555c-d99f-460a-9014-9d6c5740bea8",
+      "disposition": "IMPORT",
+      "reason": "Verified boundary participates in a reconstructable interval; never fabricate predecessor start."
+    },
+    {
+      "legacy_table": "part_replacements",
+      "legacy_id": "9dfd8507-9072-4244-acd1-be933b8b4cae",
+      "disposition": "IMPORT",
+      "reason": "Verified boundary participates in a reconstructable interval; never fabricate predecessor start."
+    },
+    {
+      "legacy_table": "part_replacements",
+      "legacy_id": "9f634de8-3403-4ec5-9a96-be88d8a6830a",
+      "disposition": "ARCHIVE_ONLY",
+      "reason": "First boundary does not prove predecessor installation."
+    },
+    {
+      "legacy_table": "part_replacements",
+      "legacy_id": "a42debfa-0890-4c80-b4ac-48218ab50a87",
+      "disposition": "IMPORT",
+      "reason": "Verified boundary participates in a reconstructable interval; never fabricate predecessor start."
+    },
+    {
+      "legacy_table": "part_replacements",
+      "legacy_id": "a822b7f9-a41e-4ab6-946e-ed63a8874083",
+      "disposition": "IMPORT",
+      "reason": "Verified boundary participates in a reconstructable interval; never fabricate predecessor start."
+    },
+    {
+      "legacy_table": "part_replacements",
+      "legacy_id": "a862b9e3-2457-43e3-8491-a86d6777e288",
+      "disposition": "ARCHIVE_ONLY",
+      "reason": "First boundary does not prove predecessor installation."
+    },
+    {
+      "legacy_table": "part_replacements",
+      "legacy_id": "a8aed9bf-f3d5-4dbc-80ce-667b13902bab",
+      "disposition": "ARCHIVE_ONLY",
+      "reason": "First boundary does not prove predecessor installation."
+    },
+    {
+      "legacy_table": "part_replacements",
+      "legacy_id": "ab77d3f6-b043-47aa-ac8b-9c224c388a12",
+      "disposition": "IMPORT",
+      "reason": "Verified boundary participates in a reconstructable interval; never fabricate predecessor start."
+    },
+    {
+      "legacy_table": "part_replacements",
+      "legacy_id": "abdb5143-2128-4bdc-98dd-f922b55d59d8",
+      "disposition": "IMPORT",
+      "reason": "Verified boundary participates in a reconstructable interval; never fabricate predecessor start."
+    },
+    {
+      "legacy_table": "part_replacements",
+      "legacy_id": "b276f26b-394a-4657-a3ee-ef51a6271efd",
+      "disposition": "ARCHIVE_ONLY",
+      "reason": "First boundary does not prove predecessor installation."
+    },
+    {
+      "legacy_table": "part_replacements",
+      "legacy_id": "b2e91df3-2846-4be7-9c05-66a4c32220d9",
+      "disposition": "IMPORT",
+      "reason": "Verified boundary participates in a reconstructable interval; never fabricate predecessor start."
+    },
+    {
+      "legacy_table": "part_replacements",
+      "legacy_id": "b5243024-5d60-4adb-8360-e75cca4bd321",
+      "disposition": "IMPORT",
+      "reason": "Verified boundary participates in a reconstructable interval; never fabricate predecessor start."
+    },
+    {
+      "legacy_table": "part_replacements",
+      "legacy_id": "b5eb3f2a-692a-4ab3-920b-dc6d4e437950",
+      "disposition": "ARCHIVE_ONLY",
+      "reason": "First boundary does not prove predecessor installation."
+    },
+    {
+      "legacy_table": "part_replacements",
+      "legacy_id": "b6b645e7-977b-4935-a16b-f8b83c86115b",
+      "disposition": "ARCHIVE_ONLY",
+      "reason": "First boundary does not prove predecessor installation."
+    },
+    {
+      "legacy_table": "part_replacements",
+      "legacy_id": "b75e74e2-a3aa-4c6d-81c2-f1b018119d3d",
+      "disposition": "ARCHIVE_ONLY",
+      "reason": "First boundary does not prove predecessor installation."
+    },
+    {
+      "legacy_table": "part_replacements",
+      "legacy_id": "bd0fa2bb-9c69-4741-bc72-ad6d94824814",
+      "disposition": "IMPORT",
+      "reason": "Verified boundary participates in a reconstructable interval; never fabricate predecessor start."
+    },
+    {
+      "legacy_table": "part_replacements",
+      "legacy_id": "be64d145-164d-407b-8ed2-8afbb1458189",
+      "disposition": "IMPORT",
+      "reason": "Verified boundary participates in a reconstructable interval; never fabricate predecessor start."
+    },
+    {
+      "legacy_table": "part_replacements",
+      "legacy_id": "c34953e1-40c0-4dbf-9b45-a764b78edd6f",
+      "disposition": "IMPORT",
+      "reason": "Verified boundary participates in a reconstructable interval; never fabricate predecessor start."
+    },
+    {
+      "legacy_table": "part_replacements",
+      "legacy_id": "cc867daa-e02a-439a-a8ac-afabc0a7fb55",
+      "disposition": "ARCHIVE_ONLY",
+      "reason": "First boundary does not prove predecessor installation."
+    },
+    {
+      "legacy_table": "part_replacements",
+      "legacy_id": "d3c5d5af-3688-4916-9fda-e3ad5c867e74",
+      "disposition": "ARCHIVE_ONLY",
+      "reason": "First boundary does not prove predecessor installation."
+    },
+    {
+      "legacy_table": "part_replacements",
+      "legacy_id": "d959e9d2-08f6-4db2-b068-5cdcaec3b2d3",
+      "disposition": "MANUAL_REVIEW",
+      "reason": "Component slot is not identified by source evidence."
+    },
+    {
+      "legacy_table": "part_replacements",
+      "legacy_id": "da16101d-706b-406e-8377-e3de40313af0",
+      "disposition": "IMPORT",
+      "reason": "Verified boundary participates in a reconstructable interval; never fabricate predecessor start."
+    },
+    {
+      "legacy_table": "part_replacements",
+      "legacy_id": "e8e26ec3-c0e3-4f37-8b28-fdb5ba847be6",
+      "disposition": "MANUAL_REVIEW",
+      "reason": "Component slot is not identified by source evidence."
+    },
+    {
+      "legacy_table": "part_replacements",
+      "legacy_id": "edd86c23-b7de-474e-93e9-710cfcd45b40",
+      "disposition": "IMPORT",
+      "reason": "Verified boundary participates in a reconstructable interval; never fabricate predecessor start."
+    },
+    {
+      "legacy_table": "part_replacements",
+      "legacy_id": "ef3762c0-979c-4c38-8c1c-da0ec76c4ef6",
+      "disposition": "ARCHIVE_ONLY",
+      "reason": "First boundary does not prove predecessor installation."
+    },
+    {
+      "legacy_table": "part_replacements",
+      "legacy_id": "f3a58215-beec-419f-a6b9-addd83c38eb0",
+      "disposition": "IMPORT",
+      "reason": "Verified boundary participates in a reconstructable interval; never fabricate predecessor start."
+    },
+    {
+      "legacy_table": "part_replacements",
+      "legacy_id": "f4516753-9ff9-4642-854d-d168745ad55a",
+      "disposition": "IMPORT",
+      "reason": "Verified boundary participates in a reconstructable interval; never fabricate predecessor start."
+    },
+    {
+      "legacy_table": "part_replacements",
+      "legacy_id": "f52f637e-48f1-4a26-a1ce-de69a2fff044",
+      "disposition": "IMPORT",
+      "reason": "Verified boundary participates in a reconstructable interval; never fabricate predecessor start."
+    },
+    {
+      "legacy_table": "part_replacements",
+      "legacy_id": "fabf449b-f249-4fa4-8afb-22cbe91db1cb",
+      "disposition": "IMPORT",
+      "reason": "Verified boundary participates in a reconstructable interval; never fabricate predecessor start."
+    },
+    {
+      "legacy_table": "part_replacements",
+      "legacy_id": "ff67ede2-b239-483f-8f01-3e54201bce41",
+      "disposition": "IMPORT",
+      "reason": "Verified boundary participates in a reconstructable interval; never fabricate predecessor start."
+    }
+  ]
+}

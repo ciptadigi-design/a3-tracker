@@ -1,0 +1,296 @@
+{
+  "source_project": "wtslqxjwjqyjgcapfrrz",
+  "exact_label_rule": "Map normalized exact label to existing C1070 component and slot IDs; slot identity is mandatory.",
+  "repeated_logical_component_rule": "Never dedupe by component_id/name; preserve distinct slot_code and existing machine_component_assignment_id.",
+  "ambiguous_row_count": 32,
+  "rows": [
+    {
+      "legacy_table": "part_replacements",
+      "legacy_id": "73543d0f-99e5-46b3-a02a-4c84967f6194",
+      "legacy_label": "Fuser Unit",
+      "target_component_id": null,
+      "target_slot_code": null,
+      "treatment": "MANUAL_REVIEW",
+      "reason": "Insufficient evidence for a physical component/slot; TEST_COMPONENT is forbidden."
+    },
+    {
+      "legacy_table": "part_replacements",
+      "legacy_id": "e8e26ec3-c0e3-4f37-8b28-fdb5ba847be6",
+      "legacy_label": "Charging Corona",
+      "target_component_id": null,
+      "target_slot_code": null,
+      "treatment": "MANUAL_REVIEW",
+      "reason": "Insufficient evidence for a physical component/slot; TEST_COMPONENT is forbidden."
+    },
+    {
+      "legacy_table": "part_replacements",
+      "legacy_id": "2fb16092-4494-4682-a365-fb20ae97e88a",
+      "legacy_label": "Drum Unit",
+      "target_component_id": null,
+      "target_slot_code": null,
+      "treatment": "MANUAL_REVIEW",
+      "reason": "Insufficient evidence for a physical component/slot; TEST_COMPONENT is forbidden."
+    },
+    {
+      "legacy_table": "part_replacements",
+      "legacy_id": "41342cc0-fc25-4d14-8bf5-b6b8c5cb21e4",
+      "legacy_label": "Drum Unit",
+      "target_component_id": null,
+      "target_slot_code": null,
+      "treatment": "MANUAL_REVIEW",
+      "reason": "Insufficient evidence for a physical component/slot; TEST_COMPONENT is forbidden."
+    },
+    {
+      "legacy_table": "part_replacements",
+      "legacy_id": "d959e9d2-08f6-4db2-b068-5cdcaec3b2d3",
+      "legacy_label": "Charging Corona",
+      "target_component_id": null,
+      "target_slot_code": null,
+      "treatment": "MANUAL_REVIEW",
+      "reason": "Insufficient evidence for a physical component/slot; TEST_COMPONENT is forbidden."
+    },
+    {
+      "legacy_table": "inventory_parts",
+      "legacy_id": "40",
+      "legacy_label": "Developing Unit",
+      "target_component_id": null,
+      "target_slot_code": null,
+      "treatment": "MANUAL_REVIEW",
+      "reason": "Insufficient evidence for a physical component/slot; TEST_COMPONENT is forbidden."
+    },
+    {
+      "legacy_table": "inventory_parts",
+      "legacy_id": "47",
+      "legacy_label": "Other Part",
+      "target_component_id": null,
+      "target_slot_code": null,
+      "treatment": "MANUAL_REVIEW",
+      "reason": "Insufficient evidence for a physical component/slot; TEST_COMPONENT is forbidden."
+    },
+    {
+      "legacy_table": "inventory_parts",
+      "legacy_id": "35",
+      "legacy_label": "Charging Corona",
+      "target_component_id": null,
+      "target_slot_code": null,
+      "treatment": "MANUAL_REVIEW",
+      "reason": "Insufficient evidence for a physical component/slot; TEST_COMPONENT is forbidden."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "156",
+      "legacy_label": "Drum Unit",
+      "target_component_id": null,
+      "target_slot_code": null,
+      "treatment": "MAP_LEGACY_NONCANONICAL_INVENTORY_ITEM",
+      "reason": "Preserve acquisition without claiming color/physical slot; item has no component_id."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "161",
+      "legacy_label": "Drum Unit",
+      "target_component_id": null,
+      "target_slot_code": null,
+      "treatment": "MAP_LEGACY_NONCANONICAL_INVENTORY_ITEM",
+      "reason": "Preserve acquisition without claiming color/physical slot; item has no component_id."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "162",
+      "legacy_label": "Charging Corona",
+      "target_component_id": null,
+      "target_slot_code": null,
+      "treatment": "MAP_LEGACY_NONCANONICAL_INVENTORY_ITEM",
+      "reason": "Preserve acquisition without claiming color/physical slot; item has no component_id."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "181",
+      "legacy_label": "Drum Unit",
+      "target_component_id": null,
+      "target_slot_code": null,
+      "treatment": "MAP_LEGACY_NONCANONICAL_INVENTORY_ITEM",
+      "reason": "Preserve acquisition without claiming color/physical slot; item has no component_id."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "182",
+      "legacy_label": "Charging Corona",
+      "target_component_id": null,
+      "target_slot_code": null,
+      "treatment": "MAP_LEGACY_NONCANONICAL_INVENTORY_ITEM",
+      "reason": "Preserve acquisition without claiming color/physical slot; item has no component_id."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "189",
+      "legacy_label": "Charging Corona",
+      "target_component_id": null,
+      "target_slot_code": null,
+      "treatment": "MAP_LEGACY_NONCANONICAL_INVENTORY_ITEM",
+      "reason": "Preserve acquisition without claiming color/physical slot; item has no component_id."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "198",
+      "legacy_label": "Drum Unit",
+      "target_component_id": null,
+      "target_slot_code": null,
+      "treatment": "MAP_LEGACY_NONCANONICAL_INVENTORY_ITEM",
+      "reason": "Preserve acquisition without claiming color/physical slot; item has no component_id."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "203",
+      "legacy_label": "Charging Corona",
+      "target_component_id": null,
+      "target_slot_code": null,
+      "treatment": "MAP_LEGACY_NONCANONICAL_INVENTORY_ITEM",
+      "reason": "Preserve acquisition without claiming color/physical slot; item has no component_id."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "212",
+      "legacy_label": "Drum Unit",
+      "target_component_id": null,
+      "target_slot_code": null,
+      "treatment": "MAP_LEGACY_NONCANONICAL_INVENTORY_ITEM",
+      "reason": "Preserve acquisition without claiming color/physical slot; item has no component_id."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "218",
+      "legacy_label": "Charging Corona",
+      "target_component_id": null,
+      "target_slot_code": null,
+      "treatment": "MAP_LEGACY_NONCANONICAL_INVENTORY_ITEM",
+      "reason": "Preserve acquisition without claiming color/physical slot; item has no component_id."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "220",
+      "legacy_label": "Drum Unit",
+      "target_component_id": null,
+      "target_slot_code": null,
+      "treatment": "MAP_LEGACY_NONCANONICAL_INVENTORY_ITEM",
+      "reason": "Preserve acquisition without claiming color/physical slot; item has no component_id."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "225",
+      "legacy_label": "Developing Unit",
+      "target_component_id": null,
+      "target_slot_code": null,
+      "treatment": "MAP_LEGACY_NONCANONICAL_INVENTORY_ITEM",
+      "reason": "Preserve acquisition without claiming color/physical slot; item has no component_id."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "230",
+      "legacy_label": "Drum Unit",
+      "target_component_id": null,
+      "target_slot_code": null,
+      "treatment": "MAP_LEGACY_NONCANONICAL_INVENTORY_ITEM",
+      "reason": "Preserve acquisition without claiming color/physical slot; item has no component_id."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "241",
+      "legacy_label": "Charging Corona",
+      "target_component_id": null,
+      "target_slot_code": null,
+      "treatment": "MAP_LEGACY_NONCANONICAL_INVENTORY_ITEM",
+      "reason": "Preserve acquisition without claiming color/physical slot; item has no component_id."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "243",
+      "legacy_label": "Drum Unit",
+      "target_component_id": null,
+      "target_slot_code": null,
+      "treatment": "MAP_LEGACY_NONCANONICAL_INVENTORY_ITEM",
+      "reason": "Preserve acquisition without claiming color/physical slot; item has no component_id."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "253",
+      "legacy_label": "Drum Unit",
+      "target_component_id": null,
+      "target_slot_code": null,
+      "treatment": "MAP_LEGACY_NONCANONICAL_INVENTORY_ITEM",
+      "reason": "Preserve acquisition without claiming color/physical slot; item has no component_id."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "254",
+      "legacy_label": "Charging Corona",
+      "target_component_id": null,
+      "target_slot_code": null,
+      "treatment": "MAP_LEGACY_NONCANONICAL_INVENTORY_ITEM",
+      "reason": "Preserve acquisition without claiming color/physical slot; item has no component_id."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "265",
+      "legacy_label": "Charging Corona",
+      "target_component_id": null,
+      "target_slot_code": null,
+      "treatment": "MAP_LEGACY_NONCANONICAL_INVENTORY_ITEM",
+      "reason": "Preserve acquisition without claiming color/physical slot; item has no component_id."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "266",
+      "legacy_label": "Drum Unit",
+      "target_component_id": null,
+      "target_slot_code": null,
+      "treatment": "MAP_LEGACY_NONCANONICAL_INVENTORY_ITEM",
+      "reason": "Preserve acquisition without claiming color/physical slot; item has no component_id."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "280",
+      "legacy_label": "Charging Corona",
+      "target_component_id": null,
+      "target_slot_code": null,
+      "treatment": "MAP_LEGACY_NONCANONICAL_INVENTORY_ITEM",
+      "reason": "Preserve acquisition without claiming color/physical slot; item has no component_id."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "283",
+      "legacy_label": "Developing Unit",
+      "target_component_id": null,
+      "target_slot_code": null,
+      "treatment": "MAP_LEGACY_NONCANONICAL_INVENTORY_ITEM",
+      "reason": "Preserve acquisition without claiming color/physical slot; item has no component_id."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "285",
+      "legacy_label": "Charging Corona",
+      "target_component_id": null,
+      "target_slot_code": null,
+      "treatment": "MAP_LEGACY_NONCANONICAL_INVENTORY_ITEM",
+      "reason": "Preserve acquisition without claiming color/physical slot; item has no component_id."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "287",
+      "legacy_label": "Drum Unit",
+      "target_component_id": null,
+      "target_slot_code": null,
+      "treatment": "MAP_LEGACY_NONCANONICAL_INVENTORY_ITEM",
+      "reason": "Preserve acquisition without claiming color/physical slot; item has no component_id."
+    },
+    {
+      "legacy_table": "part_purchases",
+      "legacy_id": "301",
+      "legacy_label": "Other Part",
+      "target_component_id": null,
+      "target_slot_code": null,
+      "treatment": "MANUAL_REVIEW",
+      "reason": "Insufficient evidence for a physical component/slot; TEST_COMPONENT is forbidden."
+    }
+  ]
+}

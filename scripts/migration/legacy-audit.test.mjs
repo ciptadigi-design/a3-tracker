@@ -1,6 +1,9 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { analyzeLegacyData, auditLegacyProject } from './legacy-audit.mjs'
+import {
+  analyzeLegacyData, assertDispositionTotal, auditLegacyProject, classifyCounterCollision,
+  classifyCounterDate, deterministicUuidV5, fingerprintRows, normalizeForComparison,
+} from './legacy-audit.mjs'
 
 test('profiles legacy evidence without exposing person/customer values', () => {
   const result = analyzeLegacyData({
@@ -51,4 +54,53 @@ test('hosted audit is restricted to GET requests on the explicit allowlist', asy
   } finally {
     globalThis.fetch = originalFetch
   }
+})
+
+test('source fingerprints are independent of row and object-key order', () => {
+  assert.equal(fingerprintRows([{ id: 2, value: 'b' }, { id: 1, value: 'a' }]), fingerprintRows([{ value: 'a', id: 1 }, { value: 'b', id: 2 }]))
+})
+
+test('locked identity mapping uses Tuparev and deny-lists Graha', async () => {
+  const mapping = JSON.parse(await (await import('node:fs/promises')).readFile(new URL('./mapping.json', import.meta.url)))
+  assert.equal(mapping.identity.account.id, '357e420a-c9ea-4404-9da4-f254c5dce5ef')
+  assert.equal(mapping.identity.branch.code, 'CG-TUP')
+  assert.equal(mapping.identity.machine.code, 'CG-TUP-A3-01')
+  assert.ok(mapping.identity.denylisted_branch_ids.includes('9f753339-0d54-42c9-9bb6-afe2461803f8'))
+})
+
+test('counter date precision and collision mechanics preserve evidence', () => {
+  const yesterday = classifyCounterDate({ date_for: '2026-01-01', date_str: '2026-01-02 08:00:00' })
+  assert.equal(yesterday.status, 'RESOLVED_DATE_ONLY')
+  const collision = classifyCounterCollision({ total_clicks: 100, date_str: '2026-01-02 08:00:00' }, [{ id: 'target', reading_value: 100, observed_at: '2026-01-02T01:02:00Z' }])
+  assert.equal(collision.collision, 'SAME_EVENT_HIGH_CONFIDENCE')
+  assert.equal(collision.disposition, 'MERGE')
+})
+
+test('daily clicks, unknown lifecycle, purchases, and opening stock stay conservative', async () => {
+  const mapping = JSON.parse(await (await import('node:fs/promises')).readFile(new URL('./mapping.json', import.meta.url)))
+  assert.match(mapping.entities[0].field_rules.daily_clicks, /SKIP_DERIVED/)
+  assert.equal(mapping.policies.lifecycle.unknown_stays_unknown, true)
+  assert.equal(mapping.policies.purchases.create_receipts, false)
+  assert.equal(mapping.policies.opening_stock.requires_physical_count_approval, true)
+  assert.equal(mapping.policies.components.other_part_treatment, 'MANUAL_REVIEW_OR_ARCHIVE_TEXT_ONLY')
+})
+
+test('duplicate mechanics, dispositions, UUIDv5, and crosswalk are stable', () => {
+  assertDispositionTotal([{ disposition: 'IMPORT' }, { disposition: 'SKIP_DUPLICATE' }], 2)
+  const namespace = '8d17ee87-c890-5f1e-92bf-5ea595530e2f'
+  assert.equal(deterministicUuidV5(namespace, 'row-1'), deterministicUuidV5(namespace, 'row-1'))
+  assert.notEqual(deterministicUuidV5(namespace, 'row-1'), deterministicUuidV5(namespace, 'row-2'))
+  assert.equal(normalizeForComparison('  Akmal   OJAN '), 'akmal ojan')
+})
+
+test('generated register accounts for all 526 rows and incident duplicates', async () => {
+  const fs = await import('node:fs/promises')
+  const register = JSON.parse(await fs.readFile(new URL('./source-row-dispositions.json', import.meta.url)))
+  assert.equal(register.row_count, 526)
+  assert.equal(register.unexplained_remainder, 0)
+  assert.equal(Object.values(register.counts).reduce((sum, count) => sum + count, 0), 526)
+  assert.equal(register.counts.SKIP_DUPLICATE, 2)
+  assert.deepEqual(register.rows.filter((row) => row.disposition === 'SKIP_DUPLICATE').map((row) => row.legacy_id).sort(), [
+    '3436509c-f729-4f78-b9b7-33d0d41f6837', '76c2f97c-cae5-44a8-ac0c-29af462b5994',
+  ])
 })

@@ -1,0 +1,39 @@
+{
+  "mapping_version": "m2.9b-v1",
+  "normalization": "trim + collapse whitespace + en-US case fold; source snapshots remain unchanged",
+  "normalized_unique_count": 26,
+  "auth_identity_rule": "Historical operational people are independent of Auth; create no Auth users.",
+  "target_people": {
+    "akmal": { "id": "c89d9c9c-b892-4794-b69c-f2680908a068", "name": "Akmal Fauzan" },
+    "angga": { "id": "7bff2e7b-de85-40a7-949f-86acd32aea8c", "name": "Muhammad Angga Nugraha" },
+    "daffa": { "id": "03852a38-51d5-46cb-88a4-145325500e53", "name": "Muhammad Daffa Ramadhiansyah" }
+  },
+  "mappings": [
+    { "legacy_value": "a Epri / a epri", "normalized_value": "a epri", "candidate_target_person": "Epri", "confidence": "MEDIUM", "treatment": "CREATE_PERSON" },
+    { "legacy_value": "AKMAL / Akmal / akmal", "normalized_value": "akmal", "candidate_target_person": "Akmal Fauzan", "target_person_id": "c89d9c9c-b892-4794-b69c-f2680908a068", "confidence": "HIGH", "treatment": "MAP_EXISTING" },
+    { "legacy_value": "Akmal - Dhea", "normalized_value": "akmal - dhea", "candidate_target_person": null, "confidence": "LOW", "treatment": "ARCHIVE_TEXT_ONLY" },
+    { "legacy_value": "Akmal OJAN / akmal ojan", "normalized_value": "akmal ojan", "candidate_target_person": "Akmal Fauzan", "target_person_id": "c89d9c9c-b892-4794-b69c-f2680908a068", "confidence": "HIGH", "treatment": "MAP_EXISTING" },
+    { "legacy_value": " akmall", "normalized_value": "akmall", "candidate_target_person": "Akmal Fauzan", "target_person_id": "c89d9c9c-b892-4794-b69c-f2680908a068", "confidence": "MEDIUM", "treatment": "MAP_EXISTING" },
+    { "legacy_value": "Angga / Angga  / angga", "normalized_value": "angga", "candidate_target_person": "Muhammad Angga Nugraha", "target_person_id": "7bff2e7b-de85-40a7-949f-86acd32aea8c", "confidence": "HIGH", "treatment": "MAP_EXISTING" },
+    { "legacy_value": "anggga", "normalized_value": "anggga", "candidate_target_person": "Muhammad Angga Nugraha", "target_person_id": "7bff2e7b-de85-40a7-949f-86acd32aea8c", "confidence": "MEDIUM", "treatment": "MAP_EXISTING" },
+    { "legacy_value": "Bigel / bigel", "normalized_value": "bigel", "candidate_target_person": "Bigel", "confidence": "MEDIUM", "treatment": "CREATE_PERSON" },
+    { "legacy_value": "Bulan / bulan", "normalized_value": "bulan", "candidate_target_person": "Bulan", "confidence": "MEDIUM", "treatment": "CREATE_PERSON" },
+    { "legacy_value": "Daffa / daffa", "normalized_value": "daffa", "candidate_target_person": "Muhammad Daffa Ramadhiansyah", "target_person_id": "03852a38-51d5-46cb-88a4-145325500e53", "confidence": "HIGH", "treatment": "MAP_EXISTING" },
+    { "legacy_value": "Daniel / daniel", "normalized_value": "daniel", "candidate_target_person": "Daniel", "confidence": "MEDIUM", "treatment": "CREATE_PERSON" },
+    { "legacy_value": "Dhea", "normalized_value": "dhea", "candidate_target_person": "Dhea", "confidence": "MEDIUM", "treatment": "CREATE_PERSON" },
+    { "legacy_value": "Lydia", "normalized_value": "lydia", "candidate_target_person": "Lydia", "confidence": "MEDIUM", "treatment": "CREATE_PERSON" },
+    { "legacy_value": "Marsya", "normalized_value": "marsya", "candidate_target_person": "Marsya", "confidence": "MEDIUM", "treatment": "CREATE_PERSON" },
+    { "legacy_value": "Nabilah", "normalized_value": "nabilah", "candidate_target_person": "Nabilah", "confidence": "MEDIUM", "treatment": "CREATE_PERSON" },
+    { "legacy_value": "oan", "normalized_value": "oan", "candidate_target_person": "Akmal Fauzan", "target_person_id": "c89d9c9c-b892-4794-b69c-f2680908a068", "confidence": "LOW", "treatment": "MANUAL_REVIEW" },
+    { "legacy_value": "OJAN / Ojan / ojAN / ojan / ojan ", "normalized_value": "ojan", "candidate_target_person": "Akmal Fauzan", "target_person_id": "c89d9c9c-b892-4794-b69c-f2680908a068", "confidence": "HIGH", "treatment": "MAP_EXISTING" },
+    { "legacy_value": "ojan adalah akmal", "normalized_value": "ojan adalah akmal", "candidate_target_person": "Akmal Fauzan", "target_person_id": "c89d9c9c-b892-4794-b69c-f2680908a068", "confidence": "HIGH", "treatment": "MAP_EXISTING" },
+    { "legacy_value": "ojan kun", "normalized_value": "ojan kun", "candidate_target_person": "Akmal Fauzan", "target_person_id": "c89d9c9c-b892-4794-b69c-f2680908a068", "confidence": "MEDIUM", "treatment": "MAP_EXISTING" },
+    { "legacy_value": "ojan yang mantep", "normalized_value": "ojan yang mantep", "candidate_target_person": "Akmal Fauzan", "target_person_id": "c89d9c9c-b892-4794-b69c-f2680908a068", "confidence": "MEDIUM", "treatment": "MAP_EXISTING" },
+    { "legacy_value": "ojann", "normalized_value": "ojann", "candidate_target_person": "Akmal Fauzan", "target_person_id": "c89d9c9c-b892-4794-b69c-f2680908a068", "confidence": "MEDIUM", "treatment": "MAP_EXISTING" },
+    { "legacy_value": "oojan", "normalized_value": "oojan", "candidate_target_person": "Akmal Fauzan", "target_person_id": "c89d9c9c-b892-4794-b69c-f2680908a068", "confidence": "MEDIUM", "treatment": "MAP_EXISTING" },
+    { "legacy_value": "oojann", "normalized_value": "oojann", "candidate_target_person": "Akmal Fauzan", "target_person_id": "c89d9c9c-b892-4794-b69c-f2680908a068", "confidence": "MEDIUM", "treatment": "MAP_EXISTING" },
+    { "legacy_value": "pinkan", "normalized_value": "pinkan", "candidate_target_person": "Pinkan", "confidence": "MEDIUM", "treatment": "CREATE_PERSON" },
+    { "legacy_value": "Ramdani", "normalized_value": "ramdani", "candidate_target_person": "Ramdani", "confidence": "MEDIUM", "treatment": "CREATE_PERSON" },
+    { "legacy_value": "sri bulan", "normalized_value": "sri bulan", "candidate_target_person": "Bulan", "confidence": "LOW", "treatment": "MANUAL_REVIEW" }
+  ]
+}

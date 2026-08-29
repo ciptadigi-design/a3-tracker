@@ -6,6 +6,8 @@ Legacy Supabase project: `wtslqxjwjqyjgcapfrrz`<br>
 New DEV Supabase project: `sxitqjxljoqsnpepymrl`<br>
 Assessment mode: **read-only**
 
+> **M2.9B supersession (2026-08-29):** The user approved Account = Cipta Grafika, Branch = Tuparev, and physical Machine = existing `CG-TUP-A3-01` (Konica Minolta bizhub PRESS C1070/1070P). All assessed legacy operational evidence belongs to Tuparev; Graha receives zero legacy operational data. These identity blockers are closed. See `M2_9B_MIGRATION_DECISION_CLOSURE.md` for the current gate and machine-readable IDs.
+
 ## 1. Decision summary
 
 M2.10 is **BLOCKED**, not because the observable legacy rows are unusable, but because two acceptance-critical facts are not yet provable:
@@ -412,6 +414,6 @@ Required before M2.10 can be GO:
 8. A source write-freeze owner/window and full-snapshot/delta protocol.
 9. A disposable exact-schema target, verified target backup/restore procedure, target collision snapshot, and signed reconciliation thresholds.
 
-Until items 1 and 2 are resolved, readiness is **BLOCKED** rather than conditional.
+M2.9B closes item 2. Item 1 remains an administrative limitation; it does not invalidate the five proven application tables, but requires explicit risk acceptance before a conditional M2.10. Current operational/manual decisions are tracked by source ID in the M2.9B register.
 
 Shared-hosting/PHP/MySQL migration was not started. Maintenance was not started.

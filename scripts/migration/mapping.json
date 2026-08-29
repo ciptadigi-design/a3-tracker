@@ -1,5 +1,5 @@
 {
-  "mapping_version": "m2.9-v1",
+  "mapping_version": "m2.9b-v1",
   "source": {
     "platform": "supabase-postgresql",
     "project_ref": "wtslqxjwjqyjgcapfrrz",
@@ -11,8 +11,22 @@
   "target": {
     "platform": "supabase-postgresql",
     "project_ref": "sxitqjxljoqsnpepymrl",
-    "accepted_application_sha": "0313c6debd6b9167984e07fa769f178253011f46",
+    "accepted_application_sha": "8773d6e7b0514aed6a97cff32d53318d35691324",
     "latest_schema_migration": "20260829000600"
+  },
+  "identity": {
+    "account": { "id": "357e420a-c9ea-4404-9da4-f254c5dce5ef", "code": "CG", "name": "Cipta Grafika", "decision": "APPROVED_MERGE" },
+    "branch": { "id": "76d3c7ab-55c3-40f7-b133-0ef54a448893", "code": "CG-TUP", "name": "Tuparev", "decision": "APPROVED_MERGE" },
+    "machine": { "id": "b4ca07ee-c588-404d-abcf-b6a029e68776", "code": "CG-TUP-A3-01", "manufacturer_id": "50000000-0000-0000-0000-000000000001", "machine_model_id": "51000000-0000-0000-0000-000000000001", "decision": "APPROVED_MERGE_EXISTING_PHYSICAL_MACHINE" },
+    "inventory_location_candidate": { "id": "b6296488-5479-4dd0-9463-091891b4cbe4", "code": "CG_DIGITAL", "name": "CG Digital Print", "decision": "DETERMINISTIC_ONLY_ACTIVE_TUPAREV_LOCATION" },
+    "denylisted_branch_ids": ["9f753339-0d54-42c9-9bb6-afe2461803f8"],
+    "graha_legacy_operational_data": "NONE"
+  },
+  "policies": {
+    "components": { "slot_identity_required": true, "other_part_treatment": "MANUAL_REVIEW_OR_ARCHIVE_TEXT_ONLY", "test_component_forbidden": true },
+    "lifecycle": { "unknown_stays_unknown": true, "first_replacement_does_not_prove_predecessor_installation": true, "levels": ["A_VERIFIED_INTERVAL", "B_PARTIAL_BOUNDARY", "C_EVENT_ONLY", "D_UNMAPPABLE"] },
+    "purchases": { "representation": "HISTORICAL_ACQUISITION_EVIDENCE", "create_receipts": false, "create_inventory_movements": false, "create_fifo_lots": false, "historical_status": "draft_with_legacy_historical_note" },
+    "opening_stock": { "source": "PHYSICAL_STOCK_OPNAME_AT_CUTOVER", "requires_physical_count_approval": true, "legacy_snapshot_is_approved_opening": false }
   },
   "defaults": {
     "mode": "dry-run",
@@ -34,7 +48,7 @@
         "date_str": "observed_at interpreted as Asia/Jakarta only after timezone approval",
         "date_for": "local operational date validation only",
         "operator": "operator_name_snapshot and optional approved operational_person_id",
-        "daily_clicks": "do not import; derive from chronological effective readings",
+        "daily_clicks": "SKIP_DERIVED; do not import; derive from chronological effective readings",
         "id": "generate target UUID and record crosswalk"
       },
       "collision_key": "approved source ID crosswalk; never value or timestamp alone",
@@ -127,8 +141,8 @@
     }
   ],
   "crosswalk": {
-    "required_fields": ["legacy_table", "legacy_id", "new_table", "new_id", "mapping_version", "decision", "approved_by", "approved_at"],
-    "decisions": ["MERGE", "KEEP_NEW", "IMPORT_LEGACY", "SKIP_LEGACY", "MANUAL_REVIEW"]
+    "required_fields": ["legacy_source_project", "legacy_table", "legacy_id", "target_entity", "target_id", "mapping_rule", "confidence", "disposition", "notes"],
+    "dispositions": ["IMPORT", "MERGE", "SKIP_DUPLICATE", "SKIP_DERIVED", "ARCHIVE_ONLY", "MANUAL_REVIEW"]
   },
   "expected_difference_reasons": [
     "DUPLICATE",

@@ -8,7 +8,8 @@ const LEGACY_TABLES = [
   'part_purchases',
 ]
 
-const normalize = (value) => String(value ?? '').trim().toLocaleLowerCase('en-US')
+export const normalizeForComparison = (value) => String(value ?? '').trim().replace(/\s+/g, ' ').toLocaleLowerCase('en-US')
+const normalize = normalizeForComparison
 const countWhere = (rows, predicate) => rows.filter(predicate).length
 const distinctCount = (values) => new Set(values.map(normalize).filter(Boolean)).size
 const duplicateCount = (rows, key) => rows.length - new Set(rows.map(key)).size
@@ -28,14 +29,51 @@ const groupedCounts = (values) => Object.fromEntries(
   }, new Map())].sort(([left], [right]) => left.localeCompare(right)),
 )
 
-const canonicalize = (value) => {
+export const canonicalize = (value) => {
   if (Array.isArray(value)) return value.map(canonicalize)
   if (value && typeof value === 'object') {
     return Object.fromEntries(Object.keys(value).sort().map((key) => [key, canonicalize(value[key])]))
   }
   return value
 }
-const fingerprint = (value) => createHash('sha256').update(JSON.stringify(canonicalize(value))).digest('hex')
+export const deterministicFingerprint = (value) => createHash('sha256').update(JSON.stringify(canonicalize(value))).digest('hex')
+export const fingerprintRows = (rows) => deterministicFingerprint([...rows].sort((left, right) => String(left.id).localeCompare(String(right.id))))
+
+export function deterministicUuidV5(namespace, name) {
+  const hex = namespace.replaceAll('-', '')
+  if (!/^[0-9a-f]{32}$/i.test(hex)) throw new Error('Invalid UUID namespace')
+  const hash = createHash('sha1').update(Buffer.concat([Buffer.from(hex, 'hex'), Buffer.from(name)])).digest()
+  hash[6] = (hash[6] & 0x0f) | 0x50
+  hash[8] = (hash[8] & 0x3f) | 0x80
+  const value = hash.subarray(0, 16).toString('hex')
+  return `${value.slice(0, 8)}-${value.slice(8, 12)}-${value.slice(12, 16)}-${value.slice(16, 20)}-${value.slice(20)}`
+}
+
+export function classifyCounterDate(row) {
+  const entryDate = String(row.date_str ?? '').slice(0, 10)
+  if (row.date_for === entryDate) return { status: 'RESOLVED_DETERMINISTICALLY', precision: 'source_local_datetime' }
+  return {
+    status: 'RESOLVED_DATE_ONLY',
+    precision: 'source_calendar_date',
+    migration_time_rule: 'MIGRATION_SYNTHETIC_TIME: date_for + date_str local time; retain date_str and created_at as source evidence',
+  }
+}
+
+export function classifyCounterCollision(row, targetRows = []) {
+  const sameValue = targetRows.filter((target) => Number(target.reading_value) === Number(row.total_clicks))
+  if (!sameValue.length) return { collision: 'DISTINCT_EVENT', disposition: 'IMPORT' }
+  const interpreted = Date.parse(`${String(row.date_str).replace(' ', 'T')}+07:00`)
+  const nearest = sameValue.map((target) => ({ target, gap: Math.abs(Date.parse(target.observed_at) - interpreted) })).sort((a, b) => a.gap - b.gap)[0]
+  if (nearest.gap <= 5 * 60_000) return { collision: 'SAME_EVENT_HIGH_CONFIDENCE', disposition: 'MERGE', target_id: nearest.target.id }
+  return { collision: 'POSSIBLE_DUPLICATE', disposition: 'MANUAL_REVIEW', target_id: nearest.target.id }
+}
+
+export function assertDispositionTotal(rows, expected) {
+  const dispositions = ['IMPORT', 'MERGE', 'SKIP_DUPLICATE', 'SKIP_DERIVED', 'ARCHIVE_ONLY', 'MANUAL_REVIEW']
+  if (rows.some((row) => !dispositions.includes(row.disposition))) throw new Error('Unknown source-row disposition')
+  if (rows.length !== expected) throw new Error(`Disposition total ${rows.length} does not equal expected ${expected}`)
+  return true
+}
 
 function genericProfile(rows) {
   const columns = [...new Set(rows.flatMap((row) => Object.keys(row)))].sort()
@@ -51,7 +89,7 @@ function genericProfile(rows) {
       countWhere(rows, (row) => row[column] === null || row[column] === undefined || row[column] === ''),
     ])),
     duplicate_primary_key_candidates: duplicateCount(rows, (row) => String(row.id)),
-    ordered_row_fingerprint_sha256: fingerprint([...rows].sort((left, right) => String(left.id).localeCompare(String(right.id)))),
+    ordered_row_fingerprint_sha256: fingerprintRows(rows),
   }
 }
 
