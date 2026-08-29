@@ -288,7 +288,7 @@ create function public.replace_machine_component(target_account_id uuid,target_m
 returns public.component_replacement_events language plpgsql security definer set search_path='' as $$
 declare result public.component_replacement_events%rowtype;
 begin
-  -- The base implementation retains every for update lock.
+  -- The base implementation retains machine_record and every for update lock.
   perform public.set_operational_override(target_account_id,'replace_component');
   result:=public.replace_machine_component_m27a_base(target_account_id,target_machine_id,target_lifecycle_id,target_replacement_counter,target_replaced_at,target_replacement_reason,target_condition_at_removal,target_include_in_adaptive_learning,target_performed_by_user_id,target_performed_by_name_snapshot,target_notes,target_client_request_id,target_inventory_source,target_inventory_item_id,target_inventory_location_id,target_inventory_quantity,target_external_inventory_reason);
   perform set_config('a3.operational_capability_override','',true); return result;
