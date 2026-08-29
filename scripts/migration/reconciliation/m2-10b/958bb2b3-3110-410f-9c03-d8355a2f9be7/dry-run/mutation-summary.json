@@ -1,0 +1,25 @@
+{
+  "created": {
+    "people": 0,
+    "counters": 0,
+    "lifecycles": 0,
+    "purchases": 0,
+    "incidents": 0,
+    "suppliers": 0,
+    "items": 0
+  },
+  "already_present": {
+    "people": 0,
+    "counters": 0,
+    "lifecycles": 0,
+    "purchases": 0,
+    "incidents": 0,
+    "suppliers": 0,
+    "items": 18
+  },
+  "merged": {
+    "counters": 1
+  },
+  "skipped": 49,
+  "failed": 0
+}

@@ -1,0 +1,21 @@
+{
+  "dry_run": true,
+  "validated_operations": {
+    "people": 10,
+    "counters": 179,
+    "lifecycles": 47,
+    "suppliers": 9,
+    "items": 22,
+    "purchases": 161,
+    "incidents": 89
+  },
+  "dispositions": {
+    "IMPORT": 476,
+    "MERGE": 1,
+    "SKIP_DUPLICATE": 2,
+    "ARCHIVE_ONLY": 45,
+    "APPROVED_EXCLUDE": 2,
+    "MANUAL_REVIEW": 0
+  },
+  "unexplained": 0
+}

@@ -1,0 +1,1936 @@
+{
+  "fingerprint": "5bae4aff63e1ab38d59421c0a758406307b8f2d23ed9751e63f724ffea835dfb",
+  "state": {
+    "account": {
+      "code": "CG",
+      "id": "357e420a-c9ea-4404-9da4-f254c5dce5ef",
+      "name": "Cipta Grafika",
+      "status": "active"
+    },
+    "assignments": [
+      {
+        "component_id": "53000000-0000-0000-0000-000000000001",
+        "id": "39f262a7-c85b-499a-b1b9-f4aa23b5b482",
+        "slot_code": "CHARGING_CORONA_C",
+        "source_profile_id": "54000000-0000-0000-0000-000000000001",
+        "source_type": "model_profile",
+        "status": "configured"
+      },
+      {
+        "component_id": "53000000-0000-0000-0000-000000000004",
+        "id": "ed7d8c8e-0c8e-49cc-a603-8d037884592a",
+        "slot_code": "CHARGING_CORONA_K",
+        "source_profile_id": "54000000-0000-0000-0000-000000000004",
+        "source_type": "model_profile",
+        "status": "configured"
+      },
+      {
+        "component_id": "53000000-0000-0000-0000-000000000002",
+        "id": "6014bb5a-4851-4d9b-98a6-f4fe96acd91f",
+        "slot_code": "CHARGING_CORONA_M",
+        "source_profile_id": "54000000-0000-0000-0000-000000000002",
+        "source_type": "model_profile",
+        "status": "configured"
+      },
+      {
+        "component_id": "53000000-0000-0000-0000-000000000003",
+        "id": "d15009c8-3ae8-4174-a334-0884aa0aff23",
+        "slot_code": "CHARGING_CORONA_Y",
+        "source_profile_id": "54000000-0000-0000-0000-000000000003",
+        "source_type": "model_profile",
+        "status": "configured"
+      },
+      {
+        "component_id": "53000000-0000-0000-0000-000000000005",
+        "id": "2cf0b58b-62f1-4ada-89b2-3edad38950c7",
+        "slot_code": "CLEANING_BLADE",
+        "source_profile_id": "54000000-0000-0000-0000-000000000005",
+        "source_type": "model_profile",
+        "status": "configured"
+      },
+      {
+        "component_id": "53000000-0000-0000-0000-000000000006",
+        "id": "c07ffd76-4f37-43e8-b0cc-68947d996848",
+        "slot_code": "CLEANING_UNIT",
+        "source_profile_id": "54000000-0000-0000-0000-000000000006",
+        "source_type": "model_profile",
+        "status": "configured"
+      },
+      {
+        "component_id": "53000000-0000-0000-0000-000000000007",
+        "id": "674d4f76-37b6-4cf9-9657-72b9c199b9d1",
+        "slot_code": "DEVELOPER_C",
+        "source_profile_id": "54000000-0000-0000-0000-000000000007",
+        "source_type": "model_profile",
+        "status": "configured"
+      },
+      {
+        "component_id": "53000000-0000-0000-0000-000000000010",
+        "id": "d4e59e17-1fb0-4792-9605-89fd1e94ae32",
+        "slot_code": "DEVELOPER_K",
+        "source_profile_id": "54000000-0000-0000-0000-000000000010",
+        "source_type": "model_profile",
+        "status": "configured"
+      },
+      {
+        "component_id": "53000000-0000-0000-0000-000000000008",
+        "id": "8e8c8abe-dff6-4385-b3e4-872ae427c8a7",
+        "slot_code": "DEVELOPER_M",
+        "source_profile_id": "54000000-0000-0000-0000-000000000008",
+        "source_type": "model_profile",
+        "status": "configured"
+      },
+      {
+        "component_id": "53000000-0000-0000-0000-000000000009",
+        "id": "78353386-dbd4-4422-817a-6017026d352d",
+        "slot_code": "DEVELOPER_Y",
+        "source_profile_id": "54000000-0000-0000-0000-000000000009",
+        "source_type": "model_profile",
+        "status": "configured"
+      },
+      {
+        "component_id": "53000000-0000-0000-0000-000000000011",
+        "id": "0483f3cb-fd8e-4e06-b90d-d6cb5bf49f0c",
+        "slot_code": "DEVELOPING_UNIT_C",
+        "source_profile_id": "54000000-0000-0000-0000-000000000011",
+        "source_type": "model_profile",
+        "status": "configured"
+      },
+      {
+        "component_id": "53000000-0000-0000-0000-000000000014",
+        "id": "87483e5d-1ce1-4867-9a11-bd9a2de09ee3",
+        "slot_code": "DEVELOPING_UNIT_K",
+        "source_profile_id": "54000000-0000-0000-0000-000000000014",
+        "source_type": "model_profile",
+        "status": "configured"
+      },
+      {
+        "component_id": "53000000-0000-0000-0000-000000000012",
+        "id": "0e8a41ec-127d-4c15-9982-50f600d555a8",
+        "slot_code": "DEVELOPING_UNIT_M",
+        "source_profile_id": "54000000-0000-0000-0000-000000000012",
+        "source_type": "model_profile",
+        "status": "configured"
+      },
+      {
+        "component_id": "53000000-0000-0000-0000-000000000013",
+        "id": "3247d99b-c875-4780-8a87-7ec0d0b34d17",
+        "slot_code": "DEVELOPING_UNIT_Y",
+        "source_profile_id": "54000000-0000-0000-0000-000000000013",
+        "source_type": "model_profile",
+        "status": "configured"
+      },
+      {
+        "component_id": "53000000-0000-0000-0000-000000000015",
+        "id": "f43b56f6-0237-43f9-91ba-700edfe58d6b",
+        "slot_code": "DRUM_C",
+        "source_profile_id": "54000000-0000-0000-0000-000000000015",
+        "source_type": "model_profile",
+        "status": "configured"
+      },
+      {
+        "component_id": "53000000-0000-0000-0000-000000000018",
+        "id": "0392c28c-d5dc-41ac-8147-73387993ecd9",
+        "slot_code": "DRUM_K",
+        "source_profile_id": "54000000-0000-0000-0000-000000000018",
+        "source_type": "model_profile",
+        "status": "configured"
+      },
+      {
+        "component_id": "53000000-0000-0000-0000-000000000016",
+        "id": "4b9de768-d2ee-4026-b6b4-729154b9dfed",
+        "slot_code": "DRUM_M",
+        "source_profile_id": "54000000-0000-0000-0000-000000000016",
+        "source_type": "model_profile",
+        "status": "configured"
+      },
+      {
+        "component_id": "53000000-0000-0000-0000-000000000017",
+        "id": "10687eb9-8d5c-4e4a-947e-89f3af748475",
+        "slot_code": "DRUM_Y",
+        "source_profile_id": "54000000-0000-0000-0000-000000000017",
+        "source_type": "model_profile",
+        "status": "configured"
+      },
+      {
+        "component_id": "53000000-0000-0000-0000-000000000019",
+        "id": "05911685-9d23-4a3d-a524-f665bd66b562",
+        "slot_code": "FUSER_BELT",
+        "source_profile_id": "54000000-0000-0000-0000-000000000019",
+        "source_type": "model_profile",
+        "status": "configured"
+      },
+      {
+        "component_id": "53000000-0000-0000-0000-000000000020",
+        "id": "d4270912-e62f-4b0f-a2a5-02668e073baf",
+        "slot_code": "GEAR",
+        "source_profile_id": "54000000-0000-0000-0000-000000000020",
+        "source_type": "model_profile",
+        "status": "configured"
+      },
+      {
+        "component_id": "53000000-0000-0000-0000-000000000021",
+        "id": "0398e2da-c7a2-4ccc-9ee0-5b2d7e73517a",
+        "slot_code": "IBT",
+        "source_profile_id": "54000000-0000-0000-0000-000000000021",
+        "source_type": "model_profile",
+        "status": "configured"
+      },
+      {
+        "component_id": "53000000-0000-0000-0000-000000000022",
+        "id": "c1108e16-3e14-4503-8d7b-75fc171c0137",
+        "slot_code": "LASER_UNIT",
+        "source_profile_id": "54000000-0000-0000-0000-000000000022",
+        "source_type": "model_profile",
+        "status": "configured"
+      },
+      {
+        "component_id": "53000000-0000-0000-0000-000000000023",
+        "id": "0d001c1d-7b78-4f35-ada8-2f6b9dfb48e3",
+        "slot_code": "ROLL_MESIN",
+        "source_profile_id": "54000000-0000-0000-0000-000000000023",
+        "source_type": "model_profile",
+        "status": "configured"
+      },
+      {
+        "component_id": "53000000-0000-0000-0000-000000000024",
+        "id": "81f54d49-9eda-4bbc-a64d-e8f2228be73e",
+        "slot_code": "SENSOR",
+        "source_profile_id": "54000000-0000-0000-0000-000000000024",
+        "source_type": "model_profile",
+        "status": "configured"
+      },
+      {
+        "component_id": "53000000-0000-0000-0000-000000000025",
+        "id": "26610ba6-9b0a-420b-97e6-f3bc6b888847",
+        "slot_code": "TONER_C",
+        "source_profile_id": "54000000-0000-0000-0000-000000000025",
+        "source_type": "model_profile",
+        "status": "configured"
+      },
+      {
+        "component_id": "53000000-0000-0000-0000-000000000028",
+        "id": "5967c690-ba48-4714-b6d2-acc6b6d94fa0",
+        "slot_code": "TONER_K",
+        "source_profile_id": "54000000-0000-0000-0000-000000000028",
+        "source_type": "model_profile",
+        "status": "configured"
+      },
+      {
+        "component_id": "53000000-0000-0000-0000-000000000026",
+        "id": "1799ba1f-6809-43e0-bdea-5d5a903e1b81",
+        "slot_code": "TONER_M",
+        "source_profile_id": "54000000-0000-0000-0000-000000000026",
+        "source_type": "model_profile",
+        "status": "configured"
+      },
+      {
+        "component_id": "53000000-0000-0000-0000-000000000027",
+        "id": "3d50d2ee-7ce9-4dd7-b2e7-8d28e6f99f33",
+        "slot_code": "TONER_Y",
+        "source_profile_id": "54000000-0000-0000-0000-000000000027",
+        "source_type": "model_profile",
+        "status": "configured"
+      }
+    ],
+    "auth_user_count": 3,
+    "balances": [
+      {
+        "inventory_item_id": "83edc69c-4c86-42f4-8e91-a18be0fdf758",
+        "location_id": "b6296488-5479-4dd0-9463-091891b4cbe4",
+        "quantity": 4
+      },
+      {
+        "inventory_item_id": "f5e24ff8-e1d1-4de5-9cf9-496a6f5ccac7",
+        "location_id": "b6296488-5479-4dd0-9463-091891b4cbe4",
+        "quantity": 0
+      }
+    ],
+    "branch": {
+      "account_id": "357e420a-c9ea-4404-9da4-f254c5dce5ef",
+      "code": "CG-TUP",
+      "id": "76d3c7ab-55c3-40f7-b133-0ef54a448893",
+      "is_active": true,
+      "name": "Tuparev"
+    },
+    "components": [
+      {
+        "account_id": null,
+        "code": "CHARGING_CORONA_C",
+        "id": "53000000-0000-0000-0000-000000000001",
+        "is_active": true,
+        "name": "Charging Corona Cyan"
+      },
+      {
+        "account_id": null,
+        "code": "CHARGING_CORONA_M",
+        "id": "53000000-0000-0000-0000-000000000002",
+        "is_active": true,
+        "name": "Charging Corona Magenta"
+      },
+      {
+        "account_id": null,
+        "code": "CHARGING_CORONA_Y",
+        "id": "53000000-0000-0000-0000-000000000003",
+        "is_active": true,
+        "name": "Charging Corona Yellow"
+      },
+      {
+        "account_id": null,
+        "code": "CHARGING_CORONA_K",
+        "id": "53000000-0000-0000-0000-000000000004",
+        "is_active": true,
+        "name": "Charging Corona Black"
+      },
+      {
+        "account_id": null,
+        "code": "CLEANING_BLADE",
+        "id": "53000000-0000-0000-0000-000000000005",
+        "is_active": true,
+        "name": "Cleaning Blade"
+      },
+      {
+        "account_id": null,
+        "code": "CLEANING_UNIT",
+        "id": "53000000-0000-0000-0000-000000000006",
+        "is_active": true,
+        "name": "Cleaning Unit"
+      },
+      {
+        "account_id": null,
+        "code": "DEVELOPER_C",
+        "id": "53000000-0000-0000-0000-000000000007",
+        "is_active": true,
+        "name": "Developer Cyan"
+      },
+      {
+        "account_id": null,
+        "code": "DEVELOPER_M",
+        "id": "53000000-0000-0000-0000-000000000008",
+        "is_active": true,
+        "name": "Developer Magenta"
+      },
+      {
+        "account_id": null,
+        "code": "DEVELOPER_Y",
+        "id": "53000000-0000-0000-0000-000000000009",
+        "is_active": true,
+        "name": "Developer Yellow"
+      },
+      {
+        "account_id": null,
+        "code": "DEVELOPER_K",
+        "id": "53000000-0000-0000-0000-000000000010",
+        "is_active": true,
+        "name": "Developer Black"
+      },
+      {
+        "account_id": null,
+        "code": "DEVELOPING_UNIT_C",
+        "id": "53000000-0000-0000-0000-000000000011",
+        "is_active": true,
+        "name": "Developing Unit Cyan"
+      },
+      {
+        "account_id": null,
+        "code": "DEVELOPING_UNIT_M",
+        "id": "53000000-0000-0000-0000-000000000012",
+        "is_active": true,
+        "name": "Developing Unit Magenta"
+      },
+      {
+        "account_id": null,
+        "code": "DEVELOPING_UNIT_Y",
+        "id": "53000000-0000-0000-0000-000000000013",
+        "is_active": true,
+        "name": "Developing Unit Yellow"
+      },
+      {
+        "account_id": null,
+        "code": "DEVELOPING_UNIT_K",
+        "id": "53000000-0000-0000-0000-000000000014",
+        "is_active": true,
+        "name": "Developing Unit Black"
+      },
+      {
+        "account_id": null,
+        "code": "DRUM_C",
+        "id": "53000000-0000-0000-0000-000000000015",
+        "is_active": true,
+        "name": "Drum Unit Cyan"
+      },
+      {
+        "account_id": null,
+        "code": "DRUM_M",
+        "id": "53000000-0000-0000-0000-000000000016",
+        "is_active": true,
+        "name": "Drum Unit Magenta"
+      },
+      {
+        "account_id": null,
+        "code": "DRUM_Y",
+        "id": "53000000-0000-0000-0000-000000000017",
+        "is_active": true,
+        "name": "Drum Unit Yellow"
+      },
+      {
+        "account_id": null,
+        "code": "DRUM_K",
+        "id": "53000000-0000-0000-0000-000000000018",
+        "is_active": true,
+        "name": "Drum Unit Black"
+      },
+      {
+        "account_id": null,
+        "code": "FUSER_BELT",
+        "id": "53000000-0000-0000-0000-000000000019",
+        "is_active": true,
+        "name": "Fuser Belt"
+      },
+      {
+        "account_id": null,
+        "code": "GEAR",
+        "id": "53000000-0000-0000-0000-000000000020",
+        "is_active": true,
+        "name": "Gear"
+      },
+      {
+        "account_id": null,
+        "code": "IBT",
+        "id": "53000000-0000-0000-0000-000000000021",
+        "is_active": true,
+        "name": "Intermediate Transfer Belt (IBT)"
+      },
+      {
+        "account_id": null,
+        "code": "LASER_UNIT",
+        "id": "53000000-0000-0000-0000-000000000022",
+        "is_active": true,
+        "name": "Laser Unit"
+      },
+      {
+        "account_id": null,
+        "code": "ROLL_MESIN",
+        "id": "53000000-0000-0000-0000-000000000023",
+        "is_active": true,
+        "name": "Roll Mesin"
+      },
+      {
+        "account_id": null,
+        "code": "SENSOR",
+        "id": "53000000-0000-0000-0000-000000000024",
+        "is_active": true,
+        "name": "Sensor"
+      },
+      {
+        "account_id": null,
+        "code": "TONER_C",
+        "id": "53000000-0000-0000-0000-000000000025",
+        "is_active": true,
+        "name": "Toner Cyan"
+      },
+      {
+        "account_id": null,
+        "code": "TONER_M",
+        "id": "53000000-0000-0000-0000-000000000026",
+        "is_active": true,
+        "name": "Toner Magenta"
+      },
+      {
+        "account_id": null,
+        "code": "TONER_Y",
+        "id": "53000000-0000-0000-0000-000000000027",
+        "is_active": true,
+        "name": "Toner Yellow"
+      },
+      {
+        "account_id": null,
+        "code": "TONER_K",
+        "id": "53000000-0000-0000-0000-000000000028",
+        "is_active": true,
+        "name": "Toner Black"
+      },
+      {
+        "account_id": "357e420a-c9ea-4404-9da4-f254c5dce5ef",
+        "code": "TEST_COMPONENT",
+        "id": "9753a67c-4da2-4049-96c9-5d13fecc0874",
+        "is_active": false,
+        "name": "TEST COMPONENT"
+      }
+    ],
+    "counters": [
+      {
+        "client_request_id": "af7e0aa0-d56a-4e67-b69b-f8f32fd19949",
+        "counter_type_id": "52000000-0000-0000-0000-000000000001",
+        "id": "44086d7c-c480-4039-a115-4002b0c94e66",
+        "machine_id": "b4ca07ee-c588-404d-abcf-b6a029e68776",
+        "notes": null,
+        "observed_at": "2026-08-26T11:15:00+00:00",
+        "operator_name_snapshot": null,
+        "operator_person_id": null,
+        "previous_reading_id": null,
+        "reading_value": 1437283,
+        "source": "manual",
+        "status": "effective"
+      },
+      {
+        "client_request_id": "1930d682-9091-4465-a597-33ec3c9c232f",
+        "counter_type_id": "52000000-0000-0000-0000-000000000001",
+        "id": "6e40a1e2-72ef-4878-b669-65271ac144b9",
+        "machine_id": "b4ca07ee-c588-404d-abcf-b6a029e68776",
+        "notes": null,
+        "observed_at": "2026-08-26T14:22:00+00:00",
+        "operator_name_snapshot": null,
+        "operator_person_id": null,
+        "previous_reading_id": "44086d7c-c480-4039-a115-4002b0c94e66",
+        "reading_value": 1437911,
+        "source": "manual",
+        "status": "effective"
+      },
+      {
+        "client_request_id": "30ecde6f-c819-4dbb-a2e4-61f3440ff3fe",
+        "counter_type_id": "52000000-0000-0000-0000-000000000001",
+        "id": "d222f09e-99e8-4b13-9281-0b64d7570dc4",
+        "machine_id": "b4ca07ee-c588-404d-abcf-b6a029e68776",
+        "notes": null,
+        "observed_at": "2026-08-27T15:08:00+00:00",
+        "operator_name_snapshot": "Akmal Fauzan",
+        "operator_person_id": "c89d9c9c-b892-4794-b69c-f2680908a068",
+        "previous_reading_id": "6e40a1e2-72ef-4878-b669-65271ac144b9",
+        "reading_value": 1438992,
+        "source": "manual",
+        "status": "effective"
+      }
+    ],
+    "fifo_allocations": [
+      {
+        "allocated_cost": null,
+        "allocation_policy": "FIFO",
+        "id": "c1ef8c31-f2d4-4c0c-9e43-31ec1b9e7992",
+        "outbound_movement_id": "244ff6bb-6221-486d-8df3-fe2bba5b9665",
+        "quantity": 1,
+        "source_cost_lot_id": "80d2f995-893e-43af-88f2-7208407d6707",
+        "unit_cost": null
+      },
+      {
+        "allocated_cost": 1625000,
+        "allocation_policy": "FIFO",
+        "id": "e3f31911-8599-455a-a84f-66ee2aa8b2d8",
+        "outbound_movement_id": "59c5c076-b8b6-42a6-8fba-463a5c75b394",
+        "quantity": 1,
+        "source_cost_lot_id": "945ef4b9-42f3-49d4-a630-ddaba0e72b76",
+        "unit_cost": 1625000
+      }
+    ],
+    "fifo_lots": [
+      {
+        "effective_at": "2026-08-27T23:04:00+00:00",
+        "id": "5edfcd16-a5a4-4af5-b9fe-166595cbc992",
+        "inventory_item_id": "83edc69c-4c86-42f4-8e91-a18be0fdf758",
+        "location_id": "b6296488-5479-4dd0-9463-091891b4cbe4",
+        "source_quantity": 1,
+        "source_receipt_line_id": "50b7313a-5128-4cc9-b0fa-9f1b724ab425",
+        "source_type": "receipt",
+        "unit_cost": 1625000
+      },
+      {
+        "effective_at": "2026-08-27T15:46:00+00:00",
+        "id": "80d2f995-893e-43af-88f2-7208407d6707",
+        "inventory_item_id": "83edc69c-4c86-42f4-8e91-a18be0fdf758",
+        "location_id": "b6296488-5479-4dd0-9463-091891b4cbe4",
+        "source_quantity": 4,
+        "source_receipt_line_id": null,
+        "source_type": "opening_balance",
+        "unit_cost": null
+      },
+      {
+        "effective_at": "2026-08-28T09:39:00+00:00",
+        "id": "945ef4b9-42f3-49d4-a630-ddaba0e72b76",
+        "inventory_item_id": "f5e24ff8-e1d1-4de5-9cf9-496a6f5ccac7",
+        "location_id": "b6296488-5479-4dd0-9463-091891b4cbe4",
+        "source_quantity": 1,
+        "source_receipt_line_id": "f650d7ad-9a3c-4dec-9327-bfa40679f82c",
+        "source_type": "receipt",
+        "unit_cost": 1625000
+      }
+    ],
+    "graha": {
+      "account_id": "357e420a-c9ea-4404-9da4-f254c5dce5ef",
+      "code": "CG-GRH",
+      "id": "9f753339-0d54-42c9-9bb6-afe2461803f8",
+      "is_active": true,
+      "name": "Graha"
+    },
+    "graha_counts": {
+      "costs": 0,
+      "counters": 0,
+      "incidents": 0,
+      "lifecycles": 0,
+      "machines": 0,
+      "movements": 0,
+      "replacements": 0,
+      "stock": 0
+    },
+    "incidents": [
+      {
+        "assessed_loss": 2000,
+        "branch_id": "76d3c7ab-55c3-40f7-b133-0ef54a448893",
+        "category": "desain",
+        "client_request_id": "e18dc412-8a2f-4764-a196-9c26a93268a8",
+        "id": "7c489b75-ff11-4393-af5d-200dfb06fe99",
+        "incident_type": "human",
+        "machine_id": "b4ca07ee-c588-404d-abcf-b6a029e68776",
+        "material_loss": 1000,
+        "occurred_at": "2026-08-26T15:07:00+00:00",
+        "penalty_multiplier": 1,
+        "qty_affected": null,
+        "responsible_name_snapshot": "Akmal",
+        "responsible_person_id": null,
+        "service_loss": 1000,
+        "status": "resolved"
+      },
+      {
+        "assessed_loss": 9000,
+        "branch_id": "76d3c7ab-55c3-40f7-b133-0ef54a448893",
+        "category": "desain",
+        "client_request_id": "a100fd9d-5625-4e41-8645-d0e7ad1973e6",
+        "id": "f349ddfa-83f1-4615-9ff4-f25c69eec4cc",
+        "incident_type": "human",
+        "machine_id": null,
+        "material_loss": 7000,
+        "occurred_at": "2026-08-27T06:50:00+00:00",
+        "penalty_multiplier": 1,
+        "qty_affected": null,
+        "responsible_name_snapshot": "Akmal",
+        "responsible_person_id": null,
+        "service_loss": 2000,
+        "status": "resolved"
+      }
+    ],
+    "items": [
+      {
+        "component_id": "53000000-0000-0000-0000-000000000004",
+        "id": "770eeac4-f202-4432-b54e-926746ddb34f",
+        "is_active": true,
+        "is_canonical": true,
+        "name": "Charging Corona Black",
+        "notes": "Canonical Inventory Item provisioned from the active Component Catalog.",
+        "sku": null,
+        "unit": "pcs"
+      },
+      {
+        "component_id": "53000000-0000-0000-0000-000000000001",
+        "id": "1804a82e-d40c-4401-8889-86cbd3378e62",
+        "is_active": true,
+        "is_canonical": true,
+        "name": "Charging Corona Cyan",
+        "notes": "Canonical Inventory Item provisioned from the active Component Catalog.",
+        "sku": null,
+        "unit": "pcs"
+      },
+      {
+        "component_id": "53000000-0000-0000-0000-000000000002",
+        "id": "6e9b5f7b-9666-4558-a12e-adde47d7fc1f",
+        "is_active": true,
+        "is_canonical": true,
+        "name": "Charging Corona Magenta",
+        "notes": "Canonical Inventory Item provisioned from the active Component Catalog.",
+        "sku": null,
+        "unit": "pcs"
+      },
+      {
+        "component_id": "53000000-0000-0000-0000-000000000003",
+        "id": "00a04737-7eac-4ab1-a7f7-fd13ffc1a4b1",
+        "is_active": true,
+        "is_canonical": true,
+        "name": "Charging Corona Yellow",
+        "notes": "Canonical Inventory Item provisioned from the active Component Catalog.",
+        "sku": null,
+        "unit": "pcs"
+      },
+      {
+        "component_id": "53000000-0000-0000-0000-000000000005",
+        "id": "bc15b939-619b-4b96-a044-69b9150c2ba2",
+        "is_active": true,
+        "is_canonical": true,
+        "name": "Cleaning Blade",
+        "notes": "Canonical Inventory Item provisioned from the active Component Catalog.",
+        "sku": null,
+        "unit": "pcs"
+      },
+      {
+        "component_id": "53000000-0000-0000-0000-000000000006",
+        "id": "9998747a-053b-4eae-a965-bf5fe26551aa",
+        "is_active": true,
+        "is_canonical": true,
+        "name": "Cleaning Unit",
+        "notes": "Canonical Inventory Item provisioned from the active Component Catalog.",
+        "sku": null,
+        "unit": "pcs"
+      },
+      {
+        "component_id": "53000000-0000-0000-0000-000000000010",
+        "id": "90756ce1-7af8-44b5-be9c-ac0e01255025",
+        "is_active": true,
+        "is_canonical": true,
+        "name": "Developer Black",
+        "notes": "Canonical Inventory Item provisioned from the active Component Catalog.",
+        "sku": null,
+        "unit": "pcs"
+      },
+      {
+        "component_id": "53000000-0000-0000-0000-000000000007",
+        "id": "24db836f-98d7-4e73-90a9-1e47302802be",
+        "is_active": true,
+        "is_canonical": true,
+        "name": "Developer Cyan",
+        "notes": "Canonical Inventory Item provisioned from the active Component Catalog.",
+        "sku": null,
+        "unit": "pcs"
+      },
+      {
+        "component_id": "53000000-0000-0000-0000-000000000008",
+        "id": "f195c35f-ecca-4a85-abbc-6f945d5b1e0b",
+        "is_active": true,
+        "is_canonical": true,
+        "name": "Developer Magenta",
+        "notes": "Canonical Inventory Item provisioned from the active Component Catalog.",
+        "sku": null,
+        "unit": "pcs"
+      },
+      {
+        "component_id": "53000000-0000-0000-0000-000000000009",
+        "id": "472da8a1-5f60-4c13-80b0-ea221fad535d",
+        "is_active": true,
+        "is_canonical": true,
+        "name": "Developer Yellow",
+        "notes": "Canonical Inventory Item provisioned from the active Component Catalog.",
+        "sku": null,
+        "unit": "pcs"
+      },
+      {
+        "component_id": "53000000-0000-0000-0000-000000000014",
+        "id": "9625ec11-24ac-4422-8c12-e5e9481d917c",
+        "is_active": true,
+        "is_canonical": true,
+        "name": "Developing Unit Black",
+        "notes": "Canonical Inventory Item provisioned from the active Component Catalog.",
+        "sku": null,
+        "unit": "pcs"
+      },
+      {
+        "component_id": "53000000-0000-0000-0000-000000000011",
+        "id": "bd861c98-7a88-418d-b9df-2058266b44f9",
+        "is_active": true,
+        "is_canonical": true,
+        "name": "Developing Unit Cyan",
+        "notes": "Canonical Inventory Item provisioned from the active Component Catalog.",
+        "sku": null,
+        "unit": "pcs"
+      },
+      {
+        "component_id": "53000000-0000-0000-0000-000000000012",
+        "id": "390ff39b-04c1-4dfd-a871-9847692d1f4b",
+        "is_active": true,
+        "is_canonical": true,
+        "name": "Developing Unit Magenta",
+        "notes": "Canonical Inventory Item provisioned from the active Component Catalog.",
+        "sku": null,
+        "unit": "pcs"
+      },
+      {
+        "component_id": "53000000-0000-0000-0000-000000000013",
+        "id": "84b4febd-4776-4a47-8a66-fca44ed99e30",
+        "is_active": true,
+        "is_canonical": true,
+        "name": "Developing Unit Yellow",
+        "notes": "Canonical Inventory Item provisioned from the active Component Catalog.",
+        "sku": null,
+        "unit": "pcs"
+      },
+      {
+        "component_id": "53000000-0000-0000-0000-000000000018",
+        "id": "7f33644d-e853-49eb-8b00-e36242e2a07b",
+        "is_active": true,
+        "is_canonical": true,
+        "name": "Drum Unit Black",
+        "notes": "Canonical Inventory Item provisioned from the active Component Catalog.",
+        "sku": null,
+        "unit": "pcs"
+      },
+      {
+        "component_id": "53000000-0000-0000-0000-000000000015",
+        "id": "0de4f5a7-e6c6-42f3-b334-d7bd2cc71bfd",
+        "is_active": true,
+        "is_canonical": true,
+        "name": "Drum Unit Cyan",
+        "notes": "Canonical Inventory Item provisioned from the active Component Catalog.",
+        "sku": null,
+        "unit": "pcs"
+      },
+      {
+        "component_id": "53000000-0000-0000-0000-000000000016",
+        "id": "7f09e5c3-3b91-4f47-a031-0528e3b1d330",
+        "is_active": true,
+        "is_canonical": true,
+        "name": "Drum Unit Magenta",
+        "notes": "Canonical Inventory Item provisioned from the active Component Catalog.",
+        "sku": null,
+        "unit": "pcs"
+      },
+      {
+        "component_id": "53000000-0000-0000-0000-000000000017",
+        "id": "e4cdad96-0168-43d3-91f3-7f4f09732fab",
+        "is_active": true,
+        "is_canonical": true,
+        "name": "Drum Unit Yellow",
+        "notes": "Canonical Inventory Item provisioned from the active Component Catalog.",
+        "sku": null,
+        "unit": "pcs"
+      },
+      {
+        "component_id": "53000000-0000-0000-0000-000000000019",
+        "id": "aa98d5c7-3d4b-45e1-9f21-a78520aa2b3b",
+        "is_active": true,
+        "is_canonical": true,
+        "name": "Fuser Belt",
+        "notes": "Canonical Inventory Item provisioned from the active Component Catalog.",
+        "sku": null,
+        "unit": "pcs"
+      },
+      {
+        "component_id": "53000000-0000-0000-0000-000000000020",
+        "id": "6a7cb0e6-84fe-42db-9140-265126f02056",
+        "is_active": true,
+        "is_canonical": true,
+        "name": "Gear",
+        "notes": "Canonical Inventory Item provisioned from the active Component Catalog.",
+        "sku": null,
+        "unit": "pcs"
+      },
+      {
+        "component_id": "53000000-0000-0000-0000-000000000021",
+        "id": "66554f6d-9204-4f4c-8d6d-4873717d9101",
+        "is_active": true,
+        "is_canonical": true,
+        "name": "Intermediate Transfer Belt (IBT)",
+        "notes": "Canonical Inventory Item provisioned from the active Component Catalog.",
+        "sku": null,
+        "unit": "pcs"
+      },
+      {
+        "component_id": "53000000-0000-0000-0000-000000000022",
+        "id": "2e37fc76-0bfe-4d83-b4cf-09e8e356287a",
+        "is_active": true,
+        "is_canonical": true,
+        "name": "Laser Unit",
+        "notes": "Canonical Inventory Item provisioned from the active Component Catalog.",
+        "sku": null,
+        "unit": "pcs"
+      },
+      {
+        "component_id": "53000000-0000-0000-0000-000000000023",
+        "id": "c807e83a-7007-4bb4-8666-ef08e1d557c6",
+        "is_active": true,
+        "is_canonical": true,
+        "name": "Roll Mesin",
+        "notes": "Canonical Inventory Item provisioned from the active Component Catalog.",
+        "sku": null,
+        "unit": "pcs"
+      },
+      {
+        "component_id": "53000000-0000-0000-0000-000000000024",
+        "id": "2ea7fb68-684d-447a-9698-8e059043b11b",
+        "is_active": true,
+        "is_canonical": true,
+        "name": "Sensor",
+        "notes": "Canonical Inventory Item provisioned from the active Component Catalog.",
+        "sku": null,
+        "unit": "pcs"
+      },
+      {
+        "component_id": "53000000-0000-0000-0000-000000000028",
+        "id": "93d4a680-44da-4477-a16d-5a9682e82a99",
+        "is_active": true,
+        "is_canonical": true,
+        "name": "Toner Black",
+        "notes": "Canonical Inventory Item provisioned from the active Component Catalog.",
+        "sku": null,
+        "unit": "pcs"
+      },
+      {
+        "component_id": "53000000-0000-0000-0000-000000000025",
+        "id": "05f8a4af-79a5-4525-b425-565d15593e47",
+        "is_active": true,
+        "is_canonical": true,
+        "name": "Toner Cyan",
+        "notes": "Canonical Inventory Item provisioned from the active Component Catalog.",
+        "sku": null,
+        "unit": "pcs"
+      },
+      {
+        "component_id": "53000000-0000-0000-0000-000000000025",
+        "id": "83edc69c-4c86-42f4-8e91-a18be0fdf758",
+        "is_active": false,
+        "is_canonical": false,
+        "name": "TONER CYAN",
+        "notes": null,
+        "sku": "TES SKU",
+        "unit": "bottle"
+      },
+      {
+        "component_id": "53000000-0000-0000-0000-000000000026",
+        "id": "b422d2eb-9c62-4235-bd81-2b36f231ad2a",
+        "is_active": true,
+        "is_canonical": true,
+        "name": "Toner Magenta",
+        "notes": "Canonical Inventory Item provisioned from the active Component Catalog.",
+        "sku": null,
+        "unit": "pcs"
+      },
+      {
+        "component_id": "53000000-0000-0000-0000-000000000027",
+        "id": "cd62159f-5031-4e39-b312-b2c6c5677972",
+        "is_active": true,
+        "is_canonical": true,
+        "name": "Toner Yellow",
+        "notes": "Canonical Inventory Item provisioned from the active Component Catalog.",
+        "sku": null,
+        "unit": "pcs"
+      },
+      {
+        "component_id": "53000000-0000-0000-0000-000000000027",
+        "id": "f5e24ff8-e1d1-4de5-9cf9-496a6f5ccac7",
+        "is_active": false,
+        "is_canonical": false,
+        "name": "Toner Yellow",
+        "notes": null,
+        "sku": "SKUTNYELLOW",
+        "unit": "bottle"
+      }
+    ],
+    "lifecycles": [
+      {
+        "actual_usage": null,
+        "branch_id": "76d3c7ab-55c3-40f7-b133-0ef54a448893",
+        "component_id": "53000000-0000-0000-0000-000000000001",
+        "id": "e574e10f-a88b-4c7b-8a64-f637ee3b7dad",
+        "installation_source": "legacy_import",
+        "installed_at": null,
+        "installed_counter": 1405775,
+        "machine_id": "b4ca07ee-c588-404d-abcf-b6a029e68776",
+        "model_component_profile_id": "54000000-0000-0000-0000-000000000001",
+        "notes": "Legacy import: installed counter reconstructed from snapshot 1,437,911 and verified legacy expectation.",
+        "removed_at": null,
+        "removed_counter": null,
+        "slot_code": "CHARGING_CORONA_C",
+        "status": "active"
+      },
+      {
+        "actual_usage": null,
+        "branch_id": "76d3c7ab-55c3-40f7-b133-0ef54a448893",
+        "component_id": "53000000-0000-0000-0000-000000000004",
+        "id": "9fa63956-38a3-480b-94a5-47b5506ff71c",
+        "installation_source": "legacy_import",
+        "installed_at": null,
+        "installed_counter": 1283795,
+        "machine_id": "b4ca07ee-c588-404d-abcf-b6a029e68776",
+        "model_component_profile_id": "54000000-0000-0000-0000-000000000004",
+        "notes": "Legacy import: installed counter reconstructed from snapshot 1,437,911 and verified legacy expectation.",
+        "removed_at": null,
+        "removed_counter": null,
+        "slot_code": "CHARGING_CORONA_K",
+        "status": "active"
+      },
+      {
+        "actual_usage": null,
+        "branch_id": "76d3c7ab-55c3-40f7-b133-0ef54a448893",
+        "component_id": "53000000-0000-0000-0000-000000000002",
+        "id": "1837ca2a-fa5f-4eda-9cd5-627e52234f97",
+        "installation_source": "legacy_import",
+        "installed_at": null,
+        "installed_counter": 1336448,
+        "machine_id": "b4ca07ee-c588-404d-abcf-b6a029e68776",
+        "model_component_profile_id": "54000000-0000-0000-0000-000000000002",
+        "notes": "Legacy import: installed counter reconstructed from snapshot 1,437,911 and verified legacy expectation.",
+        "removed_at": null,
+        "removed_counter": null,
+        "slot_code": "CHARGING_CORONA_M",
+        "status": "active"
+      },
+      {
+        "actual_usage": null,
+        "branch_id": "76d3c7ab-55c3-40f7-b133-0ef54a448893",
+        "component_id": "53000000-0000-0000-0000-000000000003",
+        "id": "2875b5d0-c431-4d34-9231-36e874071085",
+        "installation_source": "legacy_import",
+        "installed_at": null,
+        "installed_counter": 1335524,
+        "machine_id": "b4ca07ee-c588-404d-abcf-b6a029e68776",
+        "model_component_profile_id": "54000000-0000-0000-0000-000000000003",
+        "notes": "Legacy import: installed counter reconstructed from snapshot 1,437,911 and verified legacy expectation.",
+        "removed_at": null,
+        "removed_counter": null,
+        "slot_code": "CHARGING_CORONA_Y",
+        "status": "active"
+      },
+      {
+        "actual_usage": null,
+        "branch_id": "76d3c7ab-55c3-40f7-b133-0ef54a448893",
+        "component_id": "53000000-0000-0000-0000-000000000005",
+        "id": "49a995e0-c169-4971-b7c8-0e7135748827",
+        "installation_source": "legacy_import",
+        "installed_at": null,
+        "installed_counter": 1386563,
+        "machine_id": "b4ca07ee-c588-404d-abcf-b6a029e68776",
+        "model_component_profile_id": "54000000-0000-0000-0000-000000000005",
+        "notes": "Legacy import: installed counter reconstructed from snapshot 1,437,911 and verified legacy expectation.",
+        "removed_at": null,
+        "removed_counter": null,
+        "slot_code": "CLEANING_BLADE",
+        "status": "active"
+      },
+      {
+        "actual_usage": null,
+        "branch_id": "76d3c7ab-55c3-40f7-b133-0ef54a448893",
+        "component_id": "53000000-0000-0000-0000-000000000006",
+        "id": "df458dce-d378-4ca1-af74-7e3ca96e67c3",
+        "installation_source": "legacy_import",
+        "installed_at": null,
+        "installed_counter": null,
+        "machine_id": "b4ca07ee-c588-404d-abcf-b6a029e68776",
+        "model_component_profile_id": "54000000-0000-0000-0000-000000000006",
+        "notes": "Legacy sentinel detected. Installation history unknown; no usage or health is inferred.",
+        "removed_at": null,
+        "removed_counter": null,
+        "slot_code": "CLEANING_UNIT",
+        "status": "unknown"
+      },
+      {
+        "actual_usage": null,
+        "branch_id": "76d3c7ab-55c3-40f7-b133-0ef54a448893",
+        "component_id": "53000000-0000-0000-0000-000000000007",
+        "id": "7815c3cf-f386-400a-b202-929a7b07b57f",
+        "installation_source": "legacy_import",
+        "installed_at": null,
+        "installed_counter": 1415569,
+        "machine_id": "b4ca07ee-c588-404d-abcf-b6a029e68776",
+        "model_component_profile_id": "54000000-0000-0000-0000-000000000007",
+        "notes": "Legacy import: installed counter reconstructed from snapshot 1,437,911 and verified legacy expectation.",
+        "removed_at": null,
+        "removed_counter": null,
+        "slot_code": "DEVELOPER_C",
+        "status": "active"
+      },
+      {
+        "actual_usage": null,
+        "branch_id": "76d3c7ab-55c3-40f7-b133-0ef54a448893",
+        "component_id": "53000000-0000-0000-0000-000000000010",
+        "id": "a903e7f2-1100-4ace-8e08-f9a9a095abb4",
+        "installation_source": "legacy_import",
+        "installed_at": null,
+        "installed_counter": null,
+        "machine_id": "b4ca07ee-c588-404d-abcf-b6a029e68776",
+        "model_component_profile_id": "54000000-0000-0000-0000-000000000010",
+        "notes": "Legacy sentinel detected. Installation history unknown; no usage or health is inferred.",
+        "removed_at": null,
+        "removed_counter": null,
+        "slot_code": "DEVELOPER_K",
+        "status": "unknown"
+      },
+      {
+        "actual_usage": null,
+        "branch_id": "76d3c7ab-55c3-40f7-b133-0ef54a448893",
+        "component_id": "53000000-0000-0000-0000-000000000008",
+        "id": "dd1256b0-7ffe-4e87-806a-6e793a517740",
+        "installation_source": "legacy_import",
+        "installed_at": null,
+        "installed_counter": 1274644,
+        "machine_id": "b4ca07ee-c588-404d-abcf-b6a029e68776",
+        "model_component_profile_id": "54000000-0000-0000-0000-000000000008",
+        "notes": "Legacy import: installed counter reconstructed from snapshot 1,437,911 and verified legacy expectation.",
+        "removed_at": null,
+        "removed_counter": null,
+        "slot_code": "DEVELOPER_M",
+        "status": "active"
+      },
+      {
+        "actual_usage": null,
+        "branch_id": "76d3c7ab-55c3-40f7-b133-0ef54a448893",
+        "component_id": "53000000-0000-0000-0000-000000000009",
+        "id": "906c9ccd-0d7a-4c33-9f9a-a5b128ef738d",
+        "installation_source": "legacy_import",
+        "installed_at": null,
+        "installed_counter": 1385449,
+        "machine_id": "b4ca07ee-c588-404d-abcf-b6a029e68776",
+        "model_component_profile_id": "54000000-0000-0000-0000-000000000009",
+        "notes": "Legacy import: installed counter reconstructed from snapshot 1,437,911 and verified legacy expectation.",
+        "removed_at": null,
+        "removed_counter": null,
+        "slot_code": "DEVELOPER_Y",
+        "status": "active"
+      },
+      {
+        "actual_usage": null,
+        "branch_id": "76d3c7ab-55c3-40f7-b133-0ef54a448893",
+        "component_id": "53000000-0000-0000-0000-000000000011",
+        "id": "2fa643ef-7748-4023-ade2-856fd8e83cae",
+        "installation_source": "legacy_import",
+        "installed_at": null,
+        "installed_counter": null,
+        "machine_id": "b4ca07ee-c588-404d-abcf-b6a029e68776",
+        "model_component_profile_id": "54000000-0000-0000-0000-000000000011",
+        "notes": "Legacy sentinel detected. Installation history unknown; no usage or health is inferred.",
+        "removed_at": null,
+        "removed_counter": null,
+        "slot_code": "DEVELOPING_UNIT_C",
+        "status": "unknown"
+      },
+      {
+        "actual_usage": null,
+        "branch_id": "76d3c7ab-55c3-40f7-b133-0ef54a448893",
+        "component_id": "53000000-0000-0000-0000-000000000014",
+        "id": "9b3c5ddb-87ab-446b-b962-83ffdff4daa4",
+        "installation_source": "legacy_import",
+        "installed_at": null,
+        "installed_counter": null,
+        "machine_id": "b4ca07ee-c588-404d-abcf-b6a029e68776",
+        "model_component_profile_id": "54000000-0000-0000-0000-000000000014",
+        "notes": "Legacy sentinel detected. Installation history unknown; no usage or health is inferred.",
+        "removed_at": null,
+        "removed_counter": null,
+        "slot_code": "DEVELOPING_UNIT_K",
+        "status": "unknown"
+      },
+      {
+        "actual_usage": null,
+        "branch_id": "76d3c7ab-55c3-40f7-b133-0ef54a448893",
+        "component_id": "53000000-0000-0000-0000-000000000012",
+        "id": "44a0ee53-9481-48c3-804c-77b9269665ad",
+        "installation_source": "legacy_import",
+        "installed_at": null,
+        "installed_counter": null,
+        "machine_id": "b4ca07ee-c588-404d-abcf-b6a029e68776",
+        "model_component_profile_id": "54000000-0000-0000-0000-000000000012",
+        "notes": "Legacy sentinel detected. Installation history unknown; no usage or health is inferred.",
+        "removed_at": null,
+        "removed_counter": null,
+        "slot_code": "DEVELOPING_UNIT_M",
+        "status": "unknown"
+      },
+      {
+        "actual_usage": null,
+        "branch_id": "76d3c7ab-55c3-40f7-b133-0ef54a448893",
+        "component_id": "53000000-0000-0000-0000-000000000013",
+        "id": "95c9e631-5129-4e7e-b4bb-6c3901c6a9ea",
+        "installation_source": "legacy_import",
+        "installed_at": null,
+        "installed_counter": 1389461,
+        "machine_id": "b4ca07ee-c588-404d-abcf-b6a029e68776",
+        "model_component_profile_id": "54000000-0000-0000-0000-000000000013",
+        "notes": "Legacy import: installed counter reconstructed from snapshot 1,437,911 and verified legacy expectation.",
+        "removed_at": null,
+        "removed_counter": null,
+        "slot_code": "DEVELOPING_UNIT_Y",
+        "status": "active"
+      },
+      {
+        "actual_usage": null,
+        "branch_id": "76d3c7ab-55c3-40f7-b133-0ef54a448893",
+        "component_id": "53000000-0000-0000-0000-000000000015",
+        "id": "24774c01-ea79-49b6-b490-a873f2222174",
+        "installation_source": "legacy_import",
+        "installed_at": null,
+        "installed_counter": 1405775,
+        "machine_id": "b4ca07ee-c588-404d-abcf-b6a029e68776",
+        "model_component_profile_id": "54000000-0000-0000-0000-000000000015",
+        "notes": "Legacy import: installed counter reconstructed from snapshot 1,437,911 and verified legacy expectation.",
+        "removed_at": null,
+        "removed_counter": null,
+        "slot_code": "DRUM_C",
+        "status": "active"
+      },
+      {
+        "actual_usage": null,
+        "branch_id": "76d3c7ab-55c3-40f7-b133-0ef54a448893",
+        "component_id": "53000000-0000-0000-0000-000000000018",
+        "id": "293574a8-8f80-400c-8bdd-cf08e0704c85",
+        "installation_source": "legacy_import",
+        "installed_at": null,
+        "installed_counter": null,
+        "machine_id": "b4ca07ee-c588-404d-abcf-b6a029e68776",
+        "model_component_profile_id": "54000000-0000-0000-0000-000000000018",
+        "notes": "Legacy sentinel detected. Installation history unknown; no usage or health is inferred.",
+        "removed_at": null,
+        "removed_counter": null,
+        "slot_code": "DRUM_K",
+        "status": "unknown"
+      },
+      {
+        "actual_usage": null,
+        "branch_id": "76d3c7ab-55c3-40f7-b133-0ef54a448893",
+        "component_id": "53000000-0000-0000-0000-000000000016",
+        "id": "412e016a-c54b-42db-be12-2d091a2d44e6",
+        "installation_source": "legacy_import",
+        "installed_at": null,
+        "installed_counter": 1340792,
+        "machine_id": "b4ca07ee-c588-404d-abcf-b6a029e68776",
+        "model_component_profile_id": "54000000-0000-0000-0000-000000000016",
+        "notes": "Legacy import: installed counter reconstructed from snapshot 1,437,911 and verified legacy expectation.",
+        "removed_at": null,
+        "removed_counter": null,
+        "slot_code": "DRUM_M",
+        "status": "active"
+      },
+      {
+        "actual_usage": null,
+        "branch_id": "76d3c7ab-55c3-40f7-b133-0ef54a448893",
+        "component_id": "53000000-0000-0000-0000-000000000017",
+        "id": "6ef7a3ff-1f56-456b-972d-c4a88971136d",
+        "installation_source": "legacy_import",
+        "installed_at": null,
+        "installed_counter": 1386514,
+        "machine_id": "b4ca07ee-c588-404d-abcf-b6a029e68776",
+        "model_component_profile_id": "54000000-0000-0000-0000-000000000017",
+        "notes": "Legacy import: installed counter reconstructed from snapshot 1,437,911 and verified legacy expectation.",
+        "removed_at": null,
+        "removed_counter": null,
+        "slot_code": "DRUM_Y",
+        "status": "active"
+      },
+      {
+        "actual_usage": null,
+        "branch_id": "76d3c7ab-55c3-40f7-b133-0ef54a448893",
+        "component_id": "53000000-0000-0000-0000-000000000019",
+        "id": "e4bf1c14-2979-422d-8350-c0ac3a740da3",
+        "installation_source": "legacy_import",
+        "installed_at": null,
+        "installed_counter": 1398148,
+        "machine_id": "b4ca07ee-c588-404d-abcf-b6a029e68776",
+        "model_component_profile_id": "54000000-0000-0000-0000-000000000019",
+        "notes": "Legacy import: installed counter reconstructed from snapshot 1,437,911 and verified legacy expectation.",
+        "removed_at": null,
+        "removed_counter": null,
+        "slot_code": "FUSER_BELT",
+        "status": "active"
+      },
+      {
+        "actual_usage": null,
+        "branch_id": "76d3c7ab-55c3-40f7-b133-0ef54a448893",
+        "component_id": "53000000-0000-0000-0000-000000000020",
+        "id": "1030addf-5506-4103-870c-bfa60dda2b1e",
+        "installation_source": "legacy_import",
+        "installed_at": null,
+        "installed_counter": null,
+        "machine_id": "b4ca07ee-c588-404d-abcf-b6a029e68776",
+        "model_component_profile_id": "54000000-0000-0000-0000-000000000020",
+        "notes": "Legacy sentinel detected. Installation history unknown; no usage or health is inferred.",
+        "removed_at": null,
+        "removed_counter": null,
+        "slot_code": "GEAR",
+        "status": "unknown"
+      },
+      {
+        "actual_usage": null,
+        "branch_id": "76d3c7ab-55c3-40f7-b133-0ef54a448893",
+        "component_id": "53000000-0000-0000-0000-000000000021",
+        "id": "2435339f-1b91-4e62-8e4e-444188b95447",
+        "installation_source": "legacy_import",
+        "installed_at": null,
+        "installed_counter": 1406276,
+        "machine_id": "b4ca07ee-c588-404d-abcf-b6a029e68776",
+        "model_component_profile_id": "54000000-0000-0000-0000-000000000021",
+        "notes": "Legacy import: installed counter reconstructed from snapshot 1,437,911 and verified legacy expectation.",
+        "removed_at": null,
+        "removed_counter": null,
+        "slot_code": "IBT",
+        "status": "active"
+      },
+      {
+        "actual_usage": null,
+        "branch_id": "76d3c7ab-55c3-40f7-b133-0ef54a448893",
+        "component_id": "53000000-0000-0000-0000-000000000022",
+        "id": "6e1a44eb-73af-4a64-a805-59641bff768e",
+        "installation_source": "legacy_import",
+        "installed_at": null,
+        "installed_counter": null,
+        "machine_id": "b4ca07ee-c588-404d-abcf-b6a029e68776",
+        "model_component_profile_id": "54000000-0000-0000-0000-000000000022",
+        "notes": "Legacy sentinel detected. Installation history unknown; no usage or health is inferred.",
+        "removed_at": null,
+        "removed_counter": null,
+        "slot_code": "LASER_UNIT",
+        "status": "unknown"
+      },
+      {
+        "actual_usage": null,
+        "branch_id": "76d3c7ab-55c3-40f7-b133-0ef54a448893",
+        "component_id": "53000000-0000-0000-0000-000000000023",
+        "id": "8a2db7dd-4045-4cef-8735-d522709717b3",
+        "installation_source": "legacy_import",
+        "installed_at": null,
+        "installed_counter": null,
+        "machine_id": "b4ca07ee-c588-404d-abcf-b6a029e68776",
+        "model_component_profile_id": "54000000-0000-0000-0000-000000000023",
+        "notes": "Legacy sentinel detected. Installation history unknown; no usage or health is inferred.",
+        "removed_at": null,
+        "removed_counter": null,
+        "slot_code": "ROLL_MESIN",
+        "status": "unknown"
+      },
+      {
+        "actual_usage": null,
+        "branch_id": "76d3c7ab-55c3-40f7-b133-0ef54a448893",
+        "component_id": "53000000-0000-0000-0000-000000000024",
+        "id": "cbb45a2e-15be-40ce-9585-b8340ab45fe8",
+        "installation_source": "legacy_import",
+        "installed_at": null,
+        "installed_counter": null,
+        "machine_id": "b4ca07ee-c588-404d-abcf-b6a029e68776",
+        "model_component_profile_id": "54000000-0000-0000-0000-000000000024",
+        "notes": "Legacy sentinel detected. Installation history unknown; no usage or health is inferred.",
+        "removed_at": null,
+        "removed_counter": null,
+        "slot_code": "SENSOR",
+        "status": "unknown"
+      },
+      {
+        "actual_usage": 8354,
+        "branch_id": "76d3c7ab-55c3-40f7-b133-0ef54a448893",
+        "component_id": "53000000-0000-0000-0000-000000000025",
+        "id": "07c1752e-db9b-463c-b8ad-ddb0c718cadd",
+        "installation_source": "legacy_import",
+        "installed_at": null,
+        "installed_counter": 1430638,
+        "machine_id": "b4ca07ee-c588-404d-abcf-b6a029e68776",
+        "model_component_profile_id": "79a1fe4b-6c46-4711-9ef2-f74d46014ed9",
+        "notes": "Legacy import: installed counter reconstructed with historical 14,000 expectation; DEV profile was later overridden to 13,500. Lifecycle target intentionally preserves 14,000.",
+        "removed_at": "2026-08-28T04:00:00+00:00",
+        "removed_counter": 1438992,
+        "slot_code": "TONER_C",
+        "status": "closed"
+      },
+      {
+        "actual_usage": null,
+        "branch_id": "76d3c7ab-55c3-40f7-b133-0ef54a448893",
+        "component_id": "53000000-0000-0000-0000-000000000025",
+        "id": "1472d84f-54bc-452c-9d01-05fe66005a35",
+        "installation_source": "replacement",
+        "installed_at": "2026-08-28T04:00:00+00:00",
+        "installed_counter": 1438992,
+        "machine_id": "b4ca07ee-c588-404d-abcf-b6a029e68776",
+        "model_component_profile_id": "79a1fe4b-6c46-4711-9ef2-f74d46014ed9",
+        "notes": null,
+        "removed_at": null,
+        "removed_counter": null,
+        "slot_code": "TONER_C",
+        "status": "active"
+      },
+      {
+        "actual_usage": null,
+        "branch_id": "76d3c7ab-55c3-40f7-b133-0ef54a448893",
+        "component_id": "53000000-0000-0000-0000-000000000028",
+        "id": "e1aa2429-38b8-497e-b130-9252ba964d86",
+        "installation_source": "legacy_import",
+        "installed_at": null,
+        "installed_counter": 1434666,
+        "machine_id": "b4ca07ee-c588-404d-abcf-b6a029e68776",
+        "model_component_profile_id": "54000000-0000-0000-0000-000000000028",
+        "notes": "Legacy import: installed counter reconstructed from snapshot 1,437,911 and verified legacy expectation.",
+        "removed_at": null,
+        "removed_counter": null,
+        "slot_code": "TONER_K",
+        "status": "active"
+      },
+      {
+        "actual_usage": null,
+        "branch_id": "76d3c7ab-55c3-40f7-b133-0ef54a448893",
+        "component_id": "53000000-0000-0000-0000-000000000026",
+        "id": "12f97f9a-fc7b-4b19-b09e-553a9787d54b",
+        "installation_source": "legacy_import",
+        "installed_at": null,
+        "installed_counter": 1435866,
+        "machine_id": "b4ca07ee-c588-404d-abcf-b6a029e68776",
+        "model_component_profile_id": "54000000-0000-0000-0000-000000000026",
+        "notes": "Legacy import: installed counter reconstructed from snapshot 1,437,911 and verified legacy expectation.",
+        "removed_at": null,
+        "removed_counter": null,
+        "slot_code": "TONER_M",
+        "status": "active"
+      },
+      {
+        "actual_usage": 6597,
+        "branch_id": "76d3c7ab-55c3-40f7-b133-0ef54a448893",
+        "component_id": "53000000-0000-0000-0000-000000000027",
+        "id": "a3be3d31-0980-495a-ab9a-0397c32a638d",
+        "installation_source": "legacy_import",
+        "installed_at": null,
+        "installed_counter": 1432395,
+        "machine_id": "b4ca07ee-c588-404d-abcf-b6a029e68776",
+        "model_component_profile_id": "54000000-0000-0000-0000-000000000027",
+        "notes": "Legacy import: installed counter reconstructed from snapshot 1,437,911 and verified legacy expectation.",
+        "removed_at": "2026-08-28T09:42:00+00:00",
+        "removed_counter": 1438992,
+        "slot_code": "TONER_Y",
+        "status": "closed"
+      },
+      {
+        "actual_usage": null,
+        "branch_id": "76d3c7ab-55c3-40f7-b133-0ef54a448893",
+        "component_id": "53000000-0000-0000-0000-000000000027",
+        "id": "ea382ac6-3b06-48be-a69f-b649a209df24",
+        "installation_source": "replacement",
+        "installed_at": "2026-08-28T09:42:00+00:00",
+        "installed_counter": 1438992,
+        "machine_id": "b4ca07ee-c588-404d-abcf-b6a029e68776",
+        "model_component_profile_id": "54000000-0000-0000-0000-000000000027",
+        "notes": null,
+        "removed_at": null,
+        "removed_counter": null,
+        "slot_code": "TONER_Y",
+        "status": "active"
+      }
+    ],
+    "locations": [
+      {
+        "branch_id": "76d3c7ab-55c3-40f7-b133-0ef54a448893",
+        "code": "CG_DIGITAL",
+        "id": "b6296488-5479-4dd0-9463-091891b4cbe4",
+        "is_active": true,
+        "name": "CG Digital Print"
+      }
+    ],
+    "machine": {
+      "account_id": "357e420a-c9ea-4404-9da4-f254c5dce5ef",
+      "branch_id": "76d3c7ab-55c3-40f7-b133-0ef54a448893",
+      "display_name": "Konica Minolta bizhub PRESS C1070",
+      "id": "b4ca07ee-c588-404d-abcf-b6a029e68776",
+      "is_active": true,
+      "machine_code": "CG-TUP-A3-01",
+      "machine_model_id": "51000000-0000-0000-0000-000000000001",
+      "status": "active"
+    },
+    "migration_actor_exists": 1,
+    "migration_actor_id": "dd3c445f-0005-4435-9587-ca285f6cbbff",
+    "model_components": [
+      {
+        "account_id": null,
+        "baseline_expected_clicks": 40000,
+        "component_id": "53000000-0000-0000-0000-000000000001",
+        "id": "54000000-0000-0000-0000-000000000001",
+        "is_active": true,
+        "machine_model_id": "51000000-0000-0000-0000-000000000001",
+        "slot_code": "CHARGING_CORONA_C"
+      },
+      {
+        "account_id": null,
+        "baseline_expected_clicks": 40000,
+        "component_id": "53000000-0000-0000-0000-000000000004",
+        "id": "54000000-0000-0000-0000-000000000004",
+        "is_active": true,
+        "machine_model_id": "51000000-0000-0000-0000-000000000001",
+        "slot_code": "CHARGING_CORONA_K"
+      },
+      {
+        "account_id": null,
+        "baseline_expected_clicks": 40000,
+        "component_id": "53000000-0000-0000-0000-000000000002",
+        "id": "54000000-0000-0000-0000-000000000002",
+        "is_active": true,
+        "machine_model_id": "51000000-0000-0000-0000-000000000001",
+        "slot_code": "CHARGING_CORONA_M"
+      },
+      {
+        "account_id": null,
+        "baseline_expected_clicks": 40000,
+        "component_id": "53000000-0000-0000-0000-000000000003",
+        "id": "54000000-0000-0000-0000-000000000003",
+        "is_active": true,
+        "machine_model_id": "51000000-0000-0000-0000-000000000001",
+        "slot_code": "CHARGING_CORONA_Y"
+      },
+      {
+        "account_id": null,
+        "baseline_expected_clicks": 100000,
+        "component_id": "53000000-0000-0000-0000-000000000005",
+        "id": "54000000-0000-0000-0000-000000000005",
+        "is_active": true,
+        "machine_model_id": "51000000-0000-0000-0000-000000000001",
+        "slot_code": "CLEANING_BLADE"
+      },
+      {
+        "account_id": null,
+        "baseline_expected_clicks": 200000,
+        "component_id": "53000000-0000-0000-0000-000000000006",
+        "id": "54000000-0000-0000-0000-000000000006",
+        "is_active": true,
+        "machine_model_id": "51000000-0000-0000-0000-000000000001",
+        "slot_code": "CLEANING_UNIT"
+      },
+      {
+        "account_id": null,
+        "baseline_expected_clicks": 100000,
+        "component_id": "53000000-0000-0000-0000-000000000007",
+        "id": "54000000-0000-0000-0000-000000000007",
+        "is_active": true,
+        "machine_model_id": "51000000-0000-0000-0000-000000000001",
+        "slot_code": "DEVELOPER_C"
+      },
+      {
+        "account_id": null,
+        "baseline_expected_clicks": 100000,
+        "component_id": "53000000-0000-0000-0000-000000000010",
+        "id": "54000000-0000-0000-0000-000000000010",
+        "is_active": true,
+        "machine_model_id": "51000000-0000-0000-0000-000000000001",
+        "slot_code": "DEVELOPER_K"
+      },
+      {
+        "account_id": null,
+        "baseline_expected_clicks": 100000,
+        "component_id": "53000000-0000-0000-0000-000000000008",
+        "id": "54000000-0000-0000-0000-000000000008",
+        "is_active": true,
+        "machine_model_id": "51000000-0000-0000-0000-000000000001",
+        "slot_code": "DEVELOPER_M"
+      },
+      {
+        "account_id": null,
+        "baseline_expected_clicks": 100000,
+        "component_id": "53000000-0000-0000-0000-000000000009",
+        "id": "54000000-0000-0000-0000-000000000009",
+        "is_active": true,
+        "machine_model_id": "51000000-0000-0000-0000-000000000001",
+        "slot_code": "DEVELOPER_Y"
+      },
+      {
+        "account_id": null,
+        "baseline_expected_clicks": 200000,
+        "component_id": "53000000-0000-0000-0000-000000000011",
+        "id": "54000000-0000-0000-0000-000000000011",
+        "is_active": true,
+        "machine_model_id": "51000000-0000-0000-0000-000000000001",
+        "slot_code": "DEVELOPING_UNIT_C"
+      },
+      {
+        "account_id": null,
+        "baseline_expected_clicks": 200000,
+        "component_id": "53000000-0000-0000-0000-000000000014",
+        "id": "54000000-0000-0000-0000-000000000014",
+        "is_active": true,
+        "machine_model_id": "51000000-0000-0000-0000-000000000001",
+        "slot_code": "DEVELOPING_UNIT_K"
+      },
+      {
+        "account_id": null,
+        "baseline_expected_clicks": 200000,
+        "component_id": "53000000-0000-0000-0000-000000000012",
+        "id": "54000000-0000-0000-0000-000000000012",
+        "is_active": true,
+        "machine_model_id": "51000000-0000-0000-0000-000000000001",
+        "slot_code": "DEVELOPING_UNIT_M"
+      },
+      {
+        "account_id": null,
+        "baseline_expected_clicks": 200000,
+        "component_id": "53000000-0000-0000-0000-000000000013",
+        "id": "54000000-0000-0000-0000-000000000013",
+        "is_active": true,
+        "machine_model_id": "51000000-0000-0000-0000-000000000001",
+        "slot_code": "DEVELOPING_UNIT_Y"
+      },
+      {
+        "account_id": null,
+        "baseline_expected_clicks": 40000,
+        "component_id": "53000000-0000-0000-0000-000000000015",
+        "id": "54000000-0000-0000-0000-000000000015",
+        "is_active": true,
+        "machine_model_id": "51000000-0000-0000-0000-000000000001",
+        "slot_code": "DRUM_C"
+      },
+      {
+        "account_id": null,
+        "baseline_expected_clicks": 40000,
+        "component_id": "53000000-0000-0000-0000-000000000018",
+        "id": "54000000-0000-0000-0000-000000000018",
+        "is_active": true,
+        "machine_model_id": "51000000-0000-0000-0000-000000000001",
+        "slot_code": "DRUM_K"
+      },
+      {
+        "account_id": null,
+        "baseline_expected_clicks": 40000,
+        "component_id": "53000000-0000-0000-0000-000000000016",
+        "id": "54000000-0000-0000-0000-000000000016",
+        "is_active": true,
+        "machine_model_id": "51000000-0000-0000-0000-000000000001",
+        "slot_code": "DRUM_M"
+      },
+      {
+        "account_id": null,
+        "baseline_expected_clicks": 40000,
+        "component_id": "53000000-0000-0000-0000-000000000017",
+        "id": "54000000-0000-0000-0000-000000000017",
+        "is_active": true,
+        "machine_model_id": "51000000-0000-0000-0000-000000000001",
+        "slot_code": "DRUM_Y"
+      },
+      {
+        "account_id": null,
+        "baseline_expected_clicks": 200000,
+        "component_id": "53000000-0000-0000-0000-000000000019",
+        "id": "54000000-0000-0000-0000-000000000019",
+        "is_active": true,
+        "machine_model_id": "51000000-0000-0000-0000-000000000001",
+        "slot_code": "FUSER_BELT"
+      },
+      {
+        "account_id": "357e420a-c9ea-4404-9da4-f254c5dce5ef",
+        "baseline_expected_clicks": 150000,
+        "component_id": "53000000-0000-0000-0000-000000000020",
+        "id": "095f8818-042f-452e-b829-5acf003ba764",
+        "is_active": false,
+        "machine_model_id": "51000000-0000-0000-0000-000000000001",
+        "slot_code": "GEAR"
+      },
+      {
+        "account_id": null,
+        "baseline_expected_clicks": 150000,
+        "component_id": "53000000-0000-0000-0000-000000000020",
+        "id": "54000000-0000-0000-0000-000000000020",
+        "is_active": true,
+        "machine_model_id": "51000000-0000-0000-0000-000000000001",
+        "slot_code": "GEAR"
+      },
+      {
+        "account_id": "357e420a-c9ea-4404-9da4-f254c5dce5ef",
+        "baseline_expected_clicks": null,
+        "component_id": "53000000-0000-0000-0000-000000000020",
+        "id": "93328b69-30e7-41fb-a2f9-527e0a5bc558",
+        "is_active": true,
+        "machine_model_id": "51000000-0000-0000-0000-000000000001",
+        "slot_code": "GEAR"
+      },
+      {
+        "account_id": "357e420a-c9ea-4404-9da4-f254c5dce5ef",
+        "baseline_expected_clicks": 150000,
+        "component_id": "53000000-0000-0000-0000-000000000020",
+        "id": "0175db65-e32c-4d35-a4df-007e422939ab",
+        "is_active": false,
+        "machine_model_id": "51000000-0000-0000-0000-000000000001",
+        "slot_code": "GEAR_TEST"
+      },
+      {
+        "account_id": null,
+        "baseline_expected_clicks": 200000,
+        "component_id": "53000000-0000-0000-0000-000000000021",
+        "id": "54000000-0000-0000-0000-000000000021",
+        "is_active": true,
+        "machine_model_id": "51000000-0000-0000-0000-000000000001",
+        "slot_code": "IBT"
+      },
+      {
+        "account_id": null,
+        "baseline_expected_clicks": 300000,
+        "component_id": "53000000-0000-0000-0000-000000000022",
+        "id": "54000000-0000-0000-0000-000000000022",
+        "is_active": true,
+        "machine_model_id": "51000000-0000-0000-0000-000000000001",
+        "slot_code": "LASER_UNIT"
+      },
+      {
+        "account_id": null,
+        "baseline_expected_clicks": 150000,
+        "component_id": "53000000-0000-0000-0000-000000000023",
+        "id": "54000000-0000-0000-0000-000000000023",
+        "is_active": true,
+        "machine_model_id": "51000000-0000-0000-0000-000000000001",
+        "slot_code": "ROLL_MESIN"
+      },
+      {
+        "account_id": null,
+        "baseline_expected_clicks": 250000,
+        "component_id": "53000000-0000-0000-0000-000000000024",
+        "id": "54000000-0000-0000-0000-000000000024",
+        "is_active": true,
+        "machine_model_id": "51000000-0000-0000-0000-000000000001",
+        "slot_code": "SENSOR"
+      },
+      {
+        "account_id": null,
+        "baseline_expected_clicks": 14000,
+        "component_id": "53000000-0000-0000-0000-000000000025",
+        "id": "54000000-0000-0000-0000-000000000025",
+        "is_active": true,
+        "machine_model_id": "51000000-0000-0000-0000-000000000001",
+        "slot_code": "TONER_C"
+      },
+      {
+        "account_id": "357e420a-c9ea-4404-9da4-f254c5dce5ef",
+        "baseline_expected_clicks": 14000,
+        "component_id": "53000000-0000-0000-0000-000000000025",
+        "id": "79a1fe4b-6c46-4711-9ef2-f74d46014ed9",
+        "is_active": true,
+        "machine_model_id": "51000000-0000-0000-0000-000000000001",
+        "slot_code": "TONER_C"
+      },
+      {
+        "account_id": null,
+        "baseline_expected_clicks": 14000,
+        "component_id": "53000000-0000-0000-0000-000000000028",
+        "id": "54000000-0000-0000-0000-000000000028",
+        "is_active": true,
+        "machine_model_id": "51000000-0000-0000-0000-000000000001",
+        "slot_code": "TONER_K"
+      },
+      {
+        "account_id": null,
+        "baseline_expected_clicks": 14000,
+        "component_id": "53000000-0000-0000-0000-000000000026",
+        "id": "54000000-0000-0000-0000-000000000026",
+        "is_active": true,
+        "machine_model_id": "51000000-0000-0000-0000-000000000001",
+        "slot_code": "TONER_M"
+      },
+      {
+        "account_id": null,
+        "baseline_expected_clicks": 14000,
+        "component_id": "53000000-0000-0000-0000-000000000027",
+        "id": "54000000-0000-0000-0000-000000000027",
+        "is_active": true,
+        "machine_model_id": "51000000-0000-0000-0000-000000000001",
+        "slot_code": "TONER_Y"
+      }
+    ],
+    "movements": [
+      {
+        "client_request_id": "066a4d74-0191-401d-92cd-166a24a70c60",
+        "id": "bccd98d8-0ebc-462c-8f2e-e51e1f73f56e",
+        "inventory_item_id": "83edc69c-4c86-42f4-8e91-a18be0fdf758",
+        "location_id": "b6296488-5479-4dd0-9463-091891b4cbe4",
+        "movement_type": "opening_balance",
+        "notes": null,
+        "occurred_at": "2026-08-27T15:46:00+00:00",
+        "quantity": 4,
+        "reference_id": null,
+        "reference_type": "opening_balance"
+      },
+      {
+        "client_request_id": "c62ccaf5-a7f5-435a-987c-3441bb325ee6",
+        "id": "40060e2d-b4bb-4324-b660-23f49023be21",
+        "inventory_item_id": "83edc69c-4c86-42f4-8e91-a18be0fdf758",
+        "location_id": "b6296488-5479-4dd0-9463-091891b4cbe4",
+        "movement_type": "receipt",
+        "notes": null,
+        "occurred_at": "2026-08-27T23:04:00+00:00",
+        "quantity": 1,
+        "reference_id": "4bbdc220-f8fd-42cd-8cab-1e9b7cc19cbc",
+        "reference_type": "purchase_receipt"
+      },
+      {
+        "client_request_id": "06148525-4fc0-4855-9c27-7dee38cbe0da",
+        "id": "244ff6bb-6221-486d-8df3-fe2bba5b9665",
+        "inventory_item_id": "83edc69c-4c86-42f4-8e91-a18be0fdf758",
+        "location_id": "b6296488-5479-4dd0-9463-091891b4cbe4",
+        "movement_type": "issue",
+        "notes": "CG-TUP-A3-01 · TONER_C",
+        "occurred_at": "2026-08-28T04:00:00+00:00",
+        "quantity": -1,
+        "reference_id": "392ffdb5-7ccf-4304-9d9c-db9727a73cfd",
+        "reference_type": "component_replacement"
+      },
+      {
+        "client_request_id": "9073b433-a9da-4263-b3c4-da2ca099dae5",
+        "id": "7cbe8df1-1d33-4e06-b2ab-f735839abeeb",
+        "inventory_item_id": "f5e24ff8-e1d1-4de5-9cf9-496a6f5ccac7",
+        "location_id": "b6296488-5479-4dd0-9463-091891b4cbe4",
+        "movement_type": "receipt",
+        "notes": null,
+        "occurred_at": "2026-08-28T09:39:00+00:00",
+        "quantity": 1,
+        "reference_id": "5ec56801-53c0-4b63-b382-b1c15bc7680d",
+        "reference_type": "purchase_receipt"
+      },
+      {
+        "client_request_id": "14d8b93a-407f-40b2-a8a2-8628f8058687",
+        "id": "59c5c076-b8b6-42a6-8fba-463a5c75b394",
+        "inventory_item_id": "f5e24ff8-e1d1-4de5-9cf9-496a6f5ccac7",
+        "location_id": "b6296488-5479-4dd0-9463-091891b4cbe4",
+        "movement_type": "issue",
+        "notes": "CG-TUP-A3-01 · TONER_Y",
+        "occurred_at": "2026-08-28T09:42:00+00:00",
+        "quantity": -1,
+        "reference_id": "d063cc89-ec0d-4164-8746-bf2618cdedb5",
+        "reference_type": "component_replacement"
+      }
+    ],
+    "operating_costs": [],
+    "people": [
+      {
+        "code": null,
+        "id": "c89d9c9c-b892-4794-b69c-f2680908a068",
+        "is_active": true,
+        "linked_user_id": null,
+        "name": "Akmal Fauzan",
+        "notes": "Initial Cipta Grafika operational directory bootstrap."
+      },
+      {
+        "code": null,
+        "id": "7bff2e7b-de85-40a7-949f-86acd32aea8c",
+        "is_active": true,
+        "linked_user_id": null,
+        "name": "Muhammad Angga Nugraha",
+        "notes": "Initial Cipta Grafika operational directory bootstrap."
+      },
+      {
+        "code": null,
+        "id": "03852a38-51d5-46cb-88a4-145325500e53",
+        "is_active": true,
+        "linked_user_id": null,
+        "name": "Muhammad Daffa Ramadhiansyah",
+        "notes": "Initial Cipta Grafika operational directory bootstrap."
+      }
+    ],
+    "person_branches": [
+      {
+        "branch_id": "76d3c7ab-55c3-40f7-b133-0ef54a448893",
+        "is_active": true,
+        "operational_person_id": "03852a38-51d5-46cb-88a4-145325500e53"
+      },
+      {
+        "branch_id": "76d3c7ab-55c3-40f7-b133-0ef54a448893",
+        "is_active": true,
+        "operational_person_id": "7bff2e7b-de85-40a7-949f-86acd32aea8c"
+      },
+      {
+        "branch_id": "76d3c7ab-55c3-40f7-b133-0ef54a448893",
+        "is_active": true,
+        "operational_person_id": "c89d9c9c-b892-4794-b69c-f2680908a068"
+      }
+    ],
+    "project_ref": "sxitqjxljoqsnpepymrl",
+    "purchase_lines": [
+      {
+        "id": "2f15065a-0745-415f-b0ad-6bb34ce3205f",
+        "inventory_item_id": "f5e24ff8-e1d1-4de5-9cf9-496a6f5ccac7",
+        "line_total": 1625000,
+        "notes": null,
+        "ordered_quantity": 1,
+        "purchase_id": "74526bbf-4554-47c6-89c9-d2304c0ffa69",
+        "unit_price": 1625000
+      },
+      {
+        "id": "5d7fcc82-e308-479e-ba59-4541fc0f9f1b",
+        "inventory_item_id": "83edc69c-4c86-42f4-8e91-a18be0fdf758",
+        "line_total": 1625000,
+        "notes": null,
+        "ordered_quantity": 1,
+        "purchase_id": "aaecec6a-6ee4-4c6c-a535-30dbeda2d1dd",
+        "unit_price": 1625000
+      }
+    ],
+    "purchases": [
+      {
+        "branch_id": "76d3c7ab-55c3-40f7-b133-0ef54a448893",
+        "client_request_id": "7e4e838b-7a4e-4e94-8b6b-20c0c7079037",
+        "id": "74526bbf-4554-47c6-89c9-d2304c0ffa69",
+        "notes": null,
+        "purchase_date": "2026-08-28",
+        "purchase_number": "PUR-202608-0002",
+        "status": "received",
+        "supplier_id": "65ddedac-6463-4890-ac8f-6df4a4420dd3"
+      },
+      {
+        "branch_id": "76d3c7ab-55c3-40f7-b133-0ef54a448893",
+        "client_request_id": "3b054c67-55ef-4b90-b37d-e55efc5edb07",
+        "id": "aaecec6a-6ee4-4c6c-a535-30dbeda2d1dd",
+        "notes": null,
+        "purchase_date": "2026-08-28",
+        "purchase_number": "PUR-202608-0001",
+        "status": "received",
+        "supplier_id": "65ddedac-6463-4890-ac8f-6df4a4420dd3"
+      }
+    ],
+    "receipt_lines": [
+      {
+        "acquisition_value": 1625000,
+        "id": "50b7313a-5128-4cc9-b0fa-9f1b724ab425",
+        "inventory_movement_id": "40060e2d-b4bb-4324-b660-23f49023be21",
+        "purchase_line_id": "5d7fcc82-e308-479e-ba59-4541fc0f9f1b",
+        "quantity": 1,
+        "receipt_id": "4bbdc220-f8fd-42cd-8cab-1e9b7cc19cbc"
+      },
+      {
+        "acquisition_value": 1625000,
+        "id": "f650d7ad-9a3c-4dec-9327-bfa40679f82c",
+        "inventory_movement_id": "7cbe8df1-1d33-4e06-b2ab-f735839abeeb",
+        "purchase_line_id": "2f15065a-0745-415f-b0ad-6bb34ce3205f",
+        "quantity": 1,
+        "receipt_id": "5ec56801-53c0-4b63-b382-b1c15bc7680d"
+      }
+    ],
+    "receipts": [
+      {
+        "client_request_id": "27c4f853-8ffb-463e-8313-717517e598c1",
+        "id": "4bbdc220-f8fd-42cd-8cab-1e9b7cc19cbc",
+        "location_id": "b6296488-5479-4dd0-9463-091891b4cbe4",
+        "purchase_id": "aaecec6a-6ee4-4c6c-a535-30dbeda2d1dd",
+        "receipt_number": "RCV-20260828-4BBDC220",
+        "received_at": "2026-08-27T23:04:00+00:00"
+      },
+      {
+        "client_request_id": "13a6f11a-f7b1-4881-bac7-8329e715e21f",
+        "id": "5ec56801-53c0-4b63-b382-b1c15bc7680d",
+        "location_id": "b6296488-5479-4dd0-9463-091891b4cbe4",
+        "purchase_id": "74526bbf-4554-47c6-89c9-d2304c0ffa69",
+        "receipt_number": "RCV-20260828-5EC56801",
+        "received_at": "2026-08-28T09:39:00+00:00"
+      }
+    ],
+    "replacements": [
+      {
+        "branch_id": "76d3c7ab-55c3-40f7-b133-0ef54a448893",
+        "client_request_id": "06148525-4fc0-4855-9c27-7dee38cbe0da",
+        "id": "392ffdb5-7ccf-4304-9d9c-db9727a73cfd",
+        "machine_id": "b4ca07ee-c588-404d-abcf-b6a029e68776",
+        "new_lifecycle_id": "1472d84f-54bc-452c-9d01-05fe66005a35",
+        "previous_lifecycle_id": "07c1752e-db9b-463c-b8ad-ddb0c718cadd",
+        "replaced_at": "2026-08-28T04:00:00+00:00",
+        "replacement_counter": 1438992,
+        "slot_code_snapshot": "TONER_C"
+      },
+      {
+        "branch_id": "76d3c7ab-55c3-40f7-b133-0ef54a448893",
+        "client_request_id": "14d8b93a-407f-40b2-a8a2-8628f8058687",
+        "id": "d063cc89-ec0d-4164-8746-bf2618cdedb5",
+        "machine_id": "b4ca07ee-c588-404d-abcf-b6a029e68776",
+        "new_lifecycle_id": "ea382ac6-3b06-48be-a69f-b649a209df24",
+        "previous_lifecycle_id": "a3be3d31-0980-495a-ab9a-0397c32a638d",
+        "replaced_at": "2026-08-28T09:42:00+00:00",
+        "replacement_counter": 1438992,
+        "slot_code_snapshot": "TONER_Y"
+      }
+    ],
+    "schema_ledger": "20260829000600",
+    "selling_prices": [
+      {
+        "branch_id": "76d3c7ab-55c3-40f7-b133-0ef54a448893",
+        "client_request_id": "f91fb3c7-f94d-4a3e-9aeb-789ac597dd0f",
+        "effective_from": "2026-08-28T12:55:00+00:00",
+        "id": "2a2163cd-2249-43cb-8e71-4c3e57aeacf2",
+        "machine_id": "b4ca07ee-c588-404d-abcf-b6a029e68776",
+        "price_per_click": 1000,
+        "status": "voided"
+      }
+    ],
+    "suppliers": [
+      {
+        "id": "65ddedac-6463-4890-ac8f-6df4a4420dd3",
+        "is_active": true,
+        "name": "Just For Print",
+        "notes": null,
+        "supplier_code": "JFP"
+      }
+    ]
+  }
+}

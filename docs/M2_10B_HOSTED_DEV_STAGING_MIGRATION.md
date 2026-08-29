@@ -4,7 +4,7 @@ Date: 2026-08-30 (Asia/Jakarta)
 Repository baseline: `b29d26a79d0a5100cc90daa2928ff8564f4971e5`
 Execution ID: `958bb2b3-3110-410f-9c03-d8355a2f9be7`
 Target: Supabase DEV `sxitqjxljoqsnpepymrl`
-Status: **pre-apply gates complete; exact-SHA commit/CI gate pending**
+Status: **hosted DEV staging applied and reconciled; ready for signed-in user acceptance**
 
 ## Approved decisions
 
@@ -21,7 +21,7 @@ Status: **pre-apply gates complete; exact-SHA commit/CI gate pending**
 
 ## Fresh source snapshot
 
-The source snapshot was captured GET-only from legacy project `wtslqxjwjqyjgcapfrrz` at `2026-08-29T20:33:53.321Z` (2026-08-30 Asia/Jakarta). The private snapshot is mode `0600` and is not committed.
+The source snapshot was captured GET-only from legacy project `wtslqxjwjqyjgcapfrrz` at `2026-08-29T20:33:53.321Z` (2026-08-30 Asia/Jakarta). An immediate pre-apply snapshot at `2026-08-29T21:00:35.080Z` produced the same counts and fingerprints. The private snapshots are mode `0600` and are not committed.
 
 | Table | Rows | SHA-256 |
 |---|---:|---|
@@ -99,7 +99,31 @@ Machine Models gutters remain 24px desktop, 20px tablet, and 14px compact mobile
 
 ## Apply, reconciliation, and idempotency
 
-Pending exact-SHA commit, push, and successful GitHub CI. The required order after that gate is hosted rollback-only dry-run, first explicit apply, reconciliation, Graha inspection, identical second apply using the new postflight fingerprint, and second reconciliation. Actual timestamps, mutation summaries, and postflight results will be appended without overwriting M2.10A artifacts.
+The hosted authorization code was committed and pushed as `10207032a175fe4fe2e177729e0134cd88150acf` before use. GitHub Database CI run `33274779032` completed successfully for that exact SHA. A rollback-only hosted dry-run then completed with the target fingerprint unchanged at `5bae4aff63e1ab38d59421c0a758406307b8f2d23ed9751e63f724ffea835dfb`.
+
+The first explicit apply ran from `2026-08-29T21:00:48.718Z` through `2026-08-29T21:00:58.799Z` and produced postflight fingerprint `200a579fdab0b4425545e5aa24c1b0f5f48429108b020d87def9714406317292`.
+
+| Domain | Created | Merged | Already present |
+|---|---:|---:|---:|
+| Operational People | 10 | 0 | 0 |
+| Counters | 179 | 1 | 0 |
+| Lifecycles | 47 | 0 | 0 |
+| Purchases | 161 | 0 | 0 |
+| Incidents | 89 | 0 | 0 |
+| Suppliers | 9 | 0 | 0 |
+| Inventory Items | 4 | 0 | 18 |
+
+The first apply skipped the 49 registered expected differences, failed zero writes, and reconciled all 526 source rows with zero unexplained rows and zero unresolved staging approvals. Purchases total 208 units and IDR 371,029,998 of acquisition evidence. Imported incident assessed loss is IDR 455,962.36. The target now has 77 lifecycle rows in total: the 30 pre-existing rows were preserved and 47 verified closed intervals were added. The imported counter timeline contains 179 new rows plus the one high-confidence merge, with latest value 1,440,211 at `2026-08-28T12:09:54Z`.
+
+The identical second apply ran from `2026-08-29T21:01:14.616Z` through `2026-08-29T21:01:28.861Z`. Its preflight and postflight fingerprints were both `200a579fdab0b4425545e5aa24c1b0f5f48429108b020d87def9714406317292`; it created zero rows, reported all imported domain evidence already present, retained the single merge and 49 expected skips, and failed zero writes.
+
+Both reconciliations assert zero legacy receipts, inventory movements, FIFO layers, opening stock, aggregate Machine Cost rows, Auth identities, and Graha leakage. Current total Tuparev incident loss is IDR 466,962.36, comprising IDR 455,962.36 imported evidence plus IDR 11,000 pre-existing DEV evidence. No source evidence was rewritten to force Machine Cost parity.
+
+## Deployment and application acceptance
+
+Vercel automatically deployed exact migration commit `10207032a175fe4fe2e177729e0134cd88150acf` as deployment `dpl_E22XqgMy8cQrSEdeRFe2ri2gD8fx`; it is READY and the stable alias `https://a3-tracker-dev-nu.vercel.app` resolves to it. `/`, `/machines`, `/daily`, `/components`, `/inventory`, `/machine-cost`, `/errors`, `/reports`, `/settings`, and `/settings/machine-models` all returned HTTP 200.
+
+A signed-in browser session was not available to the execution environment. Visual/data review is therefore intentionally not claimed and remains the user/team staging-acceptance task. Database reconciliation covers the Reports source domains, but does not substitute for that signed-in review.
 
 ## Staging limitations and Production gates
 
