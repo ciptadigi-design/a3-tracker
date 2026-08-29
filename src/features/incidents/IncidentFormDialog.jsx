@@ -242,7 +242,7 @@ export function IncidentFormDialog({ account, branch, machines, members, inciden
 
             {formError && <div className="form-error" role="alert"><AlertCircle size={16} /><span>{formError}</span></div>}
           </div>
-          <footer className="dialog-actions"><button className="draft-reset-button" type="button" onClick={handleReset} disabled={!hasDraft || isSaving}><RotateCcw size={15} />Reset draft</button><button className="secondary-button" type="button" onClick={onClose} disabled={isSaving}>Batal</button><button className="primary-button" type="submit" disabled={isSaving || Boolean(pendingDraft || runtimeConflict)}>{isSaving ? <LoaderCircle className="spin" size={17} /> : isEdit ? <PencilLine size={17} /> : <ClipboardPlus size={17} />}{isSaving ? 'Menyimpan…' : isEdit ? 'Simpan Perubahan' : 'Simpan Log Error'}</button></footer>
+          <footer className="dialog-actions form-action-footer"><button className="draft-reset-button" type="button" onClick={handleReset} disabled={!hasDraft || isSaving} aria-label="Reset draft" title="Reset draft"><RotateCcw size={15} />Reset draft</button><button className="secondary-button" type="button" onClick={onClose} disabled={isSaving}>Batal</button><button className="primary-button" type="submit" disabled={isSaving || Boolean(pendingDraft || runtimeConflict)}>{isSaving ? <LoaderCircle className="spin" size={17} /> : isEdit ? <PencilLine size={17} /> : <ClipboardPlus size={17} />}{isSaving ? 'Menyimpan…' : isEdit ? 'Simpan Perubahan' : 'Simpan Log Error'}</button></footer>
         </form>
     </BlockingDialog>
   )

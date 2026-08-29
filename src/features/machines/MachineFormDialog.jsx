@@ -170,7 +170,7 @@ export function MachineFormDialog({ mode, machine, account, branches, branchId, 
             {formError && <div className="form-error" role="alert"><AlertCircle size={16} /><span>{formError}</span></div>}
             {!isEdit && selectedManufacturer && <p className="form-context-note">Creating a {selectedManufacturer.name} machine inside {account?.name}. Database constraints and tenant access remain authoritative.</p>}
           </div>
-          <footer className="dialog-actions"><button className="draft-reset-button" type="button" onClick={handleResetDraft} disabled={!hasDraft || isSaving}><RotateCcw size={15} />Reset draft</button><button className="secondary-button" type="button" onClick={onClose} disabled={isSaving}>Cancel</button><button className="primary-button" type="submit" disabled={isSaving || Boolean(pendingDraft)}>{isSaving && <LoaderCircle className="spin" size={17} />}{isSaving ? 'Saving machine…' : isEdit ? 'Save changes' : 'Create machine'}</button></footer>
+          <footer className="dialog-actions form-action-footer"><button className="draft-reset-button" type="button" onClick={handleResetDraft} disabled={!hasDraft || isSaving} aria-label="Reset draft" title="Reset draft"><RotateCcw size={15} />Reset draft</button><button className="secondary-button" type="button" onClick={onClose} disabled={isSaving}>Cancel</button><button className="primary-button" type="submit" disabled={isSaving || Boolean(pendingDraft)}>{isSaving && <LoaderCircle className="spin" size={17} />}{isSaving ? 'Saving machine…' : isEdit ? 'Save changes' : 'Create machine'}</button></footer>
         </form>
     </BlockingDialog>
   )

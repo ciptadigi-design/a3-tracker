@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { LoaderCircle, LockKeyhole, SlidersHorizontal, X } from 'lucide-react'
+import { LoaderCircle, LockKeyhole, RotateCcw, SlidersHorizontal, X } from 'lucide-react'
 import { BlockingDialog } from '../../components/ui/BlockingDialog.jsx'
 import { useAuth } from '../auth/useAuth.js'
 import { createDraftKey } from '../drafts/draftKeys.js'
@@ -52,7 +52,7 @@ function profileErrorMessage(error) {
 export function ProfileDialog({ account, model, models, profile, components, initialComponent, draftEntityId, onClose, onSave }) {
   const { user } = useAuth()
   const initial = initialValues({ profile, model, initialComponent })
-  const { value, updateDraft, clearDraft, wasRestored } = usePersistentDraft({
+  const { value, updateDraft, resetDraft, clearDraft, hasDraft, wasRestored } = usePersistentDraft({
     draftKey: createDraftKey({
       userId: user.id,
       accountId: account.id,
@@ -124,7 +124,7 @@ export function ProfileDialog({ account, model, models, profile, components, ini
             <label className="form-field"><span>Notes</span><textarea rows="3" value={values.notes} onChange={(event) => change('notes', event.target.value)} /></label>
             {error && <div className="form-error">{error}</div>}
           </div>
-          <footer className="dialog-actions"><button className="secondary-button" type="button" onClick={onClose} disabled={saving}>Cancel</button><button className="primary-button" disabled={saving}>{saving && <LoaderCircle className="spin" size={16} />}{profile ? 'Save profile' : 'Create assignment'}</button></footer>
+          <footer className="dialog-actions form-action-footer"><button className="draft-reset-button" type="button" onClick={() => resetDraft(initial)} disabled={!hasDraft || saving} aria-label="Reset draft" title="Reset draft"><RotateCcw size={15} />Reset draft</button><button className="secondary-button" type="button" onClick={onClose} disabled={saving}>Cancel</button><button className="primary-button" disabled={saving}>{saving && <LoaderCircle className="spin" size={16} />}{profile ? 'Save profile' : 'Create assignment'}</button></footer>
         </form>
     </BlockingDialog>
   )

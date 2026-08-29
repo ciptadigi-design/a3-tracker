@@ -70,7 +70,7 @@ export function InitializeLifecycleDialog({ account, machine, lifecycle, onClose
         <label className="form-field"><span>Notes</span><textarea rows="3" value={value.notes} onChange={(event) => change('notes', event.target.value)} placeholder="Optional source or context" /></label>
         {error && <div className="form-error">{error}</div>}
       </div>
-      <footer className="dialog-actions"><button className="draft-reset-button" type="button" onClick={() => resetDraft(blank)} disabled={!hasDraft || saving}><RotateCcw size={15} />Reset draft</button><button className="secondary-button" type="button" onClick={onClose} disabled={saving}>Cancel</button><button className="primary-button" disabled={saving}>{saving && <LoaderCircle className="spin" size={16} />}Initialize lifecycle</button></footer>
+      <footer className="dialog-actions form-action-footer"><button className="draft-reset-button" type="button" onClick={() => resetDraft(blank)} disabled={!hasDraft || saving} aria-label="Reset draft" title="Reset draft"><RotateCcw size={15} />Reset draft</button><button className="secondary-button" type="button" onClick={onClose} disabled={saving}>Cancel</button><button className="primary-button" disabled={saving}>{saving && <LoaderCircle className="spin" size={16} />}Initialize lifecycle</button></footer>
     </form>
   </BlockingDialog>
 }

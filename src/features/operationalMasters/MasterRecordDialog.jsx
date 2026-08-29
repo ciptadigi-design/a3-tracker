@@ -63,7 +63,7 @@ export function MasterRecordDialog({ kind, record, account, manufacturers = [], 
       <label className="form-field form-field-wide"><span>Notes <small>Optional</small></span><textarea rows="3" value={value.notes} onChange={(event) => change('notes', event.target.value)} /></label>
       {record && <label className="master-active-toggle"><input type="checkbox" checked={value.isActive} onChange={(event) => change('isActive', event.target.checked)} /><span><strong>Active</strong><small>Turn off to archive while preserving historical references.</small></span></label>}
     </div>{error && <div className="form-error" role="alert"><AlertCircle size={16} /><span>{error}</span></div>}</div>
-    <footer className="dialog-actions"><button className="draft-reset-button" type="button" onClick={() => resetDraft(serverValues)} disabled={!hasDraft || saving}><RotateCcw size={15} />Reset draft</button><button className="secondary-button" type="button" onClick={onClose} disabled={saving}>Cancel</button><button className="primary-button" type="submit" disabled={saving}>{saving && <LoaderCircle className="spin" size={17} />}{saving ? 'Saving…' : 'Save'}</button></footer></form>
+    <footer className="dialog-actions form-action-footer"><button className="draft-reset-button" type="button" onClick={() => resetDraft(serverValues)} disabled={!hasDraft || saving} aria-label="Reset draft" title="Reset draft"><RotateCcw size={15} />Reset draft</button><button className="secondary-button" type="button" onClick={onClose} disabled={saving}>Cancel</button><button className="primary-button" type="submit" disabled={saving}>{saving && <LoaderCircle className="spin" size={17} />}{saving ? 'Saving…' : 'Save'}</button></footer></form>
   </BlockingDialog>
 }
 

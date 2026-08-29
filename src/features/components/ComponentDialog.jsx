@@ -104,7 +104,7 @@ export function ComponentDialog({ account, component, manufacturers, onClose, on
             </div>
             {error && <div className="form-error">{error}</div>}
           </div>
-          <footer className="dialog-actions"><button className="draft-reset-button" type="button" onClick={() => resetDraft(initial)} disabled={!hasDraft || saving}><RotateCcw size={15} />Reset draft</button><button className="secondary-button" type="button" onClick={onClose} disabled={saving}>Cancel</button><button className="primary-button" disabled={saving}>{saving && <LoaderCircle className="spin" size={16} />}Save component</button></footer>
+          <footer className="dialog-actions form-action-footer"><button className="draft-reset-button" type="button" onClick={() => resetDraft(initial)} disabled={!hasDraft || saving} aria-label="Reset draft" title="Reset draft"><RotateCcw size={15} />Reset draft</button><button className="secondary-button" type="button" onClick={onClose} disabled={saving}>Cancel</button><button className="primary-button" disabled={saving}>{saving && <LoaderCircle className="spin" size={16} />}Save component</button></footer>
         </form>
     </BlockingDialog>
   )

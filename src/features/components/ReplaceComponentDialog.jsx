@@ -153,7 +153,7 @@ export function ReplaceComponentDialog({ account, machine, lifecycle, operationa
         {replacementCounter > Number(lifecycle.latest_effective_counter) && <div className="replacement-counter-notice">A Total Impressions reading of <strong>{number(replacementCounter)}</strong> will be recorded atomically with this replacement.</div>}
         {error && <div className="form-error" role="alert">{error}</div>}
       </div>
-      <footer className="dialog-actions replacement-dialog-actions"><button className="draft-reset-button" type="button" onClick={reset} disabled={!hasDraft || saving}><RotateCcw size={15} />Reset draft</button><div><button className="secondary-button" type="button" onClick={onClose} disabled={saving}>Cancel</button><button className="primary-button" disabled={saving}>{saving && <LoaderCircle className="spin" size={16} />}Confirm Replacement</button></div></footer>
+      <footer className="dialog-actions form-action-footer replacement-dialog-actions"><button className="draft-reset-button" type="button" onClick={reset} disabled={!hasDraft || saving} aria-label="Reset draft" title="Reset draft"><RotateCcw size={15} />Reset draft</button><button className="secondary-button" type="button" onClick={onClose} disabled={saving}>Cancel</button><button className="primary-button" disabled={saving}>{saving && <LoaderCircle className="spin" size={16} />}Confirm Replacement</button></footer>
     </form>
   </BlockingDialog>
 }
