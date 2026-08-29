@@ -77,7 +77,7 @@ test('owner protection, lifecycle actions, and destructive confirmations are exp
 })
 
 test('operational CRUD is handed off instead of duplicated', () => {
-  assert.match(page, /Manage Model Profiles/)
+  assert.match(page, /Manage Profiles/)
   assert.match(page, /navigate\('\/components'\)/)
   assert.doesNotMatch(page, /saveInventoryItem|saveComponent|saveProfile/)
 })

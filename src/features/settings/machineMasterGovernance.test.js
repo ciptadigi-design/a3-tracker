@@ -6,6 +6,8 @@ const view = readFileSync(new URL('./MachineMasterGovernance.jsx', import.meta.u
 const page = readFileSync(new URL('../../pages/SettingsPage.jsx', import.meta.url), 'utf8')
 const service = readFileSync(new URL('../../services/supabase/operationalMasters.js', import.meta.url), 'utf8')
 const app = readFileSync(new URL('../../app/AppShell.jsx', import.meta.url), 'utf8')
+const styles = readFileSync(new URL('../../App.css', import.meta.url), 'utf8')
+const settingsService = readFileSync(new URL('../../services/supabase/settings.js', import.meta.url), 'utf8')
 
 test('Settings exposes compact Manufacturer and Model governance', () => {
   assert.match(view, /Manufacturers/)
@@ -14,8 +16,41 @@ test('Settings exposes compact Manufacturer and Model governance', () => {
   assert.match(view, /onEdit/)
   assert.match(view, /Archive/)
   assert.match(view, /Restore/)
-  assert.match(view, /Platform shared master · read only/)
+  assert.match(view, /Platform shared master · Read only/)
   assert.match(page, /machine-master-status/)
+})
+
+test('active tab controls the compact primary CTA and both empty states are explicit', () => {
+  assert.match(view, /view === 'manufacturers' \? 'Manufacturer' : 'Model'/)
+  assert.match(view, /onCreate\(kind\)/)
+  assert.match(view, /No manufacturers have been added yet\./)
+  assert.match(view, /No machine models have been added yet\./)
+  assert.match(view, /Create a Manufacturer first/)
+})
+
+test('Manufacturer and Model rows share one aligned identity, fact, status, and action structure', () => {
+  assert.match(view, /machine-master-identity/)
+  assert.match(view, /machine-master-fact/)
+  assert.match(view, /manufacturer\?\.name/)
+  assert.match(view, /scope-pill/)
+  assert.match(view, /machine-master-actions/)
+  assert.match(view, /shared \? <><span aria-hidden="true" \/><span aria-hidden="true" \/><\/>/)
+  assert.match(view, /aria-label={`Edit \$\{record\.name\}`}/)
+  assert.match(view, /aria-label={`\$\{record\.is_active \? 'Archive' : 'Restore'\} \$\{record\.name\}`}/)
+})
+
+test('Machine Models layout becomes a stacked mobile list without horizontal grid dependence', () => {
+  assert.match(styles, /\.machine-master-list article \{ grid-template-columns: auto minmax\(0,1fr\) auto;/)
+  assert.match(styles, /\.machine-master-list \.machine-master-fact \{ grid-column: 2;/)
+  assert.match(styles, /\.machine-master-list \.machine-master-actions \{ width: 71px; grid-column: 2 \/ -1;/)
+})
+
+test('Component Model Profiles is a subordinate compact card with truthful model-level metric', () => {
+  assert.match(page, /model-profile-settings-card/)
+  assert.match(page, /Manage Profiles/)
+  assert.match(page, /active.*slots.*across.*models/)
+  assert.match(settingsService, /machine_model_id/)
+  assert.doesNotMatch(page, />Manage Model Profiles</)
 })
 
 test('machine-master writes remain explicitly Platform Superuser governed', () => {

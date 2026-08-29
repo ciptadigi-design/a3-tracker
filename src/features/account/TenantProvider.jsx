@@ -5,6 +5,7 @@ import { LoadingScreen } from '../../components/ui/LoadingScreen.jsx'
 import { ErrorState } from '../../components/ui/ErrorState.jsx'
 import { TenantContext } from './tenantContext.js'
 import { reportFailure, userErrorMessage } from '../../lib/appErrors.js'
+import { readBranchPreference, resolveAuthorizedBranchId, writeBranchPreference } from './branchPreference.js'
 
 export function TenantProvider({ children }) {
   const { user } = useAuth()
@@ -39,8 +40,24 @@ export function TenantProvider({ children }) {
   )
 
   useEffect(() => {
-    setSelectedBranchId((current) => availableBranches.some((branch) => branch.id === current) ? current : availableBranches[0]?.id ?? null)
-  }, [availableBranches])
+    if (!user?.id || !selectedAccountId || !availableBranches.length) return
+    setSelectedBranchId((current) => {
+      const next = resolveAuthorizedBranchId({
+        currentBranchId: current,
+        preferredBranchId: readBranchPreference({ userId: user.id, accountId: selectedAccountId }),
+        branches: availableBranches,
+      })
+      if (next) writeBranchPreference({ userId: user.id, accountId: selectedAccountId, branchId: next })
+      return next
+    })
+  }, [availableBranches, selectedAccountId, user?.id])
+
+  const selectBranch = useCallback((branchId) => {
+    if (!user?.id || !selectedAccountId || !availableBranches.some((branch) => branch.id === branchId && branch.is_active !== false)) return false
+    setSelectedBranchId(branchId)
+    writeBranchPreference({ userId: user.id, accountId: selectedAccountId, branchId })
+    return true
+  }, [availableBranches, selectedAccountId, user?.id])
 
   const branch = availableBranches.find((item) => item.id === selectedBranchId) ?? null
   const membership = useMemo(() => tenantData?.memberships.find((item) => item.account_id === selectedAccountId)
@@ -58,10 +75,10 @@ export function TenantProvider({ children }) {
     selectedAccountId,
     selectedBranchId,
     setSelectedAccountId,
-    setSelectedBranchId,
+    setSelectedBranchId: selectBranch,
     refresh,
     isPlatformSuperuser: Boolean(tenantData?.isPlatformSuperuser),
-  }), [account, availableBranches, branch, membership, operationalPermissions, refresh, selectedAccountId, selectedBranchId, tenantData])
+  }), [account, availableBranches, branch, membership, operationalPermissions, refresh, selectBranch, selectedAccountId, selectedBranchId, tenantData])
 
   if (isLoading) return <LoadingScreen label="Loading your account and branches" />
   if (error) return <ErrorState title="We couldn't load your workspace" detail={userErrorMessage(error, 'Workspace context is temporarily unavailable.')} onRetry={refresh} />
