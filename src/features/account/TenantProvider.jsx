@@ -42,6 +42,7 @@ export function TenantProvider({ children }) {
 
   const branch = availableBranches.find((item) => item.id === selectedBranchId) ?? null
   const membership = tenantData?.memberships.find((item) => item.account_id === selectedAccountId) ?? null
+  const operationalPermissions = tenantData?.permissions?.find((item) => item.account_id === selectedAccountId) ?? null
   const value = useMemo(() => ({
     profile: tenantData?.profile ?? null,
     accounts: tenantData?.accounts ?? [],
@@ -49,12 +50,13 @@ export function TenantProvider({ children }) {
     account,
     branch,
     membership,
+    operationalPermissions,
     selectedAccountId,
     selectedBranchId,
     setSelectedAccountId,
     setSelectedBranchId,
     refresh,
-  }), [account, availableBranches, branch, membership, refresh, selectedAccountId, selectedBranchId, tenantData])
+  }), [account, availableBranches, branch, membership, operationalPermissions, refresh, selectedAccountId, selectedBranchId, tenantData])
 
   if (isLoading) return <LoadingScreen label="Loading your account and branches" />
   if (error) return <ErrorState title="We couldn't load your workspace" detail={error.message} onRetry={refresh} />

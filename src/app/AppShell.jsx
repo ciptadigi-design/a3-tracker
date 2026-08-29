@@ -20,7 +20,6 @@ import { ReportsPage } from '../pages/ReportsPage.jsx'
 
 const comingSoonPages = {
   '/maintenance': ['Maintenance', 'Maintenance planning will arrive after machine onboarding.'],
-  '/settings': ['Settings', 'Operational workspace settings.'],
 }
 
 export function AppShell() {
@@ -48,10 +47,10 @@ export function AppShell() {
   else if (path === '/inventory') page = <InventoryPage />
   else if (path === '/machine-cost') page = <MachineCostPage />
   else if (path === '/reports') page = <ReportsPage />
-  else if (path === '/settings') page = <SettingsPage />
+  else if (path === '/settings') page = <SettingsPage navigate={handleNavigate} />
   else if (getIncidentIdFromPath(path)) page = <IncidentDetailPage incidentId={getIncidentIdFromPath(path)} navigate={handleNavigate} />
   else {
-    const [title, description] = comingSoonPages[path] ?? comingSoonPages['/settings']
+    const [title, description] = comingSoonPages[path] ?? ['Page not found', 'This route is not available.']
     page = <ComingSoonPage title={title} description={description} />
   }
 
@@ -59,7 +58,7 @@ export function AppShell() {
     <div className="app-frame">
       <div className="app-ambient app-ambient-one" /><div className="app-ambient app-ambient-two" />
       <div className={`mobile-nav-backdrop ${mobileNavOpen ? 'mobile-nav-backdrop-open' : ''}`} onClick={() => setMobileNavOpen(false)} />
-      <div className={`sidebar-wrap ${mobileNavOpen ? 'sidebar-wrap-open' : ''}`}><Sidebar path={path} navigate={handleNavigate} account={tenant.account} branch={tenant.branch} /></div>
+      <div className={`sidebar-wrap ${mobileNavOpen ? 'sidebar-wrap-open' : ''}`}><Sidebar path={path} navigate={handleNavigate} account={tenant.account} branch={tenant.branch} membership={tenant.membership} /></div>
       <div className="app-main">
         <TopBar profile={tenant.profile} account={tenant.account} branch={tenant.branch} branches={tenant.branches} onBranchChange={tenant.setSelectedBranchId} theme={theme} toggleTheme={toggleTheme} onLogout={handleLogout} onMenu={() => setMobileNavOpen(true)} />
         {logoutError && <div className="inline-error" role="alert">{logoutError}</div>}

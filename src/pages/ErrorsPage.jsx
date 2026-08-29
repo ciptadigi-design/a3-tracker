@@ -21,7 +21,7 @@ function SummaryCard({ icon, label, value, detail, tone }) {
 
 export function ErrorsPage({ navigate }) {
   const { user } = useAuth()
-  const { account, branch } = useTenant()
+  const { account, branch, membership, operationalPermissions } = useTenant()
   const machinesState = useMachines(account.id, branch.id)
   const incidentState = useOperationalIncidents(account.id, branch.id)
   const [success, setSuccess] = useState(null)
@@ -49,7 +49,8 @@ export function ErrorsPage({ navigate }) {
 
   const isReady = !incidentState.isLoading && !machinesState.isLoading
   const scopeDescription = selectedMachine ? `${selectedMachine.machine_code} · all history` : effectiveMachineFilter === 'branch' ? 'Branch / No specific machine · all history' : 'All assessed operational loss in this branch · all history'
-  const addAction = <button className="primary-button" type="button" onClick={() => workflow.setUIState({ type: 'create' })} disabled={!isReady}><ClipboardPlus size={18} /> Log error baru</button>
+  const canLogErrors = ['owner', 'admin', 'technician'].includes(membership?.role) || (membership?.role === 'operator' && operationalPermissions?.operator_can_log_errors)
+  const addAction = canLogErrors ? <button className="primary-button" type="button" onClick={() => workflow.setUIState({ type: 'create' })} disabled={!isReady}><ClipboardPlus size={18} /> Log error baru</button> : null
 
   return (
     <div className="page-stack errors-page">
@@ -69,7 +70,7 @@ export function ErrorsPage({ navigate }) {
 
       <IncidentHistory incidents={filteredIncidents} machines={machinesState.machines} timezone={timezone} isLoading={incidentState.isLoading} error={incidentState.error} onRefresh={incidentState.refresh} onOpen={(incidentId) => navigate(`/errors/${incidentId}`)} />
 
-      {workflow.value.type === 'create' && isReady && <IncidentFormDialog account={account} branch={branch} machines={machinesState.machines} members={incidentState.members} onClose={workflow.clearUIState} onSave={handleCreate} />}
+      {canLogErrors && workflow.value.type === 'create' && isReady && <IncidentFormDialog account={account} branch={branch} machines={machinesState.machines} members={incidentState.members} onClose={workflow.clearUIState} onSave={handleCreate} />}
     </div>
   )
 }

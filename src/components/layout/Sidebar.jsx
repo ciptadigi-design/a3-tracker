@@ -22,7 +22,7 @@ function NavLink({ item, path, navigate }) {
   )
 }
 
-export function Sidebar({ path, navigate, account, branch }) {
+export function Sidebar({ path, navigate, account, branch, membership }) {
   return (
     <aside className="sidebar glass-surface">
       <div className="brand-lockup sidebar-brand"><span className="brand-mark"><Printer size={22} strokeWidth={1.8} /></span><span>A3 Tracker</span></div>
@@ -35,7 +35,7 @@ export function Sidebar({ path, navigate, account, branch }) {
         {navigation.map((item) => <NavLink key={item.path} item={item} path={path} navigate={navigate} />)}
       </nav>
       <nav className="secondary-nav" aria-label="Settings navigation">
-        <NavLink item={{ path: '/settings', label: 'Settings', icon: Settings }} path={path} navigate={navigate} />
+        {['owner', 'admin'].includes(membership?.role) && <NavLink item={{ path: '/settings', label: 'Settings', icon: Settings, active: true }} path={path} navigate={navigate} />}
         <div className="sidebar-footnote"><ClipboardCheck size={15} /> Secure tenant access</div>
       </nav>
     </aside>

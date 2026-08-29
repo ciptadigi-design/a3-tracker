@@ -24,7 +24,7 @@ export async function loadTenantContext(userId) {
     return { profile: profileResult.data, memberships: [], accounts: [], branches: [] }
   }
 
-  const [accountsResult, branchesResult] = await Promise.all([
+  const [accountsResult, branchesResult, permissionsResult] = await Promise.all([
     supabase
       .from('accounts')
       .select('id, code, name, default_timezone, status, machine_economics_advanced_enabled')
@@ -37,16 +37,22 @@ export async function loadTenantContext(userId) {
       .in('account_id', accountIds)
       .eq('is_active', true)
       .order('name'),
+    supabase
+      .from('account_operational_permissions')
+      .select('account_id, operator_can_initialize_component, operator_can_replace_component, operator_can_create_purchase, operator_can_receive_goods, operator_can_adjust_inventory, operator_can_transfer_inventory, operator_can_log_errors')
+      .in('account_id', accountIds),
   ])
 
   if (accountsResult.error) throw accountsResult.error
   if (branchesResult.error) throw branchesResult.error
+  if (permissionsResult.error) throw permissionsResult.error
 
   return {
     profile: profileResult.data,
     memberships,
     accounts: accountsResult.data ?? [],
     branches: branchesResult.data ?? [],
+    permissions: permissionsResult.data ?? [],
   }
 }
 
