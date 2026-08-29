@@ -19,11 +19,11 @@ Deno.serve(async (request) => {
     if (!identifier.includes('@')) {
       if (!/^[a-z0-9._-]{3,32}$/.test(identifier)) return json(request, 401, { error: genericFailure })
       const admin = createClient(url, serviceKey, { auth: { persistSession: false, autoRefreshToken: false } })
-      const { data: profile, error: lookupError } = await admin.from('profiles').select('user_id').eq('username_normalized', identifier).maybeSingle()
-      if (lookupError || !profile) email = 'invalid-username-login@invalid.local'
+      const { data: userId, error: lookupError } = await admin.rpc('resolve_login_username', { target_username: identifier })
+      if (lookupError || !userId) email = 'invalid-username-login@invalid.local'
       else {
-      const { data: authUser, error: userError } = await admin.auth.admin.getUserById(profile.user_id)
-      email = userError || !authUser.user?.email ? 'invalid-username-login@invalid.local' : authUser.user.email
+        const { data: authUser, error: userError } = await admin.auth.admin.getUserById(userId)
+        email = userError || !authUser.user?.email ? 'invalid-username-login@invalid.local' : authUser.user.email
       }
     }
 

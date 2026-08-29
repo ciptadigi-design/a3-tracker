@@ -71,6 +71,14 @@ insert into public.operational_incidents(account_id,branch_id,machine_id,occurre
 
 -- M2.7B legacy-fixture continuity: scoped memberships and Operational People
 -- are explicitly assigned to the fixture branches that were account-wide before M2.7B.
+insert into public.operational_people (account_id, name, linked_user_id)
+select membership.account_id, coalesce(nullif(btrim(profile.display_name), ''), auth_user.email), membership.user_id
+from public.account_memberships membership
+join public.profiles profile on profile.user_id = membership.user_id
+join auth.users auth_user on auth_user.id = membership.user_id
+where not exists (select 1 from public.operational_people person
+  where person.account_id = membership.account_id and person.linked_user_id = membership.user_id);
+
 insert into public.account_membership_branches (account_id, membership_id, branch_id, assigned_by, updated_by)
 select membership.account_id, membership.id, branch.id, membership.created_by, membership.created_by
 from public.account_memberships membership

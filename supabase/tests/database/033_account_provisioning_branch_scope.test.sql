@@ -7,6 +7,10 @@ select extensions.has_table('public','account_membership_branches','membership B
 select extensions.has_table('public','operational_person_branches','PIC Branch scope is normalized');
 select extensions.has_column('public','profiles','username_normalized','profile owns normalized username');
 select extensions.ok(not has_function_privilege('anon','public.get_settings_members(uuid)','EXECUTE'),'anonymous cannot enumerate members');
+select extensions.ok(not has_function_privilege('anon','public.resolve_login_username(text)','EXECUTE')
+  and not has_function_privilege('authenticated','public.resolve_login_username(text)','EXECUTE')
+  and has_function_privilege('service_role','public.resolve_login_username(text)','EXECUTE'),
+  'only the server Auth boundary can resolve username to Auth identity');
 select extensions.ok(not has_function_privilege('anon','public.can_access_branch(uuid,uuid)','EXECUTE'),'anonymous cannot call Branch resolver');
 
 insert into auth.users(id,aud,role,email,encrypted_password,email_confirmed_at,raw_app_meta_data,raw_user_meta_data,created_at,updated_at) values
@@ -29,7 +33,8 @@ insert into public.account_memberships(id,account_id,user_id,role,status,accepte
 ('b7300000-0000-4000-8000-000000000004','b7100000-0000-4000-8000-000000000001','b7000000-0000-4000-8000-000000000004','operator','active',now());
 insert into public.account_membership_branches(account_id,membership_id,branch_id) values
 ('b7100000-0000-4000-8000-000000000001','b7300000-0000-4000-8000-000000000002','b7200000-0000-4000-8000-000000000001'),
-('b7100000-0000-4000-8000-000000000001','b7300000-0000-4000-8000-000000000003','b7200000-0000-4000-8000-000000000001');
+('b7100000-0000-4000-8000-000000000001','b7300000-0000-4000-8000-000000000003','b7200000-0000-4000-8000-000000000001'),
+('b7100000-0000-4000-8000-000000000001','b7300000-0000-4000-8000-000000000004','b7200000-0000-4000-8000-000000000001');
 
 select extensions.lives_ok($$update public.profiles set username=' Admin.Tuparev ' where user_id='b7000000-0000-4000-8000-000000000002'$$,'username is trimmed and accepted');
 select extensions.is((select username from public.profiles where user_id='b7000000-0000-4000-8000-000000000002'),'admin.tuparev','username canonicalizes to lowercase');
@@ -44,12 +49,36 @@ set local role authenticated;
 select set_config('request.jwt.claims','{"sub":"b7000000-0000-4000-8000-000000000001","role":"authenticated"}',true);
 select extensions.ok(public.can_manage_account_governance('b7100000-0000-4000-8000-000000000001'),'Owner manages governance');
 select extensions.ok(public.can_access_branch('b7100000-0000-4000-8000-000000000001','b7200000-0000-4000-8000-000000000002'),'Owner has implicit all-Branch scope');
+select extensions.lives_ok($$insert into public.machines(account_id,branch_id,machine_model_id,machine_code,display_name)
+  values('b7100000-0000-4000-8000-000000000001','b7200000-0000-4000-8000-000000000002','51000000-0000-0000-0000-000000000001','M27B-OWNER-CIA','Owner Cianjur Machine')$$,
+  'Owner can create a Machine in any own-account Branch');
+select extensions.throws_ok($$insert into public.machines(account_id,branch_id,machine_model_id,machine_code,display_name)
+  values('b7100000-0000-4000-8000-000000000002','b7200000-0000-4000-8000-000000000003','51000000-0000-0000-0000-000000000001','M27B-OWNER-CROSS','Cross-account Machine')$$,
+  '42501',null,'Owner cannot create a Machine in another Account');
 select set_config('request.jwt.claims','{"sub":"b7000000-0000-4000-8000-000000000002","role":"authenticated"}',true);
 select extensions.ok(not public.can_manage_account_governance('b7100000-0000-4000-8000-000000000001'),'Admin cannot manage governance');
 select extensions.ok(public.can_access_branch('b7100000-0000-4000-8000-000000000001','b7200000-0000-4000-8000-000000000001'),'Admin reaches assigned Tuparev');
 select extensions.ok(not public.can_access_branch('b7100000-0000-4000-8000-000000000001','b7200000-0000-4000-8000-000000000002'),'Admin cannot reach Cianjur');
+select extensions.lives_ok($$insert into public.machines(account_id,branch_id,machine_model_id,machine_code,display_name)
+  values('b7100000-0000-4000-8000-000000000001','b7200000-0000-4000-8000-000000000001','51000000-0000-0000-0000-000000000001','M27B-TUP','Authorized Tuparev Machine')$$,
+  'Admin can create a Machine in an assigned Branch');
+select extensions.throws_ok($$insert into public.machines(account_id,branch_id,machine_model_id,machine_code,display_name)
+  values('b7100000-0000-4000-8000-000000000001','b7200000-0000-4000-8000-000000000002','51000000-0000-0000-0000-000000000001','M27B-CIA-DENIED','Denied Cianjur Machine')$$,
+  '42501',null,'Admin cannot create a Machine in an unassigned Branch');
 select extensions.throws_ok($$select public.manage_workspace_settings('b7100000-0000-4000-8000-000000000001','Nope','Asia/Jakarta','b7900000-0000-4000-8000-000000000001')$$,'42501',null,'Admin is denied workspace governance');
 select extensions.throws_ok($$select * from public.resolve_operational_report_scope('b7100000-0000-4000-8000-000000000001',null,null,current_date,current_date)$$,'42501',null,'scoped Admin cannot request all-Branch report');
+
+select set_config('request.jwt.claims','{"sub":"b7000000-0000-4000-8000-000000000003","role":"authenticated"}',true);
+select extensions.ok(public.can_access_branch('b7100000-0000-4000-8000-000000000001','b7200000-0000-4000-8000-000000000001'),'Technician reaches an assigned Branch');
+select extensions.throws_ok($$insert into public.machines(account_id,branch_id,machine_model_id,machine_code,display_name)
+  values('b7100000-0000-4000-8000-000000000001','b7200000-0000-4000-8000-000000000001','51000000-0000-0000-0000-000000000001','M27B-TECH-DENIED','Denied Technician Machine')$$,
+  '42501',null,'Technician Branch access does not grant Machine administration');
+select set_config('request.jwt.claims','{"sub":"b7000000-0000-4000-8000-000000000004","role":"authenticated"}',true);
+select extensions.ok(public.can_access_branch('b7100000-0000-4000-8000-000000000001','b7200000-0000-4000-8000-000000000001'),'Operator reaches an assigned Branch');
+select extensions.ok(not public.can_access_branch('b7100000-0000-4000-8000-000000000001','b7200000-0000-4000-8000-000000000002'),'Operator cannot reach an unassigned Branch');
+select extensions.throws_ok($$insert into public.machines(account_id,branch_id,machine_model_id,machine_code,display_name)
+  values('b7100000-0000-4000-8000-000000000001','b7200000-0000-4000-8000-000000000001','51000000-0000-0000-0000-000000000001','M27B-OP-DENIED','Denied Operator Machine')$$,
+  '42501',null,'Operator Branch access does not grant Machine administration');
 
 reset role;
 insert into public.operational_people(id,account_id,name) values
@@ -60,6 +89,16 @@ set local role authenticated;
 select set_config('request.jwt.claims','{"sub":"b7000000-0000-4000-8000-000000000001","role":"authenticated"}',true);
 select extensions.ok(public.is_operational_person_valid_for_branch('b7100000-0000-4000-8000-000000000001','b7400000-0000-4000-8000-000000000001','b7200000-0000-4000-8000-000000000001'),'PIC is valid in assigned Branch');
 select extensions.ok(not public.is_operational_person_valid_for_branch('b7100000-0000-4000-8000-000000000001','b7400000-0000-4000-8000-000000000001','b7200000-0000-4000-8000-000000000002'),'PIC is invalid in unassigned Branch');
+select extensions.lives_ok($$select public.create_operational_incident(
+  'b7100000-0000-4000-8000-000000000001','b7200000-0000-4000-8000-000000000001',statement_timestamp(),
+  'prosedur','human','Assigned-Branch PIC fixture','b7900000-0000-4000-8000-000000000010',null,null,null,null,null,
+  'b7400000-0000-4000-8000-000000000001','Akmal Fauzan',0,0,null,null,null)$$,
+  'Owner can log an incident with a PIC assigned to its Branch');
+select extensions.throws_ok($$select public.create_operational_incident(
+  'b7100000-0000-4000-8000-000000000001','b7200000-0000-4000-8000-000000000002',statement_timestamp(),
+  'prosedur','human','Wrong-Branch PIC fixture','b7900000-0000-4000-8000-000000000011',null,null,null,null,null,
+  'b7400000-0000-4000-8000-000000000001','Akmal Fauzan',0,0,null,null,null)$$,
+  '23514',null,'Owner all-Branch access does not bypass PIC Branch assignment');
 select public.manage_operational_person_branches('b7100000-0000-4000-8000-000000000001','b7400000-0000-4000-8000-000000000001',array['b7200000-0000-4000-8000-000000000001','b7200000-0000-4000-8000-000000000002']::uuid[],'b7900000-0000-4000-8000-000000000002');
 select extensions.ok(public.is_operational_person_valid_for_branch('b7100000-0000-4000-8000-000000000001','b7400000-0000-4000-8000-000000000001','b7200000-0000-4000-8000-000000000002'),'one PIC supports multiple Branches without duplication');
 select extensions.is((select count(*)::integer from public.operational_people where id='b7400000-0000-4000-8000-000000000001'),1,'multi-Branch PIC remains one person');
@@ -71,6 +110,9 @@ set local role authenticated;
 select set_config('request.jwt.claims','{"sub":"b7000000-0000-4000-8000-000000000005","role":"authenticated"}',true);
 select extensions.ok(public.is_platform_superuser(),'platform Superuser resolves independently');
 select extensions.ok(public.can_access_branch('b7100000-0000-4000-8000-000000000002','b7200000-0000-4000-8000-000000000003'),'platform Superuser reaches explicitly entered tenant context');
+select extensions.lives_ok($$insert into public.machines(account_id,branch_id,machine_model_id,machine_code,display_name)
+  values('b7100000-0000-4000-8000-000000000002','b7200000-0000-4000-8000-000000000003','51000000-0000-0000-0000-000000000001','M27B-PLATFORM','Platform Managed Machine')$$,
+  'platform Superuser can administer a Machine in explicit tenant context');
 
 select * from extensions.finish();
 rollback;

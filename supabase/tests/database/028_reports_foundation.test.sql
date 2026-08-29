@@ -80,6 +80,14 @@ insert into public.inventory_items(id,account_id,sku,name,unit,minimum_stock) va
 
 -- M2.7B legacy-fixture continuity: scoped memberships and Operational People
 -- are explicitly assigned to the fixture branches that were account-wide before M2.7B.
+insert into public.operational_people (account_id, name, linked_user_id)
+select membership.account_id, coalesce(nullif(btrim(profile.display_name), ''), auth_user.email), membership.user_id
+from public.account_memberships membership
+join public.profiles profile on profile.user_id = membership.user_id
+join auth.users auth_user on auth_user.id = membership.user_id
+where not exists (select 1 from public.operational_people person
+  where person.account_id = membership.account_id and person.linked_user_id = membership.user_id);
+
 insert into public.account_membership_branches (account_id, membership_id, branch_id, assigned_by, updated_by)
 select membership.account_id, membership.id, branch.id, membership.created_by, membership.created_by
 from public.account_memberships membership
@@ -188,16 +196,17 @@ select extensions.is((select total_stock from public.get_report_inventory_stock(
 select extensions.is((select total_stock from public.get_report_inventory_stock('b6100000-0000-4000-8000-000000000001','b6300000-0000-4000-8000-000000000002') where inventory_item_id='b6c00000-0000-4000-8000-000000000001'),1::numeric,'branch inventory report derives branch location balance only');
 select extensions.ok((select jsonb_array_length(location_breakdown)=2 from public.get_report_inventory_stock('b6100000-0000-4000-8000-000000000001',null) where inventory_item_id='b6c00000-0000-4000-8000-000000000001'),'inventory report exposes readable location breakdown without raw top-level IDs');
 
--- All active operational roles read the same projection; suspended, cross-account, and anonymous callers are denied.
+-- Active scoped roles read their assigned Branch projection; suspended,
+-- cross-account, and anonymous callers are denied.
 select set_config('request.jwt.claim.sub','b6000000-0000-4000-8000-000000000002',true);
-select extensions.is((select total_clicks from public.get_report_overview('b6100000-0000-4000-8000-000000000001',null,null,'2026-08-01','2026-08-31')),500::numeric,'Admin reads account report');
-select extensions.is((select count(*)::int from public.get_report_period_comparison('b6100000-0000-4000-8000-000000000001',null,null,'2026-08-01','2026-08-31','this_month')),7,'Admin reads all comparison metrics');
+select extensions.is((select total_clicks from public.get_report_overview('b6100000-0000-4000-8000-000000000001','b6300000-0000-4000-8000-000000000001',null,'2026-08-01','2026-08-31')),430::numeric,'Admin reads an assigned Branch report');
+select extensions.is((select count(*)::int from public.get_report_period_comparison('b6100000-0000-4000-8000-000000000001','b6300000-0000-4000-8000-000000000001',null,'2026-08-01','2026-08-31','this_month')),7,'Admin reads all assigned-Branch comparison metrics');
 select set_config('request.jwt.claim.sub','b6000000-0000-4000-8000-000000000003',true);
-select extensions.is((select total_clicks from public.get_report_overview('b6100000-0000-4000-8000-000000000001',null,null,'2026-08-01','2026-08-31')),500::numeric,'Technician reads permitted operational report');
-select extensions.is((select count(*)::int from public.get_report_machine_comparison('b6100000-0000-4000-8000-000000000001',null,null,'2026-08-01','2026-08-31')),3,'Technician reads permitted machine comparison');
+select extensions.is((select total_clicks from public.get_report_overview('b6100000-0000-4000-8000-000000000001','b6300000-0000-4000-8000-000000000001',null,'2026-08-01','2026-08-31')),430::numeric,'Technician reads a permitted Branch report');
+select extensions.is((select count(*)::int from public.get_report_machine_comparison('b6100000-0000-4000-8000-000000000001','b6300000-0000-4000-8000-000000000001',null,'2026-08-01','2026-08-31')),2,'Technician reads permitted Branch machine comparison');
 select set_config('request.jwt.claim.sub','b6000000-0000-4000-8000-000000000004',true);
-select extensions.is((select total_clicks from public.get_report_overview('b6100000-0000-4000-8000-000000000001',null,null,'2026-08-01','2026-08-31')),500::numeric,'Operator reads permitted operational report');
-select extensions.is((select count(*)::int from public.get_report_component_ranking('b6100000-0000-4000-8000-000000000001',null,null,'2026-08-01','2026-08-31')),1,'Operator reads permitted component ranking');
+select extensions.is((select total_clicks from public.get_report_overview('b6100000-0000-4000-8000-000000000001','b6300000-0000-4000-8000-000000000001',null,'2026-08-01','2026-08-31')),430::numeric,'Operator reads a permitted Branch report');
+select extensions.is((select count(*)::int from public.get_report_component_ranking('b6100000-0000-4000-8000-000000000001','b6300000-0000-4000-8000-000000000001',null,'2026-08-01','2026-08-31')),1,'Operator reads permitted Branch component ranking');
 select set_config('request.jwt.claim.sub','b6000000-0000-4000-8000-000000000005',true);
 select extensions.throws_ok($$select public.get_report_overview('b6100000-0000-4000-8000-000000000001',null,null,'2026-08-01','2026-08-31')$$,'42501',null,'suspended membership is denied');
 select extensions.throws_ok($$select public.get_report_period_comparison('b6100000-0000-4000-8000-000000000001',null,null,'2026-08-01','2026-08-31','this_month')$$,'42501',null,'suspended membership cannot read report comparison');

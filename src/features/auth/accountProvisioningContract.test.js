@@ -12,6 +12,7 @@ test('email-or-username login remains one Supabase password authority with gener
   assert.match(login, /Email or username/)
   assert.match(auth, /functions\.invoke\('auth-login'/)
   assert.match(serverLogin, /signInWithPassword/)
+  assert.match(serverLogin, /rpc\('resolve_login_username'/)
   assert.match(serverLogin, /Invalid username\/email or password\./)
   assert.doesNotMatch(serverLogin, /return json\([^\n]+email/)
 })
@@ -27,6 +28,7 @@ test('privileged onboarding stays server-side and is invite-first', () => {
 test('database owns normalized username and many-to-many branch scope', () => {
   assert.match(migration, /username_normalized/)
   assert.match(migration, /profiles_username_normalized_key/)
+  assert.match(migration, /grant execute on function public\.resolve_login_username\(text\) to service_role/)
   assert.match(migration, /account_membership_branches/)
   assert.match(migration, /operational_person_branches/)
   assert.match(migration, /can_access_branch/)

@@ -29,6 +29,12 @@ insert into public.account_memberships(id,account_id,user_id,role,status,accepte
 values('d2000000-0000-4000-8000-000000000001','d1000000-0000-4000-8000-000000000001','d0000000-0000-4000-8000-000000000001','operator','active',now());
 insert into public.branches(id,account_id,code,name)
 values('d3000000-0000-4000-8000-000000000001','d1000000-0000-4000-8000-000000000001','RACE','Race Branch');
+insert into public.account_membership_branches(account_id,membership_id,branch_id)
+values('d1000000-0000-4000-8000-000000000001','d2000000-0000-4000-8000-000000000001','d3000000-0000-4000-8000-000000000001');
+insert into public.operational_people(id,account_id,name,linked_user_id)
+values('d3100000-0000-4000-8000-000000000001','d1000000-0000-4000-8000-000000000001','M24B Race Operator','d0000000-0000-4000-8000-000000000001');
+insert into public.operational_person_branches(account_id,operational_person_id,branch_id)
+values('d1000000-0000-4000-8000-000000000001','d3100000-0000-4000-8000-000000000001','d3000000-0000-4000-8000-000000000001');
 insert into public.machines(id,account_id,branch_id,machine_model_id,machine_code,display_name) values
 ('d4000000-0000-4000-8000-000000000001','d1000000-0000-4000-8000-000000000001','d3000000-0000-4000-8000-000000000001','51000000-0000-0000-0000-000000000001','M24B-RACE-1','Race Machine One'),
 ('d4000000-0000-4000-8000-000000000002','d1000000-0000-4000-8000-000000000001','d3000000-0000-4000-8000-000000000001','51000000-0000-0000-0000-000000000001','M24B-RACE-2','Race Machine Two');

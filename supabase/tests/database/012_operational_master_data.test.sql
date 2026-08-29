@@ -63,7 +63,7 @@ values ('e3100000-0000-0000-0000-000000000001','e3500000-0000-4000-8000-00000000
 
 set local role authenticated;
 select set_config('request.jwt.claim.sub','e3000000-0000-0000-0000-000000000002',true);
-select extensions.lives_ok($$update public.operational_people set notes='Admin managed' where id='e3500000-0000-4000-8000-000000000001'$$,'admin can update operator');
+select extensions.is_empty($$update public.operational_people set notes='Admin managed' where id='e3500000-0000-4000-8000-000000000001' returning id$$,'Admin cannot mutate Owner-governed Operational People');
 select extensions.lives_ok($$update public.manufacturers set notes='Admin managed' where id='e3600000-0000-4000-8000-000000000001'$$,'admin can update workspace manufacturers');
 select extensions.lives_ok($$update public.machine_models set description='Admin managed' where id='e3700000-0000-4000-8000-000000000001'$$,'admin can update workspace machine models');
 select extensions.lives_ok($$insert into public.machines(account_id,branch_id,machine_model_id,machine_code,display_name) values ('e3100000-0000-0000-0000-000000000001','e3300000-0000-0000-0000-000000000001','e3700000-0000-4000-8000-000000000001','M23E-A-02','M2.3E Workspace Model Machine')$$,'admin can create a machine referencing a workspace model');
@@ -75,8 +75,9 @@ select extensions.lives_ok($$select public.record_machine_counter('e3100000-0000
 select extensions.is((select operator_person_id from public.counter_readings where client_request_id='e3800000-0000-4000-8000-000000000001'),'e3500000-0000-4000-8000-000000000001'::uuid,'counter stores the operational person reference');
 select extensions.is((select operator_name_snapshot from public.counter_readings where client_request_id='e3800000-0000-4000-8000-000000000001'),'Press PIC','counter stores operator name snapshot');
 select extensions.is((select created_by from public.counter_readings where client_request_id='e3800000-0000-4000-8000-000000000001'),'e3000000-0000-0000-0000-000000000002'::uuid,'authenticated creator remains separate from operator');
+select set_config('request.jwt.claim.sub','e3000000-0000-0000-0000-000000000001',true);
 select extensions.throws_ok($$delete from public.operational_people where id='e3500000-0000-4000-8000-000000000001'$$,'23503',null,'referenced operator cannot be hard deleted');
-select extensions.lives_ok($$update public.operational_people set name='Renamed PIC',is_active=false where id='e3500000-0000-4000-8000-000000000001'$$,'referenced operator can be archived');
+select extensions.lives_ok($$update public.operational_people set name='Renamed PIC',is_active=false where id='e3500000-0000-4000-8000-000000000001'$$,'Owner can archive a referenced operator');
 select extensions.is((select operator_name_snapshot from public.counter_readings where client_request_id='e3800000-0000-4000-8000-000000000001'),'Press PIC','archive and rename do not change historical snapshot');
 reset role;
 

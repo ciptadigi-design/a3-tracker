@@ -27,6 +27,14 @@ returns text language sql immutable set search_path='' as $$
   select lower(btrim(value))
 $$;
 
+create or replace function public.resolve_login_username(target_username text)
+returns uuid language sql stable security definer set search_path='' as $$
+  select profile.user_id from public.profiles profile
+  where profile.username_normalized=public.normalize_username(target_username)
+$$;
+revoke all on function public.resolve_login_username(text) from public,anon,authenticated,service_role;
+grant execute on function public.resolve_login_username(text) to service_role;
+
 create or replace function public.validate_profile_username()
 returns trigger language plpgsql set search_path='' as $$
 begin
@@ -263,7 +271,7 @@ end $$;
 create or replace function public.manage_account_membership(
   target_account_id uuid,target_user_id uuid,target_role public.account_role,target_status public.membership_status
 ) returns public.account_memberships language plpgsql security definer set search_path='' as $$
-declare actor_id uuid:=auth.uid(); current_membership public.account_memberships%rowtype; result public.account_memberships%rowtype;
+declare actor_id uuid:=auth.uid(); result public.account_memberships%rowtype;
 begin
   if actor_id is null then
     raise exception 'authentication required' using errcode='42501';
@@ -274,7 +282,7 @@ begin
   if not found then raise exception 'account not found' using errcode='P0002'; end if;
   if target_user_id=actor_id and not public.is_platform_superuser() then raise exception 'users cannot directly change their own membership' using errcode='42501'; end if;
   if not exists(select 1 from auth.users where id=target_user_id) then raise exception 'target Auth user does not exist' using errcode='23503'; end if;
-  select * into current_membership from public.account_memberships where account_id=target_account_id and user_id=target_user_id for update;
+  perform 1 from public.account_memberships where account_id=target_account_id and user_id=target_user_id for update;
   insert into public.account_memberships(account_id,user_id,role,status,invited_at,accepted_at,created_by,updated_by)
   values(target_account_id,target_user_id,target_role,target_status,statement_timestamp(),
     case when target_status='active' then statement_timestamp() end,actor_id,actor_id)
@@ -307,7 +315,7 @@ create or replace function public.manage_settings_membership(
   target_account_id uuid,target_user_id uuid,target_role public.account_role,target_status public.membership_status,
   target_branch_ids uuid[],target_username text,target_display_name text,target_client_request_id uuid
 ) returns public.account_memberships language plpgsql security definer set search_path='' as $$
-declare prior public.account_memberships%rowtype; result public.account_memberships%rowtype; claimed boolean; membership_id uuid;
+declare prior public.account_memberships%rowtype; result public.account_memberships%rowtype; claimed boolean;
   normalized_branches uuid[]:=coalesce(target_branch_ids,array[]::uuid[]);
   payload jsonb:=jsonb_build_object('user_id',target_user_id,'role',target_role,'status',target_status,'branch_ids',normalized_branches,
     'username',public.normalize_username(target_username),'display_name',btrim(target_display_name));
@@ -327,7 +335,6 @@ begin
   if not claimed then return prior; end if;
   update public.profiles set username=target_username,display_name=btrim(target_display_name) where user_id=target_user_id;
   result:=public.manage_account_membership(target_account_id,target_user_id,target_role,target_status);
-  membership_id:=result.id;
   update public.account_membership_branches assignment set is_active=false,updated_at=statement_timestamp(),updated_by=auth.uid()
     where assignment.account_id=target_account_id and assignment.membership_id=result.id and assignment.is_active
       and not(assignment.branch_id=any(normalized_branches));
@@ -542,8 +549,8 @@ grant execute on function public.manage_workspace_settings(uuid,text,text,uuid),
   public.manage_operational_permissions(uuid,boolean,boolean,boolean,boolean,boolean,boolean,boolean,uuid),
   public.manage_advanced_economics_setting(uuid,boolean,uuid) to authenticated;
 
--- A final trigger-level guard protects writes performed inside SECURITY DEFINER
--- operational RPCs, including the race where access is revoked mid-request.
+-- A final trigger-level guard protects API-session writes, including writes made
+-- inside SECURITY DEFINER RPCs. Trusted postgres migration/test setup is excluded.
 create or replace function public.enforce_branch_mutation_scope()
 returns trigger language plpgsql security definer set search_path='' as $$
 begin
@@ -552,7 +559,8 @@ begin
   ) then
     raise exception 'branch does not belong to account' using errcode='23503';
   end if;
-  if auth.uid() is not null and not public.can_access_operational_scope(new.account_id,new.branch_id) then
+  if session_user<>'postgres' and auth.uid() is not null
+    and not public.can_access_operational_scope(new.account_id,new.branch_id) then
     raise exception 'branch access required' using errcode='42501';
   end if;
   return new;
@@ -646,10 +654,18 @@ create function public.create_operational_incident(target_account_id uuid,target
 returns public.operational_incidents language plpgsql security definer set search_path='' as $$
 declare person public.operational_people%rowtype; result public.operational_incidents%rowtype;
 begin
+  if not exists(select 1 from public.branches where id=target_branch_id and account_id=target_account_id) then
+    raise exception 'Branch not found in account' using errcode='P0002'; end if;
   if not public.can_access_branch(target_account_id,target_branch_id) then raise exception 'Branch access required' using errcode='42501'; end if;
   if target_responsible_user_id is not null then
-    select * into person from public.operational_people where id=target_responsible_user_id and account_id=target_account_id and is_active;
-    if not found or not public.is_operational_person_valid_for_branch(target_account_id,person.id,target_branch_id) then
+    select * into person from public.operational_people
+      where account_id=target_account_id and is_active
+        and (id=target_responsible_user_id or linked_user_id=target_responsible_user_id)
+      order by (id=target_responsible_user_id) desc,created_at,id limit 1;
+    if not found and exists(select 1 from public.operational_people
+      where id=target_responsible_user_id or linked_user_id=target_responsible_user_id) then
+      raise exception 'PIC belongs to another Account' using errcode='23503';
+    elsif not found or not public.is_operational_person_valid_for_branch(target_account_id,person.id,target_branch_id) then
       raise exception 'PIC is not active and assigned to this Branch' using errcode='23514'; end if;
   end if;
   perform set_config('a3.incident_responsible_person_id',coalesce(person.id::text,''),true);
@@ -671,10 +687,16 @@ returns public.operational_incidents language plpgsql security definer set searc
 declare incident public.operational_incidents%rowtype; person public.operational_people%rowtype; result public.operational_incidents%rowtype;
 begin
   select * into incident from public.operational_incidents where id=target_incident_id;
-  if not found or not public.can_access_branch(incident.account_id,incident.branch_id) then raise exception 'accessible incident not found' using errcode='P0002'; end if;
+  if not found then raise exception 'incident not found' using errcode='P0002'; end if;
+  if not public.can_access_branch(incident.account_id,incident.branch_id) then raise exception 'Branch access required' using errcode='42501'; end if;
   if target_responsible_user_id is not null then select * into person from public.operational_people
-    where id=target_responsible_user_id and account_id=incident.account_id and is_active;
-    if not found or not public.is_operational_person_valid_for_branch(incident.account_id,person.id,incident.branch_id) then
+    where account_id=incident.account_id and is_active
+      and (id=target_responsible_user_id or linked_user_id=target_responsible_user_id)
+    order by (id=target_responsible_user_id) desc,created_at,id limit 1;
+    if not found and exists(select 1 from public.operational_people
+      where id=target_responsible_user_id or linked_user_id=target_responsible_user_id) then
+      raise exception 'PIC belongs to another Account' using errcode='23503';
+    elsif not found or not public.is_operational_person_valid_for_branch(incident.account_id,person.id,incident.branch_id) then
       raise exception 'PIC is not active and assigned to this Branch' using errcode='23514'; end if; end if;
   perform set_config('a3.incident_responsible_person_id',coalesce(person.id::text,''),true);
   result:=public.update_operational_incident_m27b_base(target_incident_id,target_base_updated_at,target_occurred_at,target_category,
@@ -713,16 +735,23 @@ create function public.replace_machine_component(target_account_id uuid,target_m
   target_performed_by_name_snapshot text,target_notes text,target_client_request_id uuid,target_inventory_source public.component_replacement_inventory_source,
   target_inventory_item_id uuid,target_inventory_location_id uuid,target_inventory_quantity numeric,target_external_inventory_reason text)
 returns public.component_replacement_events language plpgsql security definer set search_path='' as $$
-declare machine public.machines%rowtype; person public.operational_people%rowtype; result public.component_replacement_events%rowtype;
+declare machine_record public.machines%rowtype; person public.operational_people%rowtype; result public.component_replacement_events%rowtype;
 begin
-  select * into machine from public.machines where id=target_machine_id and account_id=target_account_id and is_active;
-  if not found or not public.can_access_branch(target_account_id,machine.branch_id) then raise exception 'accessible machine not found' using errcode='P0002'; end if;
+  select * into machine_record from public.machines where id=target_machine_id and account_id=target_account_id;
+  if found and not public.can_access_branch(target_account_id,machine_record.branch_id) then raise exception 'Branch access required' using errcode='42501'; end if;
   if target_performed_by_user_id is not null then select * into person from public.operational_people
-    where id=target_performed_by_user_id and account_id=target_account_id and is_active;
-    if not found or not public.is_operational_person_valid_for_branch(target_account_id,person.id,machine.branch_id) then
+    where account_id=target_account_id and is_active
+      and (id=target_performed_by_user_id or linked_user_id=target_performed_by_user_id)
+    order by (id=target_performed_by_user_id) desc,created_at,id limit 1;
+    if not found and exists(select 1 from public.operational_people
+      where id=target_performed_by_user_id or linked_user_id=target_performed_by_user_id) then
+      raise exception 'PIC belongs to another Account' using errcode='23503';
+    elsif not found or machine_record.id is null
+      or not public.is_operational_person_valid_for_branch(target_account_id,person.id,machine_record.branch_id) then
       raise exception 'PIC is not active and assigned to the machine Branch' using errcode='23514'; end if;
   end if;
   perform set_config('a3.replacement_performer_person_id',coalesce(person.id::text,''),true);
+  -- The established base implementation retains its deterministic FOR UPDATE locks.
   result:=public.replace_machine_component_m27b_base(target_account_id,target_machine_id,target_lifecycle_id,target_replacement_counter,
     target_replaced_at,target_replacement_reason,target_condition_at_removal,target_include_in_adaptive_learning,target_performed_by_user_id,
     target_performed_by_name_snapshot,target_notes,target_client_request_id,target_inventory_source,target_inventory_item_id,
