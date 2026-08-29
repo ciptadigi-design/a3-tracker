@@ -59,6 +59,35 @@ export function classifyCounterDate(row) {
   }
 }
 
+const counterOrder = (left, right) => String(left.date_for).localeCompare(String(right.date_for))
+  || Number(left.total_clicks) - Number(right.total_clicks)
+  || String(left.date_str).localeCompare(String(right.date_str))
+  || String(left.created_at).localeCompare(String(right.created_at))
+  || String(left.id).localeCompare(String(right.id))
+
+export function assignCounterMigrationTimestamps(rows) {
+  let previous = null
+  return [...rows].sort(counterOrder).map((row) => {
+    const dateOnly = String(row.date_for) !== String(row.date_str).slice(0, 10)
+    const localTime = String(row.date_str).slice(11, 19)
+    let timestamp = Date.parse(`${dateOnly ? row.date_for : String(row.date_str).slice(0, 10)}T${localTime}+07:00`)
+    if (!Number.isFinite(timestamp)) throw new Error(`Invalid counter timestamp for ${row.id}`)
+    if (previous !== null && timestamp <= previous) {
+      if (!dateOnly) throw new Error(`Source-recorded counter chronology conflicts at ${row.id}`)
+      timestamp = previous + 1
+    }
+    if (new Date(timestamp + 7 * 60 * 60_000).toISOString().slice(0, 10) !== row.date_for) {
+      throw new Error(`Synthetic counter timestamp escaped operational date for ${row.id}`)
+    }
+    previous = timestamp
+    return {
+      ...row,
+      migration_timestamp: new Date(timestamp).toISOString(),
+      timestamp_evidence: dateOnly ? 'MIGRATION_SYNTHETIC_TIME' : 'SOURCE_RECORDED_LOCAL_TIME',
+    }
+  })
+}
+
 export function classifyCounterCollision(row, targetRows = []) {
   const sameValue = targetRows.filter((target) => Number(target.reading_value) === Number(row.total_clicks))
   if (!sameValue.length) return { collision: 'DISTINCT_EVENT', disposition: 'IMPORT' }
@@ -73,6 +102,30 @@ export function assertDispositionTotal(rows, expected) {
   if (rows.some((row) => !dispositions.includes(row.disposition))) throw new Error('Unknown source-row disposition')
   if (rows.length !== expected) throw new Error(`Disposition total ${rows.length} does not equal expected ${expected}`)
   return true
+}
+
+export function buildEligibilitySet(rows) {
+  const mapping = {
+    IMPORT: 'APPLY_ELIGIBLE', MERGE: 'MERGE_ELIGIBLE', SKIP_DUPLICATE: 'SKIP_DUPLICATE',
+    SKIP_DERIVED: 'SKIP_DERIVED', ARCHIVE_ONLY: 'ARCHIVE_ONLY', MANUAL_REVIEW: 'EXCLUDED_MANUAL',
+  }
+  const eligible = rows.map((row) => ({ ...row, eligibility: mapping[row.disposition] }))
+  if (eligible.some((row) => !row.eligibility)) throw new Error('Disposition has no M2.10A eligibility mapping')
+  return eligible
+}
+
+export function planLegacyPurchase(row) {
+  return {
+    purchase: { status: 'draft', notes: `LEGACY_IMPORT; RECEIPT_UNKNOWN_NOT_REPRESENTED; source_id=${row.id}` },
+    purchase_line: { inventory_item_component_id: null }, receipts: [], inventory_movements: [], fifo_lots: [],
+  }
+}
+
+export function transformLegacyLoss({ material_loss, service_loss, stored_total }) {
+  const base = Number(material_loss) + Number(service_loss)
+  if (!(base > 0)) return { material_loss, service_loss, penalty_multiplier: 1, reconciled_total: base }
+  const multiplier = Number(stored_total) / base
+  return { material_loss, service_loss, penalty_multiplier: multiplier, reconciled_total: base * multiplier }
 }
 
 function genericProfile(rows) {

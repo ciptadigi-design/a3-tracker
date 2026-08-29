@@ -8,6 +8,8 @@ Assessment mode: **read-only**
 
 > **M2.9B supersession (2026-08-29):** The user approved Account = Cipta Grafika, Branch = Tuparev, and physical Machine = existing `CG-TUP-A3-01` (Konica Minolta bizhub PRESS C1070/1070P). All assessed legacy operational evidence belongs to Tuparev; Graha receives zero legacy operational data. These identity blockers are closed. See `M2_9B_MIGRATION_DECISION_CLOSURE.md` for the current gate and machine-readable IDs.
 
+> **M2.9C gate supersession (2026-08-29):** The original M2.9 `BLOCKED` conclusion below is retained as historical assessment context. M2.9C separates disposable-engine transformation gates from hosted-staging and Production gates. The current contract has zero M2.10A transformation blockers, explicitly excludes 29 unresolved rows, and reconciles all 526 rows. See `M2_9C_M2_10A_CONTRACT.md` and `migration/M2_9C_APPROVAL_GATES.md`.
+
 ## 1. Decision summary
 
 M2.10 is **BLOCKED**, not because the observable legacy rows are unusable, but because two acceptance-critical facts are not yet provable:

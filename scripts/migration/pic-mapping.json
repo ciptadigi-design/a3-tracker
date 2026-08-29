@@ -24,7 +24,7 @@
     { "legacy_value": "Lydia", "normalized_value": "lydia", "candidate_target_person": "Lydia", "confidence": "MEDIUM", "treatment": "CREATE_PERSON" },
     { "legacy_value": "Marsya", "normalized_value": "marsya", "candidate_target_person": "Marsya", "confidence": "MEDIUM", "treatment": "CREATE_PERSON" },
     { "legacy_value": "Nabilah", "normalized_value": "nabilah", "candidate_target_person": "Nabilah", "confidence": "MEDIUM", "treatment": "CREATE_PERSON" },
-    { "legacy_value": "oan", "normalized_value": "oan", "candidate_target_person": "Akmal Fauzan", "target_person_id": "c89d9c9c-b892-4794-b69c-f2680908a068", "confidence": "LOW", "treatment": "MANUAL_REVIEW" },
+    { "legacy_value": "oan", "normalized_value": "oan", "candidate_target_person": "Akmal Fauzan", "target_person_id": "c89d9c9c-b892-4794-b69c-f2680908a068", "confidence": "MEDIUM", "treatment": "MAP_EXISTING", "evidence": "Single replacement actor; one-character truncation of Ojan, which is explicitly self-identified as Akmal elsewhere." },
     { "legacy_value": "OJAN / Ojan / ojAN / ojan / ojan ", "normalized_value": "ojan", "candidate_target_person": "Akmal Fauzan", "target_person_id": "c89d9c9c-b892-4794-b69c-f2680908a068", "confidence": "HIGH", "treatment": "MAP_EXISTING" },
     { "legacy_value": "ojan adalah akmal", "normalized_value": "ojan adalah akmal", "candidate_target_person": "Akmal Fauzan", "target_person_id": "c89d9c9c-b892-4794-b69c-f2680908a068", "confidence": "HIGH", "treatment": "MAP_EXISTING" },
     { "legacy_value": "ojan kun", "normalized_value": "ojan kun", "candidate_target_person": "Akmal Fauzan", "target_person_id": "c89d9c9c-b892-4794-b69c-f2680908a068", "confidence": "MEDIUM", "treatment": "MAP_EXISTING" },

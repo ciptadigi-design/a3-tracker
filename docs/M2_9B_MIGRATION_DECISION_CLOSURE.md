@@ -4,6 +4,8 @@ Date: 2026-08-29 (Asia/Jakarta)<br>
 Accepted baseline: `8773d6e7b0514aed6a97cff32d53318d35691324`<br>
 Mode: read-only source/target audit; **M2.10 was not executed**
 
+> **M2.9C supersession:** `M2_9C_APPROVAL_GATES.md` separates disposable dry-run eligibility from hosted and production gates. The M2.9B BLOCKED result applies to an unqualified migration apply, not to the bounded M2.10A disposable-engine milestone.
+
 ## Gate
 
 **M2.10 BLOCKED.** Identity is fully locked and the 526-row register is complete, but 30 operational rows still require explicit decisions/physical evidence. Full legacy owner/admin catalog access is unavailable and is a separate bounded administrative limitation.

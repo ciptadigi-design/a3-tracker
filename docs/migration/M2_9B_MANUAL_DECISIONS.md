@@ -1,5 +1,7 @@
 # M2.9B Manual Decisions
 
+> Superseded for gate classification by `M2_9C_APPROVAL_GATES.md`. Original IDs are retained there without reopening approved identity decisions.
+
 | Decision ID | Domain / affected rows | Evidence and recommendation | Alternative / risk | Approver | Status |
 |---|---|---|---|---|---|
 | MIG-ADMIN-001 | Complete legacy catalog/Auth/private Storage | LEGACY absent from authorized CLI org; accept bounded limitation only after confirming five UI tables are authoritative | Obtain owner/admin read access; risk is hidden business data | Owner | PENDING |

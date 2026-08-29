@@ -1,0 +1,18 @@
+{
+  "version": "m2.9c-v1",
+  "categories": ["M2_10A_TRANSFORMATION_BLOCKER", "M2_10A_EXCLUDABLE_MANUAL_ROW", "HOSTED_STAGING_APPLY_GATE", "PRODUCTION_CUTOVER_GATE", "ADMINISTRATIVE_RISK_ACCEPTANCE"],
+  "decisions": [
+    { "id": "MIG-ADMIN-001", "category": "ADMINISTRATIVE_RISK_ACCEPTANCE", "affected_row_count": 0, "blocks_m2_10a": false, "blocks_hosted_staging": true, "blocks_production": true, "status": "PENDING_USER_ACCEPTANCE" },
+    { "id": "MIG-COUNTER-001", "category": "M2_10A_EXCLUDABLE_MANUAL_ROW", "affected_row_count": 2, "blocks_m2_10a": false, "blocks_hosted_staging": true, "blocks_production": true, "status": "PENDING" },
+    { "id": "MIG-PIC-001", "category": "HOSTED_STAGING_APPLY_GATE", "affected_row_count": 2, "blocks_m2_10a": false, "blocks_hosted_staging": true, "blocks_production": true, "status": "PARTIAL" },
+    { "id": "MIG-PIC-002", "category": "HOSTED_STAGING_APPLY_GATE", "affected_row_count": 18, "blocks_m2_10a": false, "blocks_hosted_staging": true, "blocks_production": true, "status": "PENDING" },
+    { "id": "MIG-COMPONENT-001", "category": "M2_10A_EXCLUDABLE_MANUAL_ROW", "affected_row_count": 2, "blocks_m2_10a": false, "blocks_hosted_staging": true, "blocks_production": true, "status": "PENDING" },
+    { "id": "MIG-COMPONENT-002", "category": "M2_10A_EXCLUDABLE_MANUAL_ROW", "affected_row_count": 2, "blocks_m2_10a": false, "blocks_hosted_staging": true, "blocks_production": true, "status": "PENDING" },
+    { "id": "MIG-COMPONENT-003", "category": "M2_10A_EXCLUDABLE_MANUAL_ROW", "affected_row_count": 1, "blocks_m2_10a": false, "blocks_hosted_staging": true, "blocks_production": true, "status": "PENDING" },
+    { "id": "MIG-COMPONENT-004", "category": "M2_10A_EXCLUDABLE_MANUAL_ROW", "affected_row_count": 2, "blocks_m2_10a": false, "blocks_hosted_staging": true, "blocks_production": true, "status": "PARTIAL_RESOLVED" },
+    { "id": "MIG-LIFECYCLE-001", "category": "M2_10A_EXCLUDABLE_MANUAL_ROW", "affected_row_count": 18, "blocks_m2_10a": false, "blocks_hosted_staging": false, "blocks_production": false, "status": "RESOLVED_BY_POLICY" },
+    { "id": "MIG-PURCHASE-001", "category": "HOSTED_STAGING_APPLY_GATE", "affected_row_count": 161, "blocks_m2_10a": false, "blocks_hosted_staging": true, "blocks_production": true, "status": "M2_10A_RESOLVED_HOSTED_PENDING" },
+    { "id": "MIG-STOCK-001", "category": "PRODUCTION_CUTOVER_GATE", "affected_row_count": 22, "blocks_m2_10a": false, "blocks_hosted_staging": false, "blocks_production": true, "status": "PENDING_PRODUCTION" },
+    { "id": "MIG-FREEZE-001", "category": "PRODUCTION_CUTOVER_GATE", "affected_row_count": 0, "blocks_m2_10a": false, "blocks_hosted_staging": false, "blocks_production": true, "status": "PENDING_PRODUCTION" }
+  ]
+}

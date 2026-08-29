@@ -1,5 +1,5 @@
 {
-  "mapping_version": "m2.9b-v1",
+  "mapping_version": "m2.9c-v1",
   "source": {
     "platform": "supabase-postgresql",
     "project_ref": "wtslqxjwjqyjgcapfrrz",
@@ -25,7 +25,7 @@
   "policies": {
     "components": { "slot_identity_required": true, "other_part_treatment": "MANUAL_REVIEW_OR_ARCHIVE_TEXT_ONLY", "test_component_forbidden": true },
     "lifecycle": { "unknown_stays_unknown": true, "first_replacement_does_not_prove_predecessor_installation": true, "levels": ["A_VERIFIED_INTERVAL", "B_PARTIAL_BOUNDARY", "C_EVENT_ONLY", "D_UNMAPPABLE"] },
-    "purchases": { "representation": "HISTORICAL_ACQUISITION_EVIDENCE", "create_receipts": false, "create_inventory_movements": false, "create_fifo_lots": false, "historical_status": "draft_with_legacy_historical_note" },
+    "purchases": { "representation": "HISTORICAL_ACQUISITION_EVIDENCE", "component_null_inventory_item_allowed": true, "create_receipts": false, "create_inventory_movements": false, "create_fifo_lots": false, "m2_10a_disposable_status": "draft_with_LEGACY_IMPORT_RECEIPT_UNKNOWN_NOT_REPRESENTED_note", "hosted_apply_gate": "approve draft representation or add separate historical representation in a later narrow schema decision" },
     "opening_stock": { "source": "PHYSICAL_STOCK_OPNAME_AT_CUTOVER", "requires_physical_count_approval": true, "legacy_snapshot_is_approved_opening": false }
   },
   "defaults": {

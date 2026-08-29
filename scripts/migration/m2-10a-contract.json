@@ -1,0 +1,39 @@
+{
+  "milestone": "M2.10A — DISPOSABLE MIGRATION ENGINE & FULL DRY RUN",
+  "default_mode": "dry-run",
+  "writable_target_classes": [
+    "DISPOSABLE_LOCAL_EXACT_SCHEMA"
+  ],
+  "hosted_dev_mutation_paths": [],
+  "production_mutation_paths": [],
+  "required_inputs": [
+    "manifest",
+    "expected_source_fingerprints",
+    "expected_target_fingerprints",
+    "account_id",
+    "branch_id",
+    "machine_id",
+    "execution_id",
+    "manual_exclusion_list"
+  ],
+  "eligibility_counts": {
+    "APPLY_ELIGIBLE": 476,
+    "MERGE_ELIGIBLE": 1,
+    "SKIP_DERIVED": 0,
+    "SKIP_DUPLICATE": 2,
+    "ARCHIVE_ONLY": 18,
+    "EXCLUDED_MANUAL": 29
+  },
+  "total": 526,
+  "unexplained_remainder": 0,
+  "stock_mode": "EXCLUDE_OR_EXPLICIT_FIXTURE_MARKED_NON_PRODUCTION",
+  "archive_evidence": "MIGRATION_MANIFEST_AND_CROSSWALK",
+  "purchase_mode": "DISPOSABLE_DRAFT_WITH_LEGACY_IMPORT_AND_RECEIPT_UNKNOWN_NOT_REPRESENTED_NOTES",
+  "apply_preconditions": [
+    "explicit --apply",
+    "target class is disposable",
+    "source fingerprint match",
+    "target fingerprint match",
+    "Graha denylist intact"
+  ]
+}

@@ -10,7 +10,15 @@
       "legacy_label": "Fuser Unit",
       "target_component_id": null,
       "target_slot_code": null,
-      "treatment": "MANUAL_REVIEW",
+      "source_created_at": "2026-04-02T02:44:05.205666+00:00",
+      "replacement_counter": 1295204,
+      "pic_snapshot": "Angga",
+      "source_cost": null,
+      "candidate_slots": [
+        "FUSER_BELT"
+      ],
+      "confidence": "MEDIUM",
+      "treatment": "EXCLUDE_PENDING_MANUAL_APPROVAL",
       "reason": "Insufficient evidence for a physical component/slot; TEST_COMPONENT is forbidden."
     },
     {
@@ -19,7 +27,18 @@
       "legacy_label": "Charging Corona",
       "target_component_id": null,
       "target_slot_code": null,
-      "treatment": "MANUAL_REVIEW",
+      "source_created_at": "2026-05-26T07:44:37.680888+00:00",
+      "replacement_counter": 1349569,
+      "pic_snapshot": "ojan",
+      "source_cost": null,
+      "candidate_slots": [
+        "CHARGING_CORONA_C",
+        "CHARGING_CORONA_M",
+        "CHARGING_CORONA_Y",
+        "CHARGING_CORONA_K"
+      ],
+      "confidence": "LOW",
+      "treatment": "EXCLUDE_PENDING_MANUAL_APPROVAL",
       "reason": "Insufficient evidence for a physical component/slot; TEST_COMPONENT is forbidden."
     },
     {
@@ -28,7 +47,18 @@
       "legacy_label": "Drum Unit",
       "target_component_id": null,
       "target_slot_code": null,
-      "treatment": "MANUAL_REVIEW",
+      "source_created_at": "2026-06-01T09:07:05.122577+00:00",
+      "replacement_counter": 1353291,
+      "pic_snapshot": "ojan",
+      "source_cost": null,
+      "candidate_slots": [
+        "DRUM_C",
+        "DRUM_M",
+        "DRUM_Y",
+        "DRUM_K"
+      ],
+      "confidence": "LOW",
+      "treatment": "EXCLUDE_PENDING_MANUAL_APPROVAL",
       "reason": "Insufficient evidence for a physical component/slot; TEST_COMPONENT is forbidden."
     },
     {
@@ -37,7 +67,18 @@
       "legacy_label": "Drum Unit",
       "target_component_id": null,
       "target_slot_code": null,
-      "treatment": "MANUAL_REVIEW",
+      "source_created_at": "2026-06-20T06:25:52.177833+00:00",
+      "replacement_counter": 1372545,
+      "pic_snapshot": "Angga",
+      "source_cost": null,
+      "candidate_slots": [
+        "DRUM_C",
+        "DRUM_M",
+        "DRUM_Y",
+        "DRUM_K"
+      ],
+      "confidence": "LOW",
+      "treatment": "EXCLUDE_PENDING_MANUAL_APPROVAL",
       "reason": "Insufficient evidence for a physical component/slot; TEST_COMPONENT is forbidden."
     },
     {
@@ -46,7 +87,18 @@
       "legacy_label": "Charging Corona",
       "target_component_id": null,
       "target_slot_code": null,
-      "treatment": "MANUAL_REVIEW",
+      "source_created_at": "2026-06-24T12:40:56.524579+00:00",
+      "replacement_counter": 1377914,
+      "pic_snapshot": "ojan",
+      "source_cost": null,
+      "candidate_slots": [
+        "CHARGING_CORONA_C",
+        "CHARGING_CORONA_M",
+        "CHARGING_CORONA_Y",
+        "CHARGING_CORONA_K"
+      ],
+      "confidence": "LOW",
+      "treatment": "EXCLUDE_PENDING_MANUAL_APPROVAL",
       "reason": "Insufficient evidence for a physical component/slot; TEST_COMPONENT is forbidden."
     },
     {
@@ -55,6 +107,12 @@
       "legacy_label": "Developing Unit",
       "target_component_id": null,
       "target_slot_code": null,
+      "source_created_at": null,
+      "replacement_counter": null,
+      "pic_snapshot": null,
+      "source_cost": null,
+      "candidate_slots": [],
+      "confidence": "LOW",
       "treatment": "MANUAL_REVIEW",
       "reason": "Insufficient evidence for a physical component/slot; TEST_COMPONENT is forbidden."
     },
@@ -64,6 +122,12 @@
       "legacy_label": "Other Part",
       "target_component_id": null,
       "target_slot_code": null,
+      "source_created_at": null,
+      "replacement_counter": null,
+      "pic_snapshot": null,
+      "source_cost": null,
+      "candidate_slots": [],
+      "confidence": "LOW",
       "treatment": "MANUAL_REVIEW",
       "reason": "Insufficient evidence for a physical component/slot; TEST_COMPONENT is forbidden."
     },
@@ -73,6 +137,17 @@
       "legacy_label": "Charging Corona",
       "target_component_id": null,
       "target_slot_code": null,
+      "source_created_at": null,
+      "replacement_counter": null,
+      "pic_snapshot": null,
+      "source_cost": null,
+      "candidate_slots": [
+        "CHARGING_CORONA_C",
+        "CHARGING_CORONA_M",
+        "CHARGING_CORONA_Y",
+        "CHARGING_CORONA_K"
+      ],
+      "confidence": "LOW",
       "treatment": "MANUAL_REVIEW",
       "reason": "Insufficient evidence for a physical component/slot; TEST_COMPONENT is forbidden."
     },
@@ -82,6 +157,17 @@
       "legacy_label": "Drum Unit",
       "target_component_id": null,
       "target_slot_code": null,
+      "source_created_at": "2026-04-10T06:31:41.758956+00:00",
+      "replacement_counter": null,
+      "pic_snapshot": null,
+      "source_cost": null,
+      "candidate_slots": [
+        "DRUM_C",
+        "DRUM_M",
+        "DRUM_Y",
+        "DRUM_K"
+      ],
+      "confidence": "LOW",
       "treatment": "MAP_LEGACY_NONCANONICAL_INVENTORY_ITEM",
       "reason": "Preserve acquisition without claiming color/physical slot; item has no component_id."
     },
@@ -91,6 +177,17 @@
       "legacy_label": "Drum Unit",
       "target_component_id": null,
       "target_slot_code": null,
+      "source_created_at": "2026-04-10T06:44:25.057207+00:00",
+      "replacement_counter": null,
+      "pic_snapshot": null,
+      "source_cost": null,
+      "candidate_slots": [
+        "DRUM_C",
+        "DRUM_M",
+        "DRUM_Y",
+        "DRUM_K"
+      ],
+      "confidence": "LOW",
       "treatment": "MAP_LEGACY_NONCANONICAL_INVENTORY_ITEM",
       "reason": "Preserve acquisition without claiming color/physical slot; item has no component_id."
     },
@@ -100,6 +197,17 @@
       "legacy_label": "Charging Corona",
       "target_component_id": null,
       "target_slot_code": null,
+      "source_created_at": "2026-04-10T06:45:15.451741+00:00",
+      "replacement_counter": null,
+      "pic_snapshot": null,
+      "source_cost": null,
+      "candidate_slots": [
+        "CHARGING_CORONA_C",
+        "CHARGING_CORONA_M",
+        "CHARGING_CORONA_Y",
+        "CHARGING_CORONA_K"
+      ],
+      "confidence": "LOW",
       "treatment": "MAP_LEGACY_NONCANONICAL_INVENTORY_ITEM",
       "reason": "Preserve acquisition without claiming color/physical slot; item has no component_id."
     },
@@ -109,6 +217,17 @@
       "legacy_label": "Drum Unit",
       "target_component_id": null,
       "target_slot_code": null,
+      "source_created_at": "2026-04-10T06:58:31.582135+00:00",
+      "replacement_counter": null,
+      "pic_snapshot": null,
+      "source_cost": null,
+      "candidate_slots": [
+        "DRUM_C",
+        "DRUM_M",
+        "DRUM_Y",
+        "DRUM_K"
+      ],
+      "confidence": "LOW",
       "treatment": "MAP_LEGACY_NONCANONICAL_INVENTORY_ITEM",
       "reason": "Preserve acquisition without claiming color/physical slot; item has no component_id."
     },
@@ -118,6 +237,17 @@
       "legacy_label": "Charging Corona",
       "target_component_id": null,
       "target_slot_code": null,
+      "source_created_at": "2026-04-10T07:02:10.307717+00:00",
+      "replacement_counter": null,
+      "pic_snapshot": null,
+      "source_cost": null,
+      "candidate_slots": [
+        "CHARGING_CORONA_C",
+        "CHARGING_CORONA_M",
+        "CHARGING_CORONA_Y",
+        "CHARGING_CORONA_K"
+      ],
+      "confidence": "LOW",
       "treatment": "MAP_LEGACY_NONCANONICAL_INVENTORY_ITEM",
       "reason": "Preserve acquisition without claiming color/physical slot; item has no component_id."
     },
@@ -127,6 +257,17 @@
       "legacy_label": "Charging Corona",
       "target_component_id": null,
       "target_slot_code": null,
+      "source_created_at": "2026-04-10T07:06:07.92572+00:00",
+      "replacement_counter": null,
+      "pic_snapshot": null,
+      "source_cost": null,
+      "candidate_slots": [
+        "CHARGING_CORONA_C",
+        "CHARGING_CORONA_M",
+        "CHARGING_CORONA_Y",
+        "CHARGING_CORONA_K"
+      ],
+      "confidence": "LOW",
       "treatment": "MAP_LEGACY_NONCANONICAL_INVENTORY_ITEM",
       "reason": "Preserve acquisition without claiming color/physical slot; item has no component_id."
     },
@@ -136,6 +277,17 @@
       "legacy_label": "Drum Unit",
       "target_component_id": null,
       "target_slot_code": null,
+      "source_created_at": "2026-04-10T07:14:54.226302+00:00",
+      "replacement_counter": null,
+      "pic_snapshot": null,
+      "source_cost": null,
+      "candidate_slots": [
+        "DRUM_C",
+        "DRUM_M",
+        "DRUM_Y",
+        "DRUM_K"
+      ],
+      "confidence": "LOW",
       "treatment": "MAP_LEGACY_NONCANONICAL_INVENTORY_ITEM",
       "reason": "Preserve acquisition without claiming color/physical slot; item has no component_id."
     },
@@ -145,6 +297,17 @@
       "legacy_label": "Charging Corona",
       "target_component_id": null,
       "target_slot_code": null,
+      "source_created_at": "2026-04-10T07:16:09.79344+00:00",
+      "replacement_counter": null,
+      "pic_snapshot": null,
+      "source_cost": null,
+      "candidate_slots": [
+        "CHARGING_CORONA_C",
+        "CHARGING_CORONA_M",
+        "CHARGING_CORONA_Y",
+        "CHARGING_CORONA_K"
+      ],
+      "confidence": "LOW",
       "treatment": "MAP_LEGACY_NONCANONICAL_INVENTORY_ITEM",
       "reason": "Preserve acquisition without claiming color/physical slot; item has no component_id."
     },
@@ -154,6 +317,17 @@
       "legacy_label": "Drum Unit",
       "target_component_id": null,
       "target_slot_code": null,
+      "source_created_at": "2026-04-10T07:20:19.081549+00:00",
+      "replacement_counter": null,
+      "pic_snapshot": null,
+      "source_cost": null,
+      "candidate_slots": [
+        "DRUM_C",
+        "DRUM_M",
+        "DRUM_Y",
+        "DRUM_K"
+      ],
+      "confidence": "LOW",
       "treatment": "MAP_LEGACY_NONCANONICAL_INVENTORY_ITEM",
       "reason": "Preserve acquisition without claiming color/physical slot; item has no component_id."
     },
@@ -163,6 +337,17 @@
       "legacy_label": "Charging Corona",
       "target_component_id": null,
       "target_slot_code": null,
+      "source_created_at": "2026-04-10T07:26:26.183616+00:00",
+      "replacement_counter": null,
+      "pic_snapshot": null,
+      "source_cost": null,
+      "candidate_slots": [
+        "CHARGING_CORONA_C",
+        "CHARGING_CORONA_M",
+        "CHARGING_CORONA_Y",
+        "CHARGING_CORONA_K"
+      ],
+      "confidence": "LOW",
       "treatment": "MAP_LEGACY_NONCANONICAL_INVENTORY_ITEM",
       "reason": "Preserve acquisition without claiming color/physical slot; item has no component_id."
     },
@@ -172,6 +357,17 @@
       "legacy_label": "Drum Unit",
       "target_component_id": null,
       "target_slot_code": null,
+      "source_created_at": "2026-04-10T07:26:48.974095+00:00",
+      "replacement_counter": null,
+      "pic_snapshot": null,
+      "source_cost": null,
+      "candidate_slots": [
+        "DRUM_C",
+        "DRUM_M",
+        "DRUM_Y",
+        "DRUM_K"
+      ],
+      "confidence": "LOW",
       "treatment": "MAP_LEGACY_NONCANONICAL_INVENTORY_ITEM",
       "reason": "Preserve acquisition without claiming color/physical slot; item has no component_id."
     },
@@ -181,6 +377,12 @@
       "legacy_label": "Developing Unit",
       "target_component_id": null,
       "target_slot_code": null,
+      "source_created_at": "2026-04-10T07:27:35.793221+00:00",
+      "replacement_counter": null,
+      "pic_snapshot": null,
+      "source_cost": null,
+      "candidate_slots": [],
+      "confidence": "LOW",
       "treatment": "MAP_LEGACY_NONCANONICAL_INVENTORY_ITEM",
       "reason": "Preserve acquisition without claiming color/physical slot; item has no component_id."
     },
@@ -190,6 +392,17 @@
       "legacy_label": "Drum Unit",
       "target_component_id": null,
       "target_slot_code": null,
+      "source_created_at": "2026-04-10T07:30:22.390593+00:00",
+      "replacement_counter": null,
+      "pic_snapshot": null,
+      "source_cost": null,
+      "candidate_slots": [
+        "DRUM_C",
+        "DRUM_M",
+        "DRUM_Y",
+        "DRUM_K"
+      ],
+      "confidence": "LOW",
       "treatment": "MAP_LEGACY_NONCANONICAL_INVENTORY_ITEM",
       "reason": "Preserve acquisition without claiming color/physical slot; item has no component_id."
     },
@@ -199,6 +412,17 @@
       "legacy_label": "Charging Corona",
       "target_component_id": null,
       "target_slot_code": null,
+      "source_created_at": "2026-04-10T08:20:42.116774+00:00",
+      "replacement_counter": null,
+      "pic_snapshot": null,
+      "source_cost": null,
+      "candidate_slots": [
+        "CHARGING_CORONA_C",
+        "CHARGING_CORONA_M",
+        "CHARGING_CORONA_Y",
+        "CHARGING_CORONA_K"
+      ],
+      "confidence": "LOW",
       "treatment": "MAP_LEGACY_NONCANONICAL_INVENTORY_ITEM",
       "reason": "Preserve acquisition without claiming color/physical slot; item has no component_id."
     },
@@ -208,6 +432,17 @@
       "legacy_label": "Drum Unit",
       "target_component_id": null,
       "target_slot_code": null,
+      "source_created_at": "2026-04-10T08:22:06.53995+00:00",
+      "replacement_counter": null,
+      "pic_snapshot": null,
+      "source_cost": null,
+      "candidate_slots": [
+        "DRUM_C",
+        "DRUM_M",
+        "DRUM_Y",
+        "DRUM_K"
+      ],
+      "confidence": "LOW",
       "treatment": "MAP_LEGACY_NONCANONICAL_INVENTORY_ITEM",
       "reason": "Preserve acquisition without claiming color/physical slot; item has no component_id."
     },
@@ -217,6 +452,17 @@
       "legacy_label": "Drum Unit",
       "target_component_id": null,
       "target_slot_code": null,
+      "source_created_at": "2026-04-10T08:26:09.062036+00:00",
+      "replacement_counter": null,
+      "pic_snapshot": null,
+      "source_cost": null,
+      "candidate_slots": [
+        "DRUM_C",
+        "DRUM_M",
+        "DRUM_Y",
+        "DRUM_K"
+      ],
+      "confidence": "LOW",
       "treatment": "MAP_LEGACY_NONCANONICAL_INVENTORY_ITEM",
       "reason": "Preserve acquisition without claiming color/physical slot; item has no component_id."
     },
@@ -226,6 +472,17 @@
       "legacy_label": "Charging Corona",
       "target_component_id": null,
       "target_slot_code": null,
+      "source_created_at": "2026-04-10T08:26:18.822303+00:00",
+      "replacement_counter": null,
+      "pic_snapshot": null,
+      "source_cost": null,
+      "candidate_slots": [
+        "CHARGING_CORONA_C",
+        "CHARGING_CORONA_M",
+        "CHARGING_CORONA_Y",
+        "CHARGING_CORONA_K"
+      ],
+      "confidence": "LOW",
       "treatment": "MAP_LEGACY_NONCANONICAL_INVENTORY_ITEM",
       "reason": "Preserve acquisition without claiming color/physical slot; item has no component_id."
     },
@@ -235,6 +492,17 @@
       "legacy_label": "Charging Corona",
       "target_component_id": null,
       "target_slot_code": null,
+      "source_created_at": "2026-04-10T08:30:08.946399+00:00",
+      "replacement_counter": null,
+      "pic_snapshot": null,
+      "source_cost": null,
+      "candidate_slots": [
+        "CHARGING_CORONA_C",
+        "CHARGING_CORONA_M",
+        "CHARGING_CORONA_Y",
+        "CHARGING_CORONA_K"
+      ],
+      "confidence": "LOW",
       "treatment": "MAP_LEGACY_NONCANONICAL_INVENTORY_ITEM",
       "reason": "Preserve acquisition without claiming color/physical slot; item has no component_id."
     },
@@ -244,6 +512,17 @@
       "legacy_label": "Drum Unit",
       "target_component_id": null,
       "target_slot_code": null,
+      "source_created_at": "2026-04-10T08:30:16.704151+00:00",
+      "replacement_counter": null,
+      "pic_snapshot": null,
+      "source_cost": null,
+      "candidate_slots": [
+        "DRUM_C",
+        "DRUM_M",
+        "DRUM_Y",
+        "DRUM_K"
+      ],
+      "confidence": "LOW",
       "treatment": "MAP_LEGACY_NONCANONICAL_INVENTORY_ITEM",
       "reason": "Preserve acquisition without claiming color/physical slot; item has no component_id."
     },
@@ -253,6 +532,17 @@
       "legacy_label": "Charging Corona",
       "target_component_id": null,
       "target_slot_code": null,
+      "source_created_at": "2026-05-06T03:15:44.825904+00:00",
+      "replacement_counter": null,
+      "pic_snapshot": null,
+      "source_cost": null,
+      "candidate_slots": [
+        "CHARGING_CORONA_C",
+        "CHARGING_CORONA_M",
+        "CHARGING_CORONA_Y",
+        "CHARGING_CORONA_K"
+      ],
+      "confidence": "LOW",
       "treatment": "MAP_LEGACY_NONCANONICAL_INVENTORY_ITEM",
       "reason": "Preserve acquisition without claiming color/physical slot; item has no component_id."
     },
@@ -262,6 +552,12 @@
       "legacy_label": "Developing Unit",
       "target_component_id": null,
       "target_slot_code": null,
+      "source_created_at": "2026-06-06T02:51:29.308197+00:00",
+      "replacement_counter": null,
+      "pic_snapshot": null,
+      "source_cost": null,
+      "candidate_slots": [],
+      "confidence": "LOW",
       "treatment": "MAP_LEGACY_NONCANONICAL_INVENTORY_ITEM",
       "reason": "Preserve acquisition without claiming color/physical slot; item has no component_id."
     },
@@ -271,6 +567,17 @@
       "legacy_label": "Charging Corona",
       "target_component_id": null,
       "target_slot_code": null,
+      "source_created_at": "2026-06-06T02:52:19.368601+00:00",
+      "replacement_counter": null,
+      "pic_snapshot": null,
+      "source_cost": null,
+      "candidate_slots": [
+        "CHARGING_CORONA_C",
+        "CHARGING_CORONA_M",
+        "CHARGING_CORONA_Y",
+        "CHARGING_CORONA_K"
+      ],
+      "confidence": "LOW",
       "treatment": "MAP_LEGACY_NONCANONICAL_INVENTORY_ITEM",
       "reason": "Preserve acquisition without claiming color/physical slot; item has no component_id."
     },
@@ -280,6 +587,17 @@
       "legacy_label": "Drum Unit",
       "target_component_id": null,
       "target_slot_code": null,
+      "source_created_at": "2026-06-22T04:52:24.082254+00:00",
+      "replacement_counter": null,
+      "pic_snapshot": null,
+      "source_cost": null,
+      "candidate_slots": [
+        "DRUM_C",
+        "DRUM_M",
+        "DRUM_Y",
+        "DRUM_K"
+      ],
+      "confidence": "LOW",
       "treatment": "MAP_LEGACY_NONCANONICAL_INVENTORY_ITEM",
       "reason": "Preserve acquisition without claiming color/physical slot; item has no component_id."
     },
@@ -289,8 +607,14 @@
       "legacy_label": "Other Part",
       "target_component_id": null,
       "target_slot_code": null,
-      "treatment": "MANUAL_REVIEW",
-      "reason": "Insufficient evidence for a physical component/slot; TEST_COMPONENT is forbidden."
+      "source_created_at": "2026-08-05T03:17:56.488858+00:00",
+      "replacement_counter": null,
+      "pic_snapshot": null,
+      "source_cost": null,
+      "candidate_slots": [],
+      "confidence": "LOW",
+      "treatment": "MAP_LEGACY_NONCANONICAL_INVENTORY_ITEM",
+      "reason": "Preserve acquisition without claiming color/physical slot; item has no component_id."
     }
   ]
 }

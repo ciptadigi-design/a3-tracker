@@ -1,8 +1,9 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import {
-  analyzeLegacyData, assertDispositionTotal, auditLegacyProject, classifyCounterCollision,
-  classifyCounterDate, deterministicUuidV5, fingerprintRows, normalizeForComparison,
+  analyzeLegacyData, assertDispositionTotal, assignCounterMigrationTimestamps, auditLegacyProject,
+  buildEligibilitySet, classifyCounterCollision, classifyCounterDate, deterministicUuidV5,
+  fingerprintRows, normalizeForComparison, planLegacyPurchase, transformLegacyLoss,
 } from './legacy-audit.mjs'
 
 test('profiles legacy evidence without exposing person/customer values', () => {
@@ -103,4 +104,66 @@ test('generated register accounts for all 526 rows and incident duplicates', asy
   assert.deepEqual(register.rows.filter((row) => row.disposition === 'SKIP_DUPLICATE').map((row) => row.legacy_id).sort(), [
     '3436509c-f729-4f78-b9b7-33d0d41f6837', '76c2f97c-cae5-44a8-ac0c-29af462b5994',
   ])
+})
+
+test('date-only synthetic ordering is deterministic and preserves counter chronology', () => {
+  const rows = [
+    { id: 'b', date_for: '2026-01-01', date_str: '2026-01-02 09:00:00', created_at: '2026-01-02T02:00:00Z', total_clicks: 101 },
+    { id: 'a', date_for: '2026-01-01', date_str: '2026-01-02 08:00:00', created_at: '2026-01-02T01:00:00Z', total_clicks: 100 },
+  ]
+  const first = assignCounterMigrationTimestamps(rows)
+  const second = assignCounterMigrationTimestamps([...rows].reverse())
+  assert.deepEqual(first, second)
+  assert.ok(first[0].migration_timestamp < first[1].migration_timestamp)
+  assert.ok(first.every((row) => row.timestamp_evidence === 'MIGRATION_SYNTHETIC_TIME'))
+})
+
+test('manual exclusions remain visible and eligibility reconciles to 526', async () => {
+  const fs = await import('node:fs/promises')
+  const register = JSON.parse(await fs.readFile(new URL('./source-row-dispositions.json', import.meta.url)))
+  const eligibility = buildEligibilitySet(register.rows)
+  assert.equal(eligibility.length, 526)
+  assert.equal(eligibility.filter((row) => row.eligibility === 'EXCLUDED_MANUAL').length, 29)
+  assert.equal(register.m2_10a_eligible_count, 497)
+  assert.equal(register.unexplained_remainder, 0)
+})
+
+test('purchase plan creates no receipt, stock movement, or FIFO and permits component-null acquisition', () => {
+  const plan = planLegacyPurchase({ id: 301 })
+  assert.equal(plan.purchase.status, 'draft')
+  assert.equal(plan.purchase_line.inventory_item_component_id, null)
+  assert.deepEqual(plan.receipts, [])
+  assert.deepEqual(plan.inventory_movements, [])
+  assert.deepEqual(plan.fifo_lots, [])
+})
+
+test('Other Part and first replacements never fabricate operational structure', async () => {
+  const fs = await import('node:fs/promises')
+  const components = JSON.parse(await fs.readFile(new URL('./component-mapping.json', import.meta.url)))
+  const other = components.rows.filter((row) => row.legacy_label === 'Other Part')
+  assert.ok(other.every((row) => row.target_component_id === null && row.target_slot_code === null))
+  const register = JSON.parse(await fs.readFile(new URL('./source-row-dispositions.json', import.meta.url)))
+  assert.ok(register.rows.filter((row) => row.disposition === 'ARCHIVE_ONLY').every((row) => /does not prove predecessor installation/.test(row.reason)))
+})
+
+test('incident duplicates stay skipped and legacy multiplier is not applied twice', async () => {
+  const fs = await import('node:fs/promises')
+  const register = JSON.parse(await fs.readFile(new URL('./source-row-dispositions.json', import.meta.url)))
+  const skipped = register.rows.filter((row) => row.disposition === 'SKIP_DUPLICATE').map((row) => row.legacy_id).sort()
+  assert.deepEqual(skipped, ['3436509c-f729-4f78-b9b7-33d0d41f6837', '76c2f97c-cae5-44a8-ac0c-29af462b5994'])
+  const loss = transformLegacyLoss({ material_loss: 950, service_loss: 1000, stored_total: 3900 })
+  assert.equal(loss.penalty_multiplier, 2)
+  assert.equal(loss.reconciled_total, 3900)
+})
+
+test('production-only gates do not block M2.10A and contract has zero hosted mutation paths', async () => {
+  const fs = await import('node:fs/promises')
+  const gates = JSON.parse(await fs.readFile(new URL('./approval-gates.json', import.meta.url)))
+  assert.equal(gates.decisions.length, 12)
+  assert.ok(gates.decisions.every((decision) => decision.blocks_m2_10a === false))
+  assert.ok(gates.decisions.filter((decision) => decision.category === 'PRODUCTION_CUTOVER_GATE').every((decision) => decision.blocks_production))
+  const contract = JSON.parse(await fs.readFile(new URL('./m2-10a-contract.json', import.meta.url)))
+  assert.deepEqual(contract.hosted_dev_mutation_paths, [])
+  assert.deepEqual(contract.production_mutation_paths, [])
+  assert.deepEqual(contract.writable_target_classes, ['DISPOSABLE_LOCAL_EXACT_SCHEMA'])
 })
