@@ -53,6 +53,7 @@ select extensions.ok((public.manage_settings_branch('a7100000-0000-4000-8000-000
 select extensions.is((public.manage_settings_membership('a7100000-0000-4000-8000-000000000001','a7000000-0000-4000-8000-000000000003','technician','active','a7300000-0000-4000-8000-000000000007')).role::text,'technician','Owner changes a non-owner role');
 select extensions.is((public.manage_settings_membership('a7100000-0000-4000-8000-000000000001','a7000000-0000-4000-8000-000000000003','technician','suspended','a7300000-0000-4000-8000-000000000008')).status::text,'suspended','Owner suspends a member without deleting membership');
 select extensions.is((public.manage_settings_membership('a7100000-0000-4000-8000-000000000001','a7000000-0000-4000-8000-000000000003','technician','active','a7300000-0000-4000-8000-000000000009')).status::text,'active','Owner reactivates a member');
+select extensions.is((public.manage_settings_membership('a7100000-0000-4000-8000-000000000001','a7000000-0000-4000-8000-000000000003','operator','active','a7300000-0000-4000-8000-000000000014')).role::text,'operator','Owner restores the Operator fixture role');
 
 select extensions.is((public.manage_operational_permissions('a7100000-0000-4000-8000-000000000001',true,false,true,true,true,true,false,'a7300000-0000-4000-8000-000000000010')).operator_can_create_purchase,true,'Owner updates all operational flags atomically');
 

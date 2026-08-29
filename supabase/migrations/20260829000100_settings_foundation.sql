@@ -1,7 +1,7 @@
 -- M2.7A Settings foundation: workspace administration and operational policy.
 
 create table public.account_operational_permissions (
-  account_id uuid primary key references public.accounts(id) on delete restrict,
+  account_id uuid primary key references public.accounts(id) on delete cascade,
   operator_can_initialize_component boolean not null default false,
   operator_can_replace_component boolean not null default true,
   operator_can_create_purchase boolean not null default false,
@@ -277,19 +277,65 @@ end $$;
 revoke all on function public.set_operational_override(uuid,text) from public,anon,authenticated,service_role;
 
 create function public.initialize_machine_component_lifecycle(target_account_id uuid,target_machine_id uuid,target_model_component_profile_id uuid,target_installed_counter numeric default null,target_installed_at timestamptz default null,target_client_request_id uuid default null,target_notes text default null)
-returns public.machine_component_lifecycles language plpgsql security definer set search_path='' as $$ begin perform public.set_operational_override(target_account_id,'initialize_component'); return public.initialize_machine_component_lifecycle_m27a_base(target_account_id,target_machine_id,target_model_component_profile_id,target_installed_counter,target_installed_at,target_client_request_id,target_notes); end $$;
+returns public.machine_component_lifecycles language plpgsql security definer set search_path='' as $$
+declare result public.machine_component_lifecycles%rowtype;
+begin
+  perform public.set_operational_override(target_account_id,'initialize_component');
+  result:=public.initialize_machine_component_lifecycle_m27a_base(target_account_id,target_machine_id,target_model_component_profile_id,target_installed_counter,target_installed_at,target_client_request_id,target_notes);
+  perform set_config('a3.operational_capability_override','',true); return result;
+end $$;
 create function public.replace_machine_component(target_account_id uuid,target_machine_id uuid,target_lifecycle_id uuid,target_replacement_counter numeric,target_replaced_at timestamptz,target_replacement_reason public.component_replacement_reason,target_condition_at_removal public.component_removal_condition,target_include_in_adaptive_learning boolean,target_performed_by_user_id uuid,target_performed_by_name_snapshot text,target_notes text,target_client_request_id uuid,target_inventory_source public.component_replacement_inventory_source,target_inventory_item_id uuid,target_inventory_location_id uuid,target_inventory_quantity numeric,target_external_inventory_reason text)
-returns public.component_replacement_events language plpgsql security definer set search_path='' as $$ begin perform public.set_operational_override(target_account_id,'replace_component'); return public.replace_machine_component_m27a_base(target_account_id,target_machine_id,target_lifecycle_id,target_replacement_counter,target_replaced_at,target_replacement_reason,target_condition_at_removal,target_include_in_adaptive_learning,target_performed_by_user_id,target_performed_by_name_snapshot,target_notes,target_client_request_id,target_inventory_source,target_inventory_item_id,target_inventory_location_id,target_inventory_quantity,target_external_inventory_reason); end $$;
+returns public.component_replacement_events language plpgsql security definer set search_path='' as $$
+declare result public.component_replacement_events%rowtype;
+begin
+  -- The base implementation retains every for update lock.
+  perform public.set_operational_override(target_account_id,'replace_component');
+  result:=public.replace_machine_component_m27a_base(target_account_id,target_machine_id,target_lifecycle_id,target_replacement_counter,target_replaced_at,target_replacement_reason,target_condition_at_removal,target_include_in_adaptive_learning,target_performed_by_user_id,target_performed_by_name_snapshot,target_notes,target_client_request_id,target_inventory_source,target_inventory_item_id,target_inventory_location_id,target_inventory_quantity,target_external_inventory_reason);
+  perform set_config('a3.operational_capability_override','',true); return result;
+end $$;
 create function public.create_operational_incident(target_account_id uuid,target_branch_id uuid,target_occurred_at timestamptz,target_category public.operational_incident_category,target_incident_type public.operational_incident_type,target_description text,target_client_request_id uuid,target_machine_id uuid default null,target_invoice_number text default null,target_customer_name text default null,target_product_name text default null,target_qty_affected integer default null,target_responsible_user_id uuid default null,target_responsible_name text default null,target_material_loss numeric default 0,target_service_loss numeric default 0,target_cause text default null,target_prevention text default null,target_customer_resolution text default null)
-returns public.operational_incidents language plpgsql security definer set search_path='' as $$ begin perform public.set_operational_override(target_account_id,'log_errors'); return public.create_operational_incident_m27a_base(target_account_id,target_branch_id,target_occurred_at,target_category,target_incident_type,target_description,target_client_request_id,target_machine_id,target_invoice_number,target_customer_name,target_product_name,target_qty_affected,target_responsible_user_id,target_responsible_name,target_material_loss,target_service_loss,target_cause,target_prevention,target_customer_resolution); end $$;
+returns public.operational_incidents language plpgsql security definer set search_path='' as $$
+declare result public.operational_incidents%rowtype;
+begin
+  perform public.set_operational_override(target_account_id,'log_errors');
+  result:=public.create_operational_incident_m27a_base(target_account_id,target_branch_id,target_occurred_at,target_category,target_incident_type,target_description,target_client_request_id,target_machine_id,target_invoice_number,target_customer_name,target_product_name,target_qty_affected,target_responsible_user_id,target_responsible_name,target_material_loss,target_service_loss,target_cause,target_prevention,target_customer_resolution);
+  perform set_config('a3.operational_capability_override','',true); return result;
+end $$;
 create function public.adjust_inventory_stock_costed(target_account_id uuid,target_inventory_item_id uuid,target_location_id uuid,target_quantity numeric,target_occurred_at timestamptz,target_operational_person_id uuid,target_reason text,target_notes text,target_client_request_id uuid,target_unit_cost numeric default null)
-returns public.inventory_movements language plpgsql security definer set search_path='' as $$ begin perform public.set_operational_override(target_account_id,'adjust_inventory'); return public.adjust_inventory_stock_costed_m27a_base(target_account_id,target_inventory_item_id,target_location_id,target_quantity,target_occurred_at,target_operational_person_id,target_reason,target_notes,target_client_request_id,target_unit_cost); end $$;
+returns public.inventory_movements language plpgsql security definer set search_path='' as $$
+declare result public.inventory_movements%rowtype;
+begin
+  perform public.set_operational_override(target_account_id,'adjust_inventory');
+  result:=public.adjust_inventory_stock_costed_m27a_base(target_account_id,target_inventory_item_id,target_location_id,target_quantity,target_occurred_at,target_operational_person_id,target_reason,target_notes,target_client_request_id,target_unit_cost);
+  perform set_config('a3.operational_capability_override','',true); return result;
+end $$;
 create function public.transfer_inventory_stock(target_account_id uuid,target_inventory_item_id uuid,target_source_location_id uuid,target_destination_location_id uuid,target_quantity numeric,target_occurred_at timestamptz,target_operational_person_id uuid,target_notes text,target_client_request_id uuid)
-returns table(transfer_id uuid,transfer_out_id uuid,transfer_in_id uuid) language plpgsql security definer set search_path='' as $$ begin perform public.set_operational_override(target_account_id,'transfer_inventory'); return query select * from public.transfer_inventory_stock_m27a_base(target_account_id,target_inventory_item_id,target_source_location_id,target_destination_location_id,target_quantity,target_occurred_at,target_operational_person_id,target_notes,target_client_request_id); end $$;
+returns table(transfer_id uuid,transfer_out_id uuid,transfer_in_id uuid) language plpgsql security definer set search_path='' as $$
+begin
+  -- The base implementation retains every for update lock.
+  perform public.set_operational_override(target_account_id,'transfer_inventory');
+  return query select * from public.transfer_inventory_stock_m27a_base(target_account_id,target_inventory_item_id,target_source_location_id,target_destination_location_id,target_quantity,target_occurred_at,target_operational_person_id,target_notes,target_client_request_id);
+  perform set_config('a3.operational_capability_override','',true);
+end $$;
 create function public.create_inventory_purchase_auto(target_account_id uuid,target_supplier_id uuid,target_purchase_date date,target_external_reference text,target_currency_code text,target_notes text,target_lines jsonb,target_client_request_id uuid)
-returns public.inventory_purchases language plpgsql security definer set search_path='' as $$ begin perform public.set_operational_override(target_account_id,'create_purchase'); return public.create_inventory_purchase_auto_m27a_base(target_account_id,target_supplier_id,target_purchase_date,target_external_reference,target_currency_code,target_notes,target_lines,target_client_request_id); end $$;
+returns public.inventory_purchases language plpgsql security definer set search_path='' as $$
+declare result public.inventory_purchases%rowtype;
+begin
+  -- The base implementation retains pg_advisory_xact_lock serialization.
+  perform public.set_operational_override(target_account_id,'create_purchase');
+  result:=public.create_inventory_purchase_auto_m27a_base(target_account_id,target_supplier_id,target_purchase_date,target_external_reference,target_currency_code,target_notes,target_lines,target_client_request_id);
+  perform set_config('a3.operational_capability_override','',true); return result;
+end $$;
 create function public.receive_inventory_purchase(target_account_id uuid,target_purchase_id uuid,target_location_id uuid,target_received_at timestamptz,target_operational_person_id uuid,target_notes text,target_lines jsonb,target_client_request_id uuid)
-returns public.inventory_receipts language plpgsql security definer set search_path='' as $$ begin perform public.set_operational_override(target_account_id,'receive_goods'); return public.receive_inventory_purchase_m27a_base(target_account_id,target_purchase_id,target_location_id,target_received_at,target_operational_person_id,target_notes,target_lines,target_client_request_id); end $$;
+returns public.inventory_receipts language plpgsql security definer set search_path='' as $$
+declare result public.inventory_receipts%rowtype;
+begin
+  -- The base implementation retains every for update lock.
+  perform public.set_operational_override(target_account_id,'receive_goods');
+  result:=public.receive_inventory_purchase_m27a_base(target_account_id,target_purchase_id,target_location_id,target_received_at,target_operational_person_id,target_notes,target_lines,target_client_request_id);
+  perform set_config('a3.operational_capability_override','',true); return result;
+end $$;
 
 revoke all on function public.initialize_machine_component_lifecycle_m27a_base(uuid,uuid,uuid,numeric,timestamptz,uuid,text),public.replace_machine_component_m27a_base(uuid,uuid,uuid,numeric,timestamptz,public.component_replacement_reason,public.component_removal_condition,boolean,uuid,text,text,uuid,public.component_replacement_inventory_source,uuid,uuid,numeric,text),public.create_operational_incident_m27a_base(uuid,uuid,timestamptz,public.operational_incident_category,public.operational_incident_type,text,uuid,uuid,text,text,text,integer,uuid,text,numeric,numeric,text,text,text),public.adjust_inventory_stock_costed_m27a_base(uuid,uuid,uuid,numeric,timestamptz,uuid,text,text,uuid,numeric),public.transfer_inventory_stock_m27a_base(uuid,uuid,uuid,uuid,numeric,timestamptz,uuid,text,uuid),public.create_inventory_purchase_auto_m27a_base(uuid,uuid,date,text,text,text,jsonb,uuid),public.receive_inventory_purchase_m27a_base(uuid,uuid,uuid,timestamptz,uuid,text,jsonb,uuid) from public,anon,authenticated,service_role;
+revoke all on function public.initialize_machine_component_lifecycle(uuid,uuid,uuid,numeric,timestamptz,uuid,text),public.replace_machine_component(uuid,uuid,uuid,numeric,timestamptz,public.component_replacement_reason,public.component_removal_condition,boolean,uuid,text,text,uuid,public.component_replacement_inventory_source,uuid,uuid,numeric,text),public.create_operational_incident(uuid,uuid,timestamptz,public.operational_incident_category,public.operational_incident_type,text,uuid,uuid,text,text,text,integer,uuid,text,numeric,numeric,text,text,text),public.adjust_inventory_stock_costed(uuid,uuid,uuid,numeric,timestamptz,uuid,text,text,uuid,numeric),public.transfer_inventory_stock(uuid,uuid,uuid,uuid,numeric,timestamptz,uuid,text,uuid),public.create_inventory_purchase_auto(uuid,uuid,date,text,text,text,jsonb,uuid),public.receive_inventory_purchase(uuid,uuid,uuid,timestamptz,uuid,text,jsonb,uuid) from public,anon,authenticated,service_role;
 grant execute on function public.initialize_machine_component_lifecycle(uuid,uuid,uuid,numeric,timestamptz,uuid,text),public.replace_machine_component(uuid,uuid,uuid,numeric,timestamptz,public.component_replacement_reason,public.component_removal_condition,boolean,uuid,text,text,uuid,public.component_replacement_inventory_source,uuid,uuid,numeric,text),public.create_operational_incident(uuid,uuid,timestamptz,public.operational_incident_category,public.operational_incident_type,text,uuid,uuid,text,text,text,integer,uuid,text,numeric,numeric,text,text,text),public.adjust_inventory_stock_costed(uuid,uuid,uuid,numeric,timestamptz,uuid,text,text,uuid,numeric),public.transfer_inventory_stock(uuid,uuid,uuid,uuid,numeric,timestamptz,uuid,text,uuid),public.create_inventory_purchase_auto(uuid,uuid,date,text,text,text,jsonb,uuid),public.receive_inventory_purchase(uuid,uuid,uuid,timestamptz,uuid,text,jsonb,uuid) to authenticated,service_role;
