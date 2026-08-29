@@ -388,6 +388,12 @@ verify_jwt = false
 [functions.provision-member]
 verify_jwt = true
 
+[functions.manage-account]
+verify_jwt = true
+
+[functions.bootstrap-platform-superuser]
+verify_jwt = false
+
 # [edge_runtime.secrets]
 # secret_key = "env(SECRET_VALUE)"
 

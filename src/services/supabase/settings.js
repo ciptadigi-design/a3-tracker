@@ -60,11 +60,40 @@ export async function updateMembership({ accountId, member, role, status, branch
 
 export async function provisionMember({ accountId, values }) {
   const { data, error } = await supabase.functions.invoke('provision-member', { body: {
+    action: 'direct_create',
     accountId, displayName: values.displayName.trim(), username: values.username.trim().toLowerCase(),
-    email: values.email.trim().toLowerCase(), role: values.role, branchIds: values.branchIds,
+    email: values.email.trim().toLowerCase(), password: values.password, role: values.role, branchIds: values.branchIds,
     clientRequestId: values.clientRequestId,
   } })
-  if (error) throw new Error(data?.error || 'Member invitation could not be completed.')
+  if (error) throw new Error(data?.error || 'Member account could not be created.')
+  return data
+}
+
+export async function activateMember({ accountId, member, values }) {
+  const { data, error } = await supabase.functions.invoke('provision-member', { body: {
+    action: 'activate', accountId, targetUserId: member.user_id,
+    displayName: values.displayName.trim(), username: values.username.trim().toLowerCase(),
+    email: values.email.trim().toLowerCase(), password: values.password,
+    role: values.role, branchIds: values.branchIds, clientRequestId: values.clientRequestId,
+  } })
+  if (error) throw new Error(data?.error || 'Member account could not be activated.')
+  return data
+}
+
+export async function updateManagedMemberEmail({ accountId, member, email, clientRequestId }) {
+  const { data, error } = await supabase.functions.invoke('provision-member', { body: {
+    action: 'update_email', accountId, targetUserId: member.user_id,
+    email: email.trim().toLowerCase(), clientRequestId,
+  } })
+  if (error) throw new Error(data?.error || 'Member email could not be changed.')
+  return data
+}
+
+export async function resetManagedMemberPassword({ accountId, member, password, clientRequestId }) {
+  const { data, error } = await supabase.functions.invoke('provision-member', { body: {
+    action: 'reset_password', accountId, targetUserId: member.user_id, password, clientRequestId,
+  } })
+  if (error) throw new Error(data?.error || 'Member password could not be reset.')
   return data
 }
 

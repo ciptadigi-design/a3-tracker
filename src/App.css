@@ -31,6 +31,15 @@
   --shadow: 0 24px 60px rgba(34, 51, 84, 0.10), 0 4px 14px rgba(34, 51, 84, 0.04);
 }
 
+.topbar-user-menu { position: relative; }
+.user-summary-button { border: 0; background: transparent; color: inherit; cursor: pointer; text-align: left; }
+.user-menu-popover { position: absolute; right: 0; top: calc(100% + 10px); z-index: 40; min-width: 180px; padding: 8px; border: 1px solid var(--border); box-shadow: var(--shadow); }
+.user-menu-popover button { width: 100%; display: flex; align-items: center; gap: 10px; border: 0; background: transparent; color: inherit; padding: 10px 12px; border-radius: 10px; cursor: pointer; }
+.user-menu-popover button:hover, .user-menu-popover button:focus-visible { background: var(--surface-muted); }
+.my-account-page { max-width: 920px; }
+.password-input-wrap { display: flex; align-items: center; gap: 6px; }
+.password-input-wrap input { flex: 1; min-width: 0; }
+
 :root[data-theme="dark"] {
   --page: #080b11;
   --surface: rgba(24, 29, 39, 0.76);

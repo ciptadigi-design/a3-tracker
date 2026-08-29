@@ -6,6 +6,9 @@ const page = readFileSync(new URL('../../pages/SettingsPage.jsx', import.meta.ur
 const service = readFileSync(new URL('../../services/supabase/settings.js', import.meta.url), 'utf8')
 const sidebar = readFileSync(new URL('../../components/layout/Sidebar.jsx', import.meta.url), 'utf8')
 const app = readFileSync(new URL('../../app/AppShell.jsx', import.meta.url), 'utf8')
+const topbar = readFileSync(new URL('../../components/layout/TopBar.jsx', import.meta.url), 'utf8')
+const accountPage = readFileSync(new URL('../../pages/MyAccountPage.jsx', import.meta.url), 'utf8')
+const accountService = readFileSync(new URL('../../services/supabase/account.js', import.meta.url), 'utf8')
 const css = readFileSync(new URL('../../App.css', import.meta.url), 'utf8')
 
 test('Settings route and seven-section control-plane IA are active', () => {
@@ -17,6 +20,37 @@ test('Settings route and seven-section control-plane IA are active', () => {
   assert.doesNotMatch(sidebar, /membership\?\.role|\['owner'/)
   assert.match(app, /path === '\/settings' && tenant\.isPlatformSuperuser/)
   assert.match(app, /Settings is temporarily available only to Platform Superusers/)
+})
+
+test('Direct Active member UX creates or activates accounts without invite copy', () => {
+  assert.match(page, /Direct Active onboarding/)
+  assert.match(page, /Create account/)
+  assert.match(page, /Activate account/)
+  assert.match(page, /Initial password/)
+  assert.match(page, /Member account created and activated/)
+  assert.match(service, /action: 'direct_create'/)
+  assert.match(service, /action: 'activate'/)
+  assert.doesNotMatch(page, /Invite-first onboarding|Send invitation|invitation sent/i)
+})
+
+test('managed email and password actions stay explicit and separate', () => {
+  assert.match(page, /Change email/)
+  assert.match(page, /Reset password/)
+  assert.match(service, /action: 'update_email'/)
+  assert.match(service, /action: 'reset_password'/)
+  assert.match(page, /Existing credentials were not revealed/)
+})
+
+test('My Account is available from the user menu without weakening Settings', () => {
+  assert.match(topbar, /My Account/)
+  assert.match(app, /path === '\/my-account'/)
+  assert.match(accountPage, /Display name & username/)
+  assert.match(accountPage, /Current password/)
+  assert.match(accountPage, /Change email/)
+  assert.match(accountPage, /Change password/)
+  assert.match(accountService, /functions\.invoke\('manage-account'/)
+  assert.match(accountService, /auth\.refreshSession/)
+  assert.match(page, /const canManage = isPlatformSuperuser/)
 })
 
 test('Workspace and branch forms preserve drafts, timezone inheritance, and compact mobile actions', () => {
