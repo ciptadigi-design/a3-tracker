@@ -2,9 +2,9 @@ begin;
 create extension if not exists pgtap with schema extensions;
 select extensions.no_plan();
 
-select extensions.ok((select prosecdef and proconfig @> array['search_path=""']::text[] from pg_proc where oid='public.create_inventory_purchase_auto(uuid,uuid,date,text,text,text,jsonb,uuid)'::regprocedure),'auto purchase RPC is SECURITY DEFINER with empty search path');
+select extensions.ok((select prosecdef and proconfig @> array['search_path=""']::text[] from pg_proc where oid='public.create_inventory_purchase_auto(uuid,uuid,uuid,date,text,text,text,jsonb,uuid)'::regprocedure),'Branch-scoped auto purchase RPC is SECURITY DEFINER with empty search path');
 select extensions.ok((select prosecdef and proconfig @> array['search_path=""']::text[] from pg_proc where oid='public.allocate_inventory_cost_fifo(uuid)'::regprocedure),'FIFO allocator is SECURITY DEFINER with empty search path');
-select extensions.ok(not has_function_privilege('anon','public.create_inventory_purchase_auto(uuid,uuid,date,text,text,text,jsonb,uuid)','EXECUTE'),'anonymous cannot create an auto-numbered purchase');
+select extensions.ok(not has_function_privilege('anon','public.create_inventory_purchase_auto(uuid,uuid,uuid,date,text,text,text,jsonb,uuid)','EXECUTE'),'anonymous cannot create an auto-numbered purchase');
 select extensions.ok(not has_table_privilege('authenticated','public.inventory_cost_allocations','INSERT') and not has_table_privilege('authenticated','public.inventory_cost_allocations','UPDATE') and not has_table_privilege('authenticated','public.inventory_cost_allocations','DELETE'),'authenticated clients cannot mutate allocation facts directly');
 select extensions.is((select count(*)::int from pg_catalog.pg_class c cross join lateral pg_catalog.aclexplode(coalesce(c.relacl,pg_catalog.acldefault('r',c.relowner))) a where c.oid=any(array['public.inventory_cost_lots'::regclass,'public.inventory_cost_allocations'::regclass]) and a.grantee=0),0,'PUBLIC has no cost relation privileges');
 
@@ -48,23 +48,23 @@ set local role authenticated;
 select set_config('request.jwt.claim.sub','f0000000-0000-4000-8000-000000000001',true);
 
 select extensions.lives_ok($$select public.create_inventory_purchase_auto(
-  'f1000000-0000-4000-8000-000000000001','f7000000-0000-4000-8000-000000000001','2026-07-01',null,'IDR',null,
+  'f1000000-0000-4000-8000-000000000001','f3000000-0000-4000-8000-000000000001','f7000000-0000-4000-8000-000000000001','2026-07-01',null,'IDR',null,
   '[{"inventory_item_id":"f6000000-0000-4000-8000-000000000001","quantity":"2","unit_price":"2500000"}]',
   'f8000000-0000-4000-8000-000000000001')$$,'first auto-numbered purchase succeeds for a NULL-SKU FIFO item');
 select extensions.lives_ok($$select public.create_inventory_purchase_auto(
-  'f1000000-0000-4000-8000-000000000001','f7000000-0000-4000-8000-000000000001','2026-07-02','INV-2','IDR',null,
+  'f1000000-0000-4000-8000-000000000001','f3000000-0000-4000-8000-000000000001','f7000000-0000-4000-8000-000000000001','2026-07-02','INV-2','IDR',null,
   '[{"inventory_item_id":"f6000000-0000-4000-8000-000000000001","quantity":"3","unit_price":"2650000"}]',
   'f8000000-0000-4000-8000-000000000002')$$,'second auto-numbered purchase succeeds');
 select extensions.is((select min(purchase_number) from public.inventory_purchases where account_id='f1000000-0000-4000-8000-000000000001'),'PUR-202607-0001','internal purchase number uses account/month sequence');
 select extensions.is((select max(purchase_number) from public.inventory_purchases where account_id='f1000000-0000-4000-8000-000000000001'),'PUR-202607-0002','purchase sequence is unique and monotonic');
 select extensions.is((select supplier_reference from public.inventory_purchases where client_request_id='f8000000-0000-4000-8000-000000000002'),'INV-2','external reference remains optional and independent');
 select extensions.lives_ok($$select public.create_inventory_purchase_auto(
-  'f1000000-0000-4000-8000-000000000001','f7000000-0000-4000-8000-000000000001','2026-07-01',null,'IDR',null,
+  'f1000000-0000-4000-8000-000000000001','f3000000-0000-4000-8000-000000000001','f7000000-0000-4000-8000-000000000001','2026-07-01',null,'IDR',null,
   '[{"inventory_item_id":"f6000000-0000-4000-8000-000000000001","quantity":"2","unit_price":"2500000"}]',
   'f8000000-0000-4000-8000-000000000001')$$,'auto purchase retry is idempotent');
 select extensions.is((select count(*)::int from public.inventory_purchases where client_request_id='f8000000-0000-4000-8000-000000000001'),1,'purchase retry creates no duplicate');
 select extensions.throws_ok($$select public.create_inventory_purchase_auto(
-  'f1000000-0000-4000-8000-000000000001','f7000000-0000-4000-8000-000000000001','2026-07-01',null,'IDR',null,
+  'f1000000-0000-4000-8000-000000000001','f3000000-0000-4000-8000-000000000001','f7000000-0000-4000-8000-000000000001','2026-07-01',null,'IDR',null,
   '[{"inventory_item_id":"f6000000-0000-4000-8000-000000000001","quantity":"9","unit_price":"2500000"}]',
   'f8000000-0000-4000-8000-000000000001')$$,'23505',null,'changed purchase retry is rejected');
 
@@ -123,7 +123,7 @@ reset role;
 
 select extensions.ok(position('for update of lot' in lower(pg_get_functiondef('public.allocate_inventory_cost_fifo(uuid)'::regprocedure)))>0,'allocator locks FIFO source rows');
 select extensions.ok(position('order by lot.effective_at,lot.created_at,lot.id' in lower(pg_get_functiondef('public.allocate_inventory_cost_fifo(uuid)'::regprocedure)))>0,'FIFO lock ordering is deterministic');
-select extensions.ok(position('pg_advisory_xact_lock' in lower(pg_get_functiondef('public.create_inventory_purchase_auto(uuid,uuid,date,text,text,text,jsonb,uuid)'::regprocedure)))>0,'purchase generation serializes same-request retries');
+select extensions.ok(position('pg_advisory_xact_lock' in lower(pg_get_functiondef('public.create_inventory_purchase_auto_m27c_base(uuid,uuid,date,text,text,text,jsonb,uuid)'::regprocedure)))>0,'purchase generation base serializes same-request retries');
 select extensions.ok((select realized_lifecycle_cost is null and realized_cost_per_click is null from public.component_lifecycle_costs limit 1) is not false,'lifecycle view never invents realized economics without eligible lifecycle evidence');
 
 select * from extensions.finish();

@@ -17,11 +17,14 @@ test('Reports is a live route while Maintenance remains excluded', () => {
   assert.match(sidebar, /path: '\/maintenance'.+Wrench }/)
   assert.doesNotMatch(page, /maintenance/i)
 })
-test('report filters reuse Machine Cost period and persistent UI-state contracts', () => {
+test('report filters reuse the global Branch and preserve subordinate Machine and period controls', () => {
   assert.match(page, /machineCostPeriodPresets, resolveMachineCostPeriod/)
   assert.match(page, /usePersistentUIState/)
   assert.match(page, /feature: 'reports-filters'/)
-  for (const label of ['All Branches', 'All Machines', 'Period', 'Start', 'End']) assert.match(page, new RegExp(label))
+  for (const label of ['All Machines in', 'Period', 'Start', 'End']) assert.match(page, new RegExp(label))
+  assert.doesNotMatch(page, /<span>Branch<\/span>|All Branches/)
+  assert.match(page, /loadMachines\(\{ accountId: account\.id, branchId: branch\.id \}\)/)
+  assert.match(page, /branchId: branch\.id/)
 })
 
 test('report tabs are semantic and keyboard-native', () => {
@@ -41,6 +44,7 @@ test('Overview has exactly six primary KPI instances and explicit terminology', 
 
 test('PostgreSQL RPCs remain the report aggregation authority', () => {
   for (const rpc of ['get_report_overview', 'get_report_machine_performance', 'get_report_machine_economics', 'get_report_daily_clicks', 'get_report_component_consumption', 'get_report_error_waste', 'get_report_inventory_analytics', 'get_report_purchase_lines', 'get_report_inventory_stock', 'get_report_period_comparison', 'get_report_machine_comparison', 'get_report_component_ranking', 'get_report_error_summary']) assert.match(service, new RegExp(rpc))
+  assert.match(service, /get_report_purchase_lines[\s\S]+target_branch_id: branchId/)
   assert.doesNotMatch(page, /\.reduce\(/)
 })
 

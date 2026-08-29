@@ -7,31 +7,42 @@ const supplierFields = 'id,account_id,supplier_code,name,contact_person,phone,em
 function optional(value) { return value?.trim() || null }
 
 export async function loadInventory({ accountId, branchId, includeArchived = false }) {
+  if (!accountId || !branchId) return {
+    branchId: branchId ?? null, items: [], locations: [], balances: [], totals: [], movements: [], components: [], people: [],
+    suppliers: [], purchases: [], purchaseLines: [], receipts: [], lastPrices: [], costHistory: [], costPositions: [],
+  }
   const itemsQuery = supabase.from('inventory_items').select(itemFields).eq('account_id', accountId).order('name')
-  const locationsQuery = supabase.from('inventory_locations').select(locationFields).eq('account_id', accountId).order('name')
+  const locationsQuery = supabase.from('inventory_locations').select(locationFields).eq('account_id', accountId).eq('branch_id', branchId).order('name')
   if (!includeArchived) { itemsQuery.eq('is_active', true); locationsQuery.eq('is_active', true) }
   const suppliersQuery = supabase.from('inventory_suppliers').select(supplierFields).eq('account_id', accountId).order('name')
   if (!includeArchived) suppliersQuery.eq('is_active', true)
-  const [items, locations, balances, totals, movements, components, people, suppliers, purchases, purchaseLines, receipts, lastPrices, costHistory, costPositions] = await Promise.all([
+  const [items, locations, components, people, suppliers, purchases] = await Promise.all([
     itemsQuery,
     locationsQuery,
-    supabase.from('inventory_stock_balances').select('account_id,inventory_item_id,location_id,quantity').eq('account_id', accountId),
-    supabase.from('inventory_item_totals').select('account_id,inventory_item_id,quantity').eq('account_id', accountId),
-    supabase.from('inventory_movement_history').select('*').eq('account_id', accountId).order('occurred_at', { ascending: false }).order('created_at', { ascending: false }).limit(500),
     supabase.from('components').select('id,account_id,code,name,category,is_active').or(`account_id.is.null,account_id.eq.${accountId}`).eq('is_active', true).order('name'),
     supabase.from('operational_people').select('id,account_id,name,code,is_active,operational_person_branches!inner(branch_id,is_active)').eq('account_id', accountId).eq('is_active', true).eq('operational_person_branches.branch_id', branchId).eq('operational_person_branches.is_active', true).order('name'),
     suppliersQuery,
-    supabase.from('inventory_purchase_summary').select('*').eq('account_id', accountId).order('purchase_date', { ascending: false }).order('created_at', { ascending: false }),
-    supabase.from('inventory_purchase_line_status').select('*').eq('account_id', accountId).order('item_name_snapshot'),
-    supabase.from('inventory_receipt_history').select('*').eq('account_id', accountId).order('received_at', { ascending: false }).order('created_at', { ascending: false }),
-    supabase.from('inventory_item_last_purchase_prices').select('*').eq('account_id', accountId),
-    supabase.from('inventory_purchase_cost_history').select('*').eq('account_id', accountId).order('purchase_date', { ascending: false }).limit(500),
-    supabase.from('inventory_cost_position').select('*').eq('account_id', accountId),
+    supabase.from('inventory_purchase_summary').select('*').eq('account_id', accountId).eq('branch_id', branchId).order('purchase_date', { ascending: false }).order('created_at', { ascending: false }),
   ])
-  for (const result of [items, locations, balances, totals, movements, components, people, suppliers, purchases, purchaseLines, receipts, lastPrices, costHistory, costPositions]) if (result.error) throw result.error
+  for (const result of [items, locations, components, people, suppliers, purchases]) if (result.error) throw result.error
+  const locationIds = (locations.data ?? []).map((location) => location.id)
+  const purchaseIds = (purchases.data ?? []).map((purchase) => purchase.purchase_id)
+  const [balances, movements, purchaseLines, receipts, lastPrices, costHistory, costPositions] = await Promise.all([
+    locationIds.length ? supabase.from('inventory_stock_balances').select('account_id,inventory_item_id,location_id,quantity').eq('account_id', accountId).in('location_id', locationIds) : Promise.resolve({ data: [], error: null }),
+    supabase.from('inventory_movement_history').select('*').eq('account_id', accountId).eq('branch_id', branchId).order('occurred_at', { ascending: false }).order('created_at', { ascending: false }).limit(500),
+    purchaseIds.length ? supabase.from('inventory_purchase_line_status').select('*').eq('account_id', accountId).in('purchase_id', purchaseIds).order('item_name_snapshot') : Promise.resolve({ data: [], error: null }),
+    supabase.from('inventory_receipt_history').select('*').eq('account_id', accountId).eq('branch_id', branchId).order('received_at', { ascending: false }).order('created_at', { ascending: false }),
+    supabase.from('inventory_item_last_purchase_prices').select('*').eq('account_id', accountId).eq('branch_id', branchId),
+    supabase.from('inventory_purchase_cost_history').select('*').eq('account_id', accountId).eq('branch_id', branchId).order('purchase_date', { ascending: false }).limit(500),
+    supabase.from('inventory_cost_position').select('*').eq('account_id', accountId).eq('branch_id', branchId),
+  ])
+  for (const result of [balances, movements, purchaseLines, receipts, lastPrices, costHistory, costPositions]) if (result.error) throw result.error
+  const quantityByItem = new Map()
+  for (const balance of balances.data ?? []) quantityByItem.set(balance.inventory_item_id, Number(quantityByItem.get(balance.inventory_item_id) ?? 0) + Number(balance.quantity))
+  const totals = (items.data ?? []).map((item) => ({ account_id: accountId, inventory_item_id: item.id, quantity: quantityByItem.get(item.id) ?? 0 }))
   return {
-    items: items.data ?? [], locations: locations.data ?? [], balances: balances.data ?? [],
-    totals: totals.data ?? [], movements: movements.data ?? [], components: components.data ?? [], people: people.data ?? [],
+    branchId, items: items.data ?? [], locations: locations.data ?? [], balances: balances.data ?? [],
+    totals, movements: movements.data ?? [], components: components.data ?? [], people: people.data ?? [],
     suppliers: suppliers.data ?? [], purchases: purchases.data ?? [], purchaseLines: purchaseLines.data ?? [],
     receipts: receipts.data ?? [], lastPrices: lastPrices.data ?? [], costHistory: costHistory.data ?? [],
     costPositions: costPositions.data ?? [],
@@ -58,9 +69,9 @@ export async function deleteInventorySupplier({ accountId, supplierId }) {
   return data?.[0] ?? null
 }
 
-export async function createInventoryPurchase({ accountId, values, clientRequestId }) {
+export async function createInventoryPurchase({ accountId, branchId, values, clientRequestId }) {
   const { data, error } = await supabase.rpc('create_inventory_purchase_auto', {
-    target_account_id: accountId, target_supplier_id: values.supplierId,
+    target_account_id: accountId, target_branch_id: branchId, target_supplier_id: values.supplierId,
     target_purchase_date: values.purchaseDate, target_external_reference: optional(values.supplierReference), target_currency_code: 'IDR',
     target_notes: optional(values.notes), target_lines: values.lines.map((line) => ({
       inventory_item_id: line.itemId, quantity: line.quantity, unit_price: line.unitPrice, notes: optional(line.notes),

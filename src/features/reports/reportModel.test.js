@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { deltaPresentation, priceEvidence, reportStatus, reportTabs, validReportFilters } from './reportModel.js'
+import { deltaPresentation, priceEvidence, removePersistedReportBranch, reportStatus, reportTabs, validReportFilters } from './reportModel.js'
 
-const filters = { tab: 'overview', branchId: '', machineId: '', preset: 'this_month', customStart: '', customEnd: '', errorCategory: '', errorStatus: '' }
+const filters = { tab: 'overview', machineId: '', preset: 'this_month', customStart: '', customEnd: '', errorCategory: '', errorStatus: '' }
 
 test('Reports exposes the foundation sections plus bounded machine comparison', () => {
   assert.deepEqual(reportTabs.map((tab) => tab.label), ['Overview', 'Machine Performance', 'Machine Economics', 'Machine Comparison', 'Component Consumption', 'Error / Waste', 'Inventory / Purchasing'])
@@ -21,8 +21,13 @@ test('persistent report filters accept every shared period preset', () => {
 
 test('persistent report filters reject unknown tabs and malformed scopes', () => {
   assert.equal(validReportFilters({ ...filters, tab: 'maintenance' }), false)
-  assert.equal(validReportFilters({ ...filters, branchId: null }), false)
+  assert.equal(validReportFilters({ ...filters, machineId: null }), false)
   assert.equal(validReportFilters({ ...filters, errorStatus: null }), false)
+})
+
+test('legacy page-level Branch selection is removed without losing other report filters', () => {
+  assert.deepEqual(removePersistedReportBranch({ ...filters, branchId: 'tuparev', preset: 'this_year' }), { ...filters, preset: 'this_year' })
+  assert.equal(Object.hasOwn(removePersistedReportBranch(filters), 'branchId'), false)
 })
 
 test('completeness statuses remain concise and explicit', () => {

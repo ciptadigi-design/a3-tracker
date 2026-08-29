@@ -82,7 +82,7 @@ on conflict (operational_person_id, branch_id) do update set is_active = true;
 set local role authenticated;
 select set_config('request.jwt.claim.sub','a5000000-0000-4000-8000-000000000001',true);
 
-select public.create_inventory_purchase_auto('a5100000-0000-4000-8000-000000000001','a5800000-0000-4000-8000-000000000001',
+select public.create_inventory_purchase_auto('a5100000-0000-4000-8000-000000000001','a5300000-0000-4000-8000-000000000001','a5800000-0000-4000-8000-000000000001',
   '2026-07-10',null,'IDR',null,'[{"inventory_item_id":"a5700000-0000-4000-8000-000000000001","quantity":"2","unit_price":"2650000"}]',
   'a5c00000-0000-4000-8000-000000000001');
 select public.initialize_inventory_stock_costed('a5100000-0000-4000-8000-000000000001','a5700000-0000-4000-8000-000000000001',

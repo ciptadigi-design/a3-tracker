@@ -47,7 +47,7 @@ select extensions.ok((select username is null from public.profiles where user_id
 
 set local role authenticated;
 select set_config('request.jwt.claims','{"sub":"b7000000-0000-4000-8000-000000000001","role":"authenticated"}',true);
-select extensions.ok(public.can_manage_account_governance('b7100000-0000-4000-8000-000000000001'),'Owner manages governance');
+select extensions.ok(not public.can_manage_account_governance('b7100000-0000-4000-8000-000000000001'),'Owner retains tenant role but temporary Settings governance is denied');
 select extensions.ok(public.can_access_branch('b7100000-0000-4000-8000-000000000001','b7200000-0000-4000-8000-000000000002'),'Owner has implicit all-Branch scope');
 select extensions.lives_ok($$insert into public.machines(account_id,branch_id,machine_model_id,machine_code,display_name)
   values('b7100000-0000-4000-8000-000000000001','b7200000-0000-4000-8000-000000000002','51000000-0000-0000-0000-000000000001','M27B-OWNER-CIA','Owner Cianjur Machine')$$,
@@ -66,7 +66,7 @@ select extensions.throws_ok($$insert into public.machines(account_id,branch_id,m
   values('b7100000-0000-4000-8000-000000000001','b7200000-0000-4000-8000-000000000002','51000000-0000-0000-0000-000000000001','M27B-CIA-DENIED','Denied Cianjur Machine')$$,
   '42501',null,'Admin cannot create a Machine in an unassigned Branch');
 select extensions.throws_ok($$select public.manage_workspace_settings('b7100000-0000-4000-8000-000000000001','Nope','Asia/Jakarta','b7900000-0000-4000-8000-000000000001')$$,'42501',null,'Admin is denied workspace governance');
-select extensions.throws_ok($$select * from public.resolve_operational_report_scope('b7100000-0000-4000-8000-000000000001',null,null,current_date,current_date)$$,'42501',null,'scoped Admin cannot request all-Branch report');
+select extensions.throws_ok($$select public.get_report_overview('b7100000-0000-4000-8000-000000000001',null,null,current_date,current_date)$$,'22023',null,'scoped Admin cannot request all-Branch report');
 
 select set_config('request.jwt.claims','{"sub":"b7000000-0000-4000-8000-000000000003","role":"authenticated"}',true);
 select extensions.ok(public.can_access_branch('b7100000-0000-4000-8000-000000000001','b7200000-0000-4000-8000-000000000001'),'Technician reaches an assigned Branch');
@@ -99,17 +99,19 @@ select extensions.throws_ok($$select public.create_operational_incident(
   'prosedur','human','Wrong-Branch PIC fixture','b7900000-0000-4000-8000-000000000011',null,null,null,null,null,
   'b7400000-0000-4000-8000-000000000001','Akmal Fauzan',0,0,null,null,null)$$,
   '23514',null,'Owner all-Branch access does not bypass PIC Branch assignment');
-select public.manage_operational_person_branches('b7100000-0000-4000-8000-000000000001','b7400000-0000-4000-8000-000000000001',array['b7200000-0000-4000-8000-000000000001','b7200000-0000-4000-8000-000000000002']::uuid[],'b7900000-0000-4000-8000-000000000002');
-select extensions.ok(public.is_operational_person_valid_for_branch('b7100000-0000-4000-8000-000000000001','b7400000-0000-4000-8000-000000000001','b7200000-0000-4000-8000-000000000002'),'one PIC supports multiple Branches without duplication');
-select extensions.is((select count(*)::integer from public.operational_people where id='b7400000-0000-4000-8000-000000000001'),1,'multi-Branch PIC remains one person');
-select extensions.ok(exists(select 1 from public.settings_change_events where client_request_id='b7900000-0000-4000-8000-000000000002' and action='operational_person.branches'),'PIC assignment creates audit evidence');
+select extensions.throws_ok($$select public.manage_operational_person_branches('b7100000-0000-4000-8000-000000000001','b7400000-0000-4000-8000-000000000001',array['b7200000-0000-4000-8000-000000000001','b7200000-0000-4000-8000-000000000002']::uuid[],'b7900000-0000-4000-8000-000000000002')$$,'42501',null,'Owner cannot mutate PIC Settings under the temporary rollout policy');
 
 reset role;
 insert into public.platform_user_privileges(user_id,role) values('b7000000-0000-4000-8000-000000000005','superuser');
 set local role authenticated;
 select set_config('request.jwt.claims','{"sub":"b7000000-0000-4000-8000-000000000005","role":"authenticated"}',true);
 select extensions.ok(public.is_platform_superuser(),'platform Superuser resolves independently');
+select extensions.ok(public.can_manage_account_governance('b7100000-0000-4000-8000-000000000001'),'platform Superuser alone manages temporary Settings governance');
 select extensions.ok(public.can_access_branch('b7100000-0000-4000-8000-000000000002','b7200000-0000-4000-8000-000000000003'),'platform Superuser reaches explicitly entered tenant context');
+select public.manage_operational_person_branches('b7100000-0000-4000-8000-000000000001','b7400000-0000-4000-8000-000000000001',array['b7200000-0000-4000-8000-000000000001','b7200000-0000-4000-8000-000000000002']::uuid[],'b7900000-0000-4000-8000-000000000002');
+select extensions.ok(public.is_operational_person_valid_for_branch('b7100000-0000-4000-8000-000000000001','b7400000-0000-4000-8000-000000000001','b7200000-0000-4000-8000-000000000002'),'Superuser can assign one PIC to multiple Branches without duplication');
+select extensions.is((select count(*)::integer from public.operational_people where id='b7400000-0000-4000-8000-000000000001'),1,'multi-Branch PIC remains one person');
+select extensions.ok(exists(select 1 from public.settings_change_events where client_request_id='b7900000-0000-4000-8000-000000000002' and action='operational_person.branches'),'Superuser PIC assignment creates audit evidence');
 select extensions.lives_ok($$insert into public.machines(account_id,branch_id,machine_model_id,machine_code,display_name)
   values('b7100000-0000-4000-8000-000000000002','b7200000-0000-4000-8000-000000000003','51000000-0000-0000-0000-000000000001','M27B-PLATFORM','Platform Managed Machine')$$,
   'platform Superuser can administer a Machine in explicit tenant context');

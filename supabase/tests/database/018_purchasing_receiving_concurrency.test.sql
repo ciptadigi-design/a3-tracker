@@ -27,17 +27,21 @@ values('ee000000-0000-4000-8000-000000000001','authenticated','authenticated','m
 insert into public.accounts(id,code,name) values('ee100000-0000-4000-8000-000000000001','M24C-RACE','M2.4C Receiving Race');
 insert into public.account_memberships(id,account_id,user_id,role,status,accepted_at)
 values('ee200000-0000-4000-8000-000000000001','ee100000-0000-4000-8000-000000000001','ee000000-0000-4000-8000-000000000001','owner','active',now());
+insert into public.branches(id,account_id,code,name)
+values('ee250000-0000-4000-8000-000000000001','ee100000-0000-4000-8000-000000000001','RACE','Race Branch');
 insert into public.operational_people(id,account_id,name)
 values('ee300000-0000-4000-8000-000000000001','ee100000-0000-4000-8000-000000000001','Race Receiver');
+insert into public.operational_person_branches(account_id,operational_person_id,branch_id)
+values('ee100000-0000-4000-8000-000000000001','ee300000-0000-4000-8000-000000000001','ee250000-0000-4000-8000-000000000001');
 insert into public.inventory_items(id,account_id,sku,name,unit)
 values('ee400000-0000-4000-8000-000000000001','ee100000-0000-4000-8000-000000000001','RACE','Race Receipt Item','bottle');
-insert into public.inventory_locations(id,account_id,code,name)
-values('ee500000-0000-4000-8000-000000000001','ee100000-0000-4000-8000-000000000001','RACE','Race Warehouse');
+insert into public.inventory_locations(id,account_id,branch_id,code,name)
+values('ee500000-0000-4000-8000-000000000001','ee100000-0000-4000-8000-000000000001','ee250000-0000-4000-8000-000000000001','RACE','Race Warehouse');
 insert into public.inventory_suppliers(id,account_id,supplier_code,name)
 values('ee600000-0000-4000-8000-000000000001','ee100000-0000-4000-8000-000000000001','RACE','Race Supplier');
-insert into public.inventory_purchases(id,account_id,supplier_id,purchase_number,purchase_date,currency_code,status,
+insert into public.inventory_purchases(id,account_id,branch_id,supplier_id,purchase_number,purchase_date,currency_code,status,
   supplier_code_snapshot,supplier_name_snapshot,client_request_id,created_by,created_by_name_snapshot,updated_by)
-values('ee700000-0000-4000-8000-000000000001','ee100000-0000-4000-8000-000000000001','ee600000-0000-4000-8000-000000000001',
+values('ee700000-0000-4000-8000-000000000001','ee100000-0000-4000-8000-000000000001','ee250000-0000-4000-8000-000000000001','ee600000-0000-4000-8000-000000000001',
   'PUR-RACE','2026-08-27','IDR','draft','RACE','Race Supplier','ee710000-0000-4000-8000-000000000001',
   'ee000000-0000-4000-8000-000000000001','M24C Race Owner','ee000000-0000-4000-8000-000000000001');
 insert into public.inventory_purchase_lines(id,account_id,purchase_id,inventory_item_id,ordered_quantity,unit_price,

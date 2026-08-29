@@ -72,10 +72,10 @@ export function InventoryItemDialog({ account, item, components, initialComponen
   </DialogFrame>
 }
 
-export function InventoryLocationDialog({ account, branches, location, onClose, onSave }) {
+export function InventoryLocationDialog({ account, branch, location, onClose, onSave }) {
   const { user } = useAuth()
   const initial = { code: location?.code ?? '', name: location?.name ?? '', branchId: location?.branch_id ?? '', notes: location?.notes ?? '', isActive: location?.is_active ?? true }
-  const draftKey = createDraftKey({ userId: user.id, accountId: account.id, feature: 'inventory-location', entityId: location?.id ?? 'new' })
+  const draftKey = createDraftKey({ userId: user.id, accountId: account.id, branchId: branch.id, feature: 'inventory-location', entityId: location?.id ?? 'new' })
   const draft = usePersistentDraft({ draftKey, initialValue: initial, validate: (value) => value && typeof value.code === 'string' && typeof value.name === 'string' && typeof value.isActive === 'boolean' })
   const [error, setError] = useState(null); const [busy, setBusy] = useState(false)
   const change = (field, value) => { draft.updateDraft((current) => ({ ...current, [field]: value })); setError(null) }
@@ -87,11 +87,11 @@ export function InventoryLocationDialog({ account, branches, location, onClose, 
     catch (saveError) { setError(saveError.code === '23505' ? 'That location code already exists in this workspace.' : saveError.message) }
     finally { setBusy(false) }
   }
-  return <DialogFrame icon={MapPin} kicker="Stock location" title={`${location ? 'Edit' : 'Add'} location`} description="A physical stock point, optionally associated with a branch." titleId="inventory-location-title" busy={busy} onClose={onClose}>
+  return <DialogFrame icon={MapPin} kicker="Stock location" title={`${location ? 'Edit' : 'Add'} location`} description={`A physical stock point in ${branch.name}.`} titleId="inventory-location-title" busy={busy} onClose={onClose}>
     <form className="machine-form" onSubmit={submit} noValidate><div className="machine-form-body"><div className="form-grid">
       <label className="form-field"><span>Code <b className="required-mark">*</b></span><input value={draft.value.code} onChange={(event) => change('code', event.target.value)} autoComplete="off" data-dialog-initial-focus /></label>
       <label className="form-field"><span>Name <b className="required-mark">*</b></span><input value={draft.value.name} onChange={(event) => change('name', event.target.value)} autoComplete="off" /></label>
-      <label className="form-field form-field-wide"><span>Branch <small>Optional</small></span><select value={draft.value.branchId} onChange={(event) => change('branchId', event.target.value)}><option value="">Account-wide / no branch</option>{branches.map((branch) => <option key={branch.id} value={branch.id}>{branch.code} · {branch.name}</option>)}</select></label>
+      <label className="form-field form-field-wide"><span>Branch</span><input value={`${branch.code} · ${branch.name}`} readOnly aria-readonly="true" /><small className="field-hint">Uses the global Branch context.</small></label>
       <label className="form-field form-field-wide"><span>Notes <small>Optional</small></span><textarea rows="3" value={draft.value.notes} onChange={(event) => change('notes', event.target.value)} /></label>
       {location && <label className="master-active-toggle"><input type="checkbox" checked={draft.value.isActive} onChange={(event) => change('isActive', event.target.checked)} /><span><strong>Active</strong><small>Archived locations stay visible in historical movements.</small></span></label>}
     </div>{error && <div className="form-error" role="alert"><AlertCircle size={16} />{error}</div>}</div>
@@ -105,10 +105,10 @@ const workflowConfig = {
   transfer: { icon: ArrowRightLeft, kicker: 'Location transfer', title: 'Transfer stock', description: 'Posts paired source and destination movements in one database transaction.', submit: 'Transfer stock' },
 }
 
-export function InventoryMovementDialog({ kind, account, item, items, locations, people, balances, onClose, onSubmit }) {
+export function InventoryMovementDialog({ kind, account, branchId, item, items, locations, people, balances, onClose, onSubmit }) {
   const { user } = useAuth(); const config = workflowConfig[kind]
   const initial = { itemId: item?.id ?? items[0]?.id ?? '', locationId: '', sourceLocationId: '', destinationLocationId: '', quantity: '', direction: 'out', occurredAt: localDateTime(), personId: people[0]?.id ?? '', reason: '', notes: '', costState: 'unknown', unitCost: '' }
-  const draftKey = createDraftKey({ userId: user.id, accountId: account.id, feature: `inventory-${kind}`, entityId: item?.id ?? 'general' })
+  const draftKey = createDraftKey({ userId: user.id, accountId: account.id, branchId, feature: `inventory-${kind}`, entityId: item?.id ?? 'general' })
   const draft = usePersistentDraft({ draftKey, initialValue: initial, validate: (value) => value && typeof value.itemId === 'string' && typeof value.quantity === 'string' })
   const requestId = useRef(crypto.randomUUID()); const [error, setError] = useState(null); const [busy, setBusy] = useState(false)
   const change = (field, value) => { draft.updateDraft((current) => ({ ...current, [field]: value })); setError(null) }

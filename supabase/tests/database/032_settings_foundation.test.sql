@@ -17,7 +17,11 @@ insert into auth.users(id,aud,role,email,encrypted_password,email_confirmed_at,r
 ('a7000000-0000-4000-8000-000000000003','authenticated','authenticated','operator-settings@example.com','x',now(),'{}','{"display_name":"Settings Operator"}',now(),now()),
 ('a7000000-0000-4000-8000-000000000004','authenticated','authenticated','tech-settings@example.com','x',now(),'{}','{"display_name":"Settings Technician"}',now(),now()),
 ('a7000000-0000-4000-8000-000000000005','authenticated','authenticated','other-settings@example.com','x',now(),'{}','{"display_name":"Other Owner"}',now(),now()),
-('a7000000-0000-4000-8000-000000000006','authenticated','authenticated','second-owner@example.com','x',now(),'{}','{"display_name":"Second Owner"}',now(),now());
+('a7000000-0000-4000-8000-000000000006','authenticated','authenticated','second-owner@example.com','x',now(),'{}','{"display_name":"Second Owner"}',now(),now()),
+('a7000000-0000-4000-8000-000000000007','authenticated','authenticated','platform-settings@example.com','x',now(),'{}','{"display_name":"Platform Settings"}',now(),now());
+
+insert into public.platform_user_privileges(user_id,role)
+values('a7000000-0000-4000-8000-000000000007','superuser');
 
 insert into public.accounts(id,code,name,default_timezone) values
 ('a7100000-0000-4000-8000-000000000001','M27A','Settings Workspace','Asia/Jakarta'),
@@ -34,7 +38,9 @@ select extensions.ok((select not operator_can_initialize_component and operator_
 
 set local role authenticated;
 select set_config('request.jwt.claims','{"sub":"a7000000-0000-4000-8000-000000000001","role":"authenticated"}',true);
-select extensions.is((public.manage_workspace_settings('a7100000-0000-4000-8000-000000000001',' Settings Renamed ','Asia/Makassar','a7300000-0000-4000-8000-000000000001')).name,'Settings Renamed','Owner updates trimmed workspace display name');
+select extensions.throws_ok($$select public.manage_workspace_settings('a7100000-0000-4000-8000-000000000001','Owner denied','Asia/Jakarta','a7300000-0000-4000-8000-000000000015')$$,'42501',null,'Owner is denied by the temporary Settings policy');
+select set_config('request.jwt.claims','{"sub":"a7000000-0000-4000-8000-000000000007","role":"authenticated"}',true);
+select extensions.is((public.manage_workspace_settings('a7100000-0000-4000-8000-000000000001',' Settings Renamed ','Asia/Makassar','a7300000-0000-4000-8000-000000000001')).name,'Settings Renamed','Platform Superuser updates trimmed workspace display name');
 select extensions.is((public.manage_workspace_settings('a7100000-0000-4000-8000-000000000001',' Settings Renamed ','Asia/Makassar','a7300000-0000-4000-8000-000000000001')).default_timezone,'Asia/Makassar','same workspace request is idempotent');
 select extensions.throws_ok($$select public.manage_workspace_settings('a7100000-0000-4000-8000-000000000001','Different','Asia/Makassar','a7300000-0000-4000-8000-000000000001')$$,'23505',null,'same request key with different payload is rejected');
 select extensions.throws_ok($$select public.manage_workspace_settings('a7100000-0000-4000-8000-000000000001','Valid','UTC+7','a7300000-0000-4000-8000-000000000002')$$,'22023',null,'arbitrary UTC offsets are rejected');
@@ -46,16 +52,16 @@ select extensions.throws_ok($$select public.manage_settings_branch('a7100000-000
 reset role;
 select id as settings_branch_id from public.branches where account_id='a7100000-0000-4000-8000-000000000001' and code='JKT2' \gset
 set local role authenticated;
-select set_config('request.jwt.claims','{"sub":"a7000000-0000-4000-8000-000000000001","role":"authenticated"}',true);
+select set_config('request.jwt.claims','{"sub":"a7000000-0000-4000-8000-000000000007","role":"authenticated"}',true);
 select extensions.ok(not (public.manage_settings_branch('a7100000-0000-4000-8000-000000000001',:'settings_branch_id','archive','JKT2','Jakarta Two',null,null,null,'a7300000-0000-4000-8000-000000000005')).is_active,'branch archives without deletion');
 select extensions.ok((public.manage_settings_branch('a7100000-0000-4000-8000-000000000001',:'settings_branch_id','restore','JKT2','Jakarta Two',null,null,null,'a7300000-0000-4000-8000-000000000006')).is_active,'archived branch restores safely');
 
-select extensions.is((public.manage_settings_membership('a7100000-0000-4000-8000-000000000001','a7000000-0000-4000-8000-000000000003','technician','active',array[:'settings_branch_id']::uuid[],null,'Settings Operator','a7300000-0000-4000-8000-000000000007')).role::text,'technician','Owner changes a non-owner role');
-select extensions.is((public.manage_settings_membership('a7100000-0000-4000-8000-000000000001','a7000000-0000-4000-8000-000000000003','technician','suspended',array[:'settings_branch_id']::uuid[],null,'Settings Operator','a7300000-0000-4000-8000-000000000008')).status::text,'suspended','Owner suspends a member without deleting membership');
-select extensions.is((public.manage_settings_membership('a7100000-0000-4000-8000-000000000001','a7000000-0000-4000-8000-000000000003','technician','active',array[:'settings_branch_id']::uuid[],null,'Settings Operator','a7300000-0000-4000-8000-000000000009')).status::text,'active','Owner reactivates a member');
-select extensions.is((public.manage_settings_membership('a7100000-0000-4000-8000-000000000001','a7000000-0000-4000-8000-000000000003','operator','active',array[:'settings_branch_id']::uuid[],null,'Settings Operator','a7300000-0000-4000-8000-000000000014')).role::text,'operator','Owner restores the Operator fixture role');
+select extensions.is((public.manage_settings_membership('a7100000-0000-4000-8000-000000000001','a7000000-0000-4000-8000-000000000003','technician','active',array[:'settings_branch_id']::uuid[],null,'Settings Operator','a7300000-0000-4000-8000-000000000007')).role::text,'technician','Platform Superuser changes a non-owner role');
+select extensions.is((public.manage_settings_membership('a7100000-0000-4000-8000-000000000001','a7000000-0000-4000-8000-000000000003','technician','suspended',array[:'settings_branch_id']::uuid[],null,'Settings Operator','a7300000-0000-4000-8000-000000000008')).status::text,'suspended','Platform Superuser suspends a member without deleting membership');
+select extensions.is((public.manage_settings_membership('a7100000-0000-4000-8000-000000000001','a7000000-0000-4000-8000-000000000003','technician','active',array[:'settings_branch_id']::uuid[],null,'Settings Operator','a7300000-0000-4000-8000-000000000009')).status::text,'active','Platform Superuser reactivates a member');
+select extensions.is((public.manage_settings_membership('a7100000-0000-4000-8000-000000000001','a7000000-0000-4000-8000-000000000003','operator','active',array[:'settings_branch_id']::uuid[],null,'Settings Operator','a7300000-0000-4000-8000-000000000014')).role::text,'operator','Platform Superuser restores the Operator fixture role');
 
-select extensions.is((public.manage_operational_permissions('a7100000-0000-4000-8000-000000000001',true,false,true,true,true,true,false,'a7300000-0000-4000-8000-000000000010')).operator_can_create_purchase,true,'Owner updates all operational flags atomically');
+select extensions.is((public.manage_operational_permissions('a7100000-0000-4000-8000-000000000001',true,false,true,true,true,true,false,'a7300000-0000-4000-8000-000000000010')).operator_can_create_purchase,true,'Platform Superuser updates all operational flags atomically');
 
 select set_config('request.jwt.claims','{"sub":"a7000000-0000-4000-8000-000000000003","role":"authenticated"}',true);
 select extensions.ok(public.has_operational_capability('a7100000-0000-4000-8000-000000000001','initialize_component'),'Operator is allowed when policy is true');
@@ -74,7 +80,7 @@ select set_config('request.jwt.claims','{"sub":"a7000000-0000-4000-8000-00000000
 select extensions.throws_ok($$select public.manage_settings_membership('a7100000-0000-4000-8000-000000000001','a7000000-0000-4000-8000-000000000001','admin','active',array[]::uuid[],null,'Settings Owner','a7300000-0000-4000-8000-000000000011')$$,'42501',null,'Admin cannot modify an Owner');
 select extensions.throws_ok($$select public.manage_workspace_settings('a7100000-0000-4000-8000-000000000002','Cross account','Asia/Jakarta','a7300000-0000-4000-8000-000000000012')$$,'42501',null,'cross-account administration is denied');
 
-select set_config('request.jwt.claims','{"sub":"a7000000-0000-4000-8000-000000000001","role":"authenticated"}',true);
+select set_config('request.jwt.claims','{"sub":"a7000000-0000-4000-8000-000000000007","role":"authenticated"}',true);
 select extensions.is((select count(*)::integer from public.get_settings_members('a7100000-0000-4000-8000-000000000001') where email is not null),5,'member directory exposes scoped email only to Settings admins');
 select extensions.ok((select count(*)>=8 from public.settings_change_events where account_id='a7100000-0000-4000-8000-000000000001'),'administrative mutations retain actor-snapshot audit evidence');
 

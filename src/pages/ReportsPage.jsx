@@ -1,9 +1,9 @@
-import { createElement, useCallback, useEffect, useMemo, useState } from 'react'
+import { createElement, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { AlertTriangle, BarChart3, Boxes, CalendarRange, CircleDollarSign, Download, Eye, Gauge, Package, Printer, RefreshCcw, ShoppingCart, TrendingUp } from 'lucide-react'
 import { PageHeader } from '../components/ui/PageHeader.jsx'
 import { ReportDetailDialog } from '../features/reports/ReportDetailDialog.jsx'
 import { buildReportExport, downloadCsv } from '../features/reports/reportExport.js'
-import { deltaPresentation, priceEvidence, reportStatus, reportTabs, validReportFilters } from '../features/reports/reportModel.js'
+import { deltaPresentation, priceEvidence, removePersistedReportBranch, reportStatus, reportTabs, validReportFilters } from '../features/reports/reportModel.js'
 import { useAuth } from '../features/auth/useAuth.js'
 import { useTenant } from '../features/account/useTenant.js'
 import { machineCostPeriodPresets, resolveMachineCostPeriod } from '../features/machineCost/machineCostPeriods.js'
@@ -68,11 +68,11 @@ function PeriodComparison({ rows }) {
 
 export function ReportsPage() {
   const { user } = useAuth()
-  const { account, branches } = useTenant()
+  const { account, branch } = useTenant()
   const stateKey = createUIStateKey({ userId: user.id, accountId: account.id, feature: 'reports-filters', entityId: 'workspace' })
   const { value: filters, setUIState: setFilters } = usePersistentUIState({
     uiStateKey: stateKey,
-    initialValue: { tab: 'overview', branchId: '', machineId: '', preset: 'this_month', customStart: '', customEnd: '', errorCategory: '', errorStatus: '', comparisonMetric: 'estimated_standard_contribution', componentSort: 'cost_rank' },
+    initialValue: { tab: 'overview', machineId: '', preset: 'this_month', customStart: '', customEnd: '', errorCategory: '', errorStatus: '', comparisonMetric: 'estimated_standard_contribution', componentSort: 'cost_rank' },
     validate: validReportFilters,
   })
   const [machines, setMachines] = useState([])
@@ -81,8 +81,9 @@ export function ReportsPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [generatedAt, setGeneratedAt] = useState(() => new Date())
-  const selectedBranch = branches.find((branch) => branch.id === filters.branchId) ?? null
-  const availableMachines = machines.filter((machine) => !filters.branchId || machine.branch_id === filters.branchId)
+  const reportRequest = useRef(0)
+  const selectedBranch = branch
+  const availableMachines = machines
   const selectedMachine = availableMachines.find((machine) => machine.id === filters.machineId) ?? null
   const timezone = selectedMachine?.timezone || selectedBranch?.timezone || account.default_timezone || 'Asia/Jakarta'
   const period = useMemo(() => resolveMachineCostPeriod({ preset: filters.preset, timezone, customStart: filters.customStart, customEnd: filters.customEnd }), [filters.customEnd, filters.customStart, filters.preset, timezone])
@@ -90,21 +91,33 @@ export function ReportsPage() {
 
   useEffect(() => {
     let active = true
-    loadMachines({ accountId: account.id }).then((rows) => { if (active) setMachines(rows.filter((machine) => machine.is_active)) }).catch((loadError) => { if (active) setError(loadError) })
+    setMachines([])
+    if (!branch?.id) return () => { active = false }
+    loadMachines({ accountId: account.id, branchId: branch.id }).then((rows) => { if (active) setMachines(rows.filter((machine) => machine.is_active)) }).catch((loadError) => { if (active) setError(loadError) })
     return () => { active = false }
-  }, [account.id])
+  }, [account.id, branch?.id])
+  useEffect(() => {
+    if (Object.hasOwn(filters, 'branchId')) setFilters((current) => removePersistedReportBranch(current))
+  }, [filters, setFilters])
   useEffect(() => {
     if (filters.machineId && !availableMachines.some((machine) => machine.id === filters.machineId)) setFilters((current) => ({ ...current, machineId: '' }))
   }, [availableMachines, filters.machineId, setFilters])
 
   const refresh = useCallback(async () => {
-    if (!validPeriod) { setReport(null); return }
+    const request = ++reportRequest.current
+    setReport(null)
+    if (!validPeriod || !branch?.id) { setLoading(false); return }
     setLoading(true); setError(null)
     try {
-      setReport(await loadOperationalReport({ accountId: account.id, branchId: filters.branchId, machineId: filters.machineId,
-        periodStart: period.start, periodEnd: period.end, periodPreset: filters.preset, errorCategory: filters.errorCategory, errorStatus: filters.errorStatus }))
-    } catch (loadError) { setError(loadError); setReport(null) } finally { setLoading(false) }
-  }, [account.id, filters.branchId, filters.errorCategory, filters.errorStatus, filters.machineId, filters.preset, period.end, period.start, validPeriod])
+      const nextReport = await loadOperationalReport({ accountId: account.id, branchId: branch.id, machineId: filters.machineId,
+        periodStart: period.start, periodEnd: period.end, periodPreset: filters.preset, errorCategory: filters.errorCategory, errorStatus: filters.errorStatus })
+      if (reportRequest.current === request) setReport(nextReport)
+    } catch (loadError) {
+      if (reportRequest.current === request) setError(loadError)
+    } finally {
+      if (reportRequest.current === request) setLoading(false)
+    }
+  }, [account.id, branch?.id, filters.errorCategory, filters.errorStatus, filters.machineId, filters.preset, period.end, period.start, validPeriod])
   useEffect(() => { refresh() }, [refresh])
 
   const overview = report?.overview
@@ -113,7 +126,7 @@ export function ReportsPage() {
   const comparisonMetric = filters.comparisonMetric || 'estimated_standard_contribution'
   const componentSort = filters.componentSort || 'cost_rank'
   const componentRanking = useMemo(() => [...(report?.componentRanking ?? [])].sort((left, right) => Number(left[componentSort] ?? Number.MAX_SAFE_INTEGER) - Number(right[componentSort] ?? Number.MAX_SAFE_INTEGER)), [componentSort, report?.componentRanking])
-  const scopeLabel = selectedMachine ? `${selectedMachine.machine_code} · ${selectedMachine.display_name}` : selectedBranch ? `${selectedBranch.code} · ${selectedBranch.name}` : 'All Branches · All Machines'
+  const scopeLabel = selectedMachine ? `${selectedMachine.machine_code} · ${selectedMachine.display_name}` : selectedBranch ? `${selectedBranch.code} · ${selectedBranch.name}` : 'No active Branch'
 
   function handleExport() {
     const exported = buildReportExport({ tab: filters.tab, report, periodStart: period.start, periodEnd: period.end,
@@ -130,8 +143,7 @@ export function ReportsPage() {
     <PageHeader eyebrow="Read-only operational projections" title="Reports" description="Reusable period reports derived from Daily Counter, consumption, Error/Waste, inventory, and machine economics evidence." />
     <section className="report-print-header" aria-hidden="true"><span>A3 Tracker Report</span><h1>{reportTabs.find((tab) => tab.id === filters.tab)?.label}</h1><dl><div><dt>Scope</dt><dd>{scopeLabel}</dd></div><div><dt>Period</dt><dd>{period.start} → {period.end}</dd></div><div><dt>Generated</dt><dd>{generatedAt.toLocaleString('id-ID', { timeZone: timezone })} ({timezone})</dd></div></dl></section>
     <section className="report-filter-bar glass-surface" aria-label="Report filters">
-      <label><span>Branch</span><select value={filters.branchId} onChange={(event) => setFilters((current) => ({ ...current, branchId: event.target.value, machineId: '' }))}><option value="">All Branches</option>{branches.map((branch) => <option value={branch.id} key={branch.id}>{branch.code} · {branch.name}</option>)}</select></label>
-      <label><span>Machine</span><select value={filters.machineId} onChange={(event) => setFilters((current) => ({ ...current, machineId: event.target.value }))}><option value="">All Machines</option>{availableMachines.map((machine) => <option value={machine.id} key={machine.id}>{machine.machine_code} · {machine.display_name}</option>)}</select></label>
+      <label><span>Machine</span><select value={filters.machineId} onChange={(event) => setFilters((current) => ({ ...current, machineId: event.target.value }))} disabled={!availableMachines.length}><option value="">{availableMachines.length ? `All Machines in ${selectedBranch?.name ?? 'Branch'}` : `No active machines in ${selectedBranch?.name ?? 'Branch'}`}</option>{availableMachines.map((machine) => <option value={machine.id} key={machine.id}>{machine.machine_code} · {machine.display_name}</option>)}</select></label>
       <label><span>Period</span><select value={filters.preset} onChange={(event) => setFilters((current) => ({ ...current, preset: event.target.value }))}>{machineCostPeriodPresets.map((preset) => <option value={preset.id} key={preset.id}>{preset.label}</option>)}</select></label>
       {filters.preset === 'custom' && <><label><span>Start</span><input type="date" value={filters.customStart} onChange={(event) => setFilters((current) => ({ ...current, customStart: event.target.value }))} /></label><label><span>End</span><input type="date" min={filters.customStart || undefined} value={filters.customEnd} onChange={(event) => setFilters((current) => ({ ...current, customEnd: event.target.value }))} /></label></>}
       <div className="report-period"><CalendarRange size={16} /><span>{validPeriod ? `${period.start} → ${period.end}` : 'Choose a valid range'}<small>{timezone} filter context</small></span></div>

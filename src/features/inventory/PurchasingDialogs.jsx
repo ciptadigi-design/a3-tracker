@@ -49,10 +49,10 @@ export function InventorySupplierDialog({ account, supplier, onClose, onSave }) 
   </DialogFrame>
 }
 
-export function InventoryPurchaseDialog({ account, suppliers, items, components, onClose, onCreate, onCreateItem }) {
+export function InventoryPurchaseDialog({ account, branchId, suppliers, items, components, onClose, onCreate, onCreateItem }) {
   const { user } = useAuth()
   const initial = { supplierId: '', purchaseDate: localDate(), supplierReference: '', notes: '', lines: [{ rowId: crypto.randomUUID(), itemId: '', quantity: '1', unitPrice: '', notes: '' }] }
-  const draftKey = createDraftKey({ userId: user.id, accountId: account.id, feature: 'inventory-purchase', entityId: 'new' })
+  const draftKey = createDraftKey({ userId: user.id, accountId: account.id, branchId, feature: 'inventory-purchase', entityId: 'new' })
   const draft = usePersistentDraft({ draftKey, initialValue: initial, validate: (value) => value && typeof value.supplierId === 'string' && Array.isArray(value.lines) })
   const requestId = useRef(crypto.randomUUID()); const [busy, setBusy] = useState(false); const [error, setError] = useState(null)
   const [inlineCreate, setInlineCreate] = useState(null)
@@ -117,11 +117,11 @@ export function InventoryPurchaseDialog({ account, suppliers, items, components,
   </DialogFrame>
 }
 
-export function InventoryReceiveDialog({ account, purchase, lines, locations, people, onClose, onReceive }) {
+export function InventoryReceiveDialog({ account, branchId, purchase, lines, locations, people, onClose, onReceive }) {
   const { user } = useAuth()
   const receivableLines = lines.filter((line) => Number(line.remaining_quantity) > 0)
   const initial = { locationId: '', receivedAt: localDateTime(), personId: people[0]?.id ?? '', notes: '', lines: receivableLines.map((line) => ({ purchaseLineId: line.purchase_line_id, quantity: '' })) }
-  const draftKey = createDraftKey({ userId: user.id, accountId: account.id, feature: 'inventory-receipt', entityId: purchase.purchase_id })
+  const draftKey = createDraftKey({ userId: user.id, accountId: account.id, branchId, feature: 'inventory-receipt', entityId: purchase.purchase_id })
   const draft = usePersistentDraft({ draftKey, initialValue: initial, validate: (value) => value && typeof value.locationId === 'string' && typeof value.personId === 'string' && Array.isArray(value.lines) })
   const requestId = useRef(crypto.randomUUID()); const [busy, setBusy] = useState(false); const [error, setError] = useState(null)
   const change = (field, value) => { draft.updateDraft((current) => ({ ...current, [field]: value })); setError(null) }
@@ -154,9 +154,9 @@ export function InventoryPurchaseDetailDialog({ purchase, lines, canManage, canR
   </DialogFrame>
 }
 
-export function CancelInventoryPurchaseDialog({ account, purchase, onClose, onCancel }) {
+export function CancelInventoryPurchaseDialog({ account, branchId, purchase, onClose, onCancel }) {
   const { user } = useAuth(); const initial = { reason: '' }
-  const draftKey = createDraftKey({ userId: user.id, accountId: account.id, feature: 'inventory-purchase-cancel', entityId: purchase.purchase_id })
+  const draftKey = createDraftKey({ userId: user.id, accountId: account.id, branchId, feature: 'inventory-purchase-cancel', entityId: purchase.purchase_id })
   const draft = usePersistentDraft({ draftKey, initialValue: initial, validate: (value) => value && typeof value.reason === 'string' })
   const requestId = useRef(crypto.randomUUID()); const [busy, setBusy] = useState(false); const [error, setError] = useState(null)
   async function submit(event) { event.preventDefault(); if (!draft.value.reason.trim()) return setError('Cancellation reason is required. Existing receipts will remain unchanged.'); setBusy(true); try { await onCancel(draft.value.reason, requestId.current); draft.clearDraft(); onClose() } catch (cancelError) { setError(cancelError.message) } finally { setBusy(false) } }

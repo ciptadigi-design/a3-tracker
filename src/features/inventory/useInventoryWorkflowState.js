@@ -41,8 +41,8 @@ function validWorkflow(value) {
   return value.inventoryItemId == null && value.locationId == null && value.supplierId == null && value.purchaseId == null && value.movementId == null
 }
 
-export function useInventoryWorkflowState({ userId, accountId }) {
-  const key = createUIStateKey({ userId, accountId, feature: 'inventory-workflow', entityId: 'active' })
+export function useInventoryWorkflowState({ userId, accountId, branchId }) {
+  const key = createUIStateKey({ userId, accountId, branchId, feature: 'inventory-workflow', entityId: 'active' })
   const { value, setUIState, clearUIState } = usePersistentUIState({ uiStateKey: key, initialValue: emptyWorkflow, validate: validWorkflow })
 
   const open = useCallback((type, { inventoryItemId = null, locationId = null, supplierId = null, purchaseId = null, movementId = null, entityActiveAtOpen = null } = {}) => {

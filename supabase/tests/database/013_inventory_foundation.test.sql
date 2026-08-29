@@ -53,12 +53,12 @@ set local role authenticated;
 select set_config('request.jwt.claim.sub','f4000000-0000-4000-8000-000000000001',true);
 select extensions.lives_ok($$insert into public.inventory_locations(id,account_id,branch_id,code,name) values
 ('f4600000-0000-4000-8000-000000000001','f4100000-0000-4000-8000-000000000001','f4300000-0000-4000-8000-000000000001','WH','Warehouse'),
-('f4600000-0000-4000-8000-000000000002','f4100000-0000-4000-8000-000000000001',null,'FLOOR','Machine Floor')$$,'owner creates multiple locations');
+('f4600000-0000-4000-8000-000000000002','f4100000-0000-4000-8000-000000000001','f4300000-0000-4000-8000-000000000001','FLOOR','Machine Floor')$$,'owner creates multiple Branch-owned locations');
 select extensions.lives_ok($$insert into public.inventory_items(id,account_id,component_id,sku,name,category,unit,minimum_stock) values
 ('f4500000-0000-4000-8000-000000000001','f4100000-0000-4000-8000-000000000001','53000000-0000-0000-0000-000000000025','TON-C','Toner Cyan','Toner','bottle',2),
 ('f4500000-0000-4000-8000-000000000002','f4100000-0000-4000-8000-000000000001',null,'BLADE','Cleaning Blade','Maintenance','pcs',0)$$,'owner creates linked and generic items');
 select extensions.throws_ok($$insert into public.inventory_items(account_id,sku,name) values ('f4100000-0000-4000-8000-000000000001',' ton-c ','Duplicate')$$,'23505',null,'SKU uniqueness is normalized within account');
-select extensions.throws_ok($$insert into public.inventory_locations(account_id,code,name) values ('f4100000-0000-4000-8000-000000000001',' wh ','Duplicate')$$,'23505',null,'location code uniqueness is normalized within account');
+select extensions.throws_ok($$insert into public.inventory_locations(account_id,branch_id,code,name) values ('f4100000-0000-4000-8000-000000000001','f4300000-0000-4000-8000-000000000001',' wh ','Duplicate')$$,'23505',null,'location code uniqueness is normalized within account');
 select extensions.throws_ok($$insert into public.inventory_locations(account_id,branch_id,code,name) values ('f4100000-0000-4000-8000-000000000001','f4300000-0000-4000-8000-000000000002','CROSS','Cross branch')$$,'23503',null,'cross-account branch reference is rejected');
 select extensions.throws_ok($$insert into public.inventory_items(account_id,component_id,sku,name) values ('f4100000-0000-4000-8000-000000000002','f4500000-0000-4000-8000-000000000001','BAD','Bad')$$,'23503',null,'invalid component reference is rejected');
 
@@ -101,7 +101,7 @@ reset role;
 set local role authenticated;
 select set_config('request.jwt.claim.sub','f4000000-0000-4000-8000-000000000002',true);
 select extensions.lives_ok($$insert into public.inventory_items(account_id,sku,name) values ('f4100000-0000-4000-8000-000000000001','ADMIN','Admin Item')$$,'admin can manage items');
-select extensions.lives_ok($$insert into public.inventory_locations(account_id,code,name) values ('f4100000-0000-4000-8000-000000000001','ADMIN','Admin Location')$$,'admin can manage locations');
+select extensions.lives_ok($$insert into public.inventory_locations(account_id,branch_id,code,name) values ('f4100000-0000-4000-8000-000000000001','f4300000-0000-4000-8000-000000000001','ADMIN','Admin Location')$$,'admin can manage assigned-Branch locations');
 reset role;
 
 set local role authenticated;
@@ -114,7 +114,7 @@ reset role;
 set local role authenticated;
 select set_config('request.jwt.claim.sub','f4000000-0000-4000-8000-000000000004',true);
 select extensions.is((select count(*)::int from public.inventory_movement_history),5,'operator can read movement history');
-select extensions.throws_ok($$insert into public.inventory_locations(account_id,code,name) values ('f4100000-0000-4000-8000-000000000001','OP','Denied')$$,'42501',null,'operator cannot manage locations');
+select extensions.throws_ok($$insert into public.inventory_locations(account_id,branch_id,code,name) values ('f4100000-0000-4000-8000-000000000001','f4300000-0000-4000-8000-000000000001','OP','Denied')$$,'42501',null,'operator cannot manage locations');
 reset role;
 
 set local role authenticated;
@@ -130,8 +130,8 @@ select extensions.is((select count(*)::int from public.inventory_movements),0,'o
 select extensions.throws_ok($$select public.adjust_inventory_stock('f4100000-0000-4000-8000-000000000001','f4500000-0000-4000-8000-000000000001','f4600000-0000-4000-8000-000000000002',1,now(),'f4400000-0000-4000-8000-000000000001','Cross account',null,'f4700000-0000-4000-8000-000000000013')$$,'42501',null,'cross-account mutation is rejected');
 reset role;
 
-select extensions.ok(position('for update' in lower(pg_get_functiondef('public.adjust_inventory_stock(uuid,uuid,uuid,numeric,timestamptz,uuid,text,text,uuid)'::regprocedure)))>0,'adjustment RPC contains a row lock');
-select extensions.ok(position('for update' in lower(pg_get_functiondef('public.transfer_inventory_stock(uuid,uuid,uuid,uuid,numeric,timestamptz,uuid,text,uuid)'::regprocedure)))>0,'transfer RPC contains a row lock');
+select extensions.ok(position('for update' in lower(pg_get_functiondef('public.adjust_inventory_stock_m27c_base(uuid,uuid,uuid,numeric,timestamptz,uuid,text,text,uuid)'::regprocedure)))>0,'guarded adjustment implementation retains a row lock');
+select extensions.ok(position('for update' in lower(pg_get_functiondef('public.transfer_inventory_stock_m27a_base(uuid,uuid,uuid,uuid,numeric,timestamptz,uuid,text,uuid)'::regprocedure)))>0,'guarded transfer implementation retains a row lock');
 select extensions.is((select count(*)::int from public.inventory_items where sku='ADMIN'),1,'test account keeps isolated admin item');
 
 select * from extensions.finish();

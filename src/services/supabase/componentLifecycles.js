@@ -3,24 +3,41 @@ import { loadMachines } from './machines.js'
 import { projectCurrentComponentCards } from '../../features/components/componentCardProjection.js'
 
 export async function loadMachineComponentLifecycles({ accountId, branchId }) {
-  const [machines, healthResult, historyResult, peopleResult, itemsResult, locationsResult, balancesResult, exclusionsResult] = await Promise.all([
-    loadMachines({ accountId }),
+  if (!accountId || !branchId) return {
+    branchId: branchId ?? null, machines: [], lifecycles: [], replacementHistory: [], operationalPeople: [],
+    inventoryItems: [], inventoryLocations: [], inventoryBalances: [], exclusions: [],
+  }
+
+  const [machines, locationsResult] = await Promise.all([
+    loadMachines({ accountId, branchId }),
+    supabase.from('inventory_locations').select('id,account_id,branch_id,code,name,is_active')
+      .eq('account_id', accountId).eq('branch_id', branchId).eq('is_active', true).order('name'),
+  ])
+  if (locationsResult.error) throw locationsResult.error
+  const machineIds = machines.map((machine) => machine.id)
+  const locationIds = (locationsResult.data ?? []).map((location) => location.id)
+  const [healthResult, historyResult, peopleResult, itemsResult, balancesResult, exclusionsResult] = await Promise.all([
     supabase
       .from('machine_component_configuration')
       .select('*')
       .eq('account_id', accountId)
+      .eq('branch_id', branchId)
       .in('lifecycle_status', ['unknown', 'active'])
       .order('display_order'),
     supabase
       .from('component_replacement_history')
       .select('*')
       .eq('account_id', accountId)
+      .eq('branch_id', branchId)
       .order('replaced_at', { ascending: false }),
     supabase.from('operational_people').select('id,account_id,name,code,linked_user_id,is_active,operational_person_branches!inner(branch_id,is_active)').eq('account_id', accountId).eq('operational_person_branches.branch_id', branchId).eq('operational_person_branches.is_active', true).order('name'),
     supabase.from('inventory_items').select('id,account_id,component_id,sku,name,unit,is_active').eq('account_id', accountId).eq('is_active', true).order('name'),
-    supabase.from('inventory_locations').select('id,account_id,branch_id,code,name,is_active').eq('account_id', accountId).eq('is_active', true).order('name'),
-    supabase.from('inventory_stock_balances').select('account_id,inventory_item_id,location_id,quantity').eq('account_id', accountId),
-    supabase.from('machine_component_profile_exclusions').select('id,account_id,machine_id,model_component_profile_id,reason,excluded_at').eq('account_id', accountId).is('cleared_at', null),
+    locationIds.length
+      ? supabase.from('inventory_stock_balances').select('account_id,inventory_item_id,location_id,quantity').eq('account_id', accountId).in('location_id', locationIds)
+      : Promise.resolve({ data: [], error: null }),
+    machineIds.length
+      ? supabase.from('machine_component_profile_exclusions').select('id,account_id,machine_id,model_component_profile_id,reason,excluded_at').eq('account_id', accountId).in('machine_id', machineIds).is('cleared_at', null)
+      : Promise.resolve({ data: [], error: null }),
   ])
 
   if (healthResult.error) throw healthResult.error
@@ -31,6 +48,7 @@ export async function loadMachineComponentLifecycles({ accountId, branchId }) {
   if (balancesResult.error) throw balancesResult.error
   if (exclusionsResult.error) throw exclusionsResult.error
   return {
+    branchId,
     machines,
     lifecycles: projectCurrentComponentCards(healthResult.data ?? []),
     replacementHistory: historyResult.data ?? [],

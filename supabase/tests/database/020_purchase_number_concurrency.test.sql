@@ -27,6 +27,8 @@ values('fc000000-0000-4000-8000-000000000001','authenticated','authenticated','m
 insert into public.accounts(id,code,name) values('fc100000-0000-4000-8000-000000000001','M24D-NUM','M2.4D Purchase Number Race');
 insert into public.account_memberships(id,account_id,user_id,role,status,accepted_at)
 values('fc200000-0000-4000-8000-000000000001','fc100000-0000-4000-8000-000000000001','fc000000-0000-4000-8000-000000000001','owner','active',now());
+insert into public.branches(id,account_id,code,name)
+values('fc250000-0000-4000-8000-000000000001','fc100000-0000-4000-8000-000000000001','NUM','Number Branch');
 insert into public.inventory_items(id,account_id,sku,name,unit)
 values('fc300000-0000-4000-8000-000000000001','fc100000-0000-4000-8000-000000000001','NUM','Number Item','pcs');
 insert into public.inventory_suppliers(id,account_id,supplier_code,name)
@@ -45,13 +47,13 @@ select * from extensions.dblink('m24d_number_race_2',$$select set_config('reques
 
 select extensions.is(extensions.dblink_send_query('m24d_number_race_1',$$with created as materialized (
   select purchase.purchase_number from public.create_inventory_purchase_auto(
-    'fc100000-0000-4000-8000-000000000001','fc400000-0000-4000-8000-000000000001','2026-08-01',null,'IDR',null,
+    'fc100000-0000-4000-8000-000000000001','fc250000-0000-4000-8000-000000000001','fc400000-0000-4000-8000-000000000001','2026-08-01',null,'IDR',null,
     '[{"inventory_item_id":"fc300000-0000-4000-8000-000000000001","quantity":"1","unit_price":"10"}]'::jsonb,
     'fc500000-0000-4000-8000-000000000001') purchase
 ) select created.purchase_number from created cross join lateral(select pg_sleep(1)) hold_lock$$),1,'first number generation starts');
 do $$ begin perform pg_sleep(.15); end $$;
 select extensions.is(extensions.dblink_send_query('m24d_number_race_2',$$select purchase.purchase_number from public.create_inventory_purchase_auto(
-  'fc100000-0000-4000-8000-000000000001','fc400000-0000-4000-8000-000000000001','2026-08-02',null,'IDR',null,
+  'fc100000-0000-4000-8000-000000000001','fc250000-0000-4000-8000-000000000001','fc400000-0000-4000-8000-000000000001','2026-08-02',null,'IDR',null,
   '[{"inventory_item_id":"fc300000-0000-4000-8000-000000000001","quantity":"1","unit_price":"20"}]'::jsonb,
   'fc500000-0000-4000-8000-000000000002') purchase$$),1,'second number generation starts');
 select extensions.is((select purchase_number from extensions.dblink_get_result('m24d_number_race_1') as result(purchase_number text)),'PUR-202608-0001','first concurrent purchase gets first monthly number');

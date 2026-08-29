@@ -22,7 +22,7 @@ export async function loadOperationalReport({ accountId, branchId, machineId, pe
     supabase.rpc('get_report_component_consumption', parameters),
     supabase.rpc('get_report_error_waste', errorParameters),
     supabase.rpc('get_report_inventory_analytics', inventoryParameters),
-    supabase.rpc('get_report_purchase_lines', { target_account_id: accountId, target_period_start: periodStart, target_period_end: periodEnd }),
+    supabase.rpc('get_report_purchase_lines', { target_account_id: accountId, target_branch_id: branchId, target_period_start: periodStart, target_period_end: periodEnd }),
     supabase.rpc('get_report_inventory_stock', { target_account_id: accountId, target_branch_id: branchId || null }),
     supabase.rpc('get_report_period_comparison', { ...parameters, target_period_preset: periodPreset }),
     supabase.rpc('get_report_machine_comparison', parameters),

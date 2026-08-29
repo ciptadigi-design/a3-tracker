@@ -142,7 +142,7 @@ reset role;
 
 select extensions.is((select count(*)::int from public.machine_component_lifecycles where account_id='91000000-0000-0000-0000-000000000001' and lower(slot_code)='test_component'),0,'TEST_COMPONENT remains untouched');
 select extensions.is((select count(*)::int from public.component_lifecycle_samples where account_id='91000000-0000-0000-0000-000000000001' and include_in_adaptive_learning),6,'sample view exposes only explicitly eligible facts when filtered');
-select extensions.ok((select position('for update' in lower(pg_get_functiondef('public.replace_machine_component(uuid,uuid,uuid,numeric,timestamptz,public.component_replacement_reason,public.component_removal_condition,boolean,uuid,text,text,uuid,public.component_replacement_inventory_source,uuid,uuid,numeric,text)'::regprocedure))) > 0),'RPC contains row locking for concurrency control');
+select extensions.ok((select position('for update' in lower(pg_get_functiondef('public.replace_machine_component_m27c_base(uuid,uuid,uuid,numeric,timestamptz,public.component_replacement_reason,public.component_removal_condition,boolean,uuid,text,text,uuid,public.component_replacement_inventory_source,uuid,uuid,numeric,text)'::regprocedure))) > 0),'guarded replacement implementation retains row locking for concurrency control');
 select extensions.ok((select count(*)=1 from pg_indexes where schemaname='public' and indexname='machine_component_lifecycles_open_slot_key'),'partial uniqueness still protects one open lifecycle per slot');
 
 select * from extensions.finish();

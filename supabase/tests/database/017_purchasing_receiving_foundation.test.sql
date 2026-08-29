@@ -2,9 +2,9 @@ begin;
 create extension if not exists pgtap with schema extensions;
 select extensions.no_plan();
 
-select extensions.ok((select prosecdef and proconfig @> array['search_path=""']::text[] from pg_proc where oid='public.create_inventory_purchase(uuid,uuid,text,date,text,text,text,jsonb,uuid)'::regprocedure),'purchase RPC is SECURITY DEFINER with empty search_path');
+select extensions.ok((select prosecdef and proconfig @> array['search_path=""']::text[] from pg_proc where oid='public.create_inventory_purchase(uuid,uuid,uuid,text,date,text,text,text,jsonb,uuid)'::regprocedure),'purchase RPC is SECURITY DEFINER with empty search_path');
 select extensions.ok((select prosecdef and proconfig @> array['search_path=""']::text[] from pg_proc where oid='public.receive_inventory_purchase(uuid,uuid,uuid,timestamptz,uuid,text,jsonb,uuid)'::regprocedure),'receiving RPC is SECURITY DEFINER with empty search_path');
-select extensions.ok(not has_function_privilege('anon','public.create_inventory_purchase(uuid,uuid,text,date,text,text,text,jsonb,uuid)','EXECUTE') and not has_function_privilege('anon','public.receive_inventory_purchase(uuid,uuid,uuid,timestamptz,uuid,text,jsonb,uuid)','EXECUTE'),'anonymous cannot execute purchasing RPCs');
+select extensions.ok(not has_function_privilege('anon','public.create_inventory_purchase(uuid,uuid,uuid,text,date,text,text,text,jsonb,uuid)','EXECUTE') and not has_function_privilege('anon','public.receive_inventory_purchase(uuid,uuid,uuid,timestamptz,uuid,text,jsonb,uuid)','EXECUTE'),'anonymous cannot execute purchasing RPCs');
 select extensions.ok(not has_table_privilege('authenticated','public.inventory_receipts','INSERT') and not has_table_privilege('authenticated','public.inventory_receipt_lines','INSERT') and not has_table_privilege('authenticated','public.inventory_movements','INSERT'),'authenticated clients cannot directly post receiving or ledger facts');
 select extensions.is((select count(*)::int from pg_catalog.pg_class c cross join lateral pg_catalog.aclexplode(coalesce(c.relacl,pg_catalog.acldefault('r',c.relowner))) a where c.oid=any(array['public.inventory_purchases'::regclass,'public.inventory_purchase_lines'::regclass,'public.inventory_receipts'::regclass,'public.inventory_receipt_lines'::regclass]) and a.grantee=0),0,'PUBLIC has no procurement relation privileges');
 
@@ -34,7 +34,7 @@ insert into public.operational_people(id,account_id,name,code) values
 ('e4000000-0000-4000-8000-000000000002','e1000000-0000-4000-8000-000000000002','Other PIC','OTHER');
 insert into public.inventory_locations(id,account_id,branch_id,code,name) values
 ('e5000000-0000-4000-8000-000000000001','e1000000-0000-4000-8000-000000000001','e3000000-0000-4000-8000-000000000001','WH','Warehouse'),
-('e5000000-0000-4000-8000-000000000002','e1000000-0000-4000-8000-000000000001',null,'FLOOR','Machine Floor'),
+('e5000000-0000-4000-8000-000000000002','e1000000-0000-4000-8000-000000000001','e3000000-0000-4000-8000-000000000001','FLOOR','Machine Floor'),
 ('e5000000-0000-4000-8000-000000000003','e1000000-0000-4000-8000-000000000002','e3000000-0000-4000-8000-000000000002','OTHER','Other Warehouse');
 insert into public.inventory_items(id,account_id,sku,name,unit) values
 ('e6000000-0000-4000-8000-000000000001','e1000000-0000-4000-8000-000000000001',null,'Toner Cyan','bottle'),
@@ -70,7 +70,7 @@ select extensions.lives_ok($$update public.inventory_suppliers set is_active=tru
 select extensions.lives_ok($$delete from public.inventory_suppliers where id='e7000000-0000-4000-8000-000000000002'$$,'unreferenced supplier can be deleted');
 
 select extensions.lives_ok($$select public.create_inventory_purchase(
-  'e1000000-0000-4000-8000-000000000001','e7000000-0000-4000-8000-000000000001','PUR-2026-0001','2026-08-27',
+  'e1000000-0000-4000-8000-000000000001','e3000000-0000-4000-8000-000000000001','e7000000-0000-4000-8000-000000000001','PUR-2026-0001','2026-08-27',
   'INV-100','IDR','Initial purchase',
   '[{"inventory_item_id":"e6000000-0000-4000-8000-000000000001","quantity":"10","unit_price":"2850000","notes":"Toner"},{"inventory_item_id":"e6000000-0000-4000-8000-000000000002","quantity":"2","unit_price":"1200000"}]'::jsonb,
   'e8000000-0000-4000-8000-000000000001')$$,'owner creates purchase atomically with a NULL-SKU line');
@@ -79,21 +79,21 @@ select extensions.is((select line_count from public.inventory_purchase_summary w
 select extensions.is((select purchase_total from public.inventory_purchase_summary where purchase_number='PUR-2026-0001'),30900000::numeric,'database derives purchase total');
 select extensions.is((select count(*)::int from public.inventory_movements where reference_type='purchase_receipt' and account_id='e1000000-0000-4000-8000-000000000001'),0,'purchase creation does not change stock');
 select extensions.lives_ok($$select public.create_inventory_purchase(
-  'e1000000-0000-4000-8000-000000000001','e7000000-0000-4000-8000-000000000001','PUR-2026-0001','2026-08-27',
+  'e1000000-0000-4000-8000-000000000001','e3000000-0000-4000-8000-000000000001','e7000000-0000-4000-8000-000000000001','PUR-2026-0001','2026-08-27',
   'INV-100','IDR','Initial purchase',
   '[{"inventory_item_id":"e6000000-0000-4000-8000-000000000001","quantity":"10","unit_price":"2850000","notes":"Toner"},{"inventory_item_id":"e6000000-0000-4000-8000-000000000002","quantity":"2","unit_price":"1200000"}]'::jsonb,
   'e8000000-0000-4000-8000-000000000001')$$,'identical purchase retry is idempotent');
 select extensions.is((select count(*)::int from public.inventory_purchases where client_request_id='e8000000-0000-4000-8000-000000000001'),1,'purchase retry creates no duplicate');
 select extensions.throws_ok($$select public.create_inventory_purchase(
-  'e1000000-0000-4000-8000-000000000001','e7000000-0000-4000-8000-000000000001','PUR-2026-0001','2026-08-27',null,'IDR',null,
+  'e1000000-0000-4000-8000-000000000001','e3000000-0000-4000-8000-000000000001','e7000000-0000-4000-8000-000000000001','PUR-2026-0001','2026-08-27',null,'IDR',null,
   '[{"inventory_item_id":"e6000000-0000-4000-8000-000000000001","quantity":"9","unit_price":"2850000"}]'::jsonb,
   'e8000000-0000-4000-8000-000000000001')$$,'23505',null,'changed purchase payload under same request ID is rejected');
 select extensions.throws_ok($$select public.create_inventory_purchase(
-  'e1000000-0000-4000-8000-000000000001','e7000000-0000-4000-8000-000000000001','PUR-DUP-LINE','2026-08-27',null,'IDR',null,
+  'e1000000-0000-4000-8000-000000000001','e3000000-0000-4000-8000-000000000001','e7000000-0000-4000-8000-000000000001','PUR-DUP-LINE','2026-08-27',null,'IDR',null,
   '[{"inventory_item_id":"e6000000-0000-4000-8000-000000000001","quantity":"1","unit_price":"1"},{"inventory_item_id":"e6000000-0000-4000-8000-000000000001","quantity":"1","unit_price":"1"}]'::jsonb,
   'e8000000-0000-4000-8000-000000000002')$$,'23505',null,'duplicate purchase line item is rejected');
 select extensions.throws_ok($$select public.create_inventory_purchase(
-  'e1000000-0000-4000-8000-000000000001','e7000000-0000-4000-8000-000000000001','PUR-ARCH','2026-08-27',null,'IDR',null,
+  'e1000000-0000-4000-8000-000000000001','e3000000-0000-4000-8000-000000000001','e7000000-0000-4000-8000-000000000001','PUR-ARCH','2026-08-27',null,'IDR',null,
   '[{"inventory_item_id":"e6000000-0000-4000-8000-000000000003","quantity":"1","unit_price":"1"}]'::jsonb,
   'e8000000-0000-4000-8000-000000000003')$$,'P0002',null,'archived inventory item is rejected from purchase');
 select extensions.throws_ok($$delete from public.inventory_suppliers where id='e7000000-0000-4000-8000-000000000001'$$,'23503',null,'referenced supplier cannot be deleted');
@@ -162,7 +162,7 @@ select extensions.is((select receipt_supplier_name from public.inventory_movemen
 select extensions.is((select receipt_purchase_number from public.inventory_movement_history where reference_type='purchase_receipt' and inventory_item_id='e6000000-0000-4000-8000-000000000001' order by occurred_at limit 1),'PUR-2026-0001','movement history resolves purchase number');
 select extensions.throws_ok($$select public.cancel_inventory_purchase('e1000000-0000-4000-8000-000000000001',(select id from public.inventory_purchases where purchase_number='PUR-2026-0001'),'No longer needed','ea000000-0000-4000-8000-000000000001')$$,'23514',null,'fully received purchase cannot be cancelled');
 
-select extensions.lives_ok($$select public.create_inventory_purchase('e1000000-0000-4000-8000-000000000001','e7000000-0000-4000-8000-000000000001','PUR-CANCEL','2026-08-27',null,'IDR',null,'[{"inventory_item_id":"e6000000-0000-4000-8000-000000000002","quantity":"3","unit_price":"100"}]'::jsonb,'e8000000-0000-4000-8000-000000000004')$$,'creates cancellable draft purchase');
+select extensions.lives_ok($$select public.create_inventory_purchase('e1000000-0000-4000-8000-000000000001','e3000000-0000-4000-8000-000000000001','e7000000-0000-4000-8000-000000000001','PUR-CANCEL','2026-08-27',null,'IDR',null,'[{"inventory_item_id":"e6000000-0000-4000-8000-000000000002","quantity":"3","unit_price":"100"}]'::jsonb,'e8000000-0000-4000-8000-000000000004')$$,'creates cancellable draft purchase');
 select extensions.lives_ok($$select public.cancel_inventory_purchase('e1000000-0000-4000-8000-000000000001',(select id from public.inventory_purchases where purchase_number='PUR-CANCEL'),'Order cancelled','ea000000-0000-4000-8000-000000000002')$$,'owner cancels draft purchase');
 select extensions.lives_ok($$select public.cancel_inventory_purchase('e1000000-0000-4000-8000-000000000001',(select id from public.inventory_purchases where purchase_number='PUR-CANCEL'),'Order cancelled','ea000000-0000-4000-8000-000000000002')$$,'identical cancellation retry is idempotent');
 select extensions.is((select status::text from public.inventory_purchases where purchase_number='PUR-CANCEL'),'cancelled','cancelled status is durable');
@@ -178,14 +178,14 @@ reset role;
 set local role authenticated;
 select set_config('request.jwt.claim.sub','e0000000-0000-4000-8000-000000000002',true);
 select extensions.lives_ok($$insert into public.inventory_suppliers(account_id,supplier_code,name) values('e1000000-0000-4000-8000-000000000001','ADMIN','Admin Supplier')$$,'admin manages supplier master');
-select extensions.lives_ok($$select public.create_inventory_purchase('e1000000-0000-4000-8000-000000000001',(select id from public.inventory_suppliers where supplier_code='ADMIN'),'PUR-ADMIN','2026-08-27',null,'IDR',null,'[{"inventory_item_id":"e6000000-0000-4000-8000-000000000002","quantity":"1","unit_price":"500"}]'::jsonb,'e8000000-0000-4000-8000-000000000005')$$,'admin creates purchase');
+select extensions.lives_ok($$select public.create_inventory_purchase('e1000000-0000-4000-8000-000000000001','e3000000-0000-4000-8000-000000000001',(select id from public.inventory_suppliers where supplier_code='ADMIN'),'PUR-ADMIN','2026-08-27',null,'IDR',null,'[{"inventory_item_id":"e6000000-0000-4000-8000-000000000002","quantity":"1","unit_price":"500"}]'::jsonb,'e8000000-0000-4000-8000-000000000005')$$,'admin creates purchase');
 reset role;
 
 set local role authenticated;
 select set_config('request.jwt.claim.sub','e0000000-0000-4000-8000-000000000003',true);
 select extensions.ok((select count(*) from public.inventory_purchase_summary)>=3,'technician reads purchasing evidence');
 select extensions.throws_ok($$insert into public.inventory_suppliers(account_id,supplier_code,name) values('e1000000-0000-4000-8000-000000000001','TECH','Denied')$$,'42501',null,'technician cannot manage suppliers');
-select extensions.throws_ok($$select public.create_inventory_purchase('e1000000-0000-4000-8000-000000000001','e7000000-0000-4000-8000-000000000001','PUR-TECH','2026-08-27',null,'IDR',null,'[{"inventory_item_id":"e6000000-0000-4000-8000-000000000002","quantity":"1","unit_price":"1"}]'::jsonb,'e8000000-0000-4000-8000-000000000006')$$,'42501',null,'technician cannot create purchases');
+select extensions.throws_ok($$select public.create_inventory_purchase('e1000000-0000-4000-8000-000000000001','e3000000-0000-4000-8000-000000000001','e7000000-0000-4000-8000-000000000001','PUR-TECH','2026-08-27',null,'IDR',null,'[{"inventory_item_id":"e6000000-0000-4000-8000-000000000002","quantity":"1","unit_price":"1"}]'::jsonb,'e8000000-0000-4000-8000-000000000006')$$,'42501',null,'technician cannot create purchases');
 reset role;
 
 set local role authenticated;
@@ -197,14 +197,14 @@ reset role;
 set local role authenticated;
 select set_config('request.jwt.claim.sub','e0000000-0000-4000-8000-000000000005',true);
 select extensions.is((select count(*)::int from public.inventory_suppliers),0,'suspended member cannot read suppliers');
-select extensions.throws_ok($$select public.create_inventory_purchase('e1000000-0000-4000-8000-000000000001','e7000000-0000-4000-8000-000000000001','PUR-SUSP','2026-08-27',null,'IDR',null,'[{"inventory_item_id":"e6000000-0000-4000-8000-000000000002","quantity":"1","unit_price":"1"}]'::jsonb,'e8000000-0000-4000-8000-000000000007')$$,'42501',null,'suspended member cannot create purchase');
+select extensions.throws_ok($$select public.create_inventory_purchase('e1000000-0000-4000-8000-000000000001','e3000000-0000-4000-8000-000000000001','e7000000-0000-4000-8000-000000000001','PUR-SUSP','2026-08-27',null,'IDR',null,'[{"inventory_item_id":"e6000000-0000-4000-8000-000000000002","quantity":"1","unit_price":"1"}]'::jsonb,'e8000000-0000-4000-8000-000000000007')$$,'42501',null,'suspended member cannot create purchase');
 reset role;
 
 insert into public.inventory_suppliers(id,account_id,supplier_code,name) values('e7000000-0000-4000-8000-000000000003','e1000000-0000-4000-8000-000000000002','OTHER','Other Supplier');
 set local role authenticated;
 select set_config('request.jwt.claim.sub','e0000000-0000-4000-8000-000000000006',true);
 select extensions.is((select count(*)::int from public.inventory_purchases),0,'other account cannot read purchases');
-select extensions.throws_ok($$select public.create_inventory_purchase('e1000000-0000-4000-8000-000000000001','e7000000-0000-4000-8000-000000000001','PUR-CROSS','2026-08-27',null,'IDR',null,'[{"inventory_item_id":"e6000000-0000-4000-8000-000000000002","quantity":"1","unit_price":"1"}]'::jsonb,'e8000000-0000-4000-8000-000000000008')$$,'42501',null,'cross-account purchase mutation is denied');
+select extensions.throws_ok($$select public.create_inventory_purchase('e1000000-0000-4000-8000-000000000001','e3000000-0000-4000-8000-000000000001','e7000000-0000-4000-8000-000000000001','PUR-CROSS','2026-08-27',null,'IDR',null,'[{"inventory_item_id":"e6000000-0000-4000-8000-000000000002","quantity":"1","unit_price":"1"}]'::jsonb,'e8000000-0000-4000-8000-000000000008')$$,'42501',null,'cross-account purchase mutation is denied');
 reset role;
 
 select extensions.ok(position('for update' in lower(pg_get_functiondef('public.receive_inventory_purchase(uuid,uuid,uuid,timestamptz,uuid,text,jsonb,uuid)'::regprocedure)))>0,'receiving RPC contains explicit row locks');

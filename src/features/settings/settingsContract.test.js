@@ -13,7 +13,10 @@ test('Settings route and seven-section control-plane IA are active', () => {
   assert.doesNotMatch(app, /'\/settings': \['Settings'/)
   for (const label of ['Workspace', 'Branches', 'Members & Roles', 'Permissions', 'Operations', 'Machine Models', 'Advanced']) assert.match(page, new RegExp(label.replace('&', '\\&')))
   assert.match(sidebar, /Settings, active: true/)
-  assert.match(sidebar, /\['owner', 'platform_superuser'\]/)
+  assert.match(sidebar, /isPlatformSuperuser && <NavLink/)
+  assert.doesNotMatch(sidebar, /membership\?\.role|\['owner'/)
+  assert.match(app, /path === '\/settings' && tenant\.isPlatformSuperuser/)
+  assert.match(app, /Settings is temporarily available only to Platform Superusers/)
 })
 
 test('Workspace and branch forms preserve drafts, timezone inheritance, and compact mobile actions', () => {

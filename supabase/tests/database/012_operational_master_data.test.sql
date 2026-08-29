@@ -8,7 +8,11 @@ insert into auth.users (id,aud,role,email,encrypted_password,email_confirmed_at,
 ('e3000000-0000-0000-0000-000000000003','authenticated','authenticated','m23e-tech-a@test.invalid','',now(),'{}','{}',now(),now()),
 ('e3000000-0000-0000-0000-000000000004','authenticated','authenticated','m23e-operator-a@test.invalid','',now(),'{}','{}',now(),now()),
 ('e3000000-0000-0000-0000-000000000005','authenticated','authenticated','m23e-suspended-a@test.invalid','',now(),'{}','{}',now(),now()),
-('e3000000-0000-0000-0000-000000000006','authenticated','authenticated','m23e-owner-b@test.invalid','',now(),'{}','{}',now(),now());
+('e3000000-0000-0000-0000-000000000006','authenticated','authenticated','m23e-owner-b@test.invalid','',now(),'{}','{}',now(),now()),
+('e3000000-0000-0000-0000-000000000007','authenticated','authenticated','m23e-platform@test.invalid','',now(),'{}','{}',now(),now());
+
+insert into public.platform_user_privileges(user_id,role)
+values('e3000000-0000-0000-0000-000000000007','superuser');
 
 insert into public.accounts (id,code,name,created_by,updated_by) values
 ('e3100000-0000-0000-0000-000000000001','M23E-A','M2.3E Account A','e3000000-0000-0000-0000-000000000001','e3000000-0000-0000-0000-000000000001'),
@@ -50,12 +54,14 @@ reset role;
 
 set local role authenticated;
 select set_config('request.jwt.claim.sub','e3000000-0000-0000-0000-000000000001',true);
-select extensions.lives_ok($$insert into public.operational_people(id,account_id,name,code) values ('e3500000-0000-4000-8000-000000000001','e3100000-0000-0000-0000-000000000001','Press PIC','PIC-1')$$,'owner can create operator');
-select extensions.lives_ok($$insert into public.manufacturers(id,account_id,code,name) values ('e3600000-0000-4000-8000-000000000001','e3100000-0000-0000-0000-000000000001','TEST-MFG','Test Manufacturer')$$,'owner can create workspace manufacturer');
-select extensions.lives_ok($$insert into public.machine_models(id,account_id,manufacturer_id,model_code,name,machine_category,color_capability) values ('e3700000-0000-4000-8000-000000000001','e3100000-0000-0000-0000-000000000001','e3600000-0000-4000-8000-000000000001','TEST-MODEL','Test Model','digital_a3','color')$$,'owner can create workspace model');
+select extensions.throws_ok($$insert into public.operational_people(id,account_id,name,code) values ('e3500000-0000-4000-8000-000000000001','e3100000-0000-0000-0000-000000000001','Press PIC','PIC-1')$$,'42501',null,'Owner cannot create Settings-governed Operational People');
+select set_config('request.jwt.claim.sub','e3000000-0000-0000-0000-000000000007',true);
+select extensions.lives_ok($$insert into public.operational_people(id,account_id,name,code) values ('e3500000-0000-4000-8000-000000000001','e3100000-0000-0000-0000-000000000001','Press PIC','PIC-1')$$,'Platform Superuser can create Operational People');
+select extensions.lives_ok($$insert into public.manufacturers(id,account_id,code,name) values ('e3600000-0000-4000-8000-000000000001','e3100000-0000-0000-0000-000000000001','TEST-MFG','Test Manufacturer')$$,'Platform Superuser can create workspace manufacturer');
+select extensions.lives_ok($$insert into public.machine_models(id,account_id,manufacturer_id,model_code,name,machine_category,color_capability) values ('e3700000-0000-4000-8000-000000000001','e3100000-0000-0000-0000-000000000001','e3600000-0000-4000-8000-000000000001','TEST-MODEL','Test Model','digital_a3','color')$$,'Platform Superuser can create workspace model');
 select extensions.throws_ok($$delete from public.manufacturers where id='e3600000-0000-4000-8000-000000000001'$$,'23503',null,'manufacturer deletion is denied while a model references it');
-select extensions.lives_ok($$insert into public.manufacturers(id,account_id,code,name) values ('e3600000-0000-4000-8000-000000000002','e3100000-0000-0000-0000-000000000001','TEMP-MFG','Temporary Manufacturer')$$,'owner can create a second workspace manufacturer for deletion coverage');
-select extensions.lives_ok($$insert into public.machine_models(id,account_id,manufacturer_id,model_code,name,machine_category,color_capability) values ('e3700000-0000-4000-8000-000000000002','e3100000-0000-0000-0000-000000000001','e3600000-0000-4000-8000-000000000002','TEMP-MODEL','Temporary Model','digital_a3','color')$$,'owner can create a second workspace model for deletion coverage');
+select extensions.lives_ok($$insert into public.manufacturers(id,account_id,code,name) values ('e3600000-0000-4000-8000-000000000002','e3100000-0000-0000-0000-000000000001','TEMP-MFG','Temporary Manufacturer')$$,'Platform Superuser can create a second workspace manufacturer for deletion coverage');
+select extensions.lives_ok($$insert into public.machine_models(id,account_id,manufacturer_id,model_code,name,machine_category,color_capability) values ('e3700000-0000-4000-8000-000000000002','e3100000-0000-0000-0000-000000000001','e3600000-0000-4000-8000-000000000002','TEMP-MODEL','Temporary Model','digital_a3','color')$$,'Platform Superuser can create a second workspace model for deletion coverage');
 reset role;
 
 insert into public.operational_person_branches(account_id,operational_person_id,branch_id,assigned_by,updated_by)
@@ -64,20 +70,22 @@ values ('e3100000-0000-0000-0000-000000000001','e3500000-0000-4000-8000-00000000
 set local role authenticated;
 select set_config('request.jwt.claim.sub','e3000000-0000-0000-0000-000000000002',true);
 select extensions.is_empty($$update public.operational_people set notes='Admin managed' where id='e3500000-0000-4000-8000-000000000001' returning id$$,'Admin cannot mutate Owner-governed Operational People');
-select extensions.lives_ok($$update public.manufacturers set notes='Admin managed' where id='e3600000-0000-4000-8000-000000000001'$$,'admin can update workspace manufacturers');
-select extensions.lives_ok($$update public.machine_models set description='Admin managed' where id='e3700000-0000-4000-8000-000000000001'$$,'admin can update workspace machine models');
+select extensions.is_empty($$update public.manufacturers set notes='Admin managed' where id='e3600000-0000-4000-8000-000000000001' returning id$$,'Admin cannot update Settings-governed manufacturers');
+select extensions.is_empty($$update public.machine_models set description='Admin managed' where id='e3700000-0000-4000-8000-000000000001' returning id$$,'Admin cannot update Settings-governed machine models');
 select extensions.lives_ok($$insert into public.machines(account_id,branch_id,machine_model_id,machine_code,display_name) values ('e3100000-0000-0000-0000-000000000001','e3300000-0000-0000-0000-000000000001','e3700000-0000-4000-8000-000000000001','M23E-A-02','M2.3E Workspace Model Machine')$$,'admin can create a machine referencing a workspace model');
+select set_config('request.jwt.claim.sub','e3000000-0000-0000-0000-000000000007',true);
 select extensions.throws_ok($$delete from public.machine_models where id='e3700000-0000-4000-8000-000000000001'$$,'23503',null,'machine model deletion is denied while a machine references it');
 select extensions.lives_ok($$update public.machine_models set is_active=false where id='e3700000-0000-4000-8000-000000000001'$$,'referenced workspace model can be archived');
 select extensions.lives_ok($$update public.manufacturers set is_active=false where id='e3600000-0000-4000-8000-000000000001'$$,'referenced workspace manufacturer can be archived');
 select extensions.is((select machine_model_id from public.machines where machine_code='M23E-A-02'),'e3700000-0000-4000-8000-000000000001'::uuid,'catalog archive preserves the physical machine reference');
+select set_config('request.jwt.claim.sub','e3000000-0000-0000-0000-000000000002',true);
 select extensions.lives_ok($$select public.record_machine_counter('e3100000-0000-0000-0000-000000000001','e3400000-0000-4000-8000-000000000001',100,'2026-08-26 08:00+07','e3800000-0000-4000-8000-000000000001','e3500000-0000-4000-8000-000000000001',null,null,'total_impressions')$$,'admin records a reading for a different operational person');
 select extensions.is((select operator_person_id from public.counter_readings where client_request_id='e3800000-0000-4000-8000-000000000001'),'e3500000-0000-4000-8000-000000000001'::uuid,'counter stores the operational person reference');
 select extensions.is((select operator_name_snapshot from public.counter_readings where client_request_id='e3800000-0000-4000-8000-000000000001'),'Press PIC','counter stores operator name snapshot');
 select extensions.is((select created_by from public.counter_readings where client_request_id='e3800000-0000-4000-8000-000000000001'),'e3000000-0000-0000-0000-000000000002'::uuid,'authenticated creator remains separate from operator');
-select set_config('request.jwt.claim.sub','e3000000-0000-0000-0000-000000000001',true);
+select set_config('request.jwt.claim.sub','e3000000-0000-0000-0000-000000000007',true);
 select extensions.throws_ok($$delete from public.operational_people where id='e3500000-0000-4000-8000-000000000001'$$,'23503',null,'referenced operator cannot be hard deleted');
-select extensions.lives_ok($$update public.operational_people set name='Renamed PIC',is_active=false where id='e3500000-0000-4000-8000-000000000001'$$,'Owner can archive a referenced operator');
+select extensions.lives_ok($$update public.operational_people set name='Renamed PIC',is_active=false where id='e3500000-0000-4000-8000-000000000001'$$,'Platform Superuser can archive a referenced operator');
 select extensions.is((select operator_name_snapshot from public.counter_readings where client_request_id='e3800000-0000-4000-8000-000000000001'),'Press PIC','archive and rename do not change historical snapshot');
 reset role;
 

@@ -27,12 +27,16 @@ values('f5000000-0000-4000-8000-000000000001','authenticated','authenticated','m
 insert into public.accounts(id,code,name) values('f5100000-0000-4000-8000-000000000001','M24A-RACE','M2.4A Race');
 insert into public.account_memberships(id,account_id,user_id,role,status,accepted_at)
 values('f5200000-0000-4000-8000-000000000001','f5100000-0000-4000-8000-000000000001','f5000000-0000-4000-8000-000000000001','owner','active',now());
+insert into public.branches(id,account_id,code,name)
+values('f5250000-0000-4000-8000-000000000001','f5100000-0000-4000-8000-000000000001','RACE','Race Branch');
 insert into public.operational_people(id,account_id,name)
 values('f5300000-0000-4000-8000-000000000001','f5100000-0000-4000-8000-000000000001','Race PIC');
+insert into public.operational_person_branches(account_id,operational_person_id,branch_id)
+values('f5100000-0000-4000-8000-000000000001','f5300000-0000-4000-8000-000000000001','f5250000-0000-4000-8000-000000000001');
 insert into public.inventory_items(id,account_id,sku,name,unit)
 values('f5400000-0000-4000-8000-000000000001','f5100000-0000-4000-8000-000000000001','RACE','Race Item','pcs');
-insert into public.inventory_locations(id,account_id,code,name)
-values('f5500000-0000-4000-8000-000000000001','f5100000-0000-4000-8000-000000000001','RACE','Race Location');
+insert into public.inventory_locations(id,account_id,branch_id,code,name)
+values('f5500000-0000-4000-8000-000000000001','f5100000-0000-4000-8000-000000000001','f5250000-0000-4000-8000-000000000001','RACE','Race Location');
 insert into public.inventory_movements(id,account_id,inventory_item_id,location_id,movement_type,quantity,unit_snapshot,
   occurred_at,operational_person_id,operational_person_name_snapshot,reference_type,client_request_id,created_by,created_by_name_snapshot)
 values('f5600000-0000-4000-8000-000000000001','f5100000-0000-4000-8000-000000000001','f5400000-0000-4000-8000-000000000001',

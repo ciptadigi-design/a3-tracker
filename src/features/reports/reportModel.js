@@ -13,11 +13,17 @@ export const reportTabs = [
 export function validReportFilters(value) {
   return Boolean(value && reportTabs.some((tab) => tab.id === value.tab)
     && machineCostPeriodPresets.some((preset) => preset.id === value.preset)
-    && typeof value.branchId === 'string' && typeof value.machineId === 'string'
+    && (value.branchId == null || typeof value.branchId === 'string') && typeof value.machineId === 'string'
     && typeof value.customStart === 'string' && typeof value.customEnd === 'string'
     && typeof value.errorCategory === 'string' && typeof value.errorStatus === 'string'
     && (value.comparisonMetric == null || ['estimated_standard_contribution','total_clicks','standard_cost_per_click','error_waste_cost'].includes(value.comparisonMetric))
     && (value.componentSort == null || ['cost_rank','replacement_rank','unknown_evidence_rank'].includes(value.componentSort)))
+}
+
+export function removePersistedReportBranch(value) {
+  if (!value || !Object.hasOwn(value, 'branchId')) return value
+  const { branchId: _obsoleteBranchId, ...globalBranchFilters } = value
+  return globalBranchFilters
 }
 
 export function deltaPresentation(row) {

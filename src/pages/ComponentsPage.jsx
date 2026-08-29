@@ -52,13 +52,13 @@ function DensityControl({ density, onChange }) {
   </button>
 }
 
-function MachineComponentsPanel({ machines, lifecycles, exclusions, profiles, components, replacementHistory, selectedMachine, onMachineChange, canManage, canInitialize, canReplace, onAdd, onSync, onRemove, onClearExclusion, onInitialize, onReplace, density, busy }) {
+function MachineComponentsPanel({ branchName, machines, lifecycles, exclusions, profiles, components, replacementHistory, selectedMachine, onMachineChange, canManage, canInitialize, canReplace, onAdd, onSync, onRemove, onClearExclusion, onInitialize, onReplace, density, busy }) {
   const rows = lifecycles.filter((row) => row.machine_id === selectedMachine?.id)
   const initialized = rows.filter((row) => row.lifecycle_status === 'active').length
   const currentCounter = rows.find((row) => row.latest_effective_counter != null)?.latest_effective_counter
 
   return <>
-    <div className="model-selector-row components-context-row machine-components-context lifecycle-machine-selector"><label><span>Physical machine</span><select value={selectedMachine?.id ?? ''} onChange={(event) => onMachineChange(event.target.value)}>{machines.map((machine) => <option key={machine.id} value={machine.id}>{machine.machine_code} · {machine.display_name}</option>)}</select></label><div className="components-context-count"><strong>{rows.length}</strong><span>component slots · {initialized} initialized</span></div>{canManage && selectedMachine && <div className="machine-component-toolbar"><button className="secondary-button compact-action" type="button" onClick={onAdd} disabled={busy}><Plus size={15} />Add Component</button><button className="secondary-button compact-action" type="button" onClick={onSync} disabled={busy}><RefreshCcw className={busy ? 'spin' : ''} size={15} />Sync Model Profile</button></div>}</div>
+    <div className="model-selector-row components-context-row machine-components-context lifecycle-machine-selector"><label><span>Physical machine</span><select value={selectedMachine?.id ?? ''} onChange={(event) => onMachineChange(event.target.value)} disabled={!machines.length}><option value="">{machines.length ? 'Choose machine' : `No active machines in ${branchName ?? 'this branch'}`}</option>{machines.map((machine) => <option key={machine.id} value={machine.id}>{machine.machine_code} · {machine.display_name}</option>)}</select></label><div className="components-context-count"><strong>{rows.length}</strong><span>component slots · {initialized} initialized</span></div>{canManage && selectedMachine && <div className="machine-component-toolbar"><button className="secondary-button compact-action" type="button" onClick={onAdd} disabled={busy}><Plus size={15} />Add Component</button><button className="secondary-button compact-action" type="button" onClick={onSync} disabled={busy}><RefreshCcw className={busy ? 'spin' : ''} size={15} />Sync Model Profile</button></div>}</div>
     {exclusions.filter((item) => item.machine_id === selectedMachine?.id).map((exclusion) => {
       const profile = profiles.find((item) => item.id === exclusion.model_component_profile_id)
       const component = components.find((item) => item.id === profile?.component_id)
@@ -84,7 +84,7 @@ function MachineComponentsPanel({ machines, lifecycles, exclusions, profiles, co
         </>}</>}
       </article>
     })}</div>
-    {!rows.length && <div className="component-empty"><strong>No components configured for this machine model.</strong><span>No lifecycle or inventory movement was fabricated.</span>{canManage && selectedMachine && <div><button className="secondary-button" type="button" onClick={onAdd}><Plus size={15} />Add Machine Component</button><button className="secondary-button" type="button" onClick={onSync}><RefreshCcw size={15} />Sync Model Profile</button></div>}</div>}
+    {!selectedMachine ? <div className="component-empty"><strong>No active machines in {branchName ?? 'this branch'}.</strong><span>Machine Components follows the global Branch. Model Profiles and Component Catalog remain account-wide.</span></div> : !rows.length && <div className="component-empty"><strong>No components configured for this machine model.</strong><span>No lifecycle or inventory movement was fabricated.</span>{canManage && <div><button className="secondary-button" type="button" onClick={onAdd}><Plus size={15} />Add Machine Component</button><button className="secondary-button" type="button" onClick={onSync}><RefreshCcw size={15} />Sync Model Profile</button></div>}</div>}
     {selectedMachine && density === 'detailed' && <ReplacementHistory history={replacementHistory} machine={selectedMachine} />}
   </>
 }
@@ -100,7 +100,7 @@ export function ComponentsPage() {
   const canInitialize = canManage || (membership?.role === 'operator' && operationalPermissions?.operator_can_initialize_component)
   const canReplace = ['owner', 'admin', 'technician'].includes(membership?.role) || (membership?.role === 'operator' && operationalPermissions?.operator_can_replace_component)
   const [data, setData] = useState({ manufacturers: [], models: [], components: [], profiles: [], intelligence: [], intelligenceSamples: [] })
-  const [operational, setOperational] = useState({ machines: [], lifecycles: [], exclusions: [], replacementHistory: [], operationalPeople: [], inventoryItems: [], inventoryLocations: [], inventoryBalances: [] })
+  const [operational, setOperational] = useState({ branchId: null, machines: [], lifecycles: [], exclusions: [], replacementHistory: [], operationalPeople: [], inventoryItems: [], inventoryLocations: [], inventoryBalances: [] })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [notice, setNotice] = useState(null)
@@ -141,10 +141,13 @@ export function ComponentsPage() {
   useEffect(() => {
     if (!view.modelId && data.models[0]) setView((current) => ({ ...current, modelId: data.models[0].id }))
   }, [data.models, setView, view.modelId])
-  const selectedMachine = operational.machines.find((machine) => machine.id === view.machineId) ?? operational.machines[0] ?? null
+  const scopedOperational = operational.branchId === branch?.id ? operational : { ...operational, machines: [], lifecycles: [], exclusions: [], replacementHistory: [], operationalPeople: [], inventoryLocations: [], inventoryBalances: [] }
+  const selectedMachine = scopedOperational.machines.find((machine) => machine.id === view.machineId) ?? null
   useEffect(() => {
-    if (!view.machineId && operational.machines[0]) setView((current) => ({ ...current, machineId: operational.machines[0].id }))
-  }, [operational.machines, setView, view.machineId])
+    const machineIdIsValid = scopedOperational.machines.some((machine) => machine.id === view.machineId)
+    if (view.machineId && !machineIdIsValid) setView((current) => ({ ...current, machineId: null }))
+    else if (!view.machineId && scopedOperational.machines[0]) setView((current) => ({ ...current, machineId: scopedOperational.machines[0].id }))
+  }, [scopedOperational.machines, setView, view.machineId])
 
   const effective = useMemo(() => effectiveProfiles(data.profiles, account.id, selectedModel?.id), [account.id, data.profiles, selectedModel?.id])
   const allEffectiveProfiles = useMemo(() => data.models.flatMap((model) => effectiveProfiles(data.profiles, account.id, model.id)), [account.id, data.models, data.profiles])
@@ -157,8 +160,8 @@ export function ComponentsPage() {
   const activeIntelligence = data.intelligence.find((item) => item.effective_profile_id === intelligenceProfile?.id)
   const assigningComponent = data.components.find((component) => component.id === workflow.entityId)
   const profileModel = data.models.find((model) => model.id === editingProfile?.machine_model_id) ?? selectedModel
-  const initializingLifecycle = operational.lifecycles.find((row) => workflow.type === 'lifecycle-initialize' ? row.assignment_id === workflow.entityId : row.lifecycle_id === workflow.entityId)
-  const lifecycleMachine = operational.machines.find((machine) => machine.id === initializingLifecycle?.machine_id)
+  const initializingLifecycle = scopedOperational.lifecycles.find((row) => workflow.type === 'lifecycle-initialize' ? row.assignment_id === workflow.entityId : row.lifecycle_id === workflow.entityId)
+  const lifecycleMachine = scopedOperational.machines.find((machine) => machine.id === initializingLifecycle?.machine_id)
 
   async function savedComponent(values) {
     await saveComponent({ accountId: account.id, component: editingComponent, values })
@@ -283,7 +286,7 @@ export function ComponentsPage() {
     <section className={`component-shell component-density-${density} glass-surface`}>
       <div className="component-toolbar components-shell-header"><div className="machine-view-tabs"><button className={view.tab === 'machine' ? 'selected' : ''} onClick={() => setView((current) => ({ ...current, tab: 'machine' }))}>Machine Components</button><button className={view.tab === 'profiles' ? 'selected' : ''} onClick={() => setView((current) => ({ ...current, tab: 'profiles' }))}>Model Profiles</button><button className={view.tab === 'catalog' ? 'selected' : ''} onClick={() => setView((current) => ({ ...current, tab: 'catalog' }))}>Component Catalog</button></div><div className="component-toolbar-actions"><DensityControl density={density} onChange={(mode) => setDensityState({ mode })} /><button className="icon-button" type="button" onClick={refresh} aria-label="Refresh Components" title="Refresh Components"><RefreshCcw size={17} className={loading ? 'spin' : ''} /></button></div></div>
 
-      {view.tab === 'machine' && <MachineComponentsPanel machines={operational.machines} lifecycles={operational.lifecycles} exclusions={operational.exclusions} profiles={data.profiles} components={data.components} replacementHistory={operational.replacementHistory} selectedMachine={selectedMachine} onMachineChange={(machineId) => setView((current) => ({ ...current, machineId }))} canManage={canManage} canInitialize={canInitialize} canReplace={canReplace} onAdd={() => open('machine-component-add')} onSync={syncSelectedMachine} onRemove={(assignment) => setConfirm({ kind: 'machine-component', item: assignment })} onClearExclusion={clearExclusion} onInitialize={(assignmentId) => open('lifecycle-initialize', assignmentId)} onReplace={(lifecycleId) => open('lifecycle-replace', lifecycleId)} density={density} busy={busy} />}
+      {view.tab === 'machine' && <MachineComponentsPanel branchName={branch?.name} machines={scopedOperational.machines} lifecycles={scopedOperational.lifecycles} exclusions={scopedOperational.exclusions} profiles={data.profiles} components={data.components} replacementHistory={scopedOperational.replacementHistory} selectedMachine={selectedMachine} onMachineChange={(machineId) => setView((current) => ({ ...current, machineId }))} canManage={canManage} canInitialize={canInitialize} canReplace={canReplace} onAdd={() => open('machine-component-add')} onSync={syncSelectedMachine} onRemove={(assignment) => setConfirm({ kind: 'machine-component', item: assignment })} onClearExclusion={clearExclusion} onInitialize={(assignmentId) => open('lifecycle-initialize', assignmentId)} onReplace={(lifecycleId) => open('lifecycle-replace', lifecycleId)} density={density} busy={busy} />}
 
       {view.tab === 'profiles' && <>
         <div className="model-selector-row components-context-row model-profiles-context"><label><span>Machine model</span><select value={selectedModel?.id ?? ''} onChange={(event) => setView((current) => ({ ...current, modelId: event.target.value }))}>{data.models.map((model) => <option key={model.id} value={model.id}>{model.manufacturers?.name} · {model.name}</option>)}</select></label><div className="components-context-count"><strong>{effective.filter((profile) => profile.is_active).length}</strong><span>active profiles</span></div><div className="profile-list-tools"><div className="machine-view-tabs record-tabs"><button className={!view.showArchived ? 'selected' : ''} onClick={() => setView((current) => ({ ...current, showArchived: false }))}>Active <span>{effective.filter((profile) => profile.is_active).length}</span></button><button className={view.showArchived ? 'selected' : ''} onClick={() => setView((current) => ({ ...current, showArchived: true }))}>Archived <span>{effective.filter((profile) => !profile.is_active).length}</span></button></div></div></div>
@@ -340,7 +343,7 @@ export function ComponentsPage() {
     {canManage && selectedModel && (workflow.type === 'profile-create' || (workflow.type === 'profile-edit' && editingProfile) || (workflow.type === 'profile-assign' && assigningComponent)) && <ProfileDialog account={account} model={profileModel} models={data.models} profile={editingProfile} components={data.components} initialComponent={workflow.type === 'profile-assign' ? assigningComponent : null} draftEntityId={workflow.type === 'profile-assign' ? `assign-${assigningComponent.id}` : undefined} onClose={close} onSave={savedProfile} />}
     {canManage && workflow.type === 'machine-component-add' && selectedMachine && <MachineComponentDialog machine={selectedMachine} components={data.components} onClose={close} onSave={savedMachineComponent} />}
     {canInitialize && workflow.type === 'lifecycle-initialize' && initializingLifecycle && lifecycleMachine && <InitializeLifecycleDialog account={account} machine={lifecycleMachine} lifecycle={initializingLifecycle} onClose={close} onInitialize={initializeLifecycle} />}
-    {canReplace && workflow.type === 'lifecycle-replace' && initializingLifecycle?.lifecycle_status === 'active' && lifecycleMachine && <ReplaceComponentDialog account={account} machine={lifecycleMachine} lifecycle={initializingLifecycle} operationalPeople={operational.operationalPeople} inventoryItems={operational.inventoryItems} inventoryLocations={operational.inventoryLocations} inventoryBalances={operational.inventoryBalances} onClose={close} onReplace={replaceLifecycle} />}
+    {canReplace && workflow.type === 'lifecycle-replace' && initializingLifecycle?.lifecycle_status === 'active' && lifecycleMachine && <ReplaceComponentDialog account={account} machine={lifecycleMachine} lifecycle={initializingLifecycle} operationalPeople={scopedOperational.operationalPeople} inventoryItems={scopedOperational.inventoryItems} inventoryLocations={scopedOperational.inventoryLocations} inventoryBalances={scopedOperational.inventoryBalances} onClose={close} onReplace={replaceLifecycle} />}
     {workflow.type === 'intelligence-view' && activeIntelligence && <ComponentIntelligenceDialog intelligence={activeIntelligence} samples={data.intelligenceSamples} canManage={canManage} onClose={close} onAdopt={adoptRecommendation} />}
     {confirm && <ConfirmDialog
       title={confirm.kind === 'component' ? 'Archive Component Catalog Entry' : confirm.kind === 'profile' ? 'Archive Model Profile' : 'Remove from Machine'}
