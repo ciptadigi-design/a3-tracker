@@ -174,7 +174,11 @@ returns boolean language sql stable security definer set search_path='' as $$
               membership.role='owner' or exists(
                 select 1 from public.account_membership_branches assignment
                 where assignment.account_id=target_account_id and assignment.membership_id=membership.id
-                  and assignment.branch_id=target_branch_id and assignment.is_active))))))
+                  and assignment.branch_id=target_branch_id and assignment.is_active
+              )
+            )
+        )
+      )
 $$;
 
 create or replace function public.can_access_operational_scope(target_account_id uuid,target_branch_id uuid)
