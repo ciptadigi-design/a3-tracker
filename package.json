@@ -15,6 +15,7 @@
     "test:daily-ui": "node --test src/features/counters/*.test.js",
     "test:settings-ui": "node --test src/features/settings/*.test.js",
     "test:auth-ui": "node --test src/features/auth/*.test.js",
+    "test:migration": "node --test scripts/migration/*.test.mjs",
     "preview": "vite preview"
   },
   "dependencies": {

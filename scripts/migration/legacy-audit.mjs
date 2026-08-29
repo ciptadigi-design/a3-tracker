@@ -290,14 +290,19 @@ async function fetchAllRows(url, key, table) {
   }
 }
 
-export async function auditLegacyProject({ url, key }) {
+export async function fetchLegacyData({ url, key }) {
   const entries = await Promise.all(LEGACY_TABLES.map(async (table) => [table, await fetchAllRows(url, key, table)]))
+  return Object.fromEntries(entries)
+}
+
+export async function auditLegacyProject({ url, key }) {
+  const data = await fetchLegacyData({ url, key })
   const [authSettings, buckets] = await Promise.all([
     getJson(url, key, '/auth/v1/settings'),
     getJson(url, key, '/storage/v1/bucket'),
   ])
   return {
-    ...analyzeLegacyData(Object.fromEntries(entries)),
+    ...analyzeLegacyData(data),
     services: {
       auth_endpoint_reachable: Boolean(authSettings),
       auth_user_inventory_available_with_client_key: false,

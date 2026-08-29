@@ -1,0 +1,35 @@
+-- M2.10A DISPOSABLE-ONLY accepted-new-evidence collision fixture.
+\set ON_ERROR_STOP on
+begin;
+
+-- The guarded legacy bootstrap uses gen_random_uuid(). Normalize only these
+-- disposable fixture identities before any event references them.
+update public.machine_component_lifecycles lifecycle
+set id=('a3600000-0000-4000-8000-'||right(assignment.id::text,12))::uuid
+from public.machine_component_assignments assignment
+where lifecycle.machine_component_assignment_id=assignment.id
+  and lifecycle.machine_id='b4ca07ee-c588-404d-abcf-b6a029e68776';
+
+insert into public.inventory_items(id,account_id,component_id,sku,name,unit,is_active) values
+('a3000000-0000-4000-8000-000000000001','357e420a-c9ea-4404-9da4-f254c5dce5ef','53000000-0000-0000-0000-000000000025','FIX-TON-C','Fixture Toner Cyan','bottle',true),
+('a3000000-0000-4000-8000-000000000002','357e420a-c9ea-4404-9da4-f254c5dce5ef','53000000-0000-0000-0000-000000000026','FIX-TON-M','Fixture Toner Magenta','bottle',true);
+insert into public.inventory_movements(id,account_id,inventory_item_id,location_id,movement_type,quantity,unit_snapshot,occurred_at,operational_person_id,operational_person_name_snapshot,reference_type,reference_id,client_request_id,created_by,created_by_name_snapshot,notes) values
+('a3100000-0000-4000-8000-000000000001','357e420a-c9ea-4404-9da4-f254c5dce5ef','a3000000-0000-4000-8000-000000000001','b6296488-5479-4dd0-9463-091891b4cbe4','opening_balance',2,'bottle','2026-08-27 14:00+00','c89d9c9c-b892-4794-b69c-f2680908a068','Akmal Fauzan','opening_balance',null,'a3200000-0000-4000-8000-000000000001','a0000000-0000-4000-8000-000000000001','M2.10A Fixture Owner','NON_PRODUCTION_FIXTURE accepted-target baseline'),
+('a3100000-0000-4000-8000-000000000002','357e420a-c9ea-4404-9da4-f254c5dce5ef','a3000000-0000-4000-8000-000000000002','b6296488-5479-4dd0-9463-091891b4cbe4','opening_balance',2,'bottle','2026-08-27 14:00+00','c89d9c9c-b892-4794-b69c-f2680908a068','Akmal Fauzan','opening_balance',null,'a3200000-0000-4000-8000-000000000002','a0000000-0000-4000-8000-000000000001','M2.10A Fixture Owner','NON_PRODUCTION_FIXTURE accepted-target baseline'),
+('a3100000-0000-4000-8000-000000000003','357e420a-c9ea-4404-9da4-f254c5dce5ef','a3000000-0000-4000-8000-000000000001','b6296488-5479-4dd0-9463-091891b4cbe4','issue',-1,'bottle','2026-08-27 15:08+00','c89d9c9c-b892-4794-b69c-f2680908a068','Akmal Fauzan','component_replacement','a3400000-0000-4000-8000-000000000001','a3500000-0000-4000-8000-000000000001','a0000000-0000-4000-8000-000000000001','M2.10A Fixture Owner','Accepted new-system fixture evidence'),
+('a3100000-0000-4000-8000-000000000004','357e420a-c9ea-4404-9da4-f254c5dce5ef','a3000000-0000-4000-8000-000000000002','b6296488-5479-4dd0-9463-091891b4cbe4','issue',-1,'bottle','2026-08-27 15:08+00','c89d9c9c-b892-4794-b69c-f2680908a068','Akmal Fauzan','component_replacement','a3400000-0000-4000-8000-000000000002','a3500000-0000-4000-8000-000000000002','a0000000-0000-4000-8000-000000000001','M2.10A Fixture Owner','Accepted new-system fixture evidence');
+
+update public.machine_component_lifecycles set status='closed',removed_counter=1438992,removed_at='2026-08-27 15:08+00',actual_usage=1438992-installed_counter
+where machine_id='b4ca07ee-c588-404d-abcf-b6a029e68776' and slot_code in ('TONER_C','TONER_M') and status='active';
+insert into public.machine_component_lifecycles(id,account_id,branch_id,machine_id,model_component_profile_id,component_id,slot_code,status,installed_counter,installed_at,installation_source,baseline_expected_clicks_snapshot,expected_at_install,notes) values
+('a3300000-0000-4000-8000-000000000001','357e420a-c9ea-4404-9da4-f254c5dce5ef','76d3c7ab-55c3-40f7-b133-0ef54a448893','b4ca07ee-c588-404d-abcf-b6a029e68776','a0200000-0000-4000-8000-000000000001','53000000-0000-0000-0000-000000000025','TONER_C','active',1438992,'2026-08-27 15:08+00','replacement',14000,14000,'Accepted newer target fixture lifecycle; migration must preserve.'),
+('a3300000-0000-4000-8000-000000000002','357e420a-c9ea-4404-9da4-f254c5dce5ef','76d3c7ab-55c3-40f7-b133-0ef54a448893','b4ca07ee-c588-404d-abcf-b6a029e68776','54000000-0000-0000-0000-000000000026','53000000-0000-0000-0000-000000000026','TONER_M','active',1438992,'2026-08-27 15:08+00','replacement',14000,14000,'Accepted newer target fixture lifecycle; migration must preserve.');
+
+insert into public.component_replacement_events(id,account_id,branch_id,machine_id,model_component_profile_id,component_id,slot_code_snapshot,previous_lifecycle_id,new_lifecycle_id,previous_installed_counter,replacement_counter,actual_usage,expected_at_install,baseline_expected_snapshot,replacement_reason,condition_at_removal,include_in_adaptive_learning,performed_by_name_snapshot,replaced_at,notes,counter_reading_id,client_request_id,created_by,inventory_source,inventory_movement_id,performed_by_person_id)
+select 'a3400000-0000-4000-8000-000000000001','357e420a-c9ea-4404-9da4-f254c5dce5ef','76d3c7ab-55c3-40f7-b133-0ef54a448893','b4ca07ee-c588-404d-abcf-b6a029e68776',old.model_component_profile_id,old.component_id,'TONER_C',old.id,'a3300000-0000-4000-8000-000000000001',old.installed_counter,1438992,1438992-old.installed_counter,old.expected_at_install,old.baseline_expected_clicks_snapshot,'depleted','worn',true,'Akmal Fauzan','2026-08-27 15:08+00','Accepted newer target fixture chain; KEEP NEW.',null,'a3500000-0000-4000-8000-000000000001','a0000000-0000-4000-8000-000000000001','inventory','a3100000-0000-4000-8000-000000000003','c89d9c9c-b892-4794-b69c-f2680908a068'
+from public.machine_component_lifecycles old where old.machine_id='b4ca07ee-c588-404d-abcf-b6a029e68776' and old.slot_code='TONER_C' and old.status='closed';
+insert into public.component_replacement_events(id,account_id,branch_id,machine_id,model_component_profile_id,component_id,slot_code_snapshot,previous_lifecycle_id,new_lifecycle_id,previous_installed_counter,replacement_counter,actual_usage,expected_at_install,baseline_expected_snapshot,replacement_reason,condition_at_removal,include_in_adaptive_learning,performed_by_name_snapshot,replaced_at,notes,counter_reading_id,client_request_id,created_by,inventory_source,inventory_movement_id,performed_by_person_id)
+select 'a3400000-0000-4000-8000-000000000002','357e420a-c9ea-4404-9da4-f254c5dce5ef','76d3c7ab-55c3-40f7-b133-0ef54a448893','b4ca07ee-c588-404d-abcf-b6a029e68776',old.model_component_profile_id,old.component_id,'TONER_M',old.id,'a3300000-0000-4000-8000-000000000002',old.installed_counter,1438992,1438992-old.installed_counter,old.expected_at_install,old.baseline_expected_clicks_snapshot,'depleted','worn',true,'Akmal Fauzan','2026-08-27 15:08+00','Accepted newer target fixture chain; KEEP NEW.',null,'a3500000-0000-4000-8000-000000000002','a0000000-0000-4000-8000-000000000001','inventory','a3100000-0000-4000-8000-000000000004','c89d9c9c-b892-4794-b69c-f2680908a068'
+from public.machine_component_lifecycles old where old.machine_id='b4ca07ee-c588-404d-abcf-b6a029e68776' and old.slot_code='TONER_M' and old.status='closed';
+
+commit;

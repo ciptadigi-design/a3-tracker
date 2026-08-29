@@ -15,3 +15,9 @@ Manufacturers and Models now share one compact grid grammar: icon, identity, con
 The header action follows the selected tab (`Manufacturer` or `Model`), segmented tabs are compact and connected to the dataset, and empty states are explicit. Component Model Profiles is a shorter secondary card with a compact `Manage Profiles` action and an active-slot/across-models metric derived from `machine_model_id`.
 
 Add/Edit dialogs retain `BlockingDialog`, existing spacing/footer conventions, and persistent drafts. No Manufacturer, Machine Model, Model Profile, component, provisioning, inventory, cost, report, role, or migration semantics changed.
+
+### Final spacing acceptance
+
+The remaining visual issue was structural: tabs and list rows were individually margin/padded from the panel edge, but they did not share an explicit inner content region with the header. `MachineMasterGovernance` now wraps both tab views, their rows, and every empty/loading-state position in `machine-master-content`.
+
+The wrapper uses the established Settings rhythm responsively: 24 px desktop, 20 px tablet, and 14 px compact-mobile content gutters. The header uses the matching 24/20/16 px rhythm; list rows retain their small intentional card indentation. The list now has a contained rounded boundary, so both Manufacturers and Models read as one dataset instead of touching the panel divider. The compact Component Model Profiles card remains subordinate and unchanged in behavior. No sidebar geometry or business logic changed.

@@ -1,0 +1,27 @@
+{
+  "migration_version": "m2.10a-v1",
+  "mapping_version": "m2.9c-v1",
+  "source_project": "wtslqxjwjqyjgcapfrrz",
+  "target_type": "DISPOSABLE",
+  "target_schema_ledger": "20260829000600",
+  "account_id": "357e420a-c9ea-4404-9da4-f254c5dce5ef",
+  "branch_id": "76d3c7ab-55c3-40f7-b133-0ef54a448893",
+  "machine_id": "b4ca07ee-c588-404d-abcf-b6a029e68776",
+  "denylisted_branch_ids": ["9f753339-0d54-42c9-9bb6-afe2461803f8"],
+  "manual_exclusions": [
+    "click_history:54da82a6-b723-442c-880f-19215e1f35bb",
+    "click_history:82d3b425-7273-415d-8c49-338d92405962",
+    "inventory_parts:28", "inventory_parts:29", "inventory_parts:30", "inventory_parts:31", "inventory_parts:32", "inventory_parts:33",
+    "inventory_parts:34", "inventory_parts:35", "inventory_parts:36", "inventory_parts:37", "inventory_parts:38", "inventory_parts:39",
+    "inventory_parts:40", "inventory_parts:41", "inventory_parts:42", "inventory_parts:43", "inventory_parts:44", "inventory_parts:45",
+    "inventory_parts:46", "inventory_parts:47", "inventory_parts:48", "inventory_parts:49",
+    "part_replacements:2fb16092-4494-4682-a365-fb20ae97e88a",
+    "part_replacements:41342cc0-fc25-4d14-8bf5-b6b8c5cb21e4",
+    "part_replacements:73543d0f-99e5-46b3-a02a-4c84967f6194",
+    "part_replacements:d959e9d2-08f6-4db2-b068-5cdcaec3b2d3",
+    "part_replacements:e8e26ec3-c0e3-4f37-8b28-fdb5ba847be6"
+  ],
+  "disposition_totals": { "IMPORT": 476, "MERGE": 1, "SKIP_DUPLICATE": 2, "ARCHIVE_ONLY": 18, "MANUAL_REVIEW": 29 },
+  "eligible_accounted": 497,
+  "unexplained_remainder": 0
+}

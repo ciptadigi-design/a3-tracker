@@ -11,3 +11,9 @@ Opening stock is excluded or supplied only as a fixture marked `NON_PRODUCTION_F
 M2.10B is a later **Hosted Staging Migration Acceptance** milestone requiring approval of remaining hosted mappings, full legacy inventory or accepted limitation, exact hosted fingerprint, backup, and explicit apply authorization. Production apply remains separate and additionally requires physical stock opname, opening approval, freeze owner/window, final snapshot/fingerprints, rollback, reconciliation, and acceptance.
 
 M2.10A must not mutate hosted DEV or Production, create final opening stock, perform final freeze, or start domain cutover.
+
+## M2.10A proof (2026-08-30)
+
+The contract is now implemented and proven against the exact local migration ledger. Full transactional dry-run, first disposable apply, idempotent second apply, fresh-target deterministic rerun, deliberate rollback failure, 526-row reconciliation, and zero-Graha/zero-purchase-stock assertions passed. The 29 manual rows remain explicitly excluded. See `M2_10A_DISPOSABLE_MIGRATION_ENGINE.md` and `scripts/migration/reconciliation/m2-10a/`.
+
+This proof does not authorize M2.10B or Production apply; all previously listed hosted and production gates remain open.

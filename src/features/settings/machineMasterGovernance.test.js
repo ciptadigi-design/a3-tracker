@@ -40,6 +40,9 @@ test('Manufacturer and Model rows share one aligned identity, fact, status, and 
 })
 
 test('Machine Models layout becomes a stacked mobile list without horizontal grid dependence', () => {
+  assert.match(view, /machine-master-content/)
+  assert.match(styles, /\.machine-master-content \{ padding: 0 24px 18px;/)
+  assert.match(styles, /\.machine-master-content \{ padding: 0 14px 14px;/)
   assert.match(styles, /\.machine-master-list article \{ grid-template-columns: auto minmax\(0,1fr\) auto;/)
   assert.match(styles, /\.machine-master-list \.machine-master-fact \{ grid-column: 2;/)
   assert.match(styles, /\.machine-master-list \.machine-master-actions \{ width: 71px; grid-column: 2 \/ -1;/)
