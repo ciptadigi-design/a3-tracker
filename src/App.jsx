@@ -5,6 +5,7 @@ import { TenantProvider } from './features/account/TenantProvider.jsx'
 import { AppShell } from './app/AppShell.jsx'
 import { LoadingScreen } from './components/ui/LoadingScreen.jsx'
 import { PasswordSetupPage } from './features/auth/PasswordSetupPage.jsx'
+import { AppErrorBoundary } from './components/ui/AppErrorBoundary.jsx'
 import './App.css'
 
 function AuthenticatedRoot() {
@@ -23,8 +24,10 @@ function AuthenticatedRoot() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <AuthenticatedRoot />
-    </AuthProvider>
+    <AppErrorBoundary>
+      <AuthProvider>
+        <AuthenticatedRoot />
+      </AuthProvider>
+    </AppErrorBoundary>
   )
 }

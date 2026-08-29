@@ -1,4 +1,5 @@
 import { supabase } from './client.js'
+import { operationalError } from '../../lib/appErrors.js'
 
 export async function loadCounterHistory({ accountId, machineId }) {
   const [historyResult, profilesResult] = await Promise.all([
@@ -34,7 +35,7 @@ export async function recordCounterReading({ accountId, machineId, readingValue,
     target_counter_type_code: 'total_impressions',
   })
 
-  if (error) throw error
+  if (error) throw operationalError(error, { operation: 'counter.record', accountId, clientRequestId }, 'The counter reading could not be recorded.')
   return data
 }
 
@@ -47,6 +48,6 @@ export async function correctCounterReading({ readingId, correctionReason, repla
     target_replacement_notes: replacementNotes?.trim() || null,
   })
 
-  if (error) throw error
+  if (error) throw operationalError(error, { operation: 'counter.correct', clientRequestId }, 'The counter correction could not be completed.')
   return data
 }

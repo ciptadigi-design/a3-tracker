@@ -1,5 +1,7 @@
 # React + Vite
 
+Operational deployment and recovery procedures: [M2.8 Production Readiness Runbook](docs/M2_8_PRODUCTION_READINESS_RUNBOOK.md).
+
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
 Currently, two official plugins are available:

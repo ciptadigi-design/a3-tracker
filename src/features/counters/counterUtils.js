@@ -40,7 +40,7 @@ export function calculateDailySummary(history, timezone, now = new Date()) {
 }
 
 export function mapCounterError(error) {
-  const message = `${error?.message ?? ''} ${error?.details ?? ''}`.trim()
+  const message = `${error?.cause?.message ?? ''} ${error?.message ?? ''} ${error?.details ?? ''}`.trim()
   if (message.includes('counter regression')) return 'The new counter is lower than the previous effective reading. Check the machine display and try again.'
   if (message.includes('older than the latest')) return 'The observed time is earlier than the latest effective reading. Counter entries must remain chronological.'
   if (message.includes('cannot be in the future')) return 'Observed time cannot be more than five minutes in the future.'

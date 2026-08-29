@@ -1,8 +1,9 @@
 import { supabase } from './client.js'
+import { operationalError } from '../../lib/appErrors.js'
 
 async function invokeAccount(body, fallback) {
   const { data, error } = await supabase.functions.invoke('manage-account', { body })
-  if (error) throw new Error(data?.error || fallback)
+  if (error) throw operationalError(error, { operation: `my-account.${body.action}`, clientRequestId: body.clientRequestId }, data?.error || fallback)
   return data
 }
 

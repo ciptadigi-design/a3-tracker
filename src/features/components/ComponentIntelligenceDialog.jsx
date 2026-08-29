@@ -3,6 +3,7 @@ import { AlertTriangle, BarChart3, CheckCircle2, Sparkles, X, XCircle } from 'lu
 import { BlockingDialog } from '../../components/ui/BlockingDialog.jsx'
 import { removalConditionLabels, replacementReasonLabels } from './componentReplacement.js'
 import { ComponentChannelMarker } from './ComponentChannelMarker.jsx'
+import { userErrorMessage } from '../../lib/appErrors.js'
 
 const confidenceLabels = { no_data: 'No Data', very_low: 'Very Low', low: 'Low', developing: 'Developing', medium: 'Medium', high: 'High', mature: 'Mature' }
 const recommendationLabels = { no_data: 'Waiting for lifecycle samples', insufficient_data: 'Data Belum Cukup', keep_baseline: 'Pertahankan Baseline', review_increase: 'Pertimbangkan Naik', review_decrease: 'Pertimbangkan Turun', high_variability: 'Variasi Tinggi — Tinjau Data', adaptive_disabled: 'Rekomendasi Adaptif Dinonaktifkan' }
@@ -51,7 +52,7 @@ export function ComponentIntelligenceDialog({ intelligence, samples, canManage, 
       {guardrail && <div className="intelligence-guardrail"><AlertTriangle size={17} /><span>The observed estimate exceeds the maximum one-step adjustment. The suggestion is limited to {signed(intelligence.maximum_adjustment_percent, '%')} from the current baseline.</span></div>}
       <label className="form-field form-field-wide"><span>Adoption note <small>optional</small></span><textarea value={reason} onChange={(event) => setReason(event.target.value)} maxLength={500} placeholder="Why this recommendation is being adopted" /></label>
       <p className="intelligence-immutability-note">The installed component keeps its original expectation snapshot. The adopted baseline applies when a future lifecycle starts.</p>
-      {error && <div className="inline-error"><span>{error.message}</span></div>}
+      {error && <div className="inline-error"><span>{userErrorMessage(error, 'Component intelligence could not be loaded.')}</span></div>}
       <div className="dialog-actions"><button className="secondary-button" onClick={() => setConfirming(false)} disabled={busy}>Cancel</button><button className="primary-button" onClick={adopt} disabled={busy}>{busy ? 'Adopting…' : 'Adopt Baseline'}</button></div>
     </div>
   </BlockingDialog>

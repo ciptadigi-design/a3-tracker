@@ -3,6 +3,7 @@ import { supabase, supabaseConfigurationError } from '../../services/supabase/cl
 import { AuthContext } from './authContext.js'
 import { clearDraftsForUser } from '../drafts/draftStorage.js'
 import { clearUIStateForUser } from '../uiState/uiStateStorage.js'
+import { reportFailure } from '../../lib/appErrors.js'
 
 export function AuthProvider({ children }) {
   const [session, setSession] = useState(null)
@@ -17,7 +18,7 @@ export function AuthProvider({ children }) {
     let isMounted = true
     supabase.auth.getSession().then(({ data, error }) => {
       if (!isMounted) return
-      if (error) console.error('Unable to restore Supabase session', error)
+      if (error) reportFailure(error, { operation: 'auth.session.restore' })
       setSession(data.session ?? null)
       setIsLoading(false)
     })
@@ -47,13 +48,19 @@ export function AuthProvider({ children }) {
         if (error || !data?.access_token || !data?.refresh_token) throw new Error(data?.error || 'Invalid username/email or password.')
         const result = await supabase.auth.setSession({ access_token: data.access_token, refresh_token: data.refresh_token })
         if (result.error) throw new Error('Invalid username/email or password.')
-        await supabase.rpc('accept_current_memberships')
+        const membership = await supabase.rpc('accept_current_memberships')
+        if (membership.error) {
+          reportFailure(membership.error, { operation: 'auth.membership.accept' })
+          await supabase.auth.signOut()
+          throw new Error('Workspace access could not be activated. Please try again.')
+        }
       },
       async completePasswordSetup(password) {
         if (!supabase) throw new Error(supabaseConfigurationError)
         const { error } = await supabase.auth.updateUser({ password })
         if (error) throw error
-        await supabase.rpc('accept_current_memberships')
+        const membership = await supabase.rpc('accept_current_memberships')
+        if (membership.error) throw new Error('Workspace access could not be activated. Please try again.')
         setNeedsPasswordSetup(false)
         window.history.replaceState({}, '', window.location.pathname)
       },

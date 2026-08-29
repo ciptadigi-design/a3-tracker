@@ -16,6 +16,7 @@ import { formatIncidentDate, formatRupiah, mapIncidentError } from './incidentUt
 import { useOperationalIncident } from './useOperationalIncidents.js'
 import { VoidIncidentDialog } from './VoidIncidentDialog.jsx'
 import { solveOperationalIncident, updateOperationalIncident, voidOperationalIncident } from '../../services/supabase/operationalIncidents.js'
+import { userErrorMessage } from '../../lib/appErrors.js'
 
 const emptyEditWorkflow = { type: null }
 const isEditWorkflow = (value) => value && (value.type === null || value.type === 'edit')
@@ -30,9 +31,9 @@ function Narrative({ number, title, value }) {
 
 export function IncidentDetailPage({ incidentId, navigate }) {
   const { user } = useAuth()
-  const { account, branches, membership } = useTenant()
-  const state = useOperationalIncident(account.id, incidentId)
-  const machinesState = useMachines(account.id)
+  const { account, branch: activeBranch, branches, membership } = useTenant()
+  const state = useOperationalIncident(account.id, activeBranch.id, incidentId)
+  const machinesState = useMachines(account.id, activeBranch.id)
   const [showVoid, setShowVoid] = useState(false)
   const [showSolve, setShowSolve] = useState(false)
   const [actionError, setActionError] = useState(null)
@@ -50,8 +51,8 @@ export function IncidentDetailPage({ incidentId, navigate }) {
   }, [clearEditWorkflow, editWorkflowType, state.incident?.status])
 
   if (state.isLoading) return <LoadingScreen label="Memuat detail operational error" />
-  if (state.error) return <ErrorState title="Incident tidak dapat dimuat" detail={state.error.message} onRetry={state.refresh} />
-  if (!state.incident) return <ErrorState title="Incident tidak ditemukan" detail="Record tidak tersedia pada account aktif." />
+  if (state.error) return <ErrorState title="Incident tidak dapat dimuat" detail={userErrorMessage(state.error, 'Detail incident sementara tidak tersedia.')} onRetry={state.refresh} />
+  if (!state.incident) return <ErrorState title="Incident tidak tersedia di Branch ini" detail="Pilih Branch pemilik incident atau kembali ke daftar Errors Branch aktif." />
 
   const incident = state.incident
   const branch = branches.find((item) => item.id === incident.branch_id)

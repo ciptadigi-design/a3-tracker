@@ -40,7 +40,7 @@ export function validateMachineForm(values, { branches, models, mode }) {
 }
 
 export function mapMachineMutationError(error) {
-  const source = `${error?.message ?? ''} ${error?.details ?? ''} ${error?.hint ?? ''}`
+  const source = `${error?.cause?.message ?? ''} ${error?.message ?? ''} ${error?.details ?? ''} ${error?.hint ?? ''}`
   if (error?.code === '23505' && source.includes('machines_account_machine_code_normalized_key')) {
     return { field: 'machineCode', message: 'That machine code is already reserved in this account.' }
   }
@@ -50,5 +50,5 @@ export function mapMachineMutationError(error) {
   if (error?.code === '42501') return { message: 'Your account role does not allow machine changes.' }
   if (error?.code === '23514' && source.includes('timezone')) return { field: 'timezone', message: 'Enter a valid IANA timezone, such as Asia/Jakarta.' }
   if (error?.code === 'PGRST116') return { message: 'The machine changed or is no longer available. Refresh and try again.' }
-  return { message: error?.message || 'The machine could not be saved. Please try again.' }
+  return { message: 'The machine could not be saved. Refresh and try again.' }
 }

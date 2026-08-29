@@ -4,11 +4,12 @@ import { PageHeader } from '../components/ui/PageHeader.jsx'
 import { useTenant } from '../features/account/useTenant.js'
 import { useAuth } from '../features/auth/useAuth.js'
 import { updateMyEmail, updateMyPassword, updateMyProfile } from '../services/supabase/account.js'
+import { userErrorMessage } from '../lib/appErrors.js'
 
 const requestId = () => crypto.randomUUID()
 
 function Message({ error, notice }) {
-  if (error) return <div className="form-error" role="alert">{error.message || error}</div>
+  if (error) return <div className="form-error" role="alert">{userErrorMessage(error, 'Your account change could not be completed. Please try again.')}</div>
   return notice ? <div className="success-banner" role="status"><span>{notice}</span></div> : null
 }
 

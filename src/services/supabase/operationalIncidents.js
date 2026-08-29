@@ -1,4 +1,5 @@
 import { supabase } from './client.js'
+import { operationalError } from '../../lib/appErrors.js'
 
 const incidentFields = `
   id,
@@ -57,14 +58,18 @@ export async function loadOperationalIncidents({ accountId, branchId }) {
   }
 }
 
-export async function loadOperationalIncident({ accountId, incidentId }) {
-  const [incidentResult, profileResult, revisionResult] = await Promise.all([
-    supabase
-      .from('operational_incidents')
-      .select(incidentFields)
-      .eq('account_id', accountId)
-      .eq('id', incidentId)
-      .maybeSingle(),
+export async function loadOperationalIncident({ accountId, branchId, incidentId }) {
+  const incidentResult = await supabase
+    .from('operational_incidents')
+    .select(incidentFields)
+    .eq('account_id', accountId)
+    .eq('branch_id', branchId)
+    .eq('id', incidentId)
+    .maybeSingle()
+  if (incidentResult.error) throw incidentResult.error
+  if (!incidentResult.data) return { incident: null, members: [], revisions: [], people: [] }
+
+  const [profileResult, revisionResult, peopleResult] = await Promise.all([
     supabase.rpc('get_account_member_profiles', { target_account_id: accountId }),
     supabase
       .from('operational_incident_revisions')
@@ -73,20 +78,15 @@ export async function loadOperationalIncident({ accountId, incidentId }) {
       .eq('incident_id', incidentId)
       .order('changed_at', { ascending: true })
       .order('id', { ascending: true }),
+    supabase.from('operational_people').select('id,name,is_active,operational_person_branches!inner(branch_id,is_active)').eq('account_id', accountId).eq('operational_person_branches.branch_id', branchId).eq('operational_person_branches.is_active', true).order('name'),
   ])
 
-  if (incidentResult.error) throw incidentResult.error
   if (revisionResult.error) throw revisionResult.error
-  let people = []
-  if (incidentResult.data?.branch_id) {
-    const result = await supabase.from('operational_people').select('id,name,is_active,operational_person_branches!inner(branch_id,is_active)').eq('account_id', accountId).eq('operational_person_branches.branch_id', incidentResult.data.branch_id).eq('operational_person_branches.is_active', true).order('name')
-    if (!result.error) people = result.data ?? []
-  }
   return {
     incident: incidentResult.data,
     members: profileResult.error ? [] : profileResult.data ?? [],
     revisions: revisionResult.data ?? [],
-    people,
+    people: peopleResult.error ? [] : peopleResult.data ?? [],
   }
 }
 
@@ -118,7 +118,7 @@ export async function updateOperationalIncident({ incidentId, values }) {
     target_incident_id: incidentId,
     ...incidentMutationPayload(values),
   })
-  if (error) throw error
+  if (error) throw operationalError(error, { operation: 'incident.update' }, 'The incident could not be updated.')
   return data
 }
 
@@ -154,7 +154,7 @@ export async function createOperationalIncident({ accountId, branchId, values })
     target_customer_resolution: values.customerResolution.trim() || null,
   })
 
-  if (error) throw error
+  if (error) throw operationalError(error, { operation: 'incident.create', accountId, branchId, clientRequestId: values.clientRequestId }, 'The incident could not be recorded.')
   return data
 }
 

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { LoaderCircle, LockKeyhole, Printer } from 'lucide-react'
 import { useAuth } from './useAuth.js'
+import { userErrorMessage } from '../../lib/appErrors.js'
 
 export function PasswordSetupPage() {
   const { completePasswordSetup } = useAuth()
@@ -13,7 +14,7 @@ export function PasswordSetupPage() {
     if (password.length < 8) return setError('Use at least 8 characters.')
     if (password !== confirmation) return setError('Passwords do not match.')
     setBusy(true); setError(null)
-    try { await completePasswordSetup(password) } catch (caught) { setError(caught.message || 'Password could not be saved.') } finally { setBusy(false) }
+    try { await completePasswordSetup(password) } catch (caught) { setError(userErrorMessage(caught, 'Password could not be saved. Please request a new recovery link if this one expired.')) } finally { setBusy(false) }
   }
   return <main className="login-page"><section className="login-panel-wrap"><div className="login-panel glass-surface">
     <div className="mobile-brand brand-lockup"><span className="brand-mark"><Printer size={21} /></span><span>A3 Tracker</span></div>

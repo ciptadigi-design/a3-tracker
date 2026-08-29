@@ -6,6 +6,7 @@ import { CounterHistory } from '../features/counters/CounterHistory.jsx'
 import { calculateDailySummary, formatCounter } from '../features/counters/counterUtils.js'
 import { useCounterHistory } from '../features/counters/useCounterHistory.js'
 import { createDraftKey } from '../features/drafts/draftKeys.js'
+import { userErrorMessage } from '../lib/appErrors.js'
 import { migrateLegacyDailySelection } from '../features/drafts/draftStorage.js'
 import { useTenant } from '../features/account/useTenant.js'
 import { useAuth } from '../features/auth/useAuth.js'
@@ -57,7 +58,7 @@ export function DailyPage() {
   }
 
   if (machinesState.error) {
-    return <div className="page-stack"><PageHeader eyebrow={`${account?.name} · ${branch?.name}`} title="Daily" description="Machine-centric daily counter workspace." /><div className="embedded-error glass-surface" role="alert"><strong>Machines could not be loaded.</strong><span>{machinesState.error.message}</span><button className="secondary-button" type="button" onClick={machinesState.refresh}>Try again</button></div></div>
+    return <div className="page-stack"><PageHeader eyebrow={`${account?.name} · ${branch?.name}`} title="Daily" description="Machine-centric daily counter workspace." /><div className="embedded-error glass-surface" role="alert"><strong>Machines could not be loaded.</strong><span>{userErrorMessage(machinesState.error, 'Daily machine records are temporarily unavailable.')}</span><button className="secondary-button" type="button" onClick={machinesState.refresh}>Try again</button></div></div>
   }
 
   return (

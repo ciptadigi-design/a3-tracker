@@ -1,6 +1,7 @@
 import { supabase } from './client.js'
 import { loadMachines } from './machines.js'
 import { projectCurrentComponentCards } from '../../features/components/componentCardProjection.js'
+import { operationalError } from '../../lib/appErrors.js'
 
 export async function loadMachineComponentLifecycles({ accountId, branchId }) {
   if (!accountId || !branchId) return {
@@ -71,7 +72,7 @@ export async function initializeComponentLifecycle({ accountId, machineId, profi
     target_notes: notes?.trim() || null,
   })
 
-  if (error) throw error
+  if (error) throw operationalError(error, { operation: 'component.initialize', accountId, clientRequestId }, 'The component could not be initialized.')
   return data
 }
 
@@ -96,6 +97,6 @@ export async function replaceComponentLifecycle({ accountId, machineId, lifecycl
     target_external_inventory_reason: inventorySource === 'external_untracked' ? externalInventoryReason?.trim() || null : null,
   })
 
-  if (error) throw error
+  if (error) throw operationalError(error, { operation: 'component.replace', accountId, clientRequestId }, 'The component replacement could not be completed.')
   return data
 }

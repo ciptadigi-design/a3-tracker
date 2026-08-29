@@ -10,6 +10,7 @@ import { MachineFormDialog } from './MachineFormDialog.jsx'
 import { RetireMachineDialog } from './RetireMachineDialog.jsx'
 import { useMachine } from './useMachine.js'
 import { useMachineWorkflowState } from './useMachineWorkflowState.js'
+import { userErrorMessage } from '../../lib/appErrors.js'
 
 function DetailItem({ icon, label, value, hint }) {
   return <div className="detail-item"><span className="detail-item-icon">{createElement(icon, { size: 18 })}</span><div><span>{label}</span><strong>{value || '—'}</strong>{hint && <small>{hint}</small>}</div></div>
@@ -30,15 +31,15 @@ const futureModules = [
 export function MachineDetailPage({ machineId, navigate }) {
   const { user } = useAuth()
   const { account, branch: activeBranch, branches, membership, setSelectedBranchId } = useTenant()
-  const { machine, isLoading, error, refresh, setMachine } = useMachine(account?.id, machineId)
+  const { machine, isLoading, error, refresh, setMachine } = useMachine(account?.id, activeBranch?.id, machineId)
   const [showRetire, setShowRetire] = useState(false)
   const [success, setSuccess] = useState(null)
   const canManage = membership?.role === 'owner' || membership?.role === 'admin'
   const machineWorkflow = useMachineWorkflowState({ userId: user.id, accountId: account.id, branchId: machine?.branch_id ?? activeBranch?.id })
 
   if (isLoading) return <LoadingScreen label="Loading machine details" />
-  if (error) return <ErrorState title="Machine could not be loaded" detail={error.message} onRetry={refresh} />
-  if (!machine) return <ErrorState title="Machine not found" detail="This machine is unavailable in the active account or no longer exists." />
+  if (error) return <ErrorState title="Machine could not be loaded" detail={userErrorMessage(error, 'Machine details are temporarily unavailable.')} onRetry={refresh} />
+  if (!machine) return <ErrorState title="Machine not available in this Branch" detail="Choose the Branch that owns this machine, or return to the Branch machine list." />
 
   const model = machine.machine_models
   const branch = branches.find((item) => item.id === machine.branch_id)

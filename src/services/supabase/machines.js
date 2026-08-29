@@ -1,4 +1,5 @@
 import { supabase } from './client.js'
+import { operationalError } from '../../lib/appErrors.js'
 
 const machineFields = `
   id,
@@ -38,11 +39,12 @@ export async function loadMachines({ accountId, branchId }) {
   return data ?? []
 }
 
-export async function loadMachine({ accountId, machineId }) {
+export async function loadMachine({ accountId, branchId, machineId }) {
   const { data, error } = await supabase
     .from('machines')
     .select(machineFields)
     .eq('account_id', accountId)
+    .eq('branch_id', branchId)
     .eq('id', machineId)
     .maybeSingle()
 
@@ -98,7 +100,7 @@ export async function createMachine({ accountId, values }) {
     .select(machineFields)
     .single()
 
-  if (error) throw error
+  if (error) throw operationalError(error, { operation: 'machine.create', accountId, branchId: values.branchId }, 'The machine could not be created.')
   return data
 }
 
@@ -121,7 +123,7 @@ export async function updateMachine({ accountId, machineId, values }) {
     .select(machineFields)
     .single()
 
-  if (error) throw error
+  if (error) throw operationalError(error, { operation: 'machine.update', accountId, branchId: values.branchId }, 'The machine could not be updated.')
   return data
 }
 
@@ -135,6 +137,6 @@ export async function retireMachine({ accountId, machineId }) {
     .select(machineFields)
     .single()
 
-  if (error) throw error
+  if (error) throw operationalError(error, { operation: 'machine.retire', accountId }, 'The machine could not be retired.')
   return data
 }

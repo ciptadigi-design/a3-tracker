@@ -4,6 +4,7 @@ import { loadTenantContext } from '../../services/supabase/tenant.js'
 import { LoadingScreen } from '../../components/ui/LoadingScreen.jsx'
 import { ErrorState } from '../../components/ui/ErrorState.jsx'
 import { TenantContext } from './tenantContext.js'
+import { reportFailure, userErrorMessage } from '../../lib/appErrors.js'
 
 export function TenantProvider({ children }) {
   const { user } = useAuth()
@@ -22,6 +23,7 @@ export function TenantProvider({ children }) {
       setTenantData(data)
       setSelectedAccountId((current) => data.accounts.some((account) => account.id === current) ? current : data.accounts[0]?.id ?? null)
     } catch (loadError) {
+      reportFailure(loadError, { operation: 'tenant.load' })
       setError(loadError)
     } finally {
       setIsLoading(false)
@@ -62,8 +64,10 @@ export function TenantProvider({ children }) {
   }), [account, availableBranches, branch, membership, operationalPermissions, refresh, selectedAccountId, selectedBranchId, tenantData])
 
   if (isLoading) return <LoadingScreen label="Loading your account and branches" />
-  if (error) return <ErrorState title="We couldn't load your workspace" detail={error.message} onRetry={refresh} />
+  if (error) return <ErrorState title="We couldn't load your workspace" detail={userErrorMessage(error, 'Workspace context is temporarily unavailable.')} onRetry={refresh} />
   if (!tenantData?.accounts.length) return <ErrorState title="No active workspace found" detail="Your account is authenticated, but it does not have an active account membership." />
+  if (!availableBranches.length) return <ErrorState title="No active Branch access" detail="This workspace has no active Branch available to your membership. Contact a workspace Owner or Platform Superuser." onRetry={refresh} />
+  if (!branch) return <LoadingScreen label="Selecting your active Branch" />
 
   return <TenantContext.Provider value={value}>{children}</TenantContext.Provider>
 }

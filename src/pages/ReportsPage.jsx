@@ -9,6 +9,7 @@ import { useTenant } from '../features/account/useTenant.js'
 import { machineCostPeriodPresets, resolveMachineCostPeriod } from '../features/machineCost/machineCostPeriods.js'
 import { createUIStateKey } from '../features/uiState/uiStateKeys.js'
 import { usePersistentUIState } from '../features/uiState/usePersistentUIState.js'
+import { userErrorMessage } from '../lib/appErrors.js'
 import { loadMachines } from '../services/supabase/machines.js'
 import { loadOperationalReport } from '../services/supabase/reports.js'
 
@@ -151,7 +152,7 @@ export function ReportsPage() {
     </section>
     <div className="report-action-bar" aria-label="Report export and print actions"><span>Exports use the selected filters and authorized report data.</span><div><button className="secondary-button" type="button" onClick={handleExport} disabled={!report || loading}><Download size={15} />Export CSV</button><button className="secondary-button" type="button" onClick={handlePrint} disabled={!report || loading}><Printer size={15} />Print / Save PDF</button></div></div>
     <nav className="report-tabs" role="tablist" aria-label="Report sections">{reportTabs.map((tab) => <button key={tab.id} type="button" role="tab" aria-selected={filters.tab === tab.id} className={filters.tab === tab.id ? 'active' : ''} onClick={() => setFilters((current) => ({ ...current, tab: tab.id }))}>{tab.label}</button>)}</nav>
-    {error && <div className="inline-error" role="alert">{error.message}</div>}
+    {error && <div className="inline-error" role="alert">{userErrorMessage(error, 'Reports could not be generated for this scope.')}</div>}
     {loading ? <div className="report-loading glass-surface"><RefreshCcw className="spin" size={23} /><strong>Building report projections…</strong><span>Reading authoritative operational evidence for the selected range.</span></div> : !report ? <EmptyReport title="Report unavailable" detail="Choose a valid report range and try again." /> : <>
       {filters.tab === 'overview' && <>
         <div className="report-section-heading"><div><span className="card-kicker">Overview</span><h2>Operational Summary</h2><p>Standard machine economics and operational Error/Waste remain separately scoped.</p></div><StatusBadge status={overview?.report_status} /></div>

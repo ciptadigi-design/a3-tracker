@@ -13,6 +13,7 @@ import { VoidOperatingCostDialog } from '../features/machineCost/VoidOperatingCo
 import { formatDailyClicks, hasDailyClickActivity, normalizeDailyTrend } from '../features/machineCost/dailyTrendModel.js'
 import { createUIStateKey } from '../features/uiState/uiStateKeys.js'
 import { usePersistentUIState } from '../features/uiState/usePersistentUIState.js'
+import { userErrorMessage } from '../lib/appErrors.js'
 import { contributionPerClickPresentation, contributionPresentation, revenuePresentation, sellingPriceCardPresentation } from '../features/machineCost/sellingPriceModel.js'
 import { createMachineOperatingCost, createMachineSellingPrice, loadMachineCostPeriod, loadMachineOperatingCosts, loadMachineSellingPrices, voidMachineOperatingCost, voidMachineSellingPrice } from '../services/supabase/machineCost.js'
 import { loadMachines } from '../services/supabase/machines.js'
@@ -163,7 +164,7 @@ export function MachineCostPage() {
 
     <div className="machine-cost-section-nav"><nav className="machine-cost-tabs" aria-label="Machine cost sections" role="tablist"><button type="button" role="tab" aria-selected={activeTab === 'summary'} className={activeTab === 'summary' ? 'active' : ''} onClick={() => setFilters((current) => ({ ...current, view: 'summary' }))}>Summary</button><button type="button" role="tab" aria-selected={activeTab === 'operating'} className={activeTab === 'operating' ? 'active' : ''} onClick={() => setFilters((current) => ({ ...current, view: 'operating' }))}>Operating Costs</button></nav>{summary && activeTab === 'summary' && <SummaryStatusBadge summary={summary} />}</div>
 
-    {error && <div className="inline-error" role="alert">{error.message}</div>}
+    {error && <div className="inline-error" role="alert">{userErrorMessage(error, 'Machine Cost could not be loaded for this scope.')}</div>}
     {activeTab === 'operating' && selectedMachine ? <><OperatingCostsPanel costs={costWorkspace.costs} canManage={canManageCosts} enabled={advancedEnabled} onAdd={() => setCostDialog(true)} onVoid={setVoidTarget} />{costError && <div className="inline-error" role="alert">{costError.message}</div>}</> : loading ? <div className="machine-loading-state glass-surface"><RefreshCcw className="spin" size={24} /><strong>Loading machine cost evidence…</strong><span>Reading effective counter usage, component consumption, and assessed Error / Waste.</span></div> : !selectedMachine ? <div className="machine-empty-state glass-surface"><span className="empty-machine-icon"><Printer size={38} /></span><h3>No active machine in this branch</h3><p>Add or activate a machine before querying operational component cost.</p></div> : summary && activeTab === 'summary' ? <>
       {summary.counter_status !== 'COMPLETE' && <section className="machine-cost-action-message" role="status"><AlertCircle size={17} /><div><strong>No Counter Data</strong><span>{counterDisplay.hint} Cost / Click is unavailable.</span></div></section>}
       {priceError && <div className="inline-error" role="alert">{priceError.message}</div>}

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { loadCounterHistory } from '../../services/supabase/counters.js'
 
 export function useCounterHistory(accountId, machineId) {
@@ -6,8 +6,10 @@ export function useCounterHistory(accountId, machineId) {
   const [profiles, setProfiles] = useState([])
   const [isLoading, setIsLoading] = useState(Boolean(accountId && machineId))
   const [error, setError] = useState(null)
+  const requestId = useRef(0)
 
   const refresh = useCallback(async () => {
+    const request = ++requestId.current
     if (!accountId || !machineId) {
       setHistory([])
       setProfiles([])
@@ -18,12 +20,14 @@ export function useCounterHistory(accountId, machineId) {
     setError(null)
     try {
       const data = await loadCounterHistory({ accountId, machineId })
-      setHistory(data.history)
-      setProfiles(data.profiles)
+      if (requestId.current === request) {
+        setHistory(data.history)
+        setProfiles(data.profiles)
+      }
     } catch (loadError) {
-      setError(loadError)
+      if (requestId.current === request) setError(loadError)
     } finally {
-      setIsLoading(false)
+      if (requestId.current === request) setIsLoading(false)
     }
   }, [accountId, machineId])
 

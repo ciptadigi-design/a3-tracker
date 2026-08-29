@@ -18,6 +18,7 @@ import { InventoryPage } from '../pages/InventoryPage.jsx'
 import { MachineCostPage } from '../pages/MachineCostPage.jsx'
 import { ReportsPage } from '../pages/ReportsPage.jsx'
 import { MyAccountPage } from '../pages/MyAccountPage.jsx'
+import { userErrorMessage } from '../lib/appErrors.js'
 
 const comingSoonPages = {
   '/maintenance': ['Maintenance', 'Maintenance planning will arrive after machine onboarding.'],
@@ -33,7 +34,7 @@ export function AppShell() {
 
   async function handleLogout() {
     setLogoutError(null)
-    try { await signOut() } catch (error) { setLogoutError(error.message) }
+    try { await signOut() } catch (error) { setLogoutError(userErrorMessage(error, 'Sign out could not be completed. Please try again.')) }
   }
 
   function handleNavigate(nextPath) { navigate(nextPath); setMobileNavOpen(false) }
@@ -65,7 +66,7 @@ export function AppShell() {
       <div className="app-main">
         <TopBar profile={tenant.profile} account={tenant.account} accounts={tenant.accounts} onAccountChange={tenant.setSelectedAccountId} branch={tenant.branch} branches={tenant.branches} onBranchChange={tenant.setSelectedBranchId} membership={tenant.membership} theme={theme} toggleTheme={toggleTheme} onLogout={handleLogout} onMyAccount={() => handleNavigate('/my-account')} onMenu={() => setMobileNavOpen(true)} />
         {logoutError && <div className="inline-error" role="alert">{logoutError}</div>}
-        <main className="page-content">{page}</main>
+        <main className="page-content" key={`${tenant.account?.id ?? 'account'}:${tenant.branch?.id ?? 'branch'}`}>{page}</main>
       </div>
     </div>
   )

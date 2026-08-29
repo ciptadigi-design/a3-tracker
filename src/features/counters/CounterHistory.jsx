@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Clock3, FilePenLine, History, RefreshCcw } from 'lucide-react'
 import { CorrectCounterDialog } from './CorrectCounterDialog.jsx'
 import { formatCounter, formatUsage } from './counterUtils.js'
+import { userErrorMessage } from '../../lib/appErrors.js'
 
 function formatObservedAt(value, timezone) {
   return new Intl.DateTimeFormat('en-GB', {
@@ -25,7 +26,7 @@ export function CounterHistory({ history, profiles, currentUserId, timezone, isL
     <section className="counter-history-card glass-surface">
       <header className="history-header"><div><span className="card-kicker">Counter history</span><h2>Effective and corrected readings</h2><p>Usage is calculated by PostgreSQL from each reading's linked previous effective value.</p></div><button className="icon-button" type="button" onClick={onRefresh} disabled={isLoading} aria-label="Refresh counter history"><RefreshCcw size={17} className={isLoading ? 'spin' : ''} /></button></header>
       {isLoading ? <div className="history-state"><RefreshCcw className="spin" size={23} /><strong>Loading counter history…</strong></div>
-        : error ? <div className="history-state error-state"><strong>Counter history could not be loaded.</strong><span>{error.message}</span><button className="secondary-button" type="button" onClick={onRefresh}>Try again</button></div>
+        : error ? <div className="history-state error-state"><strong>Counter history could not be loaded.</strong><span>{userErrorMessage(error, 'Counter history is temporarily unavailable.')}</span><button className="secondary-button" type="button" onClick={onRefresh}>Try again</button></div>
           : history.length === 0 ? <div className="history-state"><span className="history-empty-icon"><History size={27} /></span><strong>No counter history yet.</strong><span>The first real submission will establish the cumulative baseline.</span></div>
             : <div className="counter-history-list">{history.map((reading) => <article className={`counter-history-row counter-history-${reading.status}`} key={reading.reading_id}>
               <div className="history-time"><Clock3 size={15} /><div><strong>{formatObservedAt(reading.observed_at, timezone)}</strong><span>{reading.shift_code || 'No shift'} · Operator: {reading.operator_name_snapshot || 'Not recorded'}</span><small>Recorded by {enteredBy(reading)}</small></div></div>

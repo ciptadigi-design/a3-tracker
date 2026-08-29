@@ -1,4 +1,5 @@
 import { supabase } from './client.js'
+import { operationalError } from '../../lib/appErrors.js'
 
 const itemFields = 'id,account_id,component_id,sku,name,category,unit,minimum_stock,notes,is_active,is_canonical,created_at,updated_at,archived_at,components(id,account_id,code,name,category)'
 const locationFields = 'id,account_id,branch_id,code,name,notes,is_active,created_at,updated_at,archived_at,branches(id,code,name)'
@@ -77,7 +78,7 @@ export async function createInventoryPurchase({ accountId, branchId, values, cli
       inventory_item_id: line.itemId, quantity: line.quantity, unit_price: line.unitPrice, notes: optional(line.notes),
     })), target_client_request_id: clientRequestId,
   })
-  if (error) throw error
+  if (error) throw operationalError(error, { operation: 'inventory.purchase.create', accountId, branchId, clientRequestId }, 'The purchase could not be created.')
   return data
 }
 
@@ -89,7 +90,7 @@ export async function receiveInventoryPurchase({ accountId, purchaseId, values, 
       purchase_line_id: line.purchaseLineId, quantity: line.quantity,
     })), target_client_request_id: clientRequestId,
   })
-  if (error) throw error
+  if (error) throw operationalError(error, { operation: 'inventory.purchase.receive', accountId, clientRequestId }, 'Goods could not be received.')
   return data
 }
 
@@ -98,7 +99,7 @@ export async function cancelInventoryPurchase({ accountId, purchaseId, reason, c
     target_account_id: accountId, target_purchase_id: purchaseId,
     target_reason: reason.trim(), target_client_request_id: clientRequestId,
   })
-  if (error) throw error
+  if (error) throw operationalError(error, { operation: 'inventory.purchase.cancel', accountId, clientRequestId }, 'The purchase could not be cancelled.')
   return data
 }
 
@@ -145,7 +146,7 @@ export async function initializeInventoryStock({ accountId, values, clientReques
     target_operational_person_id: values.personId, target_notes: optional(values.notes), target_client_request_id: clientRequestId,
     target_opening_unit_cost: values.costState === 'known' ? values.unitCost : null,
   })
-  if (error) throw error
+  if (error) throw operationalError(error, { operation: 'inventory.opening', accountId, clientRequestId }, 'Opening stock could not be posted.')
   return data
 }
 
@@ -158,7 +159,7 @@ export async function adjustInventoryStock({ accountId, values, clientRequestId 
     target_notes: optional(values.notes), target_client_request_id: clientRequestId,
     target_unit_cost: values.direction === 'in' && values.costState === 'known' ? values.unitCost : null,
   })
-  if (error) throw error
+  if (error) throw operationalError(error, { operation: 'inventory.adjust', accountId, clientRequestId }, 'The stock adjustment could not be posted.')
   return data
 }
 
@@ -169,6 +170,6 @@ export async function transferInventoryStock({ accountId, values, clientRequestI
     target_quantity: values.quantity, target_occurred_at: values.occurredAt,
     target_operational_person_id: values.personId, target_notes: optional(values.notes), target_client_request_id: clientRequestId,
   })
-  if (error) throw error
+  if (error) throw operationalError(error, { operation: 'inventory.transfer', accountId, clientRequestId }, 'The stock transfer could not be posted.')
   return data
 }

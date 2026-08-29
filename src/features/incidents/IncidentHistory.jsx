@@ -1,6 +1,7 @@
 import { ArrowRight, ClipboardList, RefreshCcw } from 'lucide-react'
 import { categoryLabels, incidentStatusLabels, incidentTypeLabels } from './incidentConstants.js'
 import { formatIncidentDate, formatRupiah } from './incidentUtils.js'
+import { userErrorMessage } from '../../lib/appErrors.js'
 
 function HistoryValue({ label, children, className = '' }) {
   return <div className={`incident-history-value ${className}`}><span>{label}</span><strong>{children || '—'}</strong></div>
@@ -13,7 +14,7 @@ export function IncidentHistory({ incidents, machines, timezone, isLoading, erro
     <section className="incident-history-card glass-surface">
       <header className="history-header"><div><span className="card-kicker">Riwayat nyata</span><h2>Human / Operational Error</h2><p>Log mengikuti scope Machine yang dipilih. Record voided tetap tersedia untuk audit.</p></div><button className="icon-button" type="button" onClick={onRefresh} disabled={isLoading} aria-label="Refresh riwayat error"><RefreshCcw size={17} className={isLoading ? 'spin' : ''} /></button></header>
       {isLoading ? <div className="history-state"><RefreshCcw className="spin" size={23} /><strong>Memuat riwayat error…</strong></div>
-        : error ? <div className="history-state error-state"><strong>Riwayat error tidak dapat dimuat.</strong><span>{error.message}</span><button className="secondary-button" type="button" onClick={onRefresh}>Coba lagi</button></div>
+        : error ? <div className="history-state error-state"><strong>Riwayat error tidak dapat dimuat.</strong><span>{userErrorMessage(error, 'Riwayat incident sementara tidak tersedia.')}</span><button className="secondary-button" type="button" onClick={onRefresh}>Coba lagi</button></div>
           : incidents.length === 0 ? <div className="history-state"><span className="history-empty-icon"><ClipboardList size={27} /></span><strong>Belum ada log error operasional.</strong><span>Log pertama akan muncul di sini setelah disimpan ke Supabase.</span></div>
             : <div className="incident-history-list">{incidents.map((incident) => <article className={`incident-history-row incident-status-${incident.status}`} key={incident.id}>
               <HistoryValue label="Tanggal" className="incident-history-primary">{formatIncidentDate(incident.occurred_at, timezone)}</HistoryValue>

@@ -1,4 +1,5 @@
 import { supabase } from './client.js'
+import { operationalError } from '../../lib/appErrors.js'
 
 const branchFields = 'id,account_id,code,name,address,timezone,is_active,notes,created_at,updated_at,archived_at'
 const policyFields = 'account_id,operator_can_initialize_component,operator_can_replace_component,operator_can_create_purchase,operator_can_receive_goods,operator_can_adjust_inventory,operator_can_transfer_inventory,operator_can_log_errors,updated_at'
@@ -31,7 +32,7 @@ export async function updateWorkspace({ accountId, values, clientRequestId }) {
     target_account_id: accountId, target_name: values.name.trim(),
     target_default_timezone: values.defaultTimezone, target_client_request_id: clientRequestId,
   })
-  if (error) throw error
+  if (error) throw operationalError(error, { operation: 'settings.workspace', accountId, clientRequestId }, 'Workspace settings could not be saved.')
   return data
 }
 
@@ -42,7 +43,7 @@ export async function manageBranch({ accountId, branch, action, values = {}, cli
     target_code: source?.code ?? '', target_name: source?.name ?? '', target_address: optional(source?.address),
     target_timezone: source?.timezone || null, target_notes: optional(source?.notes), target_client_request_id: clientRequestId,
   })
-  if (error) throw error
+  if (error) throw operationalError(error, { operation: `settings.branch.${action}`, accountId, clientRequestId }, 'The Branch change could not be completed.')
   return data
 }
 
@@ -54,7 +55,7 @@ export async function updateMembership({ accountId, member, role, status, branch
     target_username: username || null,
     target_display_name: displayName,
   })
-  if (error) throw error
+  if (error) throw operationalError(error, { operation: 'settings.membership', accountId, clientRequestId }, 'The membership change could not be completed.')
   return data
 }
 
@@ -65,7 +66,7 @@ export async function provisionMember({ accountId, values }) {
     email: values.email.trim().toLowerCase(), password: values.password, role: values.role, branchIds: values.branchIds,
     clientRequestId: values.clientRequestId,
   } })
-  if (error) throw new Error(data?.error || 'Member account could not be created.')
+  if (error) throw operationalError(error, { operation: 'settings.member.provision', accountId, clientRequestId: values.clientRequestId }, data?.error || 'Member account could not be created.')
   return data
 }
 
@@ -76,7 +77,7 @@ export async function activateMember({ accountId, member, values }) {
     email: values.email.trim().toLowerCase(), password: values.password,
     role: values.role, branchIds: values.branchIds, clientRequestId: values.clientRequestId,
   } })
-  if (error) throw new Error(data?.error || 'Member account could not be activated.')
+  if (error) throw operationalError(error, { operation: 'settings.member.activate', accountId, clientRequestId: values.clientRequestId }, data?.error || 'Member account could not be activated.')
   return data
 }
 
@@ -85,7 +86,7 @@ export async function updateManagedMemberEmail({ accountId, member, email, clien
     action: 'update_email', accountId, targetUserId: member.user_id,
     email: email.trim().toLowerCase(), clientRequestId,
   } })
-  if (error) throw new Error(data?.error || 'Member email could not be changed.')
+  if (error) throw operationalError(error, { operation: 'settings.member.email', accountId, clientRequestId }, data?.error || 'Member email could not be changed.')
   return data
 }
 
@@ -93,7 +94,7 @@ export async function resetManagedMemberPassword({ accountId, member, password, 
   const { data, error } = await supabase.functions.invoke('provision-member', { body: {
     action: 'reset_password', accountId, targetUserId: member.user_id, password, clientRequestId,
   } })
-  if (error) throw new Error(data?.error || 'Member password could not be reset.')
+  if (error) throw operationalError(error, { operation: 'settings.member.password', accountId, clientRequestId }, data?.error || 'Member password could not be reset.')
   return data
 }
 
@@ -102,7 +103,7 @@ export async function updateOperationalPersonBranches({ accountId, personId, bra
     target_account_id: accountId, target_person_id: personId, target_branch_ids: branchIds,
     target_client_request_id: clientRequestId,
   })
-  if (error) throw error
+  if (error) throw operationalError(error, { operation: 'settings.operational-person.branches', accountId, clientRequestId }, 'PIC Branch assignments could not be saved.')
   return data
 }
 
@@ -118,7 +119,7 @@ export async function updateOperationalPermissions({ accountId, policy, clientRe
     target_operator_can_log_errors: policy.operator_can_log_errors,
     target_client_request_id: clientRequestId,
   })
-  if (error) throw error
+  if (error) throw operationalError(error, { operation: 'settings.permissions', accountId, clientRequestId }, 'Operational permissions could not be saved.')
   return data
 }
 
@@ -126,6 +127,6 @@ export async function updateAdvancedEconomics({ accountId, enabled, clientReques
   const { data, error } = await supabase.rpc('manage_advanced_economics_setting', {
     target_account_id: accountId, target_enabled: enabled, target_client_request_id: clientRequestId,
   })
-  if (error) throw error
+  if (error) throw operationalError(error, { operation: 'settings.advanced-economics', accountId, clientRequestId }, 'Advanced economics settings could not be saved.')
   return data
 }
