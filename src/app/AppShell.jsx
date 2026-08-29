@@ -49,8 +49,8 @@ export function AppShell() {
   else if (path === '/machine-cost') page = <MachineCostPage />
   else if (path === '/reports') page = <ReportsPage />
   else if (path === '/my-account') page = <MyAccountPage />
-  else if (path === '/settings' && tenant.isPlatformSuperuser) page = <SettingsPage navigate={handleNavigate} />
-  else if (path === '/settings') page = <ComingSoonPage title="Access denied" description="Settings is temporarily available only to Platform Superusers." />
+  else if ((path === '/settings' || path === '/settings/machine-models') && tenant.isPlatformSuperuser) page = <SettingsPage navigate={handleNavigate} initialSection={path === '/settings/machine-models' ? 'models' : null} />
+  else if (path === '/settings' || path === '/settings/machine-models') page = <ComingSoonPage title="Access denied" description="Settings is temporarily available only to Platform Superusers." />
   else if (getIncidentIdFromPath(path)) page = <IncidentDetailPage incidentId={getIncidentIdFromPath(path)} navigate={handleNavigate} />
   else {
     const [title, description] = comingSoonPages[path] ?? ['Page not found', 'This route is not available.']

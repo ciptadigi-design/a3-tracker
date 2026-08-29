@@ -23,7 +23,7 @@ function MachineCard({ machine, branchName, onOpen }) {
 
 export function MachinesPage({ navigate }) {
   const { user } = useAuth()
-  const { account, branch, branches, membership, setSelectedBranchId } = useTenant()
+  const { account, branch, branches, membership, isPlatformSuperuser, setSelectedBranchId } = useTenant()
   const { machines, isLoading, error, refresh } = useMachines(account?.id, branch?.id)
   const canManage = membership?.role === 'owner' || membership?.role === 'admin'
   const catalog = useMachineCatalog(account?.id, canManage)
@@ -72,7 +72,7 @@ export function MachinesPage({ navigate }) {
             : <div className="machine-grid">{visibleMachines.map((machine) => <MachineCard key={machine.id} machine={machine} branchName={branches.find((item) => item.id === machine.branch_id)?.name ?? 'Unknown branch'} onOpen={() => navigate(`/machines/${machine.id}`)} />)}</div>}
       </section>
 
-      {canManage && isContextActive && workflow.type === 'create' && !addDisabled && <MachineFormDialog mode="create" account={account} branches={branches} branchId={branch?.id} manufacturers={catalog.manufacturers} models={catalog.models} onClose={clearWorkflow} onSave={handleCreate} />}
+      {canManage && isContextActive && workflow.type === 'create' && !addDisabled && <MachineFormDialog mode="create" account={account} branches={branches} branchId={branch?.id} manufacturers={catalog.manufacturers} models={catalog.models} canManageMachineMasters={isPlatformSuperuser} onManageMachineModels={() => navigate('/settings/machine-models')} onClose={clearWorkflow} onSave={handleCreate} />}
     </div>
   )
 }

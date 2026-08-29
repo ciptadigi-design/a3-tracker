@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 
-const supportedRoutes = new Set(['/', '/machines', '/daily', '/components', '/inventory', '/machine-cost', '/errors', '/maintenance', '/reports', '/settings'])
+const supportedRoutes = new Set(['/', '/machines', '/daily', '/components', '/inventory', '/machine-cost', '/errors', '/maintenance', '/reports', '/settings', '/settings/machine-models'])
 const machineDetailPattern = /^\/machines\/([0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})$/i
 const incidentDetailPattern = /^\/errors\/([0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})$/i
 const isSupportedPath = (path) => supportedRoutes.has(path) || machineDetailPattern.test(path) || incidentDetailPattern.test(path)

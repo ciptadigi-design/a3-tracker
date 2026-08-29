@@ -10,7 +10,7 @@ export async function loadSettings({ accountId }) {
     supabase.from('branches').select(branchFields).eq('account_id', accountId).order('is_active', { ascending: false }).order('name'),
     supabase.rpc('get_settings_members', { target_account_id: accountId }),
     supabase.from('account_operational_permissions').select(policyFields).eq('account_id', accountId).single(),
-    supabase.from('machine_models').select('id,account_id,manufacturer_id,model_code,name,machine_category,color_capability,description,notes,is_active,created_at,updated_at,archived_at').or(`account_id.is.null,account_id.eq.${accountId}`).order('name'),
+    supabase.from('machine_models').select('id,account_id,manufacturer_id,model_code,name,machine_category,color_capability,description,notes,is_active,created_at,updated_at,archived_at,manufacturers(id,account_id,code,name,is_active)').or(`account_id.is.null,account_id.eq.${accountId}`).order('name'),
     supabase.from('components').select('id,account_id,is_active').or(`account_id.is.null,account_id.eq.${accountId}`),
     supabase.from('machine_model_components').select('id,account_id,is_active').or(`account_id.is.null,account_id.eq.${accountId}`),
     supabase.from('inventory_locations').select('id,is_active').eq('account_id', accountId),

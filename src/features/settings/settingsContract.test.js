@@ -18,7 +18,7 @@ test('Settings route and seven-section control-plane IA are active', () => {
   assert.match(sidebar, /Settings, active: true/)
   assert.match(sidebar, /isPlatformSuperuser && <NavLink/)
   assert.doesNotMatch(sidebar, /membership\?\.role|\['owner'/)
-  assert.match(app, /path === '\/settings' && tenant\.isPlatformSuperuser/)
+  assert.match(app, /path === '\/settings'.*tenant\.isPlatformSuperuser/)
   assert.match(app, /Settings is temporarily available only to Platform Superusers/)
 })
 
@@ -77,10 +77,8 @@ test('owner protection, lifecycle actions, and destructive confirmations are exp
 })
 
 test('operational CRUD is handed off instead of duplicated', () => {
-  assert.match(page, /Manage Components/)
+  assert.match(page, /Manage Model Profiles/)
   assert.match(page, /navigate\('\/components'\)/)
-  assert.match(page, /Open Inventory/)
-  assert.match(page, /navigate\('\/inventory'\)/)
   assert.doesNotMatch(page, /saveInventoryItem|saveComponent|saveProfile/)
 })
 

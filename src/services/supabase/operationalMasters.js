@@ -8,6 +8,28 @@ function optional(value) {
   return value?.trim() || null
 }
 
+function machineMasterError(error, kind) {
+  const source = `${error?.message ?? ''} ${error?.details ?? ''}`
+  let code = error?.code
+  let message = error?.message
+  if (error?.code === '23505') {
+    code = kind === 'manufacturer' ? 'MANUFACTURER_ALREADY_EXISTS' : 'MACHINE_MODEL_ALREADY_EXISTS'
+    message = kind === 'manufacturer'
+      ? 'A manufacturer with that code or name already exists.'
+      : 'That manufacturer already has a machine model with that code or name.'
+  } else if (source.includes('MANUFACTURER_HAS_ACTIVE_MODELS')) {
+    code = 'MANUFACTURER_HAS_ACTIVE_MODELS'
+    message = 'Archive the manufacturer’s active machine models first.'
+  } else if (source.includes('MANUFACTURER_INACTIVE')) {
+    code = 'MANUFACTURER_INACTIVE'
+    message = 'Restore the manufacturer before restoring or saving this machine model.'
+  } else if (error?.code === '42501') {
+    code = 'PLATFORM_SUPERUSER_REQUIRED'
+    message = 'Platform Superuser permission is required to manage machine masters.'
+  }
+  return Object.assign(new Error(message || 'The machine master could not be saved.'), { code })
+}
+
 export async function loadOperationalMasters({ accountId, includeArchived = false }) {
   const peopleQuery = supabase.from('operational_people').select(personFields).eq('account_id', accountId).order('name')
   const manufacturersQuery = supabase.from('manufacturers').select(manufacturerFields).or(`account_id.is.null,account_id.eq.${accountId}`).order('name')
@@ -54,7 +76,14 @@ export async function saveManufacturer({ accountId, manufacturerId, values }) {
     ? supabase.from('manufacturers').update(payload).eq('id', manufacturerId).eq('account_id', accountId)
     : supabase.from('manufacturers').insert({ ...payload, account_id: accountId })
   const { data, error } = await query.select(manufacturerFields).single()
-  if (error) throw error
+  if (error) throw machineMasterError(error, 'manufacturer')
+  return data
+}
+
+export async function setManufacturerStatus({ accountId, manufacturerId, isActive }) {
+  const { data, error } = await supabase.from('manufacturers').update({ is_active: isActive })
+    .eq('id', manufacturerId).eq('account_id', accountId).select(manufacturerFields).single()
+  if (error) throw machineMasterError(error, 'manufacturer')
   return data
 }
 
@@ -79,7 +108,14 @@ export async function saveMachineModel({ accountId, modelId, values }) {
     ? supabase.from('machine_models').update(payload).eq('id', modelId).eq('account_id', accountId)
     : supabase.from('machine_models').insert({ ...payload, account_id: accountId })
   const { data, error } = await query.select(modelFields).single()
-  if (error) throw error
+  if (error) throw machineMasterError(error, 'model')
+  return data
+}
+
+export async function setMachineModelStatus({ accountId, modelId, isActive }) {
+  const { data, error } = await supabase.from('machine_models').update({ is_active: isActive })
+    .eq('id', modelId).eq('account_id', accountId).select(modelFields).single()
+  if (error) throw machineMasterError(error, 'model')
   return data
 }
 

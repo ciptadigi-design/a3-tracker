@@ -243,6 +243,19 @@ test("effective resolver safely ignores malformed collections and slot identitie
   );
 });
 
+test("Xerox zero-profile fixture never inherits Konica profiles", () => {
+  const rows = Array.from({ length: 28 }, (_, index) => ({
+    id: `konica-${index}`,
+    account_id: "account",
+    machine_model_id: "konica-c1070",
+    slot_code: `KONICA-${index}`,
+    display_order: index,
+    is_active: true,
+  }));
+  assert.equal(effectiveProfiles(rows, "account", "konica-c1070").length, 28);
+  assert.deepEqual(effectiveProfiles(rows, "account", "xerox-versant-180"), []);
+});
+
 test("archived Catalog/Profile cards expose Restore only to managers", () => {
   assert.deepEqual(
     archivedConfigurationActions({ isActive: false, canManage: true }),

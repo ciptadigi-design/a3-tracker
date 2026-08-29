@@ -33,7 +33,7 @@ function isMachineDraft(value) {
   return value && machineDraftFields.every((field) => typeof value[field] === 'string')
 }
 
-export function MachineFormDialog({ mode, machine, account, branches, branchId, manufacturers = [], models = [], onClose, onSave }) {
+export function MachineFormDialog({ mode, machine, account, branches, branchId, manufacturers = [], models = [], canManageMachineMasters = false, onManageMachineModels, onClose, onSave }) {
   const { user } = useAuth()
   const isEdit = mode === 'edit'
   const serverValues = initialValues({ machine, branchId, manufacturers, models })
@@ -151,6 +151,7 @@ export function MachineFormDialog({ mode, machine, account, branches, branchId, 
                   <label className="form-field"><span>Machine model <RequiredMark /></span><select value={values.machineModelId} onChange={(event) => change('machineModelId', event.target.value)} disabled={!values.manufacturerId} aria-invalid={Boolean(errors.machineModelId)}><option value="">Choose model</option>{filteredModels.map((model) => <option key={model.id} value={model.id}>{model.name}</option>)}</select><FieldError message={errors.machineModelId} /></label>
                 </>}
             </div>
+            {!isEdit && <div className="machine-master-guidance"><div><strong>Can't find the manufacturer or model?</strong><span>Machine masters are managed centrally in Settings.</span></div>{canManageMachineMasters ? <button className="secondary-button" type="button" onClick={onManageMachineModels}>Manage Machine Models</button> : <span>Contact your platform administrator to add a machine manufacturer or model.</span>}</div>}
 
             <div className="form-section-heading"><strong>Identity</strong><span>Use stable identifiers from the physical machine or operating convention.</span></div>
             <div className="form-grid">
