@@ -68,7 +68,7 @@ export function ErrorsPage({ navigate }) {
         <SummaryCard icon={AlertTriangle} label="Assessed Loss" value={formatRupiah(summary.assessed)} detail={scopeDescription} tone="green" />
       </section>
 
-      <IncidentHistory incidents={filteredIncidents} machines={machinesState.machines} timezone={timezone} isLoading={incidentState.isLoading} error={incidentState.error} onRefresh={incidentState.refresh} onOpen={(incidentId) => navigate(`/errors/${incidentId}`)} />
+      <IncidentHistory incidents={filteredIncidents} machines={machinesState.machines} timezone={timezone} isLoading={incidentState.isLoading} error={incidentState.error} onRefresh={incidentState.refresh} onOpen={(incidentId) => navigate(`/errors/${incidentId}`)} resetKey={`${branch.id}:${effectiveMachineFilter}`} />
 
       {canLogErrors && workflow.value.type === 'create' && isReady && <IncidentFormDialog account={account} branch={branch} machines={machinesState.machines} people={incidentState.people} onClose={workflow.clearUIState} onSave={handleCreate} />}
     </div>

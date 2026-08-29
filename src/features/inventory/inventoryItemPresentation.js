@@ -4,5 +4,7 @@ export function inventoryItemLabel(item) {
 }
 
 export function inventoryItemScope(item) {
-  return item?.components?.name ? `Component: ${item.components.name}` : item?.category || 'Uncategorized'
+  if (item?.components?.name) return `Component: ${item.components.name}`
+  if (String(item?.notes ?? '').includes('LEGACY_IMPORT')) return 'Legacy item · Unspecified component'
+  return item?.category || 'Uncategorized'
 }

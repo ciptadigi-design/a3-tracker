@@ -14,6 +14,8 @@ const incidentFields = `
   incident_type,
   qty_affected,
   responsible_user_id,
+  operator_person_id,
+  operator_name_snapshot,
   responsible_person_id,
   responsible_name_snapshot,
   material_loss,
@@ -102,8 +104,8 @@ function incidentMutationPayload(values) {
     target_customer_name: values.customerName.trim() || null,
     target_product_name: values.productName.trim() || null,
     target_qty_affected: values.qtyAffected === '' ? null : Number(values.qtyAffected),
-    target_responsible_user_id: values.responsibleUserId || null,
-    target_responsible_name: values.responsibleName.trim() || null,
+    target_operator_person_id: values.operatorPersonId || null,
+    target_responsible_person_id: values.responsiblePersonId || null,
     target_material_loss: values.materialLoss === '' ? 0 : Number(values.materialLoss),
     target_service_loss: values.serviceLoss === '' ? 0 : Number(values.serviceLoss),
     target_cause: values.cause.trim() || null,
@@ -114,7 +116,7 @@ function incidentMutationPayload(values) {
 }
 
 export async function updateOperationalIncident({ incidentId, values }) {
-  const { data, error } = await supabase.rpc('update_operational_incident', {
+  const { data, error } = await supabase.rpc('update_operational_incident_v2', {
     target_incident_id: incidentId,
     ...incidentMutationPayload(values),
   })
@@ -132,7 +134,7 @@ export async function solveOperationalIncident({ incidentId, resolutionNote }) {
 }
 
 export async function createOperationalIncident({ accountId, branchId, values }) {
-  const { data, error } = await supabase.rpc('create_operational_incident', {
+  const { data, error } = await supabase.rpc('create_operational_incident_v2', {
     target_account_id: accountId,
     target_branch_id: branchId,
     target_occurred_at: new Date(values.occurredAt).toISOString(),
@@ -145,8 +147,8 @@ export async function createOperationalIncident({ accountId, branchId, values })
     target_customer_name: values.customerName.trim() || null,
     target_product_name: values.productName.trim() || null,
     target_qty_affected: values.qtyAffected === '' ? null : Number(values.qtyAffected),
-    target_responsible_user_id: values.responsibleUserId || null,
-    target_responsible_name: values.responsibleName.trim() || null,
+    target_operator_person_id: values.operatorPersonId || null,
+    target_responsible_person_id: values.responsiblePersonId || null,
     target_material_loss: values.materialLoss === '' ? 0 : Number(values.materialLoss),
     target_service_loss: values.serviceLoss === '' ? 0 : Number(values.serviceLoss),
     target_cause: values.cause.trim() || null,

@@ -14,3 +14,7 @@ test('SKU-less item renders only its clean name', () => {
 test('linked Component is the secondary item context', () => {
   assert.equal(inventoryItemScope({ components: { name: 'Toner Cyan' } }), 'Component: Toner Cyan')
 })
+
+test('unlinked legacy acquisition remains valid without inventing a component', () => {
+  assert.equal(inventoryItemScope({ name: 'Other Part', component_id: null, notes: 'LEGACY_IMPORT acquisition-only item; no opening stock' }), 'Legacy item · Unspecified component')
+})

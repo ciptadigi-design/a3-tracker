@@ -30,6 +30,8 @@ export const incidentRevisionFieldLabels = {
   incident_type: 'Jenis',
   machine_id: 'Machine',
   qty_affected: 'Qty Rusak',
+  operator_person_id: 'PIC / Operator',
+  operator_name_snapshot: 'Nama Operator',
   responsible_user_id: 'PIC akun',
   responsible_name_snapshot: 'PIC Terlibat',
   material_loss: 'Rugi Bahan',

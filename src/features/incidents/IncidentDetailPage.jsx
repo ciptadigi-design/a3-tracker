@@ -111,7 +111,8 @@ export function IncidentDetailPage({ incidentId, navigate }) {
         <DetailItem icon={Tag} label="Kategori / Jenis" value={`${categoryLabels[incident.category]} · ${incidentTypeLabels[incident.incident_type]}`} hint="Mesin = operational usage, bukan technical fault" />
         <DetailItem icon={Printer} label="Machine" value={machine ? `${machine.machine_code} · ${machine.display_name}` : 'Branch / No specific machine'} />
         <DetailItem icon={Gauge} label="Qty affected" value={incident.qty_affected == null ? 'Tidak dicatat' : String(incident.qty_affected)} />
-        <DetailItem icon={UserRound} label="PIC terlibat" value={incident.responsible_name_snapshot || 'Tidak dicatat'} hint={incident.responsible_user_id ? 'Linked account member + snapshot' : 'Snapshot name'} />
+        <DetailItem icon={UserRound} label="PIC / Operator" value={incident.operator_name_snapshot || 'Tidak dicatat'} hint={incident.operator_person_id ? 'Operational Person + immutable snapshot' : 'Historical record without Operator identity'} />
+        <DetailItem icon={UserRound} label="PIC terlibat" value={incident.responsible_name_snapshot || 'Tidak dicatat'} hint={incident.responsible_person_id ? 'Operational Person + immutable snapshot' : 'Historical snapshot'} />
         <DetailItem icon={Boxes} label="Rugi bahan" value={formatRupiah(incident.material_loss)} />
         <DetailItem icon={HandCoins} label="Rugi jasa" value={formatRupiah(incident.service_loss)} />
         <DetailItem icon={ClipboardCheck} label="Created by" value={memberNames.get(incident.created_by) || 'User record unavailable'} hint={formatIncidentDate(incident.created_at, timezone)} />

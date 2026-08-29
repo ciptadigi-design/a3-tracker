@@ -3,6 +3,8 @@ import { Clock3, FilePenLine, History, RefreshCcw } from 'lucide-react'
 import { CorrectCounterDialog } from './CorrectCounterDialog.jsx'
 import { formatCounter, formatUsage } from './counterUtils.js'
 import { userErrorMessage } from '../../lib/appErrors.js'
+import { Pagination } from '../../components/ui/Pagination.jsx'
+import { usePagination } from '../pagination/usePagination.js'
 
 function formatObservedAt(value, timezone) {
   return new Intl.DateTimeFormat('en-GB', {
@@ -12,8 +14,10 @@ function formatObservedAt(value, timezone) {
   }).format(new Date(value))
 }
 
-export function CounterHistory({ history, profiles, currentUserId, timezone, isLoading, error, canCorrect, onRefresh, onCorrected }) {
+export function CounterHistory({ history, profiles, currentUserId, timezone, isLoading, error, canCorrect, onRefresh, onCorrected, resetKey }) {
   const [correctingReading, setCorrectingReading] = useState(null)
+  const pagination = usePagination(history.length, resetKey)
+  const visibleHistory = history.slice(pagination.start, pagination.end)
   const latestEffective = history.find((reading) => reading.status === 'effective')
   const profileNames = new Map(profiles.map((profile) => [profile.user_id, profile.display_name]))
 
@@ -28,7 +32,7 @@ export function CounterHistory({ history, profiles, currentUserId, timezone, isL
       {isLoading ? <div className="history-state"><RefreshCcw className="spin" size={23} /><strong>Loading counter history…</strong></div>
         : error ? <div className="history-state error-state"><strong>Counter history could not be loaded.</strong><span>{userErrorMessage(error, 'Counter history is temporarily unavailable.')}</span><button className="secondary-button" type="button" onClick={onRefresh}>Try again</button></div>
           : history.length === 0 ? <div className="history-state"><span className="history-empty-icon"><History size={27} /></span><strong>No counter history yet.</strong><span>The first real submission will establish the cumulative baseline.</span></div>
-            : <div className="counter-history-list">{history.map((reading) => <article className={`counter-history-row counter-history-${reading.status}`} key={reading.reading_id}>
+            : <><div className="counter-history-list">{visibleHistory.map((reading) => <article className={`counter-history-row counter-history-${reading.status}`} key={reading.reading_id}>
               <div className="history-time"><Clock3 size={15} /><div><strong>{formatObservedAt(reading.observed_at, timezone)}</strong><span>{reading.shift_code || 'No shift'} · Operator: {reading.operator_name_snapshot || 'Not recorded'}</span><small>Recorded by {enteredBy(reading)}</small></div></div>
               <div className="history-value"><span>Reading</span><strong>{formatCounter(reading.reading_value)}</strong></div>
               <div className="history-value usage"><span>Usage</span><strong>{formatUsage(reading.usage)}</strong></div>
@@ -36,7 +40,7 @@ export function CounterHistory({ history, profiles, currentUserId, timezone, isL
               {canCorrect && reading.reading_id === latestEffective?.reading_id ? <button className="history-correct-button" type="button" onClick={() => setCorrectingReading(reading)}><FilePenLine size={15} /> Correct latest</button> : <span />}
               {reading.correction_reason && <div className="history-correction-note"><strong>Correction reason</strong><span>{reading.correction_reason}</span></div>}
               {reading.notes && <div className="history-notes">{reading.notes}</div>}
-            </article>)}</div>}
+            </article>)}</div><Pagination total={history.length} {...pagination} onPageChange={pagination.setPage} onPageSizeChange={pagination.setPageSize} label="counter readings" /></>}
       {correctingReading && <CorrectCounterDialog reading={correctingReading} onClose={() => setCorrectingReading(null)} onCorrected={onCorrected} />}
     </section>
   )
