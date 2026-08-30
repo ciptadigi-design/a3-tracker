@@ -1,0 +1,14 @@
+{
+  "classification": "NON_PRODUCTION_REHEARSAL",
+  "execution_uuid": "6a8f4bb8-1f31-4e03-a9db-fdd9821e8d78",
+  "mechanism": "repository-ledger schema reconstruction plus private logical public-schema/public-data backup",
+  "schema_backup_sha256": "fafd18b681577624b0ee7403f57ee4fb6abac28196a3474763895fe25cd1caf7",
+  "data_backup_sha256": "06bc636db387302b7743dcb113ba5ef19c60646c944e1dfd547cbdf1b8cadda0",
+  "schema_ledger": "20260830000100",
+  "baseline_fingerprint": "8c4ab77d2b05a863e261d224651dce605cf65cc3470392c0316d134c311ab7c6",
+  "restored_fingerprint": "8c4ab77d2b05a863e261d224651dce605cf65cc3470392c0316d134c311ab7c6",
+  "result": "PASS",
+  "production_overwritten": false,
+  "hosted_dev_overwritten": false,
+  "private_backup_committed": false
+}

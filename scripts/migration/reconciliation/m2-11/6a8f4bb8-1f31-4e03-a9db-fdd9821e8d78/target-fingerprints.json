@@ -1,0 +1,11 @@
+{
+  "classification": "NON_PRODUCTION_REHEARSAL",
+  "target_type": "DISPOSABLE_REHEARSAL",
+  "hosted_project_ref": null,
+  "schema_ledger": "20260830000100",
+  "baseline": "8c4ab77d2b05a863e261d224651dce605cf65cc3470392c0316d134c311ab7c6",
+  "post_apply": "f78296a4427113e2f397d25a0a2d820d2ae839f47e413ed5ecf2132eddd21533",
+  "second_apply": "f78296a4427113e2f397d25a0a2d820d2ae839f47e413ed5ecf2132eddd21533",
+  "post_stock_fixture": "80738b4383169e584df993b3790017ebbe5e2e0aafd69a2385a9e048f02a82b8",
+  "restored_baseline": "8c4ab77d2b05a863e261d224651dce605cf65cc3470392c0316d134c311ab7c6"
+}

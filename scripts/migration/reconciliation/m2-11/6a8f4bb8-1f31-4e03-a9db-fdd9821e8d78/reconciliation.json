@@ -1,0 +1,44 @@
+{
+  "people": 10,
+  "source": 526,
+  "counters": {
+    "imported": 180,
+    "max_date": "2026-08-28T12:09:54+00:00",
+    "min_date": "2026-03-04T06:53:35+00:00",
+    "accounted": 180,
+    "max_value": 1440211,
+    "min_value": 1269356,
+    "latest_value": 1440211
+  },
+  "incidents": {
+    "rows": 89,
+    "assessed_loss": 455962.36
+  },
+  "purchases": {
+    "qty": 208,
+    "rows": 161,
+    "value": 371029998
+  },
+  "lifecycles": 47,
+  "unexplained": 0,
+  "dispositions": {
+    "MERGE": 0,
+    "IMPORT": 477,
+    "ARCHIVE_ONLY": 45,
+    "MANUAL_REVIEW": 0,
+    "SKIP_DUPLICATE": 2,
+    "APPROVED_EXCLUDE": 2
+  },
+  "target_state": {
+    "assignments": 28,
+    "lifecycles_total": 47,
+    "accepted_replacement_events": 0
+  },
+  "counter_merge": 0,
+  "graha_leakage": 0,
+  "manual_excluded": 0,
+  "eligible_accounted": 526,
+  "fifo_from_legacy_purchases": 0,
+  "receipts_from_legacy_purchases": 0,
+  "movements_from_legacy_purchases": 0
+}

@@ -1,0 +1,113 @@
+{
+  "version": "m2.11-rehearsal-v1",
+  "execution_uuid": "6a8f4bb8-1f31-4e03-a9db-fdd9821e8d78",
+  "classification": "NON_PRODUCTION_REHEARSAL",
+  "source": {
+    "classification": "NON_FROZEN_ACCEPTED_REHEARSAL_SNAPSHOT",
+    "project_ref": "wtslqxjwjqyjgcapfrrz",
+    "fingerprints": {
+      "click_history": "c1e69897a12caf54eb61064f30a799be7fd41e960a3909aff3d8969834393ee5",
+      "part_replacements": "2dc08b4a2d2f6dcaf354732c44823485e895da922aa9583d7b5a2c8f4a2e207e",
+      "error_logs": "65d17c0c54b712ee04c5848e83147a2f892c1face3a48504a19e3d2a1e4cf35b",
+      "inventory_parts": "ffcd9463f006fc531987f7b3a17c0f1d3d9dd58a2c47ffef21252ef3347ca632",
+      "part_purchases": "6354204d285987b56764268ff22a06480003886528470401fdfe19766d7ee306"
+    },
+    "aggregate_fingerprint": "43d01460d9aae1605b1e0466d68ab324caa07099da24539e42eb20e0fac0cb3e"
+  },
+  "target": {
+    "type": "DISPOSABLE_REHEARSAL",
+    "hosted_project_ref": null,
+    "ledger": "20260830000100",
+    "baseline_fingerprint": "8c4ab77d2b05a863e261d224651dce605cf65cc3470392c0316d134c311ab7c6",
+    "post_apply_fingerprint": "f78296a4427113e2f397d25a0a2d820d2ae839f47e413ed5ecf2132eddd21533",
+    "post_stock_fingerprint": "80738b4383169e584df993b3790017ebbe5e2e0aafd69a2385a9e048f02a82b8"
+  },
+  "backup": {
+    "data_sha256": "06bc636db387302b7743dcb113ba5ef19c60646c944e1dfd547cbdf1b8cadda0",
+    "schema_sha256": "fafd18b681577624b0ee7403f57ee4fb6abac28196a3474763895fe25cd1caf7",
+    "private_artifact": true,
+    "restore_verified": true,
+    "restored_fingerprint": "8c4ab77d2b05a863e261d224651dce605cf65cc3470392c0316d134c311ab7c6",
+    "matches_baseline": true
+  },
+  "plan": {
+    "disposition_totals": {
+      "IMPORT": 477,
+      "MERGE": 0,
+      "SKIP_DUPLICATE": 2,
+      "ARCHIVE_ONLY": 45,
+      "APPROVED_EXCLUDE": 2,
+      "MANUAL_REVIEW": 0
+    },
+    "operation_counts": {
+      "people": 10,
+      "counters": 180,
+      "lifecycles": 47,
+      "suppliers": 9,
+      "items": 22,
+      "purchases": 161,
+      "incidents": 89
+    },
+    "unexplained_remainder": 0,
+    "hash": "23e94a05bdacd312013c4d16a8f5fb4202013ff5114f837eb01334363dc9c9a2"
+  },
+  "checks": {
+    "failure_injection": "PASS_ROLLED_BACK",
+    "dry_run_unchanged": true,
+    "first_apply": "PASS",
+    "second_apply_idempotent": true,
+    "dev_mutated": false,
+    "production_mutated": false
+  },
+  "reconciliation": {
+    "people": 10,
+    "source": 526,
+    "counters": {
+      "imported": 180,
+      "max_date": "2026-08-28T12:09:54+00:00",
+      "min_date": "2026-03-04T06:53:35+00:00",
+      "accounted": 180,
+      "max_value": 1440211,
+      "min_value": 1269356,
+      "latest_value": 1440211
+    },
+    "incidents": {
+      "rows": 89,
+      "assessed_loss": 455962.36
+    },
+    "purchases": {
+      "qty": 208,
+      "rows": 161,
+      "value": 371029998
+    },
+    "lifecycles": 47,
+    "unexplained": 0,
+    "dispositions": {
+      "MERGE": 0,
+      "IMPORT": 477,
+      "ARCHIVE_ONLY": 45,
+      "MANUAL_REVIEW": 0,
+      "SKIP_DUPLICATE": 2,
+      "APPROVED_EXCLUDE": 2
+    },
+    "target_state": {
+      "assignments": 28,
+      "lifecycles_total": 47,
+      "accepted_replacement_events": 0
+    },
+    "counter_merge": 0,
+    "graha_leakage": 0,
+    "manual_excluded": 0,
+    "eligible_accounted": 526,
+    "fifo_from_legacy_purchases": 0,
+    "receipts_from_legacy_purchases": 0,
+    "movements_from_legacy_purchases": 0
+  },
+  "stock_fixture": {
+    "lots": 2,
+    "movements": 2,
+    "graha_leakage": 0,
+    "known_cost_quantity": 1,
+    "unknown_cost_quantity": 2
+  }
+}

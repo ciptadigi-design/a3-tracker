@@ -1,0 +1,34 @@
+{
+  "version": "m2.11-production-stock-v1",
+  "classification": "PRODUCTION_PHYSICAL_STOCK_OPNAME",
+  "execution_uuid": "TBD_USER_APPROVAL_REQUIRED",
+  "target": {
+    "type": "PRODUCTION",
+    "project_ref": "TBD_USER_APPROVAL_REQUIRED",
+    "account_id": "TBD",
+    "branch_id": "TBD",
+    "location_id": "TBD"
+  },
+  "approval": {"approved": false, "reviewed_by": "TBD", "reviewed_at": "TBD"},
+  "rows": [
+    {
+      "inventory_item_id": "TBD",
+      "display_name": "TBD",
+      "sku": null,
+      "component_id": null,
+      "branch": "Tuparev",
+      "location": "TBD",
+      "counted_quantity": null,
+      "unit": "TBD",
+      "cost_evidence": null,
+      "cost_status": "UNKNOWN",
+      "unit_cost": null,
+      "source_or_counterparty": null,
+      "counted_by": "TBD",
+      "verified_by": "TBD",
+      "counted_at": "TBD",
+      "approval_status": "PENDING",
+      "notes": null
+    }
+  ]
+}

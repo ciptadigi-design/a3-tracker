@@ -115,8 +115,13 @@ export function stagingDispositionRows() {
   return [...dispositionMap({ hostedStaging: true }).values()]
 }
 
-export function buildMigrationPlan(source, { hostedStaging = false, targetState = null } = {}) {
+export function buildMigrationPlan(source, { hostedStaging = false, productionRehearsal = false, targetState = null } = {}) {
   const disposition = dispositionMap({ hostedStaging })
+  if (productionRehearsal) {
+    for (const [key, row] of disposition) {
+      if (row.disposition === 'MERGE') disposition.set(key, { ...row, disposition: 'IMPORT', eligibility: 'PRODUCTION_CREATE_NO_TARGET_COLLISION', reason: 'Production-like target has no matching pre-existing counter; create deterministic evidence row' })
+    }
+  }
   const counterDecisions = new Map(counterArtifact.decisions.map((row) => [row.legacy_id, row]))
   const crosswalk = []
   const operations = { people: [], counters: [], lifecycles: [], suppliers: [], items: [], purchases: [], incidents: [] }
@@ -147,7 +152,7 @@ export function buildMigrationPlan(source, { hostedStaging = false, targetState 
     .filter(({ d }) => d?.disposition === 'IMPORT')
     .map(({ row, d, decision }) => ({ id: idFor('row', 'click_history', row.id), sourceId: row.id, value: n(row.total_clicks), observed_at: decision.migration_timestamp, evidence: decision.timestamp_evidence, operator: resolvePlanPic(row.operator), rawOperator: row.operator, disposition: d.disposition }))
   const importedCounterIds = new Set(counterImports.map((row) => row.id))
-  const targetCounterEvents = (targetState?.counters ?? baselineCounterEvents).filter((row) => !importedCounterIds.has(row.id))
+  const targetCounterEvents = (targetState?.counters ?? (productionRehearsal ? [] : baselineCounterEvents)).filter((row) => !importedCounterIds.has(row.id))
   const stream = [...targetCounterEvents, ...counterImports].sort((a, b) => a.observed_at.localeCompare(b.observed_at) || a.id.localeCompare(b.id))
   for (let index = 0; index < stream.length; index += 1) if (stream[index].sourceId) operations.counters.push({ ...stream[index], previousId: index ? stream[index - 1].id : null })
   for (const row of source.click_history) {
@@ -215,7 +220,7 @@ export function buildMigrationPlan(source, { hostedStaging = false, targetState 
   const dispositionTotals = Object.fromEntries(dispositionKeys.map((key) => [key, crosswalk.filter((row) => row.disposition === key).length]))
   const total = Object.values(dispositionTotals).reduce((sum, value) => sum + value, 0)
   if (total !== 526) throw new Error(`Disposition accounting failed: ${total}/526`)
-  return { version: hostedStaging ? 'm2.10b-v1' : 'm2.10a-v1', actorId: targetState?.migration_actor_id ?? IDENTITY.actorId, operations, crosswalk, dispositionTotals, eligibleAccounted: total - dispositionTotals.MANUAL_REVIEW, unexplainedRemainder: 526 - total }
+  return { version: productionRehearsal ? 'm2.11-rehearsal-v1' : hostedStaging ? 'm2.10b-v1' : 'm2.10a-v1', actorId: targetState?.migration_actor_id ?? IDENTITY.actorId, operations, crosswalk, dispositionTotals, eligibleAccounted: total - dispositionTotals.MANUAL_REVIEW, unexplainedRemainder: 526 - total }
 }
 
 function crosswalkRow(table, id, disposition, targetEntity, targetId, notes, actor = null, sourceEvidence = null) {
@@ -224,7 +229,7 @@ function crosswalkRow(table, id, disposition, targetEntity, targetId, notes, act
 
 export function buildApplySql(plan, { dryRun = false, injectFailure = false, psqlMeta = true } = {}) {
   const o = plan.operations; const sql = psqlMeta ? ['\\set ON_ERROR_STOP on', 'begin;'] : ['begin;']
-  const actorName = plan.version === 'm2.10b-v1' ? 'M2.10B Hosted DEV Migration' : 'M2.10A Fixture Owner'
+  const actorName = plan.version === 'm2.10b-v1' ? 'M2.10B Hosted DEV Migration' : plan.version === 'm2.11-rehearsal-v1' ? 'M2.11 Disposable Rehearsal' : 'M2.10A Fixture Owner'
   const actorId = plan.actorId ?? IDENTITY.actorId
   for (const person of o.people) {
     sql.push(`insert into public.operational_people(id,account_id,name,notes) values(${q(person.id)},${q(IDENTITY.accountId)},${q(person.name)},'LEGACY_IMPORT; historical person only; no Auth identity') on conflict (id) do nothing;`)

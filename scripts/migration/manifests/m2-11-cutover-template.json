@@ -1,0 +1,35 @@
+{
+  "cutover_version": "m2.11-template-v1",
+  "execution_uuid": "TBD_USER_APPROVAL_REQUIRED",
+  "source": {
+    "project_ref": "wtslqxjwjqyjgcapfrrz",
+    "freeze_timestamp": "TBD_USER_APPROVAL_REQUIRED",
+    "freeze_confirmed": false,
+    "fingerprints": {},
+    "aggregate_fingerprint": "TBD"
+  },
+  "target": {
+    "project_ref": "TBD_USER_APPROVAL_REQUIRED",
+    "preflight_fingerprint": "TBD",
+    "schema_ledger": ["ALL_REPOSITORY_MIGRATIONS_THROUGH_20260830000100"]
+  },
+  "identity": {
+    "account_id": "TBD",
+    "branch_ids": {"tuparev": "TBD", "graha": "TBD"},
+    "machine_ids": {"CG-TUP-A3-01": "TBD"},
+    "inventory_location_ids": {"CG Digital Print": "TBD"}
+  },
+  "stock_manifest_hash": "TBD",
+  "backup_proof": {"provider_backup_id": "TBD", "logical_backup_hash": "TBD", "verified_restore": false},
+  "migration_plan_hash": "TBD",
+  "approvals": {
+    "cutover_owner": "TBD_USER_APPROVAL_REQUIRED",
+    "freeze_owner": "TBD_USER_APPROVAL_REQUIRED",
+    "database_operator": "TBD_USER_APPROVAL_REQUIRED",
+    "application_validator": "TBD_USER_APPROVAL_REQUIRED",
+    "business_acceptance_owner": "TBD_USER_APPROVAL_REQUIRED",
+    "rollback_decision_owner": "TBD_USER_APPROVAL_REQUIRED"
+  },
+  "reconciliation_result": "PENDING",
+  "decision": "NO_GO"
+}

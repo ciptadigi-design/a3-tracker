@@ -1,0 +1,59 @@
+{
+  "manifest": {
+    "version": "m2.11-stock-fixture-v1",
+    "classification": "NON_PRODUCTION_STOCK_OPNAME_FIXTURE",
+    "execution_uuid": "6a8f4bb8-1f31-4e03-a9db-fdd9821e8d78",
+    "target": {
+      "type": "DISPOSABLE_REHEARSAL",
+      "project_ref": null,
+      "account_id": "357e420a-c9ea-4404-9da4-f254c5dce5ef",
+      "branch_id": "76d3c7ab-55c3-40f7-b133-0ef54a448893",
+      "location_id": "b6296488-5479-4dd0-9463-091891b4cbe4"
+    },
+    "approval": {
+      "approved": true,
+      "reviewed_by": "NON_PRODUCTION_FIXTURE_REVIEWER",
+      "production_approval": false
+    },
+    "rows": [
+      {
+        "inventory_item_id": "160c7951-8712-5380-af40-f34b2540984a",
+        "display_name": "Toner Magenta",
+        "sku": "LEG-E0AFD1111F7E",
+        "component_id": "53000000-0000-0000-0000-000000000026",
+        "counted_quantity": 1,
+        "unit": "pcs",
+        "cost_status": "KNOWN",
+        "unit_cost": 125000,
+        "operational_person_id": "c89d9c9c-b892-4794-b69c-f2680908a068",
+        "counted_by": "NON_PRODUCTION_FIXTURE",
+        "verified_by": "NON_PRODUCTION_FIXTURE_REVIEWER",
+        "counted_at": "2026-08-30T03:00:00.000Z",
+        "notes": "Synthetic quantity for M2.11 rehearsal only"
+      },
+      {
+        "inventory_item_id": "188ea069-7024-5f87-b701-ae59bd0c2d20",
+        "display_name": "Toner Black",
+        "sku": "LEG-E72F7369C462",
+        "component_id": "53000000-0000-0000-0000-000000000028",
+        "counted_quantity": 2,
+        "unit": "pcs",
+        "cost_status": "UNKNOWN",
+        "unit_cost": null,
+        "operational_person_id": "c89d9c9c-b892-4794-b69c-f2680908a068",
+        "counted_by": "NON_PRODUCTION_FIXTURE",
+        "verified_by": "NON_PRODUCTION_FIXTURE_REVIEWER",
+        "counted_at": "2026-08-30T03:00:00.000Z",
+        "notes": "Synthetic quantity for M2.11 rehearsal only"
+      }
+    ]
+  },
+  "result": {
+    "lots": 2,
+    "movements": 2,
+    "graha_leakage": 0,
+    "known_cost_quantity": 1,
+    "unknown_cost_quantity": 2
+  },
+  "production_approval": false
+}

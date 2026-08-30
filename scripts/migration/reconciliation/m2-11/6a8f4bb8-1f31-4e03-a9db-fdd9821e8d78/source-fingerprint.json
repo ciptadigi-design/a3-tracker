@@ -1,0 +1,14 @@
+{
+  "classification": "NON_FROZEN_ACCEPTED_REHEARSAL_SNAPSHOT",
+  "source_project_ref": "wtslqxjwjqyjgcapfrrz",
+  "row_count": 526,
+  "table_fingerprints": {
+    "click_history": "c1e69897a12caf54eb61064f30a799be7fd41e960a3909aff3d8969834393ee5",
+    "part_replacements": "2dc08b4a2d2f6dcaf354732c44823485e895da922aa9583d7b5a2c8f4a2e207e",
+    "error_logs": "65d17c0c54b712ee04c5848e83147a2f892c1face3a48504a19e3d2a1e4cf35b",
+    "inventory_parts": "ffcd9463f006fc531987f7b3a17c0f1d3d9dd58a2c47ffef21252ef3347ca632",
+    "part_purchases": "6354204d285987b56764268ff22a06480003886528470401fdfe19766d7ee306"
+  },
+  "aggregate_fingerprint": "43d01460d9aae1605b1e0466d68ab324caa07099da24539e42eb20e0fac0cb3e",
+  "production_apply_eligible": false
+}

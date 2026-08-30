@@ -1,0 +1,12 @@
+{
+  "classification": "NON_PRODUCTION_REHEARSAL",
+  "execution_uuid": "6a8f4bb8-1f31-4e03-a9db-fdd9821e8d78",
+  "pre_cutover_fingerprint": "8c4ab77d2b05a863e261d224651dce605cf65cc3470392c0316d134c311ab7c6",
+  "post_migration_fingerprint": "f78296a4427113e2f397d25a0a2d820d2ae839f47e413ed5ecf2132eddd21533",
+  "post_stock_fixture_fingerprint": "80738b4383169e584df993b3790017ebbe5e2e0aafd69a2385a9e048f02a82b8",
+  "restored_fingerprint": "8c4ab77d2b05a863e261d224651dce605cf65cc3470392c0316d134c311ab7c6",
+  "failure_injection_transaction_rollback": "PASS",
+  "committed_state_backup_restore": "PASS",
+  "manual_delete_rollback_used": false,
+  "result": "PASS"
+}
