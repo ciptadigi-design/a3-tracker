@@ -12,4 +12,4 @@ Laravel endpoints are under `/api/v1` and are opt-in through `VITE_DATA_BACKEND=
 
 ## Verification
 
-Local SQLite migrations and the existing Laravel suite pass. MySQL/InnoDB and reference PostgreSQL CI remain required milestone gates.
+Local SQLite migrations and the existing Laravel suite pass. Exact-SHA MySQL/InnoDB and reference PostgreSQL CI are green on the final implementation branch.

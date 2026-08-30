@@ -14,4 +14,4 @@
 Keep Supabase migrations/pgTAP as reference specification until M2.12 acceptance; Laravel migrations become target source of truth after cutover.
 ### M2.11E — Machine, People & Daily Counter parity
 
-Laravel operational-core schema, scoped APIs, timezone resolver and transactional counter service are implemented. Status: **FOUNDATION_PORTED / PARITY_TESTED pending exact-SHA MySQL and reference CI**.
+Laravel operational-core schema, scoped APIs, timezone resolver, transactional counter service and audited corrections are implemented. Status: **PARITY_TESTED** (exact-SHA MySQL and reference CI green).
