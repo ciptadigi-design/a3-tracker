@@ -30,6 +30,7 @@ dist-ssr
 *.sw?
 .vercel
 .env*
+!backend/.env.example
 backend/vendor/
 backend/.env
 backend/storage/*.key
