@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\CorrectionRequest;
 use App\Http\Requests\CounterRequest;
 use App\Models\Branch;
 use App\Models\CounterReading;
@@ -13,12 +14,14 @@ use App\Models\OperationalPerson;
 use App\Models\OperationalPersonBranch;
 use App\Services\AccountAccessResolver;
 use App\Services\BranchAccessResolver;
+use App\Services\CorrectCounterReading;
 use App\Services\CounterPeriodService;
 use App\Services\CreateCounterReading;
 use App\Services\MachineAccessResolver;
 use App\Services\MachineTimezoneResolver;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 
 class OperationsController extends Controller
 {
@@ -26,26 +29,62 @@ class OperationsController extends Controller
     {
         Gate::authorize('platform.manage');
         $d = $r->validate(['code' => 'required|string|max:64', 'name' => 'required|string|max:160', 'account_id' => 'nullable|uuid']);
+        $duplicate = Manufacturer::whereRaw('lower(trim(code)) = ?', [strtolower(trim($d['code']))])->when($d['account_id'] ?? null, fn ($q, $id) => $q->where('account_id', $id), fn ($q) => $q->whereNull('account_id'))->exists();
+        abort_if($duplicate, 409, 'Manufacturer code already exists in this scope.');
 
         return response()->json(['data' => Manufacturer::create($d)], 201);
+    }
+
+    public function setManufacturerStatus(Request $r, string $id)
+    {
+        Gate::authorize('platform.manage');
+        $m = Manufacturer::findOrFail($id);
+        $active = $r->validate(['is_active' => 'required|boolean'])['is_active'];
+        if (! $active && $m->models()->where('is_active', true)->exists()) {
+            throw new ConflictHttpException('manufacturer has active machine models');
+        } $m->update(['is_active' => $active, 'archived_at' => $active ? null : now()]);
+
+        return response()->json(['data' => $m]);
     }
 
     public function storeModel(Request $r)
     {
         Gate::authorize('platform.manage');
         $d = $r->validate(['manufacturer_id' => 'required|uuid', 'model_code' => 'required|string|max:64', 'name' => 'required|string|max:160', 'account_id' => 'nullable|uuid']);
+        $duplicate = MachineModel::where('manufacturer_id', $d['manufacturer_id'])->whereRaw('lower(trim(model_code)) = ?', [strtolower(trim($d['model_code']))])->when($d['account_id'] ?? null, fn ($q, $id) => $q->where('account_id', $id), fn ($q) => $q->whereNull('account_id'))->exists();
+        abort_if($duplicate, 409, 'Machine model code already exists in this scope.');
 
         return response()->json(['data' => MachineModel::create($d)->load('manufacturer')], 201);
+    }
+
+    public function setModelStatus(Request $r, string $id)
+    {
+        Gate::authorize('platform.manage');
+        $m = MachineModel::findOrFail($id);
+        $active = $r->validate(['is_active' => 'required|boolean'])['is_active'];
+        $m->update(['is_active' => $active, 'archived_at' => $active ? null : now()]);
+
+        return response()->json(['data' => $m]);
     }
 
     public function storeMachine(Request $r, string $branch)
     {
         $b = Branch::findOrFail($branch);
-        abort_unless(app(AccountAccessResolver::class)->canGovern($r->user(), $b->account), 403);
+        abort_unless(app(AccountAccessResolver::class)->canManageOperational($r->user(), $b->account), 403);
         $d = $r->validate(['machine_model_id' => 'required|uuid', 'machine_code' => 'required|string|max:80', 'display_name' => 'required|string|max:180', 'serial_number' => 'nullable|string|max:120', 'timezone' => 'nullable|string|max:64', 'status' => 'nullable|in:active,down,maintenance,retired']);
         $m = $b->machines()->create($d + ['account_id' => $b->account_id, 'status' => $d['status'] ?? 'active']);
 
         return response()->json(['data' => $m], 201);
+    }
+
+    public function setMachineStatus(Request $r, string $id)
+    {
+        $m = Machine::with('account')->findOrFail($id);
+        abort_unless(app(AccountAccessResolver::class)->canManageOperational($r->user(), $m->account), 403);
+        $status = $r->validate(['status' => 'required|in:active,down,maintenance,retired'])['status'];
+        $m->update(['status' => $status]);
+
+        return response()->json(['data' => $m]);
     }
 
     public function storePerson(Request $r, string $account)
@@ -54,6 +93,16 @@ class OperationsController extends Controller
         $d = $r->validate(['name' => 'required|string|max:160', 'code' => 'nullable|string|max:64', 'linked_user_id' => 'nullable|uuid']);
 
         return response()->json(['data' => OperationalPerson::create($d + ['account_id' => $account])], 201);
+    }
+
+    public function setPersonStatus(Request $r, string $id)
+    {
+        Gate::authorize('platform.manage');
+        $p = OperationalPerson::findOrFail($id);
+        $active = $r->validate(['is_active' => 'required|boolean'])['is_active'];
+        $p->update(['is_active' => $active, 'archived_at' => $active ? null : now()]);
+
+        return response()->json(['data' => $p]);
     }
 
     public function assignPerson(Request $r, string $person, string $branch)
@@ -128,6 +177,14 @@ class OperationsController extends Controller
         $row = app(CreateCounterReading::class)->execute($r->user(), $m, $r->validated());
 
         return response()->json(['data' => $row->load('operator')], 201);
+    }
+
+    public function correctCounter(CorrectionRequest $r, string $reading)
+    {
+        $row = CounterReading::with('machine.account')->findOrFail($reading);
+        $corrected = app(CorrectCounterReading::class)->execute($r->user(), $row, $r->validated());
+
+        return response()->json(['data' => $corrected->load('operator')]);
     }
 
     public function period(Request $r, string $machine)

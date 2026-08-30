@@ -11,7 +11,7 @@ class CounterReading extends Model
 
     protected $keyType = 'string';
 
-    protected $fillable = ['account_id', 'machine_id', 'counter_type_id', 'reading_value', 'observed_at', 'shift_code', 'operator_person_id', 'operator_name_snapshot', 'entered_by', 'source', 'previous_reading_id', 'status', 'notes', 'client_request_id'];
+    protected $fillable = ['account_id', 'machine_id', 'counter_type_id', 'reading_value', 'observed_at', 'shift_code', 'operator_person_id', 'operator_name_snapshot', 'entered_by', 'source', 'previous_reading_id', 'corrects_reading_id', 'status', 'notes', 'correction_reason', 'client_request_id'];
 
     protected $casts = ['reading_value' => 'decimal:4', 'observed_at' => 'datetime', 'created_at' => 'datetime', 'updated_at' => 'datetime'];
 

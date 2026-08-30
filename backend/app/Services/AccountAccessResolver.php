@@ -28,4 +28,9 @@ class AccountAccessResolver
     {
         return $user->isActive() && ($this->platform->isSuperuser($user) || $this->membership($user, $account)?->role === 'owner');
     }
+
+    public function canManageOperational(User $user, Account $account): bool
+    {
+        return $account->status === 'active' && $user->isActive() && ($this->platform->isSuperuser($user) || in_array($this->membership($user, $account)?->role, ['owner', 'admin'], true));
+    }
 }

@@ -10,6 +10,7 @@ use App\Models\MachineModel;
 use App\Models\Manufacturer;
 use App\Models\OperationalPerson;
 use App\Models\OperationalPersonBranch;
+use App\Models\PlatformUserPrivilege;
 use App\Models\User;
 use App\Services\CreateCounterReading;
 use App\Services\MachineTimezoneResolver;
@@ -62,5 +63,22 @@ class OperationalParityTest extends TestCase
         $this->actingAs($f['u'])->postJson('/api/v1/machines/'.$f['machine']->id.'/counters', ['reading_value' => 10, 'observed_at' => '2026-08-30T17:30:00Z', 'operator_person_id' => $f['p']->id, 'client_request_id' => (string) Str::uuid()])->assertCreated();
         $this->actingAs($f['u'])->postJson('/api/v1/machines/'.$f['machine']->id.'/counters', ['reading_value' => 25, 'observed_at' => '2026-08-31T01:00:00+07:00', 'operator_person_id' => $f['p']->id, 'client_request_id' => (string) Str::uuid()])->assertCreated();
         $this->actingAs($f['u'])->getJson('/api/v1/machines/'.$f['machine']->id.'/counters/period?from=2026-08-31&to=2026-08-31')->assertOk()->assertJsonPath('data.usage', 15);
+    }
+
+    public function test_latest_counter_correction_is_append_only_and_owner_admin_scoped(): void
+    {
+        $f = $this->fixture();
+        $row = app(CreateCounterReading::class)->execute($f['u'], $f['machine'], ['reading_value' => 100, 'observed_at' => now()->subMinute(), 'operator_person_id' => $f['p']->id, 'client_request_id' => (string) Str::uuid()]);
+        $this->actingAs($f['u'])->postJson('/api/v1/counter-readings/'.$row->id.'/correction', ['correction_reason' => 'Meter was misread', 'replacement_value' => 110, 'client_request_id' => (string) Str::uuid()])->assertOk()->assertJsonPath('data.source', 'correction');
+        $this->assertSame('superseded', $row->fresh()->status);
+    }
+
+    public function test_master_and_person_archive_mutations_are_explicitly_superuser_only(): void
+    {
+        $f = $this->fixture();
+        $this->actingAs($f['u'])->postJson('/api/v1/manufacturers', ['code' => 'x', 'name' => 'X'])->assertForbidden();
+        PlatformUserPrivilege::create(['user_id' => $f['u']->id, 'role' => 'superuser', 'is_active' => true]);
+        $this->actingAs($f['u'])->patchJson('/api/v1/operational-people/'.$f['p']->id.'/status', ['is_active' => false])->assertOk()->assertJsonPath('data.is_active', false);
+        $this->assertFalse($f['p']->fresh()->is_active);
     }
 }
