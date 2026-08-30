@@ -17,3 +17,5 @@ The frontend currently has 21 data-access modules and 52 distinct RPCs. Keep UI,
 Response convention is `{data, meta, errors}` for new endpoints, with compatibility adapters flattening legacy shapes when needed. Use 422 validation, 401 unauthenticated, 403 forbidden, 404 missing, 409 conflicts, and non-leaky 500 errors.
 
 M2.11D implemented replacements: `auth-login` → `AuthController@login`; `provision-member` → transactional, idempotent `ProvisionMember`; `bootstrap-platform-superuser` → explicitly confirmed artisan command plus protected API action; `is_platform_superuser`, `is_account_member`, and `can_access_branch` → `PlatformPrivilegeService`, `AccountAccessResolver`, and `BranchAccessResolver`. Settings is intentionally Superuser-only; branch access still requires explicit tenant membership/context. Operational RPCs and `operational_person_branches` remain deferred.
+| `machines`, `operational_people`, `operational_person_branches` | Laravel operational core tables and scoped API | FOUNDATION_PORTED |
+| `record_machine_counter`, `machine_counter_history`, period usage | `CreateCounterReading`, counter list and period endpoints | FOUNDATION_PORTED |

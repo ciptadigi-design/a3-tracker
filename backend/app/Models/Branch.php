@@ -36,4 +36,9 @@ class Branch extends Model
     {
         return $this->belongsTo(Account::class);
     }
+
+    public function machines()
+    {
+        return $this->hasMany(Machine::class);
+    }
 }

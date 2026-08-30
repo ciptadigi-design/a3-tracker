@@ -12,3 +12,6 @@
 | History protection | triggers/RPCs | immutable models, guarded updates, DB constraints/triggers where needed | mutation rejection tests |
 
 M2.11D status: authentication, explicit platform privilege, Settings Superuser-only policy, account membership status, account/branch scope resolvers, tenant-safe assignment FKs, fail-closed checks, and governance attack tests are **PARITY_TESTED**. Full operational-table policy translation remains **DEFERRED_DOMAIN**; `operational_person_branches` is not an Auth table. Frontend filtering is never a security boundary, and a Superuser privilege does not select an arbitrary operational Branch.
+| Machine / People / Counter tenant scope | FOUNDATION_PORTED; PARITY_TESTED pending exact-SHA CI |
+| Explicit branch context and operator eligibility | FOUNDATION_PORTED |
+| Components, Inventory, Errors, Cost, Reports | DEFERRED_DOMAIN |

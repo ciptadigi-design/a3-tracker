@@ -19,6 +19,6 @@ class BranchAccessResolver
             return false;
         }
 
-return $m->role === 'owner' || AccountMembershipBranch::where(['account_id' => $branch->account_id, 'membership_id' => $m->id, 'branch_id' => $branch->id, 'is_active' => true])->exists();
+        return $m->role === 'owner' || AccountMembershipBranch::where(['account_id' => $branch->account_id, 'membership_id' => $m->id, 'branch_id' => $branch->id, 'is_active' => true])->exists();
     }
 }

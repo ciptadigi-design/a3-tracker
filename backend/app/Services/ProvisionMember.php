@@ -36,7 +36,7 @@ class ProvisionMember
                 AccountMembershipBranch::updateOrCreate(['membership_id' => $m->id, 'branch_id' => $id], ['account_id' => $account->id, 'is_active' => true]);
             } $this->audit->record($actor, 'member.provisioned', 'account_membership', $m->id, $account->id, ['role' => $m->role]);
 
-            return $m->load('user','branchAssignments');
+            return $m->load('user', 'branchAssignments');
         });
     }
 }

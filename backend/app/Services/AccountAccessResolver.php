@@ -16,7 +16,7 @@ class AccountAccessResolver
             return null;
         }
 
-return AccountMembership::whereBelongsTo($account)->whereBelongsTo($user)->where('status', 'active')->first();
+        return AccountMembership::whereBelongsTo($account)->whereBelongsTo($user)->where('status', 'active')->first();
     }
 
     public function canAccess(User $user, Account $account): bool
