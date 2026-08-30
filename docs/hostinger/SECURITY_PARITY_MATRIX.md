@@ -11,4 +11,4 @@
 | Inventory mutation | RPC checks, locks, immutable ledger | FormRequest + policy + transaction + `FOR UPDATE` + unique idempotency key | concurrency tests |
 | History protection | triggers/RPCs | immutable models, guarded updates, DB constraints/triggers where needed | mutation rejection tests |
 
-M2.11D status: authentication, explicit platform privilege, account membership status, account/branch scope resolvers, fail-closed checks, and foundation tests are **FOUNDATION_PORTED/PARITY_TESTED**. Full operational-table policy translation remains **DEFERRED_DOMAIN**. Frontend filtering is never a security boundary.
+M2.11D status: authentication, explicit platform privilege, Settings Superuser-only policy, account membership status, account/branch scope resolvers, tenant-safe assignment FKs, fail-closed checks, and governance attack tests are **PARITY_TESTED**. Full operational-table policy translation remains **DEFERRED_DOMAIN**; `operational_person_branches` is not an Auth table. Frontend filtering is never a security boundary, and a Superuser privilege does not select an arbitrary operational Branch.

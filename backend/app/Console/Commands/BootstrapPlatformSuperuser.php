@@ -1,3 +1,31 @@
 <?php
-namespace App\Console\Commands; use App\Models\{PlatformUserPrivilege,User}; use Illuminate\Console\Command; use Illuminate\Support\Str;
-class BootstrapPlatformSuperuser extends Command { protected $signature='platform:bootstrap-superuser {user_id} {--confirm=}'; protected $description='Grant the explicit platform_superuser privilege to one user.'; public function handle():int { if($this->option('confirm')!=='GRANT_PLATFORM_SUPERUSER'){$this->error('Explicit confirmation required.');return self::FAILURE;} $u=User::find($this->argument('user_id'));if(!$u){$this->error('User not found.');return self::FAILURE;} PlatformUserPrivilege::updateOrCreate(['user_id'=>$u->id],['role'=>'superuser','is_active'=>true]);$this->info('Platform Superuser privilege granted idempotently.');return self::SUCCESS;} }
+
+namespace App\Console\Commands;
+
+use App\Models\PlatformUserPrivilege;
+use App\Models\User;
+use Illuminate\Console\Command;
+
+class BootstrapPlatformSuperuser extends Command
+{
+    protected $signature = 'platform:bootstrap-superuser {user_id} {--confirm=}';
+
+    protected $description = 'Grant the explicit platform_superuser privilege to one user.';
+
+    public function handle(): int
+    {
+        if ($this->option('confirm') !== 'GRANT_PLATFORM_SUPERUSER') {
+            $this->error('Explicit confirmation required.');
+
+            return self::FAILURE;
+        } $u = User::find($this->argument('user_id'));
+        if (! $u) {
+            $this->error('User not found.');
+
+            return self::FAILURE;
+        } PlatformUserPrivilege::updateOrCreate(['user_id' => $u->id], ['role' => 'superuser', 'is_active' => true]);
+        $this->info('Platform Superuser privilege granted idempotently.');
+
+        return self::SUCCESS;
+    }
+}

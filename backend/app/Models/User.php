@@ -3,19 +3,28 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Support\Str;
+use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
+    /** @use HasFactory<UserFactory> */
     use HasApiTokens, HasFactory, Notifiable;
+
     public $incrementing = false;
+
     protected $keyType = 'string';
-    protected static function booted(): void { static::creating(function (self $user) { $user->id ??= (string) Str::uuid(); }); }
+
+    protected static function booted(): void
+    {
+        static::creating(function (self $user) {
+            $user->id ??= (string) Str::uuid();
+        });
+    }
 
     /**
      * The attributes that are mass assignable.
@@ -52,7 +61,19 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
-    public function memberships() { return $this->hasMany(AccountMembership::class); }
-    public function platformPrivilege() { return $this->hasOne(PlatformUserPrivilege::class); }
-    public function isActive(): bool { return $this->status === 'active'; }
+
+    public function memberships()
+    {
+        return $this->hasMany(AccountMembership::class);
+    }
+
+    public function platformPrivilege()
+    {
+        return $this->hasOne(PlatformUserPrivilege::class);
+    }
+
+    public function isActive(): bool
+    {
+        return $this->status === 'active';
+    }
 }
