@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CorrectionRequest;
 use App\Http\Requests\CounterRequest;
+use App\Models\Account;
 use App\Models\Branch;
 use App\Models\CounterReading;
 use App\Models\Machine;
@@ -116,18 +117,32 @@ class OperationsController extends Controller
         return response()->json(['data' => $a], 201);
     }
 
-    public function manufacturers()
+    public function manufacturers(Request $r)
     {
-        Gate::authorize('platform.manage');
+        $ids = $r->user()->memberships()->where('status', 'active')->pluck('account_id');
+        if ($r->filled('account_id')) {
+            $account = Account::findOrFail($r->string('account_id')->toString());
+            abort_unless(app(AccountAccessResolver::class)->canAccess($r->user(), $account), 403);
+            $ids = collect([$account->id]);
+        }
 
-        return response()->json(['data' => Manufacturer::where('is_active', true)->orderBy('name')->get()]);
+        return response()->json(['data' => Manufacturer::where('is_active', true)->where(function ($q) use ($ids) {
+            $q->whereNull('account_id')->orWhereIn('account_id', $ids);
+        })->orderBy('name')->get()]);
     }
 
-    public function models()
+    public function models(Request $r)
     {
-        Gate::authorize('platform.manage');
+        $ids = $r->user()->memberships()->where('status', 'active')->pluck('account_id');
+        if ($r->filled('account_id')) {
+            $account = Account::findOrFail($r->string('account_id')->toString());
+            abort_unless(app(AccountAccessResolver::class)->canAccess($r->user(), $account), 403);
+            $ids = collect([$account->id]);
+        }
 
-        return response()->json(['data' => MachineModel::with('manufacturer')->where('is_active', true)->orderBy('name')->get()]);
+        return response()->json(['data' => MachineModel::with('manufacturer')->where('is_active', true)->where(function ($q) use ($ids) {
+            $q->whereNull('account_id')->orWhereIn('account_id', $ids);
+        })->orderBy('name')->get()]);
     }
 
     public function machines(Request $r, string $branch)
@@ -153,6 +168,13 @@ class OperationsController extends Controller
         $q = OperationalPerson::where('account_id', $b->account_id)->where('is_active', true)->whereHas('branches', fn ($x) => $x->where('branches.id', $b->id)->where('operational_person_branches.is_active', true));
 
         return response()->json(['data' => $q->orderBy('name')->get()]);
+    }
+
+    public function governancePeople(Request $r, string $account)
+    {
+        Gate::authorize('platform.manage');
+
+        return response()->json(['data' => OperationalPerson::where('account_id', $account)->with('branches')->orderBy('name')->paginate(min((int) $r->integer('per_page', 25), 50))]);
     }
 
     public function counters(Request $r, string $machine)

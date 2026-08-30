@@ -36,6 +36,7 @@ Route::prefix('v1')->middleware('request.id')->group(function () {
             Route::patch('machines/{id}/status', [OperationsController::class, 'setMachineStatus']);
             Route::get('machines/{id}', [OperationsController::class, 'machine']);
             Route::get('branches/{branch}/operational-people', [OperationsController::class, 'people']);
+            Route::get('accounts/{account}/operational-people', [OperationsController::class, 'governancePeople']);
             Route::post('accounts/{account}/operational-people', [OperationsController::class, 'storePerson']);
             Route::patch('operational-people/{id}/status', [OperationsController::class, 'setPersonStatus']);
             Route::post('operational-people/{person}/branches/{branch}', [OperationsController::class, 'assignPerson']);
