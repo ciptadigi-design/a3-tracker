@@ -1,0 +1,18 @@
+services:
+  mysql:
+    image: mysql:8.0
+    command: --default-authentication-plugin=mysql_native_password
+    environment:
+      MYSQL_DATABASE: a3_tracker
+      MYSQL_USER: a3_tracker
+      MYSQL_PASSWORD: development_only
+      MYSQL_ROOT_PASSWORD: root_development_only
+    ports: ["3307:3306"]
+    volumes: [a3_mysql_data:/var/lib/mysql]
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot_development_only"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+volumes:
+  a3_mysql_data:

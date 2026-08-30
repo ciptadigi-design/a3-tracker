@@ -1,0 +1,3 @@
+<?php
+use Illuminate\Support\Facades\Route; use App\Http\Controllers\Api\AuthController; use App\Http\Controllers\Api\HealthController; use App\Http\Controllers\Api\VersionController;
+Route::prefix('v1')->middleware('request.id')->group(function(){ Route::get('health',HealthController::class); Route::get('version',VersionController::class); Route::middleware('web')->group(function(){ Route::post('auth/login',[AuthController::class,'login']); Route::post('auth/logout',[AuthController::class,'logout'])->middleware('auth'); Route::get('me',[AuthController::class,'me'])->middleware('auth'); }); });

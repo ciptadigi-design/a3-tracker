@@ -30,3 +30,9 @@ dist-ssr
 *.sw?
 .vercel
 .env*
+backend/vendor/
+backend/.env
+backend/storage/*.key
+*.sql.gz
+*.dump
+private/
