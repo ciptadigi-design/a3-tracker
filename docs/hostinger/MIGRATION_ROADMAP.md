@@ -1,7 +1,7 @@
 # Bounded migration roadmap
 
 1. **M2.11C Foundation** — Laravel 11 skeleton, local Docker MySQL/InnoDB, baseline migrations, `/health` + version, error envelope, Sanctum shell, API adapter shell, dual-stack CI.
-2. **M2.11D Auth/governance** — users/profiles, platform privilege, account/membership/branch policies; parity tests.
+2. **M2.11D Auth/governance** — users/profiles, platform privilege, account/membership/branch policies; parity tests. *(Implemented.)*
 3. **M2.11E Masters/counters** — machines, models, branches, operational people, counters and timezone tests.
 4. **M2.11F Components/lifecycle** — catalog, model profiles, assignments/exclusions, lifecycle transactions and locks.
 5. **M2.11G Inventory/FIFO** — purchases vs receipts, immutable movements/lots, receiving, transfers, replacement consumption and idempotency.

@@ -25,7 +25,9 @@ class User extends Authenticatable
     protected $fillable = [
         'name',
         'email',
+        'username',
         'password',
+        'status',
     ];
 
     /**
@@ -50,4 +52,7 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+    public function memberships() { return $this->hasMany(AccountMembership::class); }
+    public function platformPrivilege() { return $this->hasOne(PlatformUserPrivilege::class); }
+    public function isActive(): bool { return $this->status === 'active'; }
 }

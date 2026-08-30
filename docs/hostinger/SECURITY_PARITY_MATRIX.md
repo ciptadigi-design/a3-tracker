@@ -11,4 +11,4 @@
 | Inventory mutation | RPC checks, locks, immutable ledger | FormRequest + policy + transaction + `FOR UPDATE` + unique idempotency key | concurrency tests |
 | History protection | triggers/RPCs | immutable models, guarded updates, DB constraints/triggers where needed | mutation rejection tests |
 
-All 39 RLS-enabled tables require a row-by-row translation review before implementation; frontend filtering is never a security boundary.
+M2.11D status: authentication, explicit platform privilege, account membership status, account/branch scope resolvers, fail-closed checks, and foundation tests are **FOUNDATION_PORTED/PARITY_TESTED**. Full operational-table policy translation remains **DEFERRED_DOMAIN**. Frontend filtering is never a security boundary.

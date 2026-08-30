@@ -15,3 +15,5 @@ The frontend currently has 21 data-access modules and 52 distinct RPCs. Keep UI,
 | Storage/realtime | None used by frontend; do not add replacement complexity. |
 
 Response convention is `{data, meta, errors}` for new endpoints, with compatibility adapters flattening legacy shapes when needed. Use 422 validation, 401 unauthenticated, 403 forbidden, 404 missing, 409 conflicts, and non-leaky 500 errors.
+
+M2.11D implemented replacements: `auth-login` → `AuthController@login`; `provision-member` → transactional `ProvisionMember`; `bootstrap-platform-superuser` → protected API action and `platform:bootstrap-superuser`; `is_platform_superuser`, `is_account_member`, and `can_access_branch` → `PlatformPrivilegeService`, `AccountAccessResolver`, and `BranchAccessResolver`. Operational RPCs remain deferred.

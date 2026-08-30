@@ -15,7 +15,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->statefulApi();
-        $middleware->alias(['request.id' => \App\Http\Middleware\RequestId::class]);
+        $middleware->alias(['request.id' => \App\Http\Middleware\RequestId::class, 'active.user' => \App\Http\Middleware\EnsureActiveUser::class]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         $exceptions->shouldRenderJsonWhen(fn (Request $request, \Throwable $e) => $request->is('api/*'));
