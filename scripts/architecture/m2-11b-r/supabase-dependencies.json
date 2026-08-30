@@ -1,0 +1,14 @@
+{
+  "generated_from": "7c77142d1bb16d22b3a99c6b507f93ee51063a6e",
+  "frontend_service_modules": 21,
+  "frontend_files_importing_supabase_or_services": 32,
+  "distinct_frontend_rpc_calls": 52,
+  "rpc_calls": ["accept_current_memberships","add_machine_component_assignment","adjust_inventory_stock_costed","adopt_component_intelligence_recommendation","cancel_inventory_purchase","clear_machine_component_exclusion","correct_machine_counter","create_inventory_purchase_auto","create_machine_operating_cost","create_machine_selling_price","create_operational_incident_v2","get_account_member_profiles","get_machine_cost_daily_trend","get_machine_economics_period","get_report_component_consumption","get_report_component_ranking","get_report_daily_clicks","get_report_error_summary","get_report_error_waste","get_report_inventory_analytics","get_report_inventory_stock","get_report_machine_comparison","get_report_machine_economics","get_report_machine_performance","get_report_overview","get_report_period_comparison","get_report_purchase_lines","get_settings_members","initialize_inventory_stock_costed","initialize_machine_component_lifecycle","manage_advanced_economics_setting","manage_component_catalog_status","manage_machine_component_profile","manage_operational_permissions","manage_operational_person_branches","manage_settings_branch","manage_settings_membership","manage_workspace_settings","receive_inventory_purchase","record_machine_counter","remove_machine_component_assignment","replace_machine_component","resolve_operational_incident","save_machine_model_component_profile","set_machine_economics_advanced_enabled","solve_operational_incident","sync_machine_component_assignments","transfer_inventory_stock","update_operational_incident_v2","void_machine_operating_cost","void_machine_selling_price","void_operational_incident"],
+  "edge_functions_invoked_by_frontend": ["auth-login","manage-account","provision-member"],
+  "edge_functions_present": ["auth-login","bootstrap-platform-superuser","manage-account","provision-member"],
+  "storage_dependency": false,
+  "realtime_dependency": false,
+  "postgrest_dependency": true,
+  "auth_dependency": "supabase.auth session, refresh, password update, sign-out",
+  "environment_variables": ["VITE_SUPABASE_URL","VITE_SUPABASE_PUBLISHABLE_KEY"]
+}

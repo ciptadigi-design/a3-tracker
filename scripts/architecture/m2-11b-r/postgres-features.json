@@ -1,0 +1,30 @@
+{
+  "generated_from": "7c77142d1bb16d22b3a99c6b507f93ee51063a6e",
+  "features": {
+    "uuid": "ADAPT: CHAR(36) pragmatic target; preserve IDs",
+    "jsonb": "ADAPT: MySQL JSON; move indexed/query-heavy logic to columns",
+    "arrays": "MOVE_TO_LARAVEL: account_role arrays become policy input sets",
+    "enums": "ADAPT: MySQL enum or constrained varchar; prefer varchar + CHECK for portability",
+    "partial_indexes": "REDESIGN: generated discriminator columns/composite indexes",
+    "expression_indexes": "REDESIGN: generated columns or normalized fields",
+    "check_constraints": "DIRECT on MySQL 8.0.16+/MariaDB 10.2+, verify enforcement",
+    "generated_columns": "DIRECT/ADAPT: stored generated columns syntax differs",
+    "triggers": "ADAPT: retain only immutable audit/invariant triggers; prefer Laravel services",
+    "views": "DIRECT: MySQL views for read models",
+    "cte_recursive": "DIRECT on MySQL 8+/MariaDB 10.2+",
+    "window_functions": "DIRECT on MySQL 8+/MariaDB 10.2+",
+    "lateral_joins": "REDESIGN: derived tables/correlated subqueries",
+    "for_update": "DIRECT with InnoDB transactions",
+    "skip_locked": "ADAPT/verify version; not currently relied upon",
+    "advisory_locks": "MOVE_TO_LARAVEL: named lock or idempotency row; row locks preferred",
+    "security_definer": "MOVE_TO_LARAVEL: middleware/policies/services",
+    "rls": "MOVE_TO_LARAVEL: scoped repositories + policies; DB constraints remain",
+    "timestamptz": "ADAPT: UTC DATETIME(6) + IANA timezone columns",
+    "interval/date_trunc": "ADAPT: DATE_ADD/CONVERT_TZ; Carbon for period boundaries",
+    "on_conflict": "ADAPT: INSERT ... ON DUPLICATE KEY UPDATE",
+    "returning": "ADAPT: insert then select by UUID; avoid relying on RETURNING",
+    "pgcrypto": "MOVE_TO_LARAVEL: random UUID generation",
+    "extensions": "REDESIGN: remove PostgreSQL-only extensions"
+  },
+  "minimum_target": "MySQL 8.0.34+ (or MariaDB 10.6+ only after compatibility tests); InnoDB required"
+}
