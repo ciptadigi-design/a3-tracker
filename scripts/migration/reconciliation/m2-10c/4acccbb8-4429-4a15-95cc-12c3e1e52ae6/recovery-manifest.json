@@ -1,0 +1,41 @@
+{
+  "version": "m2.10c-v1",
+  "execution_id": "4acccbb8-4429-4a15-95cc-12c3e1e52ae6",
+  "target_project_ref": "sxitqjxljoqsnpepymrl",
+  "method": "private logical roles/schema/public-data export plus clean disposable exact-schema restore verification",
+  "private_backup_directory": ".migration-private/m2-10c/4acccbb8-4429-4a15-95cc-12c3e1e52ae6",
+  "files": [
+    { "name": "hosted-dev-precleanup-roles.sql", "sha256": "0decd601faa70260a3a31e8ce63208cc4a4c1f99921bc6f3ed4faf1cd980da3a", "mode": "0600" },
+    { "name": "hosted-dev-precleanup-schema.sql", "sha256": "73cf55eb2260aba7a428faa82e2441abead42023085990a7326af3e4351a75c0", "mode": "0600" },
+    { "name": "hosted-dev-precleanup-public-data.sql", "sha256": "3fb1cb4d84db21776e4c2fdd086690f08d6a76598a58950bce63b91250b76d88", "mode": "0600" }
+  ],
+  "verification": {
+    "method": "restore public data with triggers disabled into the clean local exact-schema database, assert identities/domain counts, then execute the exact cleanup transaction in rollback mode",
+    "restored_state": {
+      "purchases": 163,
+      "legacy_purchases": 161,
+      "dummy_purchases": 2,
+      "dummy_movements": 5,
+      "dummy_replacements": 2,
+      "protected_tuparev_counters": 182,
+      "graha_incidents": 0
+    },
+    "cleanup_dry_run": {
+      "allocations_deleted_then_rolled_back": 2,
+      "replacements_deleted_then_rolled_back": 2,
+      "dummy_lifecycles_deleted_then_rolled_back": 2,
+      "previous_lifecycles_restored_then_rolled_back": 2,
+      "lots_deleted_then_rolled_back": 3,
+      "receipt_lines_deleted_then_rolled_back": 2,
+      "movements_deleted_then_rolled_back": 5,
+      "receipts_deleted_then_rolled_back": 2,
+      "purchase_lines_deleted_then_rolled_back": 2,
+      "purchases_deleted_then_rolled_back": 2,
+      "post_rollback_dummy_purchases": 2,
+      "post_rollback_dummy_movements": 5,
+      "post_rollback_legacy_purchases": 161
+    }
+  },
+  "verified": true,
+  "restore_policy": "Stop on a bad cleanup and restore this DEV recovery point under controlled procedure; never casually delete immutable evidence."
+}

@@ -1,0 +1,225 @@
+{
+  "version": "m2.10c-v1",
+  "execution_id": "4acccbb8-4429-4a15-95cc-12c3e1e52ae6",
+  "mode": "apply",
+  "target_project_ref": "sxitqjxljoqsnpepymrl",
+  "performed_at": "2026-08-30T13:02:15.077Z",
+  "protected_set_size": 490,
+  "protected_intersection": [],
+  "candidate_ids": {
+    "purchases": [
+      "aaecec6a-6ee4-4c6c-a535-30dbeda2d1dd",
+      "74526bbf-4554-47c6-89c9-d2304c0ffa69"
+    ],
+    "purchaseLines": [
+      "5d7fcc82-e308-479e-ba59-4541fc0f9f1b",
+      "2f15065a-0745-415f-b0ad-6bb34ce3205f"
+    ],
+    "receipts": [
+      "4bbdc220-f8fd-42cd-8cab-1e9b7cc19cbc",
+      "5ec56801-53c0-4b63-b382-b1c15bc7680d"
+    ],
+    "receiptLines": [
+      "50b7313a-5128-4cc9-b0fa-9f1b724ab425",
+      "f650d7ad-9a3c-4dec-9327-bfa40679f82c"
+    ],
+    "movements": [
+      "bccd98d8-0ebc-462c-8f2e-e51e1f73f56e",
+      "40060e2d-b4bb-4324-b660-23f49023be21",
+      "244ff6bb-6221-486d-8df3-fe2bba5b9665",
+      "7cbe8df1-1d33-4e06-b2ab-f735839abeeb",
+      "59c5c076-b8b6-42a6-8fba-463a5c75b394"
+    ],
+    "lots": [
+      "80d2f995-893e-43af-88f2-7208407d6707",
+      "5edfcd16-a5a4-4af5-b9fe-166595cbc992",
+      "945ef4b9-42f3-49d4-a630-ddaba0e72b76"
+    ],
+    "allocations": [
+      "c1ef8c31-f2d4-4c0c-9e43-31ec1b9e7992",
+      "e3f31911-8599-455a-a84f-66ee2aa8b2d8"
+    ],
+    "replacements": [
+      "392ffdb5-7ccf-4304-9d9c-db9727a73cfd",
+      "d063cc89-ec0d-4164-8746-bf2618cdedb5"
+    ],
+    "dummyLifecycles": [
+      "1472d84f-54bc-452c-9d01-05fe66005a35",
+      "ea382ac6-3b06-48be-a69f-b649a209df24"
+    ],
+    "restoredLifecycles": [
+      "07c1752e-db9b-463c-b8ad-ddb0c718cadd",
+      "a3be3d31-0980-495a-ab9a-0397c32a638d"
+    ],
+    "itemsPreserved": [
+      "83edc69c-4c86-42f4-8e91-a18be0fdf758",
+      "f5e24ff8-e1d1-4de5-9cf9-496a6f5ccac7"
+    ]
+  },
+  "before_fingerprint": "882707ff2d315342f1bdeda6c270b868735969e7043d2f3fcdcef6b323d4455e",
+  "after_fingerprint": "360fe735e367e88581dadf01ea01fdfaf99019a4c08047cec13fb4b88c998737",
+  "before": {
+    "affected_stock": [
+      {
+        "inventory_item_id": "83edc69c-4c86-42f4-8e91-a18be0fdf758",
+        "location_id": "b6296488-5479-4dd0-9463-091891b4cbe4",
+        "quantity": 4
+      },
+      {
+        "inventory_item_id": "f5e24ff8-e1d1-4de5-9cf9-496a6f5ccac7",
+        "location_id": "b6296488-5479-4dd0-9463-091891b4cbe4",
+        "quantity": 0
+      }
+    ],
+    "dummy": {
+      "allocations": 2,
+      "lifecycles": 2,
+      "lots": 3,
+      "movements": 5,
+      "purchase_lines": 2,
+      "purchases": 2,
+      "receipt_lines": 2,
+      "receipts": 2,
+      "replacements": 2
+    },
+    "graha": {
+      "counters": 0,
+      "incidents": 0,
+      "lifecycles": 0,
+      "movements": 0,
+      "replacements": 0
+    },
+    "legacy": {
+      "counters": 179,
+      "incidents": 0,
+      "lifecycles": 47,
+      "purchases": 161
+    },
+    "machine_cost": {
+      "clicks": 30328,
+      "component_consumption": 1625000,
+      "error_waste": 129170
+    },
+    "previous_lifecycles": [
+      {
+        "actual_usage": 8354,
+        "id": "07c1752e-db9b-463c-b8ad-ddb0c718cadd",
+        "removed_at": "2026-08-28T04:00:00+00:00",
+        "removed_counter": 1438992,
+        "status": "closed"
+      },
+      {
+        "actual_usage": 6597,
+        "id": "a3be3d31-0980-495a-ab9a-0397c32a638d",
+        "removed_at": "2026-08-28T09:42:00+00:00",
+        "removed_counter": 1438992,
+        "status": "closed"
+      }
+    ],
+    "project_ref": "sxitqjxljoqsnpepymrl",
+    "schema_ledger": "20260830000100"
+  },
+  "after": {
+    "affected_stock": [],
+    "dummy": {
+      "allocations": 0,
+      "lifecycles": 0,
+      "lots": 0,
+      "movements": 0,
+      "purchase_lines": 0,
+      "purchases": 0,
+      "receipt_lines": 0,
+      "receipts": 0,
+      "replacements": 0
+    },
+    "graha": {
+      "counters": 0,
+      "incidents": 0,
+      "lifecycles": 0,
+      "movements": 0,
+      "replacements": 0
+    },
+    "legacy": {
+      "counters": 179,
+      "incidents": 0,
+      "lifecycles": 47,
+      "purchases": 161
+    },
+    "machine_cost": {
+      "clicks": 30328,
+      "component_consumption": 0,
+      "error_waste": 129170
+    },
+    "previous_lifecycles": [
+      {
+        "actual_usage": null,
+        "id": "07c1752e-db9b-463c-b8ad-ddb0c718cadd",
+        "removed_at": null,
+        "removed_counter": null,
+        "status": "active"
+      },
+      {
+        "actual_usage": null,
+        "id": "a3be3d31-0980-495a-ab9a-0397c32a638d",
+        "removed_at": null,
+        "removed_counter": null,
+        "status": "active"
+      }
+    ],
+    "project_ref": "sxitqjxljoqsnpepymrl",
+    "schema_ledger": "20260830000100"
+  },
+  "recovery": {
+    "version": "m2.10c-v1",
+    "execution_id": "4acccbb8-4429-4a15-95cc-12c3e1e52ae6",
+    "target_project_ref": "sxitqjxljoqsnpepymrl",
+    "method": "private logical roles/schema/public-data export plus clean disposable exact-schema restore verification",
+    "private_backup_directory": ".migration-private/m2-10c/4acccbb8-4429-4a15-95cc-12c3e1e52ae6",
+    "files": [
+      {
+        "name": "hosted-dev-precleanup-roles.sql",
+        "sha256": "0decd601faa70260a3a31e8ce63208cc4a4c1f99921bc6f3ed4faf1cd980da3a",
+        "mode": "0600"
+      },
+      {
+        "name": "hosted-dev-precleanup-schema.sql",
+        "sha256": "73cf55eb2260aba7a428faa82e2441abead42023085990a7326af3e4351a75c0",
+        "mode": "0600"
+      },
+      {
+        "name": "hosted-dev-precleanup-public-data.sql",
+        "sha256": "3fb1cb4d84db21776e4c2fdd086690f08d6a76598a58950bce63b91250b76d88",
+        "mode": "0600"
+      }
+    ],
+    "verification": {
+      "method": "restore public data with triggers disabled into the clean local exact-schema database, assert identities/domain counts, then execute the exact cleanup transaction in rollback mode",
+      "restored_state": {
+        "purchases": 163,
+        "legacy_purchases": 161,
+        "dummy_purchases": 2,
+        "dummy_movements": 5,
+        "dummy_replacements": 2,
+        "protected_tuparev_counters": 182,
+        "graha_incidents": 0
+      },
+      "cleanup_dry_run": {
+        "allocations_deleted_then_rolled_back": 2,
+        "replacements_deleted_then_rolled_back": 2,
+        "dummy_lifecycles_deleted_then_rolled_back": 2,
+        "previous_lifecycles_restored_then_rolled_back": 2,
+        "lots_deleted_then_rolled_back": 3,
+        "receipt_lines_deleted_then_rolled_back": 2,
+        "movements_deleted_then_rolled_back": 5,
+        "receipts_deleted_then_rolled_back": 2,
+        "purchase_lines_deleted_then_rolled_back": 2,
+        "purchases_deleted_then_rolled_back": 2,
+        "post_rollback_dummy_purchases": 2,
+        "post_rollback_dummy_movements": 5,
+        "post_rollback_legacy_purchases": 161
+      }
+    },
+    "verified": true,
+    "restore_policy": "Stop on a bad cleanup and restore this DEV recovery point under controlled procedure; never casually delete immutable evidence."
+  }
+}

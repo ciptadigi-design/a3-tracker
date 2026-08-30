@@ -1,0 +1,64 @@
+{
+  "version": "m2.10c-v1",
+  "execution_id": "4acccbb8-4429-4a15-95cc-12c3e1e52ae6",
+  "target_project_ref": "sxitqjxljoqsnpepymrl",
+  "verified_at": "2026-08-30T13:14:30Z",
+  "before_fingerprint": "882707ff2d315342f1bdeda6c270b868735969e7043d2f3fcdcef6b323d4455e",
+  "after_fingerprint": "360fe735e367e88581dadf01ea01fdfaf99019a4c08047cec13fb4b88c998737",
+  "candidate_deletion_size": 22,
+  "protected_set_size": 490,
+  "protected_intersection": [],
+  "candidate_counts": {
+    "purchases": 0,
+    "purchase_lines": 0,
+    "receipts": 0,
+    "receipt_lines": 0,
+    "movements": 0,
+    "lots": 0,
+    "allocations": 0,
+    "replacements": 0,
+    "dummy_lifecycles": 0
+  },
+  "protected_target_counts": {
+    "counter_readings": { "expected": 180, "present": 180 },
+    "inventory_purchases": { "expected": 161, "present": 161 },
+    "machine_component_lifecycles": { "expected": 47, "present": 47 },
+    "operational_incidents": { "expected": 89, "present": 89 }
+  },
+  "restored_lifecycles": [
+    { "id": "07c1752e-db9b-463c-b8ad-ddb0c718cadd", "status": "active", "removed_at": null, "removed_counter": null, "actual_usage": null },
+    { "id": "a3be3d31-0980-495a-ab9a-0397c32a638d", "status": "active", "removed_at": null, "removed_counter": null, "actual_usage": null }
+  ],
+  "orphan_counts": {
+    "purchase_lines": 0,
+    "receipts": 0,
+    "receipt_lines_receipt": 0,
+    "receipt_lines_purchase_line": 0,
+    "receipt_lines_movement": 0,
+    "lots_movement": 0,
+    "allocations_movement": 0,
+    "allocations_lot": 0,
+    "replacement_movement": 0,
+    "replacement_previous_lifecycle": 0,
+    "replacement_new_lifecycle": 0
+  },
+  "machine_cost_2026_08_01_through_2026_08_30": {
+    "total_clicks": 29725,
+    "component_consumption": 0,
+    "error_waste": 120170,
+    "standard_machine_cost": 120170,
+    "cost_per_click": 4.0427,
+    "status": "COMPLETE"
+  },
+  "generic_inventory_items": {
+    "Other Part": null,
+    "Drum Unit": null,
+    "Charging Corona": null,
+    "Developing Unit": null
+  },
+  "graha_before": { "counters": 0, "incidents": 0, "lifecycles": 0, "movements": 0, "replacements": 0 },
+  "graha_after": { "counters": 0, "incidents": 0, "lifecycles": 0, "movements": 0, "replacements": 0 },
+  "production_mutated": false,
+  "shared_hosting_started": false,
+  "maintenance_started": false
+}

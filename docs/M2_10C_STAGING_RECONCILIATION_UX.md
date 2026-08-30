@@ -1,10 +1,10 @@
 # M2.10C — Staging Reconciliation and UX Density
 
-Status: implementation and hosted-cleanup acceptance in progress. This milestone is DEV-only. It does not authorize Production, shared-hosting, PHP/MySQL, or Maintenance work.
+Status: implementation and hosted DEV cleanup complete; signed-in UX acceptance remains pending. This milestone is DEV-only. It does not authorize Production, shared-hosting, PHP/MySQL, or Maintenance work.
 
 ## Protected M2.10B evidence
 
-The protected set is derived from every `target_id` and `actor_target_id` in the M2.10B first-apply crosswalk under `scripts/migration/reconciliation/m2-10b/958bb2b3-3110-410f-9c03-d8355a2f9be7/first-apply/`. It contains 490 unique target identities. The exact M2.10C deletion set contains 20 identities and has an empty intersection with that protected set. The two previous Toner lifecycles are restoration targets and the two Inventory Items are preservation targets, so neither group enters the deletion set.
+The protected set is derived from every `target_id` and `actor_target_id` in the M2.10B first-apply crosswalk under `scripts/migration/reconciliation/m2-10b/958bb2b3-3110-410f-9c03-d8355a2f9be7/first-apply/`. It contains 490 unique target identities. The exact M2.10C deletion set contains 22 identities and has an empty intersection with that protected set. The two previous Toner lifecycles are restoration targets and the two Inventory Items are preservation targets, so neither group enters the deletion set.
 
 ## Dummy evidence identification
 
@@ -18,11 +18,13 @@ Deletion follows the actual reverse dependency order: cost allocations; replacem
 
 ## Recovery and reconciliation
 
-Before cleanup, the execution will store a logical export of all affected rows, a focused target fingerprint, dependency graph, preview, and recovery manifest under a versioned M2.10C execution directory. Hosted mutation is prohibited until the tooling commit has exact-SHA green CI and recovery verification succeeds.
+Before cleanup, the execution stored a logical export of all affected rows, a focused target fingerprint, dependency graph, preview, and recovery manifest under the versioned M2.10C execution directory. The private export hashes were reverified before apply. Tooling commit `a449dfd9496a20453d6b294d5897b30c96f1851b` was pushed and exact-SHA Database CI was green before the hosted mutation.
 
 Reconciliation locks these invariants: 161 `LEGACY_IMPORT` draft purchases remain; protected counters, lifecycles, and incidents remain; Graha counts remain byte-for-byte equivalent; affected Toner stock is derived from surviving movements; no orphan receipt/FIFO/replacement evidence survives; and the two pre-dummy lifecycles return to active without rewriting their installation evidence.
 
-For 1–30 August 2026, the observed pre-cleanup Machine Cost was 29,725 clicks, Rp1,625,000 known component consumption, Rp120,170 Error/Waste, and Rp58.7105 per click. The final values will be recorded from the post-cleanup database. No value is hardcoded into application calculations.
+For 1–30 August 2026, the observed pre-cleanup Machine Cost was 29,725 clicks, Rp1,625,000 known component consumption, Rp120,170 Error/Waste, and Rp58.7105 per click. After cleanup, the database-authoritative result is 29,725 clicks, Rp0 component consumption, Rp120,170 Error/Waste, and Rp4.0427 per click. No value is hardcoded into application calculations.
+
+The hosted transaction committed at `2026-08-30T13:02:15.077Z`. Its focused fingerprint changed from `882707ff2d315342f1bdeda6c270b868735969e7043d2f3fcdcef6b323d4455e` to `360fe735e367e88581dadf01ea01fdfaf99019a4c08047cec13fb4b88c998737`. All 22 deletion targets are absent, the two predecessor lifecycles are active, all 180 protected Counter targets, 161 Purchases, 47 lifecycles, and 89 Errors remain present, and the checked dependency graph contains no orphans. The machine-readable apply report is stored beside the recovery manifest.
 
 ## Generic historical Inventory Items
 
