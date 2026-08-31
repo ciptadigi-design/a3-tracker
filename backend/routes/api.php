@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\GovernanceController;
 use App\Http\Controllers\Api\HealthController;
 use App\Http\Controllers\Api\VersionController;
 use App\Http\Controllers\Api\OperationsController;
+use App\Http\Controllers\Api\ComponentsController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->middleware('request.id')->group(function () {
@@ -44,6 +45,19 @@ Route::prefix('v1')->middleware('request.id')->group(function () {
             Route::post('machines/{machine}/counters', [OperationsController::class, 'createCounter']);
             Route::post('counter-readings/{reading}/correction', [OperationsController::class, 'correctCounter']);
             Route::get('machines/{machine}/counters/period', [OperationsController::class, 'period']);
+            Route::get('components', [ComponentsController::class, 'catalogs']);
+            Route::post('components', [ComponentsController::class, 'storeCatalog']);
+            Route::patch('components/{id}/status', [ComponentsController::class, 'setCatalogStatus']);
+            Route::get('machine-models/{model}/profiles', [ComponentsController::class, 'profiles']);
+            Route::post('machine-models/{model}/profiles', [ComponentsController::class, 'storeProfile']);
+            Route::post('model-profiles/{profile}/slots', [ComponentsController::class, 'storeSlot']);
+            Route::patch('model-profiles/{id}/status', [ComponentsController::class, 'setProfileStatus']);
+            Route::get('machines/{machine}/components', [ComponentsController::class, 'machineComponents']);
+            Route::post('machines/{machine}/components/sync', [ComponentsController::class, 'sync']);
+            Route::post('machines/{machine}/components/manual', [ComponentsController::class, 'add']);
+            Route::post('machine-components/{component}/exclude', [ComponentsController::class, 'exclude']);
+            Route::post('component-exclusions/{exclusion}/clear', [ComponentsController::class, 'clearExclusion']);
+            Route::post('machine-components/{component}/lifecycles', [ComponentsController::class, 'initialize']);
         });
     });
 });

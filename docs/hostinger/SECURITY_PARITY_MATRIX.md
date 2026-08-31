@@ -14,4 +14,5 @@
 M2.11D status: authentication, explicit platform privilege, Settings Superuser-only policy, account membership status, account/branch scope resolvers, tenant-safe assignment FKs, fail-closed checks, and governance attack tests are **PARITY_TESTED**. Full operational-table policy translation remains **DEFERRED_DOMAIN**; `operational_person_branches` is not an Auth table. Frontend filtering is never a security boundary, and a Superuser privilege does not select an arbitrary operational Branch.
 | Machine / People / Counter tenant scope | PARITY_TESTED |
 | Explicit branch context and operator eligibility | FOUNDATION_PORTED |
-| Components, Inventory, Errors, Cost, Reports | DEFERRED_DOMAIN |
+| Component Catalog, Model Profiles, Machine Components, Lifecycle | PARITY_TESTED (M2.11F target controls) |
+| Inventory, Errors, Cost, Reports | DEFERRED_DOMAIN |
