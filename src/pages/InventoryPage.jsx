@@ -13,6 +13,7 @@ import { CancelInventoryPurchaseDialog, InventoryPurchaseDetailDialog, Inventory
 import { PurchasingPanel } from '../features/inventory/PurchasingPanel.jsx'
 import { useInventoryWorkflowState } from '../features/inventory/useInventoryWorkflowState.js'
 import { inventoryItemScope } from '../features/inventory/inventoryItemPresentation.js'
+import { sortPhysicalStockRows } from '../features/inventory/physicalStockModel.js'
 import { InventoryMovementDetailDialog } from '../features/inventory/InventoryMovementDetailDialog.jsx'
 import { adjustInventoryStock, cancelInventoryPurchase, createInventoryPurchase, deleteInventoryItem, deleteInventoryLocation, deleteInventorySupplier, initializeInventoryStock, loadInventory, receiveInventoryPurchase, saveInventoryItem, saveInventoryLocation, saveInventorySupplier, transferInventoryStock } from '../services/supabase/inventory.js'
 import { userErrorMessage } from '../lib/appErrors.js'
@@ -42,8 +43,9 @@ function statusFor(total, minimum) {
 function StockPanel({ data, showArchived, canManage, canAdjust, canTransfer, onEdit, onDelete, onOpening, onAdjust, onTransfer }) {
   const rows = data.items.filter((item) => showArchived ? !item.is_active : item.is_active)
   const pagination = usePagination(rows.length, `${data.branchId}:${showArchived}`)
-  const visibleRows = rows.slice(pagination.start, pagination.end)
   const totalByItem = new Map(data.totals.map((row) => [row.inventory_item_id, row.quantity]))
+  const sortedRows = sortPhysicalStockRows(rows.map((item) => ({ item, total: totalByItem.get(item.id) ?? 0 })))
+  const visibleRows = sortedRows.slice(pagination.start, pagination.end).map(({ item }) => item)
   return <>
     <div className="inventory-section-toolbar"><div><span className="card-kicker">Physical stock</span><h2>{rows.length} {showArchived ? 'archived' : 'active'} items</h2><p>Totals and location balances are derived from posted ledger movements.</p></div></div>
     {rows.length === 0 ? <div className="inventory-empty"><Package size={25} /><strong>No {showArchived ? 'archived' : 'active'} inventory items.</strong><span>{showArchived ? 'Archived item history will remain available here.' : 'Create an item, then initialize its physical opening stock.'}</span></div> : <div className="inventory-stock-list">
