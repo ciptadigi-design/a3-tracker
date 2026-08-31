@@ -1,6 +1,6 @@
 # M2.11G.1 Component Setup Flow, Initialize Eligibility & Graha Reconciliation Audit
 
-**Audit status:** documentation-only, no hosted data or runtime behavior changed.
+**Audit status:** findings implemented in [M2.11G.1 Component Setup Implementation](M2_11G_1_COMPONENT_SETUP_IMPLEMENTATION.md); no hosted data was mutated.
 
 ## Scope and evidence
 
@@ -74,4 +74,3 @@ Make actions contextual: Machine Components: **Sync Model Profile**, **Add Machi
 ## Non-scope
 
 No Error/Incident, Waste Attribution, full Machine Cost, Reports, or Maintenance work was started. No hosted DEV, Supabase production, Vercel, Hostinger, DNS, or real Graha data was mutated. Historical purchases remain acquisition evidence only; no legacy opening/11-unit seed exists.
-
