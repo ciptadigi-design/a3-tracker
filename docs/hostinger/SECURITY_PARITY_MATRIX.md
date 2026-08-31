@@ -16,3 +16,4 @@ M2.11D status: authentication, explicit platform privilege, Settings Superuser-o
 | Explicit branch context and operator eligibility | FOUNDATION_PORTED |
 | Component Catalog, Model Profiles, Machine Components, Lifecycle | PARITY_TESTED (M2.11F target controls) |
 | Inventory, Errors, Cost, Reports | DEFERRED_DOMAIN |
+| Inventory Items, Locations, Purchase/Receipt, FIFO and Replacement controls | PARITY_TESTED after exact-SHA CI |

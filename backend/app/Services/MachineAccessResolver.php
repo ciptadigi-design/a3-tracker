@@ -15,6 +15,6 @@ class MachineAccessResolver
             return false;
         }
 
-return ! $write || $machine->status === 'active';
+        return ! $write || $machine->status === 'active';
     }
 }

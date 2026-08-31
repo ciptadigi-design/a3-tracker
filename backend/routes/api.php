@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\HealthController;
 use App\Http\Controllers\Api\VersionController;
 use App\Http\Controllers\Api\OperationsController;
 use App\Http\Controllers\Api\ComponentsController;
+use App\Http\Controllers\Api\InventoryController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->middleware('request.id')->group(function () {
@@ -58,6 +59,14 @@ Route::prefix('v1')->middleware('request.id')->group(function () {
             Route::post('machine-components/{component}/exclude', [ComponentsController::class, 'exclude']);
             Route::post('component-exclusions/{exclusion}/clear', [ComponentsController::class, 'clearExclusion']);
             Route::post('machine-components/{component}/lifecycles', [ComponentsController::class, 'initialize']);
+            Route::get('inventory/items', [InventoryController::class, 'items']);
+            Route::get('inventory/locations', [InventoryController::class, 'locations']);
+            Route::post('purchases', [InventoryController::class, 'createPurchase']);
+            Route::post('purchases/{purchase}/receive', [InventoryController::class, 'receive']);
+            Route::get('inventory/items/{item}/locations/{location}/balance', [InventoryController::class, 'balance']);
+            Route::post('inventory/transfers', [InventoryController::class, 'transfer']);
+            Route::post('inventory/adjustments', [InventoryController::class, 'adjust']);
+            Route::post('machine-components/{component}/replacements', [InventoryController::class, 'replace']);
         });
     });
 });

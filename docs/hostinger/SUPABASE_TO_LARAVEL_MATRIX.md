@@ -22,3 +22,7 @@ M2.11D implemented replacements: `auth-login` → `AuthController@login`; `provi
 | `components`, `machine_model_components` | `component_catalogs`, `model_profiles`, `model_profile_slots` + `ComponentsController` | M2.11F_PORTED |
 | `machine_component_assignments`, profile exclusions, sync RPCs | `machine_components`, `machine_component_exclusions`, `ComponentConfigurationService` | M2.11F_PORTED |
 | `machine_component_lifecycles`, initialize RPC | `component_lifecycles`, explicit lifecycle initialization endpoint | M2.11F_PORTED |
+| `inventory_items`, `inventory_locations` | Laravel inventory item/location tables and scoped endpoints | M2.11G_PORTED |
+| purchasing/receiving RPCs | `PurchaseReceiptService`, purchase/receipt routes | M2.11G_PORTED |
+| inventory movement/FIFO RPCs | `InventoryLedgerService`, FIFO layer/allocation tables | M2.11G_PORTED |
+| replacement inventory RPC | `ReplaceMachineComponent`, replacement route | M2.11G_PORTED |
