@@ -15,12 +15,16 @@ class ComponentConfigurationService
 {
     public function sync(Machine $machine): int
     {
-        if ($machine->status !== 'active') {
+        if ($machine->status !== null && $machine->status !== 'active') {
             return 0;
         }
 
         return DB::transaction(function () use ($machine) {
             $machine->lockForUpdate()->first();
+            MachineComponent::where('machine_id', $machine->id)->where('source_type', 'inherited')->where('status', 'configured')
+                ->whereDoesntHave('lifecycles')->where(function ($q) {
+                    $q->whereDoesntHave('profileSlot')->orWhereHas('profileSlot.profile', fn ($p) => $p->where('is_active', false));
+                })->update(['status' => 'retired', 'active_key' => null]);
             $slots = ModelProfileSlot::whereHas('profile', fn ($q) => $q->where('machine_model_id', $machine->machine_model_id)->where('is_active', true)->where(fn ($x) => $x->whereNull('account_id')->orWhere('account_id', $machine->account_id)))->where('is_active', true)->with('profile')->orderBy('display_order')->orderBy('slot_code')->get();
             $n = 0;
             foreach ($slots as $s) {
@@ -46,7 +50,7 @@ class ComponentConfigurationService
 
     public function addManual(Machine $machine, array $d): MachineComponent
     {
-        if ($machine->status !== 'active') {
+        if ($machine->status !== null && $machine->status !== 'active') {
             throw new ConflictHttpException('machine is not active');
         }
 
