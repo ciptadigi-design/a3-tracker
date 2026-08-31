@@ -42,8 +42,8 @@ join public.branches branch on branch.account_id = membership.account_id
 where membership.role <> 'owner'
 on conflict (membership_id, branch_id) do update set is_active = true;
 
-insert into public.operational_person_branches (account_id, operational_person_id, branch_id, assigned_by, updated_by)
-select person.account_id, person.id, branch.id, person.created_by, person.created_by
+insert into public.operational_person_branches (account_id, operational_person_id, branch_id, can_record_counter, assigned_by, updated_by)
+select person.account_id, person.id, branch.id, true, person.created_by, person.created_by
 from public.operational_people person
 join public.branches branch on branch.account_id = person.account_id
 on conflict (operational_person_id, branch_id) do update set is_active = true;
@@ -64,8 +64,8 @@ select extensions.lives_ok($$insert into public.manufacturers(id,account_id,code
 select extensions.lives_ok($$insert into public.machine_models(id,account_id,manufacturer_id,model_code,name,machine_category,color_capability) values ('e3700000-0000-4000-8000-000000000002','e3100000-0000-0000-0000-000000000001','e3600000-0000-4000-8000-000000000002','TEMP-MODEL','Temporary Model','digital_a3','color')$$,'Platform Superuser can create a second workspace model for deletion coverage');
 reset role;
 
-insert into public.operational_person_branches(account_id,operational_person_id,branch_id,assigned_by,updated_by)
-values ('e3100000-0000-0000-0000-000000000001','e3500000-0000-4000-8000-000000000001','e3300000-0000-0000-0000-000000000001','e3000000-0000-0000-0000-000000000001','e3000000-0000-0000-0000-000000000001');
+insert into public.operational_person_branches(account_id,operational_person_id,branch_id,can_record_counter,assigned_by,updated_by)
+values ('e3100000-0000-0000-0000-000000000001','e3500000-0000-4000-8000-000000000001','e3300000-0000-0000-0000-000000000001',true,'e3000000-0000-0000-0000-000000000001','e3000000-0000-0000-0000-000000000001');
 
 set local role authenticated;
 select set_config('request.jwt.claim.sub','e3000000-0000-0000-0000-000000000002',true);

@@ -25,6 +25,9 @@ begin
   return new;
 end $$;
 
+revoke all on function public.validate_counter_operator_capability() from public,anon,authenticated,service_role;
+grant execute on function public.validate_counter_operator_capability() to service_role;
+
 drop trigger if exists counter_readings_operator_capability on public.counter_readings;
 create trigger counter_readings_operator_capability
 before insert on public.counter_readings

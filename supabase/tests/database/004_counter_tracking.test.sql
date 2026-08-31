@@ -173,8 +173,8 @@ join public.branches branch on branch.account_id = membership.account_id
 where membership.role <> 'owner'
 on conflict (membership_id, branch_id) do update set is_active = true;
 
-insert into public.operational_person_branches (account_id, operational_person_id, branch_id, assigned_by, updated_by)
-select person.account_id, person.id, branch.id, person.created_by, person.created_by
+insert into public.operational_person_branches (account_id, operational_person_id, branch_id, can_record_counter, assigned_by, updated_by)
+select person.account_id, person.id, branch.id, true, person.created_by, person.created_by
 from public.operational_people person
 join public.branches branch on branch.account_id = person.account_id
 on conflict (operational_person_id, branch_id) do update set is_active = true;
