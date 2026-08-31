@@ -1,6 +1,6 @@
 # M2.12 Hostinger production readiness
 
-Status: **CONDITIONAL — repository readiness work documented; live Hostinger preflight and complete Laravel frontend cutover remain required.**
+Status: **M2.12A application backend READY — browser-backed Laravel/MySQL runtime evidence is complete. Hostinger-specific preflight remains pending and deployment is not authorized.**
 
 This milestone does not deploy, change DNS, create a Production database, mutate DEV data, disable Vercel/Supabase, or start Maintenance.
 
@@ -20,7 +20,7 @@ The target is one HTTPS origin, `https://a3.ciptagrafika.com`, with static Vite 
 
 ## Important current blocker
 
-The repository is dual-stack, not yet a complete Laravel production frontend. `src/lib/api` has Laravel adapters for selected domains (including Reports), but `AuthProvider`, Tenant, and most feature pages still import `src/services/supabase/*`. Selecting `VITE_DATA_BACKEND=laravel` therefore does not currently provide a complete authenticated Laravel application. There is no silent Laravel→Supabase fallback in the Laravel report adapter, but production cutover must not be authorized until authentication, tenant context, and every launch page are ported behind the same adapter boundary. Supabase remains the reference implementation and is intentionally preserved.
+The M2.12A application path is complete and browser-verified: React routes through the Laravel adapters to a disposable MySQL target with no operational Supabase traffic. The remaining work is explicitly Hostinger-specific (PHP/Apache/SSL/permissions/backup/rewrite preflight) and belongs to M2.12B. Supabase remains the reference implementation and is intentionally preserved.
 
 ## Runtime contract
 

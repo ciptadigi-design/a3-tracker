@@ -37,3 +37,9 @@ test('Laravel execution never invokes the Supabase operational loader, including
   await assert.rejects(callSelectedBackend({ backend: 'invalid-value', domain: 'smoke', operation: 'load', args: [], supabase, laravel }), /Unsupported VITE_DATA_BACKEND/)
   assert.equal(supabaseCalls, 0)
 })
+
+test('Laravel incidents adapter preserves the response envelopes consumed by the incident UI', () => {
+  const adapter = read('services/laravel/incidents.js')
+  assert.match(adapter, /return \{ incidents: payload\.incidents \?\? unwrapCollection\(payload\)/)
+  assert.match(adapter, /return \{ incident: payload\.incident \?\? unwrapData\(payload\)/)
+})
