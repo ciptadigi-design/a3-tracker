@@ -112,7 +112,7 @@ class ComponentsController extends Controller
     public function add(Request $r, string $machine)
     {
         $m = Machine::findOrFail($machine);
-        $d = $r->validate(['component_id' => 'required|uuid', 'slot_code' => 'required|string|max:80', 'display_order' => 'nullable|integer|min:0']);
+        $d = $r->validate(['component_id' => 'required|uuid', 'slot_code' => 'required|string|max:80', 'display_order' => 'nullable|integer|min:0', 'tracking_method' => 'required|in:counter_based', 'baseline_expected_clicks' => 'required|integer|min:1', 'notes' => 'nullable|string']);
 
         return response()->json(['data' => app(ComponentConfigurationService::class)->addManual($m, $d)], 201);
     }
@@ -123,5 +123,14 @@ class ComponentsController extends Controller
         $d = $r->validate(['started_at' => 'nullable|date', 'evidence_level' => 'nullable|string|size:1', 'source' => 'nullable|string|max:40', 'notes' => 'nullable|string', 'client_request_id' => 'nullable|uuid']);
 
         return response()->json(['data' => app(ComponentConfigurationService::class)->initialize($mc, $d)], 201);
+    }
+
+    public function reconcile(Request $r, string $component)
+    {
+        $mc = MachineComponent::findOrFail($component);
+        $d = $r->validate(['profile_slot_id' => 'required|uuid']);
+        $slot = ModelProfileSlot::findOrFail($d['profile_slot_id']);
+
+        return response()->json(['data' => app(ComponentConfigurationService::class)->reconcileManual($mc, $slot)]);
     }
 }

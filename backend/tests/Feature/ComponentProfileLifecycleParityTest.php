@@ -16,6 +16,7 @@ use App\Models\ModelProfileSlot;
 use App\Services\ComponentConfigurationService;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 use Tests\TestCase;
@@ -65,7 +66,7 @@ class ComponentProfileLifecycleParityTest extends TestCase
         $s = app(ComponentConfigurationService::class);
         $s->sync($f['aMachine']);
         $s->sync($f['bMachine']);
-        $manual = $s->addManual($f['aMachine'], ['component_id' => $f['drum']->id, 'slot_code' => 'EXTRA-01']);
+        $manual = $s->addManual($f['aMachine'], ['component_id' => $f['drum']->id, 'slot_code' => 'EXTRA-01', 'tracking_method' => 'counter_based', 'baseline_expected_clicks' => 100]);
         $this->assertTrue($manual->source_type === 'manual');
         $this->assertFalse(MachineComponent::where('machine_id', $f['bMachine']->id)->where('slot_code', 'EXTRA-01')->exists());
         $target = MachineComponent::where('machine_id', $f['aMachine']->id)->where('slot_code', 'DRUM-C')->first();
@@ -113,11 +114,37 @@ class ComponentProfileLifecycleParityTest extends TestCase
         ModelProfileSlot::create(['profile_id' => $f['profile']->id, 'component_id' => $slot->component_id, 'slot_code' => $slot->slot_code]);
     }
 
+    public function test_configured_manual_component_initializes_without_profile_or_stock(): void
+    {
+        $f = $this->graph();
+        $service = app(ComponentConfigurationService::class);
+        $manual = $service->addManual($f['aMachine'], [
+            'component_id' => $f['drum']->id,
+            'slot_code' => 'LOCAL-DRUM',
+            'tracking_method' => 'counter_based',
+            'baseline_expected_clicks' => 1200,
+        ]);
+
+        $life = $service->initialize($manual, ['started_at' => now(), 'client_request_id' => (string) Str::uuid()]);
+
+        $this->assertNull($manual->profile_slot_id);
+        $this->assertSame($manual->id, $life->machine_component_id);
+        $this->assertSame(0, DB::table('inventory_movements')->count());
+    }
+
     public function test_second_active_lifecycle_and_invalid_chronology_are_rejected(): void
     {
-        $f = $this->graph(); $s = app(ComponentConfigurationService::class); $s->sync($f['aMachine']); $mc = MachineComponent::where('machine_id', $f['aMachine']->id)->first();
+        $f = $this->graph();
+        $s = app(ComponentConfigurationService::class);
+        $s->sync($f['aMachine']);
+        $mc = MachineComponent::where('machine_id', $f['aMachine']->id)->first();
         $s->initialize($mc, ['started_at' => '2026-01-01 00:00:00', 'client_request_id' => (string) Str::uuid()]);
-        try { $s->initialize($mc, ['started_at' => '2026-01-02 00:00:00', 'client_request_id' => (string) Str::uuid()]); $this->fail('second active lifecycle should fail'); } catch (ConflictHttpException) { $this->assertTrue(true); }
-        $this->assertSame(1, \App\Models\ComponentLifecycle::where('machine_component_id', $mc->id)->count());
+        try {
+            $s->initialize($mc, ['started_at' => '2026-01-02 00:00:00', 'client_request_id' => (string) Str::uuid()]);
+            $this->fail('second active lifecycle should fail');
+        } catch (ConflictHttpException) {
+            $this->assertTrue(true);
+        }
+        $this->assertSame(1, ComponentLifecycle::where('machine_component_id', $mc->id)->count());
     }
 }

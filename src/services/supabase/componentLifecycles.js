@@ -61,8 +61,13 @@ export async function loadMachineComponentLifecycles({ accountId, branchId }) {
   }
 }
 
-export async function initializeComponentLifecycle({ accountId, machineId, profileId, installedCounter, installedAt, notes, clientRequestId }) {
-  const { data, error } = await supabase.rpc('initialize_machine_component_lifecycle', {
+export async function initializeComponentLifecycle({ accountId, machineId, profileId, assignmentId, installedCounter, installedAt, notes, clientRequestId }) {
+  const rpc = assignmentId && !profileId ? 'initialize_machine_component_assignment_lifecycle' : 'initialize_machine_component_lifecycle'
+  const payload = assignmentId && !profileId ? {
+    target_account_id: accountId, target_machine_id: machineId, target_assignment_id: assignmentId,
+    target_installed_counter: installedCounter == null ? null : installedCounter, target_installed_at: installedAt || null,
+    target_client_request_id: clientRequestId, target_notes: notes?.trim() || null,
+  } : {
     target_account_id: accountId,
     target_machine_id: machineId,
     target_model_component_profile_id: profileId,
@@ -70,7 +75,8 @@ export async function initializeComponentLifecycle({ accountId, machineId, profi
     target_installed_at: installedAt || null,
     target_client_request_id: clientRequestId,
     target_notes: notes?.trim() || null,
-  })
+  }
+  const { data, error } = await supabase.rpc(rpc, payload)
 
   if (error) throw operationalError(error, { operation: 'component.initialize', accountId, clientRequestId }, 'The component could not be initialized.')
   return data

@@ -15,7 +15,7 @@ const profiles = [
     id: "a",
     machine_model_id: "c1070",
     component_id: "gear",
-    slot_code: "GEAR-A",
+      slot_code: "GEAR-A", tracking_method: 'counter_based', current_profile_baseline: 100,
     is_active: true,
   },
   {
@@ -274,6 +274,7 @@ test("uninitialized inherited slot can initialize and remove", () => {
         lifecycle_status: "unknown",
         model_component_profile_id: "profile",
         slot_code: "GEAR-A",
+        tracking_method: "counter_based", current_profile_baseline: 100,
       },
       canManage: true,
     }),
@@ -281,7 +282,7 @@ test("uninitialized inherited slot can initialize and remove", () => {
   );
 });
 
-test("active lifecycle cannot be detached and manual UNKNOWN has no profile initialization action", () => {
+test("active lifecycle cannot be detached and unconfigured manual UNKNOWN cannot initialize", () => {
   assert.equal(
     machineComponentCapabilities({
       assignment: {
@@ -298,7 +299,7 @@ test("active lifecycle cannot be detached and manual UNKNOWN has no profile init
       assignment: {
         lifecycle_status: "unknown",
         model_component_profile_id: null,
-        slot_code: "ROLLER-X",
+        slot_code: "ROLLER-X", tracking_method: null, current_profile_baseline: null,
       },
       canManage: true,
     }).canInitialize,
@@ -306,12 +307,20 @@ test("active lifecycle cannot be detached and manual UNKNOWN has no profile init
   );
 });
 
+test("configured manual UNKNOWN can initialize without a profile slot", () => {
+  assert.equal(machineComponentCapabilities({
+    assignment: { lifecycle_status: 'unknown', assignment_status: 'configured', model_component_profile_id: null, tracking_method: 'counter_based', current_profile_baseline: 1200, slot_code: 'LOCAL-X' },
+    canManage: true,
+  }).canInitialize, true)
+})
+
 test("UNKNOWN lifecycle evidence remains history-protected from removal", () => {
   const capabilities = machineComponentCapabilities({
     assignment: {
       lifecycle_id: "legacy-sentinel",
       lifecycle_status: "unknown",
       model_component_profile_id: "profile",
+      tracking_method: "counter_based", current_profile_baseline: 100,
       slot_code: "GEAR",
     },
     canManage: true,

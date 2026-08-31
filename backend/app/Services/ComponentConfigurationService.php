@@ -54,7 +54,14 @@ class ComponentConfigurationService
             throw new ConflictHttpException('machine is not active');
         }
 
-        return DB::transaction(fn () => MachineComponent::create(['account_id' => $machine->account_id, 'machine_id' => $machine->id, 'component_id' => $d['component_id'], 'slot_code' => strtoupper(trim($d['slot_code'])), 'source_type' => 'manual', 'status' => 'configured', 'active_key' => 'active', 'display_order' => $d['display_order'] ?? 0]));
+        if (($d['tracking_method'] ?? 'counter_based') !== 'counter_based') {
+            throw new ConflictHttpException('only counter-based lifecycle tracking is currently supported');
+        }
+        if (empty($d['baseline_expected_clicks']) || (int) $d['baseline_expected_clicks'] < 1) {
+            throw new ConflictHttpException('expected baseline is required for machine-specific lifecycle tracking');
+        }
+
+        return DB::transaction(fn () => MachineComponent::create(['account_id' => $machine->account_id, 'machine_id' => $machine->id, 'component_id' => $d['component_id'], 'slot_code' => strtoupper(trim($d['slot_code'])), 'source_type' => 'manual', 'status' => 'configured', 'active_key' => 'active', 'display_order' => $d['display_order'] ?? 0, 'tracking_method' => $d['tracking_method'], 'baseline_expected_clicks' => $d['baseline_expected_clicks'], 'notes' => $d['notes'] ?? null]));
     }
 
     public function exclude(MachineComponent $mc, string $reason, ?string $requestId = null): void
@@ -77,6 +84,9 @@ class ComponentConfigurationService
     {
         return DB::transaction(function () use ($mc, $d) {
             $mc->lockForUpdate()->first();
+            if ($mc->source_type === 'manual' && ($mc->tracking_method !== 'counter_based' || ! $mc->baseline_expected_clicks)) {
+                throw new ConflictHttpException('machine-specific component needs a counter-based expected baseline before initialization');
+            }
             if ($d['client_request_id'] ?? null) {
                 $old = ComponentLifecycle::where('client_request_id', $d['client_request_id'])->first();
                 if ($old) {
@@ -95,6 +105,23 @@ class ComponentConfigurationService
             }
 
             return ComponentLifecycle::create(['machine_component_id' => $mc->id, 'started_at' => $start, 'status' => $start ? 'active' : 'unknown', 'evidence_level' => $d['evidence_level'] ?? null, 'source' => $d['source'] ?? 'manual', 'notes' => $d['notes'] ?? null, 'client_request_id' => $d['client_request_id'] ?? null, 'active_key' => 'active']);
+        });
+    }
+
+    public function reconcileManual(MachineComponent $mc, ModelProfileSlot $slot): MachineComponent
+    {
+        return DB::transaction(function () use ($mc, $slot) {
+            $mc->lockForUpdate()->first();
+            $slot->loadMissing('profile');
+            if ($mc->source_type !== 'manual' || $slot->is_active !== true || $slot->profile->machine_model_id !== $mc->machine->machine_model_id || $slot->component_id !== $mc->component_id || strtolower(trim($slot->slot_code)) !== strtolower(trim($mc->slot_code))) {
+                throw new ConflictHttpException('manual component and active profile slot do not match');
+            }
+            if (MachineComponent::where('machine_id', $mc->machine_id)->where('status', 'configured')->where('profile_slot_id', $slot->id)->where('id', '<>', $mc->id)->exists()) {
+                throw new ConflictHttpException('a conflicting inherited assignment already exists');
+            }
+            $mc->update(['profile_slot_id' => $slot->id, 'source_type' => 'inherited', 'tracking_method' => $slot->tracking_method, 'baseline_expected_clicks' => $slot->baseline_expected_clicks]);
+
+            return $mc->fresh();
         });
     }
 }

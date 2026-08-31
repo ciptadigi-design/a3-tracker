@@ -89,6 +89,7 @@ export function effectiveProfiles(profiles, accountId, modelId) {
 }
 
 export function machineComponentCapabilities({ assignment, canManage }) {
+  const config = effectiveTrackingConfiguration(assignment)
   return {
     canRemove: Boolean(
       canManage &&
@@ -98,10 +99,17 @@ export function machineComponentCapabilities({ assignment, canManage }) {
     canInitialize: Boolean(
       canManage &&
         assignment?.lifecycle_status === "unknown" &&
-        assignment?.model_component_profile_id,
+        assignment?.assignment_status !== 'retired' &&
+        config.complete,
     ),
     showsSlotCode: Boolean(assignment?.slot_code),
   };
+}
+
+export function effectiveTrackingConfiguration(assignment) {
+  const trackingMethod = assignment?.tracking_method ?? null
+  const baseline = Number(assignment?.current_profile_baseline ?? assignment?.baseline_expected_clicks)
+  return { trackingMethod, baseline: Number.isFinite(baseline) && baseline > 0 ? baseline : null, complete: Boolean(trackingMethod && Number.isFinite(baseline) && baseline > 0) }
 }
 
 export function archivedConfigurationActions({ isActive, canManage }) {

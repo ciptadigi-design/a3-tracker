@@ -18,7 +18,7 @@ const service = readFileSync(
 
 test("Machine Components exposes explicit add, sync, remove, and restore language", () => {
   for (const label of [
-    "Add Component",
+    "Add Machine-Specific Component",
     "Sync Model Profile",
     "Remove from Machine",
     "Restore to Machine",
@@ -56,7 +56,7 @@ test("machine-specific add uses BlockingDialog with accessible dismissal and bus
   assert.match(dialog, /BlockingDialog/);
   assert.match(dialog, /aria-label="Close machine component form"/);
   assert.match(dialog, /busy=\{busy\}/);
-  assert.match(dialog, /This does not change its Model Profile/);
+  assert.match(dialog, /Standard components belong in Model Profiles/);
 });
 
 test("zero configuration state does not imply fabricated lifecycle", () => {

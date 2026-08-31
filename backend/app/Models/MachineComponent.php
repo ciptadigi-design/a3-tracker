@@ -11,7 +11,7 @@ class MachineComponent extends Model
 
     protected $keyType = 'string';
 
-    protected $fillable = ['account_id', 'machine_id', 'component_id', 'profile_slot_id', 'slot_code', 'source_type', 'status', 'active_key', 'display_order'];
+    protected $fillable = ['account_id', 'machine_id', 'component_id', 'profile_slot_id', 'slot_code', 'source_type', 'status', 'active_key', 'display_order', 'tracking_method', 'baseline_expected_clicks', 'healthy_threshold_percent', 'watch_threshold_percent', 'warning_threshold_percent', 'critical_threshold_percent', 'notes'];
 
     protected static function booted()
     {

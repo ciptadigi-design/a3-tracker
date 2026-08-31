@@ -128,3 +128,11 @@ export async function syncMachineComponents({ accountId, machineId }) {
   if (error) throw error
   return data
 }
+
+export async function reconcileManualComponent({ accountId, assignmentId, profileId, clientRequestId }) {
+  const { data, error } = await supabase.rpc('reconcile_manual_component_assignment', {
+    target_account_id: accountId, target_assignment_id: assignmentId, target_profile_id: profileId, target_client_request_id: clientRequestId,
+  })
+  if (error) throw error
+  return data
+}

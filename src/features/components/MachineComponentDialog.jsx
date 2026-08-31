@@ -57,9 +57,9 @@ export function MachineComponentDialog({
           </span>
           <div>
             <span className="card-kicker">Machine-specific configuration</span>
-            <h2 id="machine-component-dialog-title">Add Machine Component</h2>
+            <h2 id="machine-component-dialog-title">Add Machine-Specific Component</h2>
             <p>
-              {machine.machine_code} · This does not change its Model Profile.
+              {machine.machine_code} · Use this only for this physical machine. Standard components belong in Model Profiles.
             </p>
           </div>
         </div>
@@ -122,8 +122,8 @@ export function MachineComponentDialog({
                 }
               >
                 <option value="counter_based">Counter based</option>
-                <option value="consumption_based">Consumption based</option>
-                <option value="inspection_based">Inspection based</option>
+                <option value="consumption_based" disabled>Consumption based (Coming soon)</option>
+                <option value="inspection_based" disabled>Inspection based (Coming soon)</option>
               </select>
             </label>
             <label className="form-field">
@@ -158,7 +158,7 @@ export function MachineComponentDialog({
             Cancel
           </button>
           <button className="primary-button" disabled={busy}>
-            {busy && <LoaderCircle className="spin" size={16} />}Add to Machine
+            {busy && <LoaderCircle className="spin" size={16} />}Add Machine-Specific Component
           </button>
         </footer>
       </form>

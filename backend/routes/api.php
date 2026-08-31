@@ -59,6 +59,7 @@ Route::prefix('v1')->middleware('request.id')->group(function () {
             Route::post('machine-components/{component}/exclude', [ComponentsController::class, 'exclude']);
             Route::post('component-exclusions/{exclusion}/clear', [ComponentsController::class, 'clearExclusion']);
             Route::post('machine-components/{component}/lifecycles', [ComponentsController::class, 'initialize']);
+            Route::post('machine-components/{component}/reconcile', [ComponentsController::class, 'reconcile']);
             Route::get('inventory/items', [InventoryController::class, 'items']);
             Route::get('inventory/locations', [InventoryController::class, 'locations']);
             Route::post('purchases', [InventoryController::class, 'createPurchase']);
