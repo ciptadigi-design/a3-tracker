@@ -6,16 +6,21 @@ export function resolveDataBackend(value = 'supabase') {
   return backend
 }
 
-export const dataBackend = resolveDataBackend(import.meta.env.VITE_DATA_BACKEND || 'supabase')
+export const dataBackend = resolveDataBackend(import.meta.env?.VITE_DATA_BACKEND || 'supabase')
 
 export function unsupportedBackendOperation(domain, operation) {
   return new Error(`${domain}.${operation} is not implemented for VITE_DATA_BACKEND=${dataBackend}. No backend fallback was attempted.`)
 }
 
-export async function callBackend({ domain, operation, args, supabase, laravel }) {
-  const loader = dataBackend === 'laravel' ? laravel : supabase
+export async function callSelectedBackend({ backend = dataBackend, domain, operation, args, supabase, laravel }) {
+  const selected = resolveDataBackend(backend)
+  const loader = selected === 'laravel' ? laravel : supabase
   const adapter = await loader()
   const method = adapter[operation]
   if (typeof method !== 'function') throw unsupportedBackendOperation(domain, operation)
   return method(...args)
+}
+
+export async function callBackend(options) {
+  return callSelectedBackend(options)
 }

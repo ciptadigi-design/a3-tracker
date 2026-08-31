@@ -1,4 +1,5 @@
-import { AlertTriangle, BarChart3, Boxes, CalendarDays, ChevronRight, CircleDollarSign, ClipboardCheck, Gauge, LogOut, Package, Printer, Settings, UserRound, Wrench } from 'lucide-react'
+import { useState } from 'react'
+import { AlertTriangle, BarChart3, Boxes, CalendarDays, ChevronDown, ChevronRight, CircleDollarSign, ClipboardCheck, Gauge, LogOut, Package, Printer, Settings, UserRound, Wrench } from 'lucide-react'
 
 const navigation = [
   { path: '/', label: 'Overview', icon: Gauge, active: true },
@@ -23,6 +24,9 @@ function NavLink({ item, path, navigate }) {
 }
 
 export function Sidebar({ path, navigate, account, branch, profile, roleLabel, isPlatformSuperuser, onLogout }) {
+  const [accountExpanded, setAccountExpanded] = useState(false)
+  const displayName = profile?.display_name || profile?.username || 'User'
+
   return (
     <aside className="sidebar glass-surface">
       <div className="brand-lockup sidebar-brand"><span className="brand-mark"><Printer size={22} strokeWidth={1.8} /></span><span>A3 Tracker</span></div>
@@ -36,10 +40,16 @@ export function Sidebar({ path, navigate, account, branch, profile, roleLabel, i
       </nav>
       <nav className="secondary-nav" aria-label="Settings navigation">
         {isPlatformSuperuser && <NavLink item={{ path: '/settings', label: 'Settings', icon: Settings, active: true }} path={path} navigate={navigate} />}
-        <div className="sidebar-account" aria-label="Account">
-              <div className="sidebar-account-identity"><span className="user-avatar">{profile?.display_name?.slice(0, 1).toUpperCase() || 'U'}</span><div><strong>{profile?.display_name || profile?.username || 'User'}</strong><span>{roleLabel || 'Workspace member'}</span></div></div>
-          <button type="button" className="nav-item" onClick={() => navigate('/my-account')}><UserRound size={19} /><span>My Account</span></button>
-          <button type="button" className="nav-item sidebar-logout" onClick={onLogout}><LogOut size={19} /><span>Logout</span></button>
+        <div className={`sidebar-account ${accountExpanded ? 'sidebar-account-expanded' : ''}`} aria-label="Account">
+          <button type="button" className="sidebar-account-toggle" aria-expanded={accountExpanded} onClick={() => setAccountExpanded((current) => !current)}>
+            <span className="user-avatar">{displayName.slice(0, 1).toUpperCase()}</span>
+            <span className="sidebar-account-copy"><strong>{displayName}</strong><span>{roleLabel || 'Workspace member'}</span></span>
+            <ChevronDown size={16} aria-hidden="true" />
+          </button>
+          <div className="sidebar-account-actions" aria-hidden={!accountExpanded}>
+            <button type="button" className="nav-item" tabIndex={accountExpanded ? 0 : -1} onClick={() => navigate('/my-account')}><UserRound size={19} /><span>My Account</span></button>
+            <button type="button" className="nav-item sidebar-logout" tabIndex={accountExpanded ? 0 : -1} onClick={onLogout}><LogOut size={19} /><span>Logout</span></button>
+          </div>
         </div>
         <div className="sidebar-footnote"><ClipboardCheck size={15} /> Secure tenant access</div>
       </nav>

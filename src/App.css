@@ -170,11 +170,17 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .user-summary strong { font-size: 11px; }
 .user-summary span { margin-top: 2px; color: var(--text-muted); font-size: 9px; }
 .mobile-menu-button { display: none; }
-.sidebar-account { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--line); }
-.sidebar-account-identity { display: flex; align-items: center; gap: 10px; padding: 0 12px 10px; }
-.sidebar-account-identity > div { min-width: 0; display: grid; gap: 2px; }
-.sidebar-account-identity strong,.sidebar-account-identity span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.sidebar-account-identity span { color: var(--text-soft); font-size: 11px; }
+.sidebar-account { display: none; margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--line); }
+.sidebar-account-toggle { width: 100%; min-width: 0; display: flex; align-items: center; gap: 10px; padding: 8px 12px; color: var(--text-soft); border: 0; border-radius: 13px; background: transparent; text-align: left; cursor: pointer; transition: color 150ms, background 150ms; }
+.sidebar-account-toggle:hover { color: var(--text); background: var(--surface-muted); }
+.sidebar-account-toggle > svg { flex: 0 0 auto; color: var(--text-muted); transition: transform 160ms ease; }
+.sidebar-account-expanded .sidebar-account-toggle > svg { transform: rotate(180deg); }
+.sidebar-account-copy { min-width: 0; flex: 1 1 auto; display: grid; gap: 2px; }
+.sidebar-account-copy strong,.sidebar-account-copy span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sidebar-account-copy strong { color: var(--text); font-size: 12px; }
+.sidebar-account-copy span { color: var(--text-soft); font-size: 10px; }
+.sidebar-account-actions { display: grid; max-height: 0; overflow: hidden; opacity: 0; transition: max-height 160ms ease, opacity 120ms ease; }
+.sidebar-account-expanded .sidebar-account-actions { max-height: 100px; opacity: 1; }
 .sidebar-account .nav-item { width: 100%; border: 0; background: transparent; text-align: left; cursor: pointer; }
 .sidebar-logout { color: var(--text-soft); }
 .mobile-nav-backdrop { display: none; }
@@ -754,9 +760,11 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   .sidebar-wrap { position: fixed; inset: max(12px, env(safe-area-inset-top)) auto max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left)); width: min(310px, calc(100% - 36px)); max-width: calc(100% - max(24px, env(safe-area-inset-left))); z-index: 20; transform: translateX(calc(-100% - 24px)); transition: transform 220ms ease; }
   .sidebar-wrap-open { transform: translateX(0); }
   .sidebar { position: static; height: 100%; max-height: 100%; overflow-y: auto; padding-bottom: max(16px, env(safe-area-inset-bottom)); }
+  .sidebar-account { display: block; }
   .mobile-nav-backdrop { display: block; position: fixed; inset: 0; z-index: 19; pointer-events: none; opacity: 0; background: rgba(5, 8, 14, 0.44); backdrop-filter: blur(4px); transition: opacity 220ms; }
   .mobile-nav-backdrop-open { pointer-events: auto; opacity: 1; }
   .mobile-menu-button { display: inline-grid; }
+  .topbar-user-menu { display: none; }
   .topbar { top: max(12px, env(safe-area-inset-top)); }
   .overview-grid { grid-template-columns: minmax(0, 1fr); }
   .next-step-card { min-height: 210px; }
