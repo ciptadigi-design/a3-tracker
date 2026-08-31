@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use App\Models\Account;
+use App\Models\AccountMembership;
+use App\Models\AccountMembershipBranch;
 use App\Models\Branch;
 use App\Models\Machine;
 use App\Models\OperationalIncident;
@@ -16,7 +18,11 @@ class OperationalIncidentService
 
     public function create($user, Account $account, Branch $branch, array $v): OperationalIncident
     {
-        if (! $this->branches->canAccess($user, $branch) || $branch->account_id !== $account->id) {
+        $branch = $branch->fresh();
+        $membership = AccountMembership::where('account_id', $account->id)->where('user_id', $user->id)->where('status', 'active')->first();
+        $branchScope = $membership && ($membership->role === 'owner' || AccountMembershipBranch::where(['account_id' => $account->id, 'membership_id' => $membership->id, 'branch_id' => $branch->id, 'is_active' => true])->exists());
+        // scope is intentionally checked against persisted tenant rows
+        if (! $branchScope || ! $branch->is_active || (string) $branch->account_id !== (string) $account->id) {
             throw ValidationException::withMessages(['scope' => 'Invalid account or branch scope.']);
         }
         if (! empty($v['machine_id'])) {
@@ -32,7 +38,8 @@ class OperationalIncidentService
                 $p = OperationalPerson::where('account_id', $account->id)->where('id', $v[$field])->where('is_active', true)->whereHas('branches', fn ($q) => $q->where('branches.id', $branch->id)->where('operational_person_branches.is_active', true))->first();
                 if (! $p) {
                     throw ValidationException::withMessages([$field => 'Operational person is not eligible for this branch.']);
-                } $v[$field.'_snapshot'] = $p->name;
+                }
+                $v[$field === 'operator_person_id' ? 'operator_name_snapshot' : 'responsible_name_snapshot'] = $p->name;
             }
         }
         $existing = OperationalIncident::where('account_id', $account->id)->where('client_request_id', $v['client_request_id'])->first();
@@ -51,7 +58,8 @@ class OperationalIncidentService
     {
         if ($i->assessed_loss !== null) {
             return (string) $i->assessed_loss;
-        } $base = (float) $i->material_loss + (float) $i->service_loss;
+        }
+        $base = $i->base_amount !== null ? (float) $i->base_amount : (float) $i->material_loss + (float) $i->service_loss;
 
         return number_format($base * (float) ($i->penalty_multiplier ?: 1), 2, '.', '');
     }

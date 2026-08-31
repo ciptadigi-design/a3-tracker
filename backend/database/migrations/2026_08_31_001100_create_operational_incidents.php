@@ -26,6 +26,7 @@ return new class extends Migration
             $t->string('responsible_name_snapshot', 160)->nullable();
             $t->decimal('material_loss', 20, 2)->default(0);
             $t->decimal('service_loss', 20, 2)->default(0);
+            $t->decimal('base_amount', 20, 2)->nullable();
             $t->decimal('penalty_multiplier', 8, 4)->default(1);
             $t->decimal('assessed_loss', 20, 2)->nullable();
             $t->text('description');

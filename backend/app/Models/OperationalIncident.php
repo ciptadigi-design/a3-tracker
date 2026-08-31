@@ -13,7 +13,7 @@ class OperationalIncident extends Model
 
     protected $guarded = [];
 
-    protected $casts = ['occurred_at' => 'datetime', 'material_loss' => 'decimal:2', 'service_loss' => 'decimal:2', 'penalty_multiplier' => 'decimal:4', 'assessed_loss' => 'decimal:2', 'resolved_at' => 'datetime', 'voided_at' => 'datetime'];
+    protected $casts = ['occurred_at' => 'datetime', 'material_loss' => 'decimal:2', 'service_loss' => 'decimal:2', 'base_amount' => 'decimal:2', 'penalty_multiplier' => 'decimal:4', 'assessed_loss' => 'decimal:2', 'resolved_at' => 'datetime', 'voided_at' => 'datetime'];
 
     protected static function booted()
     {
