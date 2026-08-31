@@ -26,3 +26,5 @@ M2.11D implemented replacements: `auth-login` → `AuthController@login`; `provi
 | purchasing/receiving RPCs | `PurchaseReceiptService`, purchase/receipt routes | M2.11G_PORTED |
 | inventory movement/FIFO RPCs | `InventoryLedgerService`, FIFO layer/allocation tables | M2.11G_PORTED |
 | replacement inventory RPC | `ReplaceMachineComponent`, replacement route | M2.11G_PORTED |
+| operational incidents | `operational_incidents`, `OperationalIncidentService`, scoped incident routes | M2.11H_PORTED |
+| Machine Cost period | `MachineCostService`, machine cost route; FIFO replacement + incident loss | M2.11H_PORTED (advanced operating costs deferred) |

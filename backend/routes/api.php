@@ -7,6 +7,8 @@ use App\Http\Controllers\Api\VersionController;
 use App\Http\Controllers\Api\OperationsController;
 use App\Http\Controllers\Api\ComponentsController;
 use App\Http\Controllers\Api\InventoryController;
+use App\Http\Controllers\Api\IncidentsController;
+use App\Http\Controllers\Api\MachineCostController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->middleware('request.id')->group(function () {
@@ -70,6 +72,10 @@ Route::prefix('v1')->middleware('request.id')->group(function () {
             Route::post('inventory/transfers', [InventoryController::class, 'transfer']);
             Route::post('inventory/adjustments', [InventoryController::class, 'adjust']);
             Route::post('machine-components/{component}/replacements', [InventoryController::class, 'replace']);
+            Route::get('accounts/{account}/branches/{branch}/incidents', [IncidentsController::class, 'index']);
+            Route::post('accounts/{account}/branches/{branch}/incidents', [IncidentsController::class, 'store']);
+            Route::get('accounts/{account}/branches/{branch}/incidents/{incident}', [IncidentsController::class, 'show']);
+            Route::get('machines/{machine}/cost', [MachineCostController::class, 'show']);
         });
     });
 });
