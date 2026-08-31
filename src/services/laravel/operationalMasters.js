@@ -1,13 +1,11 @@
 import { apiClient, unwrapCollection, unwrapData } from '../../lib/api/apiClient.js'
-import { unsupportedBackendOperation } from '../dataBackend.js'
 export async function loadOperationalPeopleForBranch({ branchId }) { return unwrapCollection(await apiClient.get(`/branches/${branchId}/operational-people`)) }
 export async function loadOperationalMasters({ accountId }) { const [people, manufacturers, models] = await Promise.all([apiClient.get(`/accounts/${accountId}/operational-people?per_page=100`), apiClient.get(`/manufacturers?account_id=${accountId}`), apiClient.get(`/machine-models?account_id=${accountId}`)]); return { people: unwrapCollection(people), manufacturers: unwrapCollection(manufacturers), models: unwrapCollection(models) } }
-const unsupported = (operation) => { throw unsupportedBackendOperation('operational-masters', operation) }
-export const saveOperationalPerson = () => unsupported('saveOperationalPerson')
-export const deleteOperationalPerson = () => unsupported('deleteOperationalPerson')
-export async function saveManufacturer({ values }) { return unwrapData(await apiClient.post('/manufacturers', values)) }
+export async function saveOperationalPerson({ accountId, personId, values }) { const payload = { name: values.name, code: values.code, linked_user_id: values.linkedUserId || null }; return unwrapData(await (personId ? apiClient.put(`/accounts/${accountId}/operational-people/${personId}`, payload) : apiClient.post(`/accounts/${accountId}/operational-people`, payload))) }
+export async function deleteOperationalPerson({ personId }) { return unwrapData(await apiClient.patch(`/operational-people/${personId}/status`, { is_active: false })) }
+export async function saveManufacturer({ accountId, manufacturerId, values }) { const payload = { ...values, account_id: accountId }; return unwrapData(await (manufacturerId ? apiClient.put(`/manufacturers/${manufacturerId}`, payload) : apiClient.post('/manufacturers', payload))) }
 export async function setManufacturerStatus({ manufacturerId, isActive }) { return unwrapData(await apiClient.patch(`/manufacturers/${manufacturerId}/status`, { is_active: isActive })) }
-export const deleteManufacturer = () => unsupported('deleteManufacturer')
-export async function saveMachineModel({ values }) { return unwrapData(await apiClient.post('/machine-models', values)) }
+export const deleteManufacturer = ({ manufacturerId }) => setManufacturerStatus({ manufacturerId, isActive: false })
+export async function saveMachineModel({ accountId, modelId, values }) { const payload = { ...values, account_id: accountId }; return unwrapData(await (modelId ? apiClient.put(`/machine-models/${modelId}`, payload) : apiClient.post('/machine-models', payload))) }
 export async function setMachineModelStatus({ modelId, isActive }) { return unwrapData(await apiClient.patch(`/machine-models/${modelId}/status`, { is_active: isActive })) }
-export const deleteMachineModel = () => unsupported('deleteMachineModel')
+export const deleteMachineModel = ({ modelId }) => setMachineModelStatus({ modelId, isActive: false })

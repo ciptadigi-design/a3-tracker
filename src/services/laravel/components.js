@@ -12,15 +12,19 @@ export const exclude = async (componentId, payload) => unwrapData(await apiClien
 export const clearExclusion = async (exclusionId) => unwrapData(await apiClient.post(`/component-exclusions/${exclusionId}/clear`))
 export const initializeLifecycle = async (componentId, payload) => unwrapData(await apiClient.post(`/machine-components/${componentId}/lifecycles`, payload))
 export const unsupported = (operation) => { throw unsupportedBackendOperation('components', operation) }
-export const loadComponentFoundation = async ({ accountId }) => ({ catalogs: await catalogs(accountId), profiles: [], machineComponents: [] })
+export async function loadComponentFoundation({ accountId }) {
+  const [catalogRows, modelRows] = await Promise.all([catalogs(accountId), unwrapCollection(await apiClient.get(`/machine-models?account_id=${accountId}`))])
+  const profileRows = (await Promise.all(modelRows.map(async (model) => unwrapCollection(await apiClient.get(`/machine-models/${model.id}/profiles`))))).flatMap((profiles) => profiles.flatMap((profile) => (profile.slots || []).map((slot) => ({ ...slot, id: slot.id, account_id: profile.account_id, machine_model_id: profile.machine_model_id, components: slot.component, is_active: slot.is_active !== false, tracking_method: slot.tracking_method || 'counter_based' }))))
+  return { manufacturers: [], models: modelRows, components: catalogRows, profiles: profileRows, intelligence: [], intelligenceSamples: [] }
+}
 export const adoptIntelligenceRecommendation = () => unsupported('adoptIntelligenceRecommendation')
-export const saveComponent = (args) => args.component?.id ? unsupported('saveComponent') : createCatalog(args.values)
-export const setComponentStatus = () => unsupported('setComponentStatus')
-export const saveProfile = ({ modelId, values }) => createProfile(modelId, values)
-export const setProfileStatus = () => unsupported('setProfileStatus')
+export const saveComponent = ({ accountId, component, values }) => component?.id ? unwrapData(apiClient.put(`/components/${component.id}`, values)) : createCatalog({ ...values, account_id: accountId })
+export const setComponentStatus = ({ componentId, action }) => apiClient.patch(`/components/${componentId}/status`, { is_active: action !== 'archive' }).then(unwrapData)
+export const saveProfile = ({ modelId, values }) => createProfile(modelId, { ...values, name: values.name || values.slotCode || 'Default profile' })
+export const setProfileStatus = ({ profileId, action }) => apiClient.patch(`/model-profiles/${profileId}/status`, { is_active: action !== 'archive' }).then(unwrapData)
 export const addMachineComponent = ({ machineId, values }) => addManual(machineId, values)
-export const removeMachineComponent = () => unsupported('removeMachineComponent')
-export const clearMachineComponentExclusion = ({ machineId, profileId }) => unsupported('clearMachineComponentExclusion', machineId, profileId)
+export const removeMachineComponent = ({ assignmentId, reason }) => unwrapData(apiClient.patch(`/machine-components/${assignmentId}`, { reason }))
+export const clearMachineComponentExclusion = ({ profileId }) => clearExclusion(profileId)
 export const syncMachineComponents = (args) => sync(args.machineId)
-export const reconcileManualComponent = () => unsupported('reconcileManualComponent')
-export const getReconciliationCandidate = () => unsupported('getReconciliationCandidate')
+export const reconcileManualComponent = ({ assignmentId, profileId }) => apiClient.post(`/machine-components/${assignmentId}/reconcile`, { profile_slot_id: profileId }).then(unwrapData)
+export const getReconciliationCandidate = ({ assignmentId }) => apiClient.get(`/machine-components/${assignmentId}/reconciliation-candidate`).then(unwrapData)

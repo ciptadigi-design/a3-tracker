@@ -62,4 +62,11 @@ class OperationalIncidentService
 
         return number_format($base * (float) ($i->penalty_multiplier ?: 1), 2, '.', '');
     }
+
+    public function canMutate($user, OperationalIncident $incident): bool
+    {
+        $account = Account::find($incident->account_id);
+
+        return $account && app(AccountAccessResolver::class)->canManageOperational($user, $account);
+    }
 }

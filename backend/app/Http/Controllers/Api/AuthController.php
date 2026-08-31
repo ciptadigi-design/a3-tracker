@@ -21,11 +21,11 @@ class AuthController
             $user->forceFill(['name' => trim($d['displayName']), 'username' => strtolower(trim($d['username']))])->save();
         } elseif ($action === 'email') {
             $d = $r->validate(['email' => ['required', 'email', 'max:254', 'unique:users,email,'.$user->id], 'currentPassword' => 'required|string']);
-            abort_unless(Hash::check($d['currentPassword'], $user->password), 422, 'Current password is incorrect.');
+            if (! Hash::check($d['currentPassword'], $user->password)) throw ValidationException::withMessages(['currentPassword' => 'Current password is incorrect.']);
             $user->forceFill(['email' => strtolower(trim($d['email']))])->save();
         } else {
             $d = $r->validate(['currentPassword' => 'required|string', 'password' => 'required|string|min:10|confirmed']);
-            abort_unless(Hash::check($d['currentPassword'], $user->password), 422, 'Current password is incorrect.');
+            if (! Hash::check($d['currentPassword'], $user->password)) throw ValidationException::withMessages(['currentPassword' => 'Current password is incorrect.']);
             $user->forceFill(['password' => $d['password']])->save();
         }
 

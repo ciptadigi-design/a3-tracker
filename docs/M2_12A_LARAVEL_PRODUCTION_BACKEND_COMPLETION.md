@@ -8,8 +8,10 @@ My Account uses the Laravel self-service account endpoint for profile, email, an
 
 ## Copy and coverage
 
-User-facing launch-critical copy is backend-neutral. Canonical service boundaries cover authentication, tenant context, branches, machines, daily counters, components, inventory, machine cost, incidents, reports, settings, and operational people. Unsupported operations fail closed with an explicit configuration/operation error and never fall back to Supabase.
+User-facing launch-critical copy is backend-neutral. Canonical service boundaries cover authentication, tenant context, branches, machines, daily counters, components, inventory, machine cost, incidents, reports, settings, and operational people. The parity closure adds Laravel governance/settings, inventory master/workspace projection, incident workflow mutations, machine-cost evidence mutations, and component catalog edit/remove paths. Unsupported or deferred operations fail closed with an explicit configuration/operation error and never fall back to Supabase.
+
+The current UI operation matrix is: Settings (workspace, members, branches, manufacturers, models, machines, people and operator policy) → governance endpoints; Errors (edit, solve, void) → incident endpoints; Inventory (items, locations, suppliers, purchase, receipt, opening, transfer, adjustment and replacement) → inventory endpoints; Components (catalog/profile status, sync, manual assignment, exclusion, lifecycle, replacement and reconciliation) → component endpoints; Machine Cost (selling-price and operating-cost evidence) → cost endpoints. Advanced Economics and Maintenance remain deferred.
 
 ## Verification
 
-Laravel-mode Vite build succeeds with Supabase frontend variables absent. Laravel feature tests and the second `php artisan migrate --force` are clean (the latter reports `Nothing to migrate`). Hostinger, DNS, Maintenance, and hosted DEV data remain untouched.
+Laravel-mode Vite build succeeds with Supabase frontend variables absent. Normal frontend builds, focused UI suites, Laravel feature tests, Pint, and `git diff --check` are run for this closure. The second `php artisan migrate --force` is expected to report `Nothing to migrate`. Hostinger, DNS, Maintenance, and hosted DEV data remain untouched.

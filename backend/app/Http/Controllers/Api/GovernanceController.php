@@ -7,6 +7,12 @@ use App\Http\Requests\AccountRequest;
 use App\Http\Requests\BranchRequest;
 use App\Http\Requests\ProvisionMemberRequest;
 use App\Models\Account;
+use App\Models\ComponentCatalog;
+use App\Models\InventoryLocation;
+use App\Models\MachineModel;
+use App\Models\Manufacturer;
+use App\Models\ModelProfileSlot;
+use App\Models\OperationalPerson;
 use App\Models\PlatformUserPrivilege;
 use App\Models\User;
 use App\Services\AccountAccessResolver;
@@ -18,6 +24,26 @@ use Illuminate\Support\Facades\Gate;
 
 class GovernanceController extends Controller
 {
+    public function settings(Request $r, string $id)
+    {
+        $a = Account::findOrFail($id);
+        abort_unless(app(AccountAccessResolver::class)->canGovern($r->user(), $a), 403);
+        $policy = DB::table('account_operational_permissions')->where('account_id', $id)->first();
+        $policy ??= (object) array_merge(['account_id' => $id], array_fill_keys(['operator_can_initialize_component', 'operator_can_replace_component', 'operator_can_create_purchase', 'operator_can_receive_goods', 'operator_can_adjust_inventory', 'operator_can_transfer_inventory', 'operator_can_log_errors'], false));
+
+        return response()->json(['data' => ['branches' => $a->branches()->orderBy('name')->get(), 'members' => $a->memberships()->with(['user', 'branchAssignments'])->get()->map(fn ($m) => ['id' => $m->id, 'user_id' => $m->user_id, 'role' => $m->role, 'status' => $m->status, 'username' => $m->user?->username, 'display_name' => $m->user?->name, 'email' => $m->user?->email, 'branch_ids' => $m->branchAssignments->where('is_active', true)->pluck('branch_id')->values()]), 'policy' => $policy, 'models' => MachineModel::with('manufacturer')->where(fn ($q) => $q->whereNull('account_id')->orWhere('account_id', $id))->get(), 'components' => ComponentCatalog::where(fn ($q) => $q->whereNull('account_id')->orWhere('account_id', $id))->get(), 'profiles' => ModelProfileSlot::with(['component', 'profile'])->whereHas('profile', fn ($q) => $q->where(fn ($x) => $x->whereNull('account_id')->orWhere('account_id', $id)))->get(), 'locations' => InventoryLocation::where('account_id', $id)->get(), 'people' => OperationalPerson::where('account_id', $id)->with('branches')->get(), 'manufacturers' => Manufacturer::where(fn ($q) => $q->whereNull('account_id')->orWhere('account_id', $id))->get(), 'audit' => []]]);
+    }
+
+    public function updatePolicy(Request $r, string $id)
+    {
+        $a = Account::findOrFail($id);
+        abort_unless(app(AccountAccessResolver::class)->canGovern($r->user(), $a), 403);
+        $d = $r->validate(['operator_can_initialize_component' => 'boolean', 'operator_can_replace_component' => 'boolean', 'operator_can_create_purchase' => 'boolean', 'operator_can_receive_goods' => 'boolean', 'operator_can_adjust_inventory' => 'boolean', 'operator_can_transfer_inventory' => 'boolean', 'operator_can_log_errors' => 'boolean']);
+        DB::table('account_operational_permissions')->updateOrInsert(['account_id' => $id], $d + ['updated_at' => now(), 'created_at' => now()]);
+
+        return response()->json(['data' => DB::table('account_operational_permissions')->where('account_id', $id)->first()]);
+    }
+
     public function accounts(Request $r)
     {
         Gate::authorize('platform.manage');
@@ -92,17 +118,48 @@ class GovernanceController extends Controller
         $a = Account::findOrFail($accountId);
         abort_unless(app(AccountAccessResolver::class)->canGovern($r->user(), $a), 403);
         $m = $a->memberships()->findOrFail($id);
-        $d = $r->validate(['role' => 'sometimes|in:owner,admin,technician,operator', 'status' => 'sometimes|in:invited,active,suspended,revoked']);
+        $d = $r->validate(['role' => 'sometimes|in:owner,admin,technician,operator', 'status' => 'sometimes|in:invited,active,suspended,revoked', 'username' => 'sometimes|string|max:80', 'display_name' => 'sometimes|string|max:120', 'branch_ids' => 'sometimes|array', 'branch_ids.*' => 'uuid']);
         $nextRole = $d['role'] ?? $m->role;
         $nextStatus = $d['status'] ?? $m->status;
         if ($nextRole === 'owner' && $m->role !== 'owner' && ! Gate::allows('platform.manage')) {
             abort(403);
         }if ($m->role === 'owner' && $m->status === 'active' && ($nextRole !== 'owner' || $nextStatus !== 'active') && $a->memberships()->where('role', 'owner')->where('status', 'active')->count() <= 1) {
             return response()->json(['message' => 'The last active owner cannot be suspended or demoted.'], 409);
-        }$m->update($d);
+        }$m->update(array_intersect_key($d, array_flip(['role', 'status'])));
+        if ($m->user && (array_key_exists('username', $d) || array_key_exists('display_name', $d))) {
+            $m->user->forceFill(array_filter(['username' => $d['username'] ?? null, 'name' => $d['display_name'] ?? null], fn ($v) => $v !== null))->save();
+        }
+        if (array_key_exists('branch_ids', $d)) {
+            $m->branchAssignments()->update(['is_active' => false]);
+            foreach ($d['branch_ids'] as $branchId) {
+                $m->branchAssignments()->updateOrCreate(['branch_id' => $branchId], ['account_id' => $accountId, 'is_active' => true]);
+            }
+        }
         app(GovernanceAudit::class)->record($r->user(), 'membership.updated', 'account_membership', $m->id, $a->id, $d);
 
         return response()->json(['data' => $m->load('user')]);
+    }
+
+    public function updateMemberEmail(Request $r, string $accountId, string $id)
+    {
+        $a = Account::findOrFail($accountId);
+        abort_unless(app(AccountAccessResolver::class)->canGovern($r->user(), $a), 403);
+        $m = $a->memberships()->with('user')->findOrFail($id);
+        $d = $r->validate(['email' => 'required|email|max:254|unique:users,email,'.$m->user_id]);
+        $m->user->forceFill(['email' => strtolower(trim($d['email']))])->save();
+
+        return response()->json(['data' => $m->fresh('user')]);
+    }
+
+    public function resetMemberPassword(Request $r, string $accountId, string $id)
+    {
+        $a = Account::findOrFail($accountId);
+        abort_unless(app(AccountAccessResolver::class)->canGovern($r->user(), $a), 403);
+        $m = $a->memberships()->with('user')->findOrFail($id);
+        $d = $r->validate(['password' => 'required|string|min:10|confirmed']);
+        $m->user->forceFill(['password' => $d['password']])->save();
+
+        return response()->json(['data' => ['membership_id' => $m->id]]);
     }
 
     public function members(Request $r, string $id)
@@ -128,7 +185,7 @@ class GovernanceController extends Controller
         $d = $r->validate(['user_id' => 'required|uuid']);
         $u = User::findOrFail($d['user_id']);
         $p = PlatformUserPrivilege::updateOrCreate(['user_id' => $u->id], ['role' => 'superuser', 'is_active' => true]);
-        app(GovernanceAudit::class)->record($r->user(),'platform.privilege.granted','platform_user_privilege',$u->id);
+        app(GovernanceAudit::class)->record($r->user(), 'platform.privilege.granted', 'platform_user_privilege', $u->id);
 
         return response()->json(['data' => $p]);
     }

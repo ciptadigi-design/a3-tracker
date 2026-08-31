@@ -53,6 +53,16 @@ class OperationsController extends Controller
         return response()->json(['data' => $m]);
     }
 
+    public function updateManufacturer(Request $r, string $id)
+    {
+        Gate::authorize('platform.manage');
+        $m = Manufacturer::findOrFail($id);
+        $d = $r->validate(['code' => 'required|string|max:64', 'name' => 'required|string|max:160', 'account_id' => 'nullable|uuid']);
+        $m->update($d);
+
+        return response()->json(['data' => $m]);
+    }
+
     public function storeModel(MachineModelRequest $r)
     {
         Gate::authorize('platform.manage');
@@ -71,6 +81,16 @@ class OperationsController extends Controller
         $m->update(['is_active' => $active, 'archived_at' => $active ? null : now()]);
 
         return response()->json(['data' => $m]);
+    }
+
+    public function updateModel(Request $r, string $id)
+    {
+        Gate::authorize('platform.manage');
+        $m = MachineModel::findOrFail($id);
+        $d = $r->validate(['manufacturer_id' => 'required|uuid', 'model_code' => 'required|string|max:64', 'name' => 'required|string|max:160', 'account_id' => 'nullable|uuid']);
+        $m->update($d);
+
+        return response()->json(['data' => $m->load('manufacturer')]);
     }
 
     public function storeMachine(MachineRequest $r, string $branch)
@@ -95,6 +115,16 @@ class OperationsController extends Controller
         return response()->json(['data' => $m]);
     }
 
+    public function updateMachine(Request $r, string $id)
+    {
+        $m = Machine::with('account')->findOrFail($id);
+        abort_unless(app(AccountAccessResolver::class)->canManageOperational($r->user(), $m->account), 403);
+        $d = $r->validate(['machine_model_id' => 'required|uuid', 'machine_code' => 'required|string|max:80', 'display_name' => 'required|string|max:180', 'serial_number' => 'nullable|string|max:120', 'timezone' => 'nullable|string|max:64', 'status' => 'nullable|in:active,down,maintenance,retired']);
+        $m->update($d);
+
+        return response()->json(['data' => $m->load('model.manufacturer')]);
+    }
+
     public function storePerson(OperationalPersonRequest $r, string $account)
     {
         Gate::authorize('platform.manage');
@@ -109,6 +139,16 @@ class OperationsController extends Controller
         $p = OperationalPerson::findOrFail($id);
         $active = $r->validate(['is_active' => 'required|boolean'])['is_active'];
         $p->update(['is_active' => $active, 'archived_at' => $active ? null : now()]);
+
+        return response()->json(['data' => $p]);
+    }
+
+    public function updatePerson(Request $r, string $account, string $id)
+    {
+        Gate::authorize('platform.manage');
+        $p = OperationalPerson::where('account_id', $account)->findOrFail($id);
+        $d = $r->validate(['name' => 'required|string|max:160', 'code' => 'nullable|string|max:64', 'linked_user_id' => 'nullable|uuid']);
+        $p->update($d);
 
         return response()->json(['data' => $p]);
     }

@@ -18,7 +18,7 @@ class PurchaseReceiptService
             if ($old) {
                 return $old;
             }$id = (string) Str::uuid();
-            DB::table('purchases')->insert(['id' => $id, 'account_id' => $account, 'purchase_number' => $data['purchase_number'], 'purchase_date' => $data['purchase_date'], 'currency_code' => $data['currency_code'] ?? 'IDR', 'status' => 'draft', 'notes' => $data['notes'] ?? null, 'client_request_id' => $data['client_request_id'], 'created_at' => now(), 'updated_at' => now()]);
+            DB::table('purchases')->insert(['id' => $id, 'account_id' => $account, 'branch_id' => $data['branch_id'] ?? null, 'supplier_id' => $data['supplier_id'] ?? null, 'external_reference' => $data['external_reference'] ?? null, 'purchase_number' => $data['purchase_number'], 'purchase_date' => $data['purchase_date'], 'currency_code' => $data['currency_code'] ?? 'IDR', 'status' => 'draft', 'notes' => $data['notes'] ?? null, 'client_request_id' => $data['client_request_id'], 'created_at' => now(), 'updated_at' => now()]);
             foreach ($data['lines'] as $line) {
                 DB::table('purchase_lines')->insert(['id' => (string) Str::uuid(), 'account_id' => $account, 'purchase_id' => $id, 'inventory_item_id' => $line['inventory_item_id'], 'ordered_quantity' => $line['quantity'], 'unit_cost' => $line['unit_cost'] ?? null, 'created_at' => now(), 'updated_at' => now()]);
             }

@@ -1,13 +1,13 @@
+import { apiClient, unwrapData } from '../../lib/api/apiClient.js'
 import { unsupportedBackendOperation } from '../dataBackend.js'
-const unsupported = (operation) => { throw unsupportedBackendOperation('settings', operation) }
-export const loadSettings = () => unsupported('loadSettings')
-export const updateWorkspace = () => unsupported('updateWorkspace')
-export const manageBranch = () => unsupported('manageBranch')
-export const updateMembership = () => unsupported('updateMembership')
-export const provisionMember = () => unsupported('provisionMember')
-export const activateMember = () => unsupported('activateMember')
-export const updateManagedMemberEmail = () => unsupported('updateManagedMemberEmail')
-export const resetManagedMemberPassword = () => unsupported('resetManagedMemberPassword')
-export const updateOperationalPersonBranches = () => unsupported('updateOperationalPersonBranches')
-export const updateOperationalPermissions = () => unsupported('updateOperationalPermissions')
-export const updateAdvancedEconomics = () => unsupported('updateAdvancedEconomics')
+export async function loadSettings({ accountId }) { return unwrapData(await apiClient.get(`/accounts/${accountId}/settings`)) }
+export async function updateWorkspace({ accountId, values }) { return unwrapData(await apiClient.put(`/accounts/${accountId}`, { name: values.name, default_timezone: values.defaultTimezone })) }
+export async function manageBranch({ accountId, branch, action, values = {} }) { const payload = { ...values, is_active: action !== 'archive' }; return unwrapData(await (branch?.id ? apiClient.put(`/accounts/${accountId}/branches/${branch.id}`, payload) : apiClient.post(`/accounts/${accountId}/branches`, payload))) }
+export async function updateMembership({ accountId, member, role, status, branchIds, username, displayName }) { return unwrapData(await apiClient.patch(`/accounts/${accountId}/members/${member.id}`, { role, status, branch_ids: branchIds, username, display_name: displayName })) }
+export async function provisionMember({ accountId, values }) { return unwrapData(await apiClient.post(`/accounts/${accountId}/members`, { name: values.displayName, email: values.email, username: values.username, password: values.password, role: values.role, branch_ids: values.branchIds })) }
+export async function activateMember({ accountId, member, values }) { return updateMembership({ accountId, member, role: values.role, status: 'active', branchIds: values.branchIds, username: values.username, displayName: values.displayName }) }
+export async function updateManagedMemberEmail({ accountId, member, email }) { return unwrapData(await apiClient.patch(`/accounts/${accountId}/members/${member.id}/email`, { email })) }
+export async function resetManagedMemberPassword({ accountId, member, password }) { return unwrapData(await apiClient.post(`/accounts/${accountId}/members/${member.id}/password`, { password, password_confirmation: password })) }
+export async function updateOperationalPersonBranches({ personId, branchIds, counterBranchIds = [] }) { return unwrapData(await Promise.all(branchIds.map((branchId) => apiClient.post(`/operational-people/${personId}/branches/${branchId}`, { is_active: true, can_record_counter: counterBranchIds.includes(branchId) })))) }
+export async function updateOperationalPermissions({ accountId, policy }) { return unwrapData(await apiClient.patch(`/accounts/${accountId}/settings/policy`, policy)) }
+export const updateAdvancedEconomics = () => { throw unsupportedBackendOperation('settings', 'updateAdvancedEconomics') }

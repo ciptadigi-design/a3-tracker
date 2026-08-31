@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\ComponentCatalog;
 use App\Models\Machine;
 use App\Models\MachineComponent;
+use App\Models\MachineComponentExclusion;
 use App\Models\ModelProfile;
 use App\Models\ModelProfileSlot;
 use App\Services\ComponentConfigurationService;
@@ -34,6 +35,16 @@ class ComponentsController extends Controller
         $d['code'] = $code;
 
         return response()->json(['data' => ComponentCatalog::create($d)], 201);
+    }
+
+    public function updateCatalog(Request $r, string $id)
+    {
+        Gate::authorize('platform.manage');
+        $c = ComponentCatalog::findOrFail($id);
+        $d = $r->validate(['code' => 'required|string|max:64', 'name' => 'required|string|max:160', 'description' => 'nullable|string', 'category' => 'nullable|string|max:80']);
+        $c->update($d);
+
+        return response()->json(['data' => $c]);
     }
 
     public function setCatalogStatus(Request $r, string $id)
@@ -145,5 +156,14 @@ class ComponentsController extends Controller
         $mc = MachineComponent::with(['machine', 'component'])->findOrFail($component);
 
         return response()->json(['data' => app(ComponentConfigurationService::class)->reconciliationCandidate($mc)]);
+    }
+
+    public function remove(Request $r, string $component)
+    {
+        $mc = MachineComponent::findOrFail($component);
+        $d = $r->validate(['reason' => 'nullable|string']);
+        $mc->update(['status' => 'retired', 'retired_at' => now()]);
+
+        return response()->json(['data' => $mc]);
     }
 }

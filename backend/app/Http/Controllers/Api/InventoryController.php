@@ -7,6 +7,7 @@ use App\Models\Account;
 use App\Models\Branch;
 use App\Models\InventoryItem;
 use App\Models\InventoryLocation;
+use App\Models\InventorySupplier;
 use App\Models\MachineComponent;
 use App\Services\AccountAccessResolver;
 use App\Services\BranchAccessResolver;
@@ -15,9 +16,98 @@ use App\Services\MachineAccessResolver;
 use App\Services\PurchaseReceiptService;
 use App\Services\ReplaceMachineComponent;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class InventoryController extends Controller
 {
+    public function workspace(Request $r, string $account, string $branch)
+    {
+        $a = Account::findOrFail($account);
+        abort_unless(app(AccountAccessResolver::class)->canAccess($r->user(), $a), 403);
+        abort_unless(app(BranchAccessResolver::class)->canAccess($r->user(), Branch::findOrFail($branch)), 403);
+        $items = InventoryItem::where('account_id', $account)->where('is_active', true)->with('component')->orderBy('name')->get();
+        $locations = InventoryLocation::where('account_id', $account)->where('branch_id', $branch)->where('is_active', true)->orderBy('name')->get();
+        $ledger = app(InventoryLedgerService::class);
+        $balances = $locations->flatMap(fn ($l) => $items->map(fn ($i) => ['account_id' => $account, 'inventory_item_id' => $i->id, 'location_id' => $l->id, 'quantity' => $ledger->balance($i->id, $l->id)]))->values();
+        $purchases = DB::table('purchases')->where('account_id', $account)->orderByDesc('purchase_date')->get();
+        $purchaseIds = $purchases->pluck('id');
+
+        return response()->json(['data' => ['branchId' => $branch, 'items' => $items, 'locations' => $locations, 'suppliers' => InventorySupplier::where('account_id', $account)->where('is_active', true)->orderBy('name')->get(), 'balances' => $balances, 'totals' => $items->map(fn ($i) => ['account_id' => $account, 'inventory_item_id' => $i->id, 'quantity' => $balances->where('inventory_item_id', $i->id)->sum('quantity')])->values(), 'movements' => DB::table('inventory_movements')->where('account_id', $account)->whereIn('location_id', $locations->pluck('id'))->orderByDesc('occurred_at')->limit(500)->get(), 'components' => DB::table('components')->where('is_active', true)->orderBy('name')->get(), 'people' => DB::table('operational_people')->where('account_id', $account)->where('is_active', true)->orderBy('name')->get(), 'purchases' => $purchases, 'purchaseLines' => $purchaseIds->isEmpty() ? collect() : DB::table('purchase_lines')->whereIn('purchase_id', $purchaseIds)->get(), 'receipts' => $purchaseIds->isEmpty() ? collect() : DB::table('receipts')->whereIn('purchase_id', $purchaseIds)->get(), 'lastPrices' => [], 'costHistory' => [], 'costPositions' => []]]);
+    }
+
+    public function suppliers(Request $r)
+    {
+        $ids = $r->user()->memberships()->where('status', 'active')->pluck('account_id');
+
+        return response()->json(['data' => InventorySupplier::whereIn('account_id', $ids)->orderBy('name')->get()]);
+    }
+
+    public function saveSupplier(Request $r, ?string $id = null)
+    {
+        $d = $r->validate(['account_id' => 'required|uuid', 'code' => 'required|string|max:80', 'name' => 'required|string|max:160', 'contact_name' => 'nullable|string', 'phone' => 'nullable|string', 'email' => 'nullable|email', 'address' => 'nullable|string', 'notes' => 'nullable|string', 'is_active' => 'boolean']);
+        $a = Account::findOrFail($d['account_id']);
+        abort_unless(app(AccountAccessResolver::class)->canManageOperational($r->user(), $a), 403);
+        $s = $id ? InventorySupplier::where('account_id', $a->id)->findOrFail($id) : new InventorySupplier(['account_id' => $a->id]);
+        $s->fill($d);
+        $s->save();
+
+        return response()->json(['data' => $s]);
+    }
+
+    public function deleteSupplier(Request $r, string $id)
+    {
+        $s = InventorySupplier::findOrFail($id);
+        $a = Account::findOrFail($s->account_id);
+        abort_unless(app(AccountAccessResolver::class)->canManageOperational($r->user(), $a), 403);
+        $s->delete();
+
+        return response()->noContent();
+    }
+
+    public function saveItem(Request $r, ?string $id = null)
+    {
+        $d = $r->validate(['account_id' => 'required|uuid', 'component_id' => 'nullable|uuid', 'sku' => 'nullable|string|max:80', 'name' => 'required|string|max:160', 'category' => 'nullable|string|max:80', 'unit' => 'required|string|max:20', 'minimum_stock' => 'nullable|numeric', 'is_active' => 'boolean']);
+        $a = Account::findOrFail($d['account_id']);
+        abort_unless(app(AccountAccessResolver::class)->canManageOperational($r->user(), $a), 403);
+        $i = $id ? InventoryItem::where('account_id', $a->id)->findOrFail($id) : new InventoryItem(['account_id' => $a->id]);
+        $i->fill($d);
+        $i->save();
+
+        return response()->json(['data' => $i->load('component')]);
+    }
+
+    public function deleteItem(Request $r, string $id)
+    {
+        $i = InventoryItem::findOrFail($id);
+        $a = Account::findOrFail($i->account_id);
+        abort_unless(app(AccountAccessResolver::class)->canManageOperational($r->user(), $a), 403);
+        $i->update(['is_active' => false, 'archived_at' => now()]);
+
+        return response()->json(['data' => $i]);
+    }
+
+    public function saveLocation(Request $r, ?string $id = null)
+    {
+        $d = $r->validate(['account_id' => 'required|uuid', 'branch_id' => 'nullable|uuid', 'code' => 'required|string|max:64', 'name' => 'required|string|max:160', 'notes' => 'nullable|string', 'is_active' => 'boolean']);
+        $a = Account::findOrFail($d['account_id']);
+        abort_unless(app(AccountAccessResolver::class)->canManageOperational($r->user(), $a), 403);
+        $l = $id ? InventoryLocation::where('account_id', $a->id)->findOrFail($id) : new InventoryLocation(['account_id' => $a->id]);
+        $l->fill($d);
+        $l->save();
+
+        return response()->json(['data' => $l]);
+    }
+
+    public function deleteLocation(Request $r, string $id)
+    {
+        $l = InventoryLocation::findOrFail($id);
+        $a = Account::findOrFail($l->account_id);
+        abort_unless(app(AccountAccessResolver::class)->canManageOperational($r->user(), $a), 403);
+        $l->update(['is_active' => false, 'archived_at' => now()]);
+
+        return response()->json(['data' => $l]);
+    }
+
     public function items(Request $r)
     {
         return response()->json(['data' => InventoryItem::whereIn('account_id', $r->user()->memberships()->where('status', 'active')->pluck('account_id'))->where('is_active', true)->paginate(min((int) $r->integer('per_page', 25), 50))]);
@@ -34,7 +124,7 @@ class InventoryController extends Controller
 
     public function createPurchase(Request $r)
     {
-        $d = $r->validate(['account_id' => 'required|uuid', 'purchase_number' => 'required|string', 'purchase_date' => 'required|date', 'currency_code' => 'nullable|string|size:3', 'notes' => 'nullable|string', 'client_request_id' => 'required|uuid', 'lines' => 'required|array|min:1', 'lines.*.inventory_item_id' => 'required|uuid', 'lines.*.quantity' => 'required|numeric|gt:0', 'lines.*.unit_cost' => 'nullable|numeric|min:0']);
+        $d = $r->validate(['account_id' => 'required|uuid', 'branch_id' => 'nullable|uuid', 'supplier_id' => 'nullable|uuid', 'external_reference' => 'nullable|string', 'purchase_number' => 'required|string', 'purchase_date' => 'required|date', 'currency_code' => 'nullable|string|size:3', 'notes' => 'nullable|string', 'client_request_id' => 'required|uuid', 'lines' => 'required|array|min:1', 'lines.*.inventory_item_id' => 'required|uuid', 'lines.*.quantity' => 'required|numeric|gt:0', 'lines.*.unit_cost' => 'nullable|numeric|min:0']);
         abort_unless(app(AccountAccessResolver::class)->canManageOperational($r->user(), Account::findOrFail($d['account_id'])), 403);
 
         return response()->json(['data' => app(PurchaseReceiptService::class)->purchase($d['account_id'], $d)], 201);
