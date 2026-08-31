@@ -1,7 +1,7 @@
 const exportDefinitions = {
   overview: {
     slug: 'overview-machine-summary',
-    rows: (report) => report.machineComparison.map((row) => ({
+    rows: (report) => (report.machineComparison ?? report.economics ?? report.machine_cost ?? []).map((row) => ({
       Machine: `${row.machine_code} · ${row.machine_name}`, Branch: `${row.branch_code} · ${row.branch_name}`,
       'Total Clicks': row.total_clicks, 'Cost / Click (IDR)': row.standard_cost_per_click,
       'Error / Waste (IDR)': row.error_waste_cost, 'Estimated Machine Revenue (IDR)': row.estimated_machine_revenue,
@@ -70,6 +70,14 @@ const exportDefinitions = {
     ],
   },
 }
+
+// Canonical seven-section names reuse the existing export projections.
+exportDefinitions.counter = { slug: 'counter-usage', rows: (report) => (report.counter ?? []).map((row) => ({ Date: row.observed_at, Machine: row.machine_code, Operator: row.operator_name_snapshot || row.operator_name, Counter: row.reading_value ?? row.counter, Usage: row.usage, Shift: row.shift_code || row.shift })) }
+exportDefinitions['machine-cost'] = exportDefinitions.economics
+exportDefinitions.replacements = { slug: 'component-replacements', rows: (report) => (report.replacements ?? []).map((row) => ({ Date: row.replaced_at, Machine: row.machine_code, Component: row.component_code || row.component, Slot: row.slot_code_snapshot || row.slot_code, Source: row.inventory_source || row.source, 'Consumed Cost (IDR)': row.consumed_cost })) }
+exportDefinitions.incidents = exportDefinitions.errors
+exportDefinitions.operators = { slug: 'operator-activity', rows: (report) => (report.operatorActivity ?? report.operator_activity ?? []).map((row) => ({ Operator: row.operator, 'Counter Entries': row.counter_entries, 'Recorded Usage': row.recorded_usage, 'Last Counter Entry': row.last_counter_entry, Machines: Array.isArray(row.machines) ? row.machines.join(', ') : row.machines })) }
+exportDefinitions.consumption = { slug: 'inventory-consumption', rows: (report) => (report.inventoryConsumption ?? report.inventory_consumption ?? []).map((row) => ({ Date: row.replaced_at || row.effective_date, Machine: row.machine_code, Item: row.inventory_item_name || row.item, Component: row.component_code || row.component, Quantity: row.inventory_quantity ?? row.quantity_consumed, 'Consumed Cost (IDR)': row.consumed_cost, Location: row.inventory_location_name })) }
 
 function exportValue(value) {
   if (value == null || value === '') return ''

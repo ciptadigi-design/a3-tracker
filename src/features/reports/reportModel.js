@@ -2,12 +2,12 @@ import { machineCostPeriodPresets } from '../machineCost/machineCostPeriods.js'
 
 export const reportTabs = [
   { id: 'overview', label: 'Overview' },
-  { id: 'performance', label: 'Machine Performance' },
-  { id: 'economics', label: 'Machine Economics' },
-  { id: 'comparison', label: 'Machine Comparison' },
-  { id: 'components', label: 'Component Consumption' },
-  { id: 'errors', label: 'Error / Waste' },
-  { id: 'inventory', label: 'Inventory / Purchasing' },
+  { id: 'counter', label: 'Counter / Usage' },
+  { id: 'machine-cost', label: 'Machine Cost' },
+  { id: 'replacements', label: 'Component / Replacement' },
+  { id: 'incidents', label: 'Incident / Error / Waste' },
+  { id: 'operators', label: 'Operator Activity' },
+  { id: 'consumption', label: 'Inventory Consumption' },
 ]
 
 export function validReportFilters(value) {

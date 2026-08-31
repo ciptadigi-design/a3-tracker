@@ -28,6 +28,16 @@ and `inventory_consumption`. Money is integer/business-unit decimal data at the
 backend boundary: known zero is `0`, unknown is `null`, and cost/click is `null`
 when clicks are zero.
 
+## Final seven-section UX map
+
+The single Reports route now exposes persistent global filters and seven
+keyboard-accessible sections: Overview; Counter / Usage; Machine Cost;
+Component / Replacement; Incident / Error / Waste; Operator Activity; and
+Inventory Consumption. Existing chart, list, and pagination primitives are
+reused. Navigation scrolls within its own strip on narrow screens; report rows
+use the existing responsive card treatment, and all surfaces inherit theme
+tokens for dark mode.
+
 ## Scope, time, and people
 
 Account scope is resolved from authenticated membership. The selected global
