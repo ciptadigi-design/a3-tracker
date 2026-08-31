@@ -34,4 +34,9 @@ class CounterReading extends Model
     {
         return $this->belongsTo(self::class, 'previous_reading_id');
     }
+
+    public function counterType()
+    {
+        return $this->belongsTo(CounterType::class);
+    }
 }

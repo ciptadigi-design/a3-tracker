@@ -1,4 +1,6 @@
 import { supabase } from './client.js'
+import { apiBackend } from '../../lib/api/apiClient.js'
+import { laravelReports } from '../../lib/api/reports.js'
 
 function reportParameters({ accountId, branchId, machineId, periodStart, periodEnd }) {
   return {
@@ -11,6 +13,7 @@ function reportParameters({ accountId, branchId, machineId, periodStart, periodE
 }
 
 export async function loadOperationalReport({ accountId, branchId, machineId, periodStart, periodEnd, periodPreset, errorCategory, errorStatus }) {
+  if (apiBackend === 'laravel') return laravelReports.load({ accountId, branchId, machineId, periodStart, periodEnd, periodPreset, errorCategory, errorStatus })
   const parameters = reportParameters({ accountId, branchId, machineId, periodStart, periodEnd })
   const errorParameters = { ...parameters, target_category: errorCategory || null, target_status: errorStatus || null }
   const inventoryParameters = { target_account_id: accountId, target_branch_id: branchId || null, target_period_start: periodStart, target_period_end: periodEnd }

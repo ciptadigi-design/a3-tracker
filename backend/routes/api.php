@@ -1,14 +1,15 @@
 <?php
 
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\ComponentsController;
 use App\Http\Controllers\Api\GovernanceController;
 use App\Http\Controllers\Api\HealthController;
-use App\Http\Controllers\Api\VersionController;
-use App\Http\Controllers\Api\OperationsController;
-use App\Http\Controllers\Api\ComponentsController;
-use App\Http\Controllers\Api\InventoryController;
 use App\Http\Controllers\Api\IncidentsController;
+use App\Http\Controllers\Api\InventoryController;
 use App\Http\Controllers\Api\MachineCostController;
+use App\Http\Controllers\Api\OperationsController;
+use App\Http\Controllers\Api\ReportsController;
+use App\Http\Controllers\Api\VersionController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->middleware('request.id')->group(function () {
@@ -76,6 +77,7 @@ Route::prefix('v1')->middleware('request.id')->group(function () {
             Route::post('accounts/{account}/branches/{branch}/incidents', [IncidentsController::class, 'store']);
             Route::get('accounts/{account}/branches/{branch}/incidents/{incident}', [IncidentsController::class, 'show']);
             Route::get('machines/{machine}/cost', [MachineCostController::class, 'show']);
+            Route::get('reports', ReportsController::class);
         });
     });
 });
