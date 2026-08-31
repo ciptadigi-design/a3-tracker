@@ -133,4 +133,11 @@ class ComponentsController extends Controller
 
         return response()->json(['data' => app(ComponentConfigurationService::class)->reconcileManual($mc, $slot)]);
     }
+
+    public function reconciliationCandidate(Request $r, string $component)
+    {
+        $mc = MachineComponent::with(['machine', 'component'])->findOrFail($component);
+
+        return response()->json(['data' => app(ComponentConfigurationService::class)->reconciliationCandidate($mc)]);
+    }
 }

@@ -136,3 +136,11 @@ export async function reconcileManualComponent({ accountId, assignmentId, profil
   if (error) throw error
   return data
 }
+
+export async function getReconciliationCandidate({ accountId, assignmentId }) {
+  const { data, error } = await supabase.rpc('get_manual_component_reconciliation_candidate', {
+    target_account_id: accountId, target_assignment_id: assignmentId,
+  })
+  if (error) throw error
+  return data
+}

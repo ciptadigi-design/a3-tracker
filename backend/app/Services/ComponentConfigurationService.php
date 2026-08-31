@@ -113,15 +113,48 @@ class ComponentConfigurationService
         return DB::transaction(function () use ($mc, $slot) {
             $mc->lockForUpdate()->first();
             $slot->loadMissing('profile');
-            if ($mc->source_type !== 'manual' || $slot->is_active !== true || $slot->profile->machine_model_id !== $mc->machine->machine_model_id || $slot->component_id !== $mc->component_id || strtolower(trim($slot->slot_code)) !== strtolower(trim($mc->slot_code))) {
+            $machine = $mc->machine()->first();
+            $profile = $slot->profile;
+            if (! $machine || $machine->account_id !== $mc->account_id || ($machine->status !== null && $machine->status !== 'active') || $profile === null
+                || ($profile->account_id !== null && $profile->account_id !== $mc->account_id)
+                || $mc->source_type !== 'manual' || ! (bool) $slot->is_active
+                || ! (bool) $profile->is_active || (string) $profile->machine_model_id !== (string) $machine->machine_model_id
+                || (string) $slot->component_id !== (string) $mc->component_id
+                || strtolower(trim($slot->slot_code)) !== strtolower(trim($mc->slot_code))) {
                 throw new ConflictHttpException('manual component and active profile slot do not match');
             }
-            if (MachineComponent::where('machine_id', $mc->machine_id)->where('status', 'configured')->where('profile_slot_id', $slot->id)->where('id', '<>', $mc->id)->exists()) {
+            if (MachineComponentExclusion::where('machine_id', $mc->machine_id)->where('profile_slot_id', $slot->id)->whereNull('cleared_at')->exists()) {
+                throw new ConflictHttpException('active profile exclusion blocks reconciliation');
+            }
+            if (MachineComponent::where('machine_id', $mc->machine_id)->where('status', 'configured')->where('id', '<>', $mc->id)->where(function ($q) use ($slot) {
+                $q->where('profile_slot_id', $slot->id)->orWhereRaw('LOWER(TRIM(slot_code)) = ?', [strtolower(trim($slot->slot_code))]);
+            })->exists()) {
                 throw new ConflictHttpException('a conflicting inherited assignment already exists');
             }
             $mc->update(['profile_slot_id' => $slot->id, 'source_type' => 'inherited', 'tracking_method' => $slot->tracking_method, 'baseline_expected_clicks' => $slot->baseline_expected_clicks]);
 
             return $mc->fresh();
         });
+    }
+
+    public function reconciliationCandidate(MachineComponent $mc): array
+    {
+        $mc->loadMissing(['machine', 'machine.model', 'component']);
+        $slot = ModelProfileSlot::with('profile')->where('is_active', true)
+            ->whereHas('profile', fn ($q) => $q->where('is_active', true)
+                ->where('machine_model_id', $mc->machine?->machine_model_id)
+                ->where(fn ($x) => $x->whereNull('account_id')->orWhere('account_id', $mc->account_id)))
+            ->where('component_id', $mc->component_id)
+            ->whereRaw('LOWER(TRIM(slot_code)) = ?', [strtolower(trim((string) $mc->slot_code))])
+            ->get()->first();
+        $eligible = $mc->source_type === 'manual' && $mc->status === 'configured' && $slot !== null
+            && ! MachineComponentExclusion::where('machine_id', $mc->machine_id)->where('profile_slot_id', $slot?->id)->whereNull('cleared_at')->exists()
+            && ! MachineComponent::where('machine_id', $mc->machine_id)->where('status', 'configured')->where('id', '<>', $mc->id)->where(function ($q) use ($slot) {
+                $q->where('profile_slot_id', $slot?->id)->orWhereRaw('LOWER(TRIM(slot_code)) = ?', [strtolower(trim((string) $mc->slot_code))]);
+            })->exists();
+
+        return ['eligible' => $eligible, 'reason' => $eligible ? null : 'No deterministic compatible profile slot is available.', 'machine_component_id' => $mc->id,
+            'current_slot_code' => $mc->slot_code, 'profile_slot_id' => $slot?->id, 'profile_slot_code' => $slot?->slot_code,
+            'machine_model' => $mc->machine?->model?->name, 'component' => $mc->component?->name, 'preserves_identity' => true];
     }
 }

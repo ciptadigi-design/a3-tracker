@@ -6,6 +6,7 @@ use App\Models\Account;
 use App\Models\Branch;
 use App\Models\ComponentCatalog;
 use App\Models\ComponentLifecycle;
+use App\Models\ComponentReplacement;
 use App\Models\Machine;
 use App\Models\MachineComponent;
 use App\Models\MachineComponentExclusion;
@@ -146,5 +147,79 @@ class ComponentProfileLifecycleParityTest extends TestCase
             $this->assertTrue(true);
         }
         $this->assertSame(1, ComponentLifecycle::where('machine_component_id', $mc->id)->count());
+    }
+
+    public function test_manual_reconciliation_preserves_identity_and_lifecycle_history(): void
+    {
+        $f = $this->graph();
+        $service = app(ComponentConfigurationService::class);
+        $slot = ModelProfileSlot::where('slot_code', 'DRUM-C')->first();
+        $manual = $service->addManual($f['aMachine'], ['component_id' => $f['drum']->id, 'slot_code' => 'DRUM-C', 'tracking_method' => 'counter_based', 'baseline_expected_clicks' => 100]);
+        $life = $service->initialize($manual, ['started_at' => '2026-01-01 00:00:00', 'evidence_level' => 'A', 'source' => 'manual', 'notes' => 'observed', 'client_request_id' => (string) Str::uuid()]);
+        $before = $life->fresh()->toArray();
+        $id = $manual->id;
+        $result = $service->reconcileManual($manual, $slot);
+        $this->assertSame((string) $id, (string) $result->id);
+        $this->assertSame((string) $slot->id, (string) $result->profile_slot_id);
+        $this->assertSame('inherited', $result->source_type);
+        $after = $life->fresh();
+        $this->assertSame((string) $life->id, (string) $after->id);
+        $this->assertSame($before['started_at'], $after->started_at?->toJSON());
+        $this->assertSame($before['evidence_level'], $after->evidence_level);
+        $this->assertSame(1, ComponentLifecycle::where('machine_component_id', $id)->count());
+    }
+
+    public function test_reconciliation_rejects_wrong_slot_model_component_exclusion_and_conflict(): void
+    {
+        $f = $this->graph();
+        $service = app(ComponentConfigurationService::class);
+        $manual = $service->addManual($f['aMachine'], ['component_id' => $f['drum']->id, 'slot_code' => 'DRUM-C', 'tracking_method' => 'counter_based', 'baseline_expected_clicks' => 100]);
+        $slots = ModelProfileSlot::where('profile_id', $f['profile']->id)->get()->keyBy('slot_code');
+        foreach (['DRUM-M', 'DRUM-Y', 'DRUM-K'] as $wrong) {
+            try {
+                $service->reconcileManual($manual, $slots[$wrong]);
+                $this->fail('wrong slot accepted');
+            } catch (ConflictHttpException) {
+                $this->assertTrue(true);
+            }
+        }
+        MachineComponentExclusion::create(['account_id' => $f['a']->id, 'machine_id' => $f['aMachine']->id, 'profile_slot_id' => $slots['DRUM-C']->id, 'slot_code' => 'DRUM-C', 'reason' => 'review']);
+        try {
+            $service->reconcileManual($manual, $slots['DRUM-C']);
+            $this->fail('excluded assignment accepted');
+        } catch (ConflictHttpException) {
+            $this->assertTrue(true);
+        }
+        $other = $service->addManual($f['bMachine'], ['component_id' => $f['drum']->id, 'slot_code' => 'DRUM-C', 'tracking_method' => 'counter_based', 'baseline_expected_clicks' => 100]);
+        $this->assertNotSame($manual->id, $other->id);
+    }
+
+    public function test_ordinary_sync_does_not_reconcile_manual_assignment(): void
+    {
+        $f = $this->graph();
+        $service = app(ComponentConfigurationService::class);
+        $manual = $service->addManual($f['aMachine'], ['component_id' => $f['drum']->id, 'slot_code' => 'DRUM-C', 'tracking_method' => 'counter_based', 'baseline_expected_clicks' => 100]);
+        $id = (string) $manual->id;
+        $service->sync($f['aMachine']);
+        $fresh = $manual->fresh();
+        $this->assertSame($id, (string) $fresh->id);
+        $this->assertSame('manual', $fresh->source_type);
+        $this->assertNull($fresh->profile_slot_id);
+        $this->assertSame(1, MachineComponent::where('machine_id', $f['aMachine']->id)->where('slot_code', 'DRUM-C')->count());
+    }
+
+    public function test_reconciliation_preserves_replacement_history_join_and_cost_evidence(): void
+    {
+        $f = $this->graph();
+        $service = app(ComponentConfigurationService::class);
+        $slot = ModelProfileSlot::where('slot_code', 'DRUM-C')->first();
+        $manual = $service->addManual($f['aMachine'], ['component_id' => $f['drum']->id, 'slot_code' => 'DRUM-C', 'tracking_method' => 'counter_based', 'baseline_expected_clicks' => 100]);
+        $life = $service->initialize($manual, ['client_request_id' => (string) Str::uuid()]);
+        $replacementLifecycle = ComponentLifecycle::create(['machine_component_id' => $manual->id, 'status' => 'unknown']);
+        $replacement = ComponentReplacement::create(['account_id' => $f['a']->id, 'machine_component_id' => $manual->id, 'new_lifecycle_id' => $replacementLifecycle->id, 'inventory_source' => 'external_untracked', 'quantity' => 1, 'consumed_cost' => 123.45, 'replaced_at' => now(), 'external_reason' => 'historical evidence', 'client_request_id' => (string) Str::uuid()]);
+        $service->reconcileManual($manual, $slot);
+        $this->assertSame((string) $manual->id, (string) $replacement->fresh()->machine_component_id);
+        $this->assertSame('123.45', (string) $replacement->fresh()->consumed_cost);
+        $this->assertSame((string) $life->id, (string) $life->fresh()->id);
     }
 }

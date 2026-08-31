@@ -20,6 +20,8 @@ Actions are contextual (`New Component`, `Add Machine-Specific Component`, `Add 
 
 An explicit `reconcile_manual_component_assignment` operation is available in both targets (Laravel API and Supabase RPC). It validates the deterministic machine/account/model/normalized-slot/component match, rejects conflicts/exclusions, updates the existing UUID in place, and leaves lifecycle/replacement evidence untouched. It is not invoked by ordinary Sync and does not automatically reconcile hosted Graha rows. Delete/recreate and component-id-only matching remain prohibited.
 
+Executable coverage proves UUID-preserving manual → inherited conversion, exact slot/model/component matching, exclusion and duplicate-slot conflicts, lifecycle timestamp/evidence preservation, and ordinary Sync non-reconciliation. Machine Components expose a server-computed **Reconcile with Model Profile** action only for an eligible candidate. The shared `BlockingDialog` shows current and target slots plus: “Machine Component identity and existing lifecycle/replacement history will be preserved. This does not create a new lifecycle and does not change historical evidence.” The action is explicit, busy-protected, conflict-safe, and refreshes after success. Graha cleanup remains a manual, controlled review.
+
 ## Future User Manual Flow
 
 **STANDARD COMPONENT:** Catalog → Assign to Model → Sync → Initialize

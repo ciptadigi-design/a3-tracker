@@ -2,6 +2,7 @@ import { supabase } from './client.js'
 import { loadMachines } from './machines.js'
 import { projectCurrentComponentCards } from '../../features/components/componentCardProjection.js'
 import { operationalError } from '../../lib/appErrors.js'
+import { getReconciliationCandidate } from './components.js'
 
 export async function loadMachineComponentLifecycles({ accountId, branchId }) {
   if (!accountId || !branchId) return {
@@ -48,10 +49,17 @@ export async function loadMachineComponentLifecycles({ accountId, branchId }) {
   if (locationsResult.error) throw locationsResult.error
   if (balancesResult.error) throw balancesResult.error
   if (exclusionsResult.error) throw exclusionsResult.error
+  const cards = projectCurrentComponentCards(healthResult.data ?? [])
+  const manualCards = cards.filter((row) => row.source_type === 'machine_specific' && row.lifecycle_status === 'unknown')
+  const candidates = await Promise.all(manualCards.map(async (row) => {
+    try { return [row.assignment_id, await getReconciliationCandidate({ accountId, assignmentId: row.assignment_id })] } catch { return [row.assignment_id, { eligible: false, reason: 'Candidate unavailable' }] }
+  }))
+  const candidateByAssignment = Object.fromEntries(candidates)
+  cards.forEach((row) => { row.reconciliation_candidate = candidateByAssignment[row.assignment_id] ?? null })
   return {
     branchId,
     machines,
-    lifecycles: projectCurrentComponentCards(healthResult.data ?? []),
+    lifecycles: cards,
     replacementHistory: historyResult.data ?? [],
     operationalPeople: peopleResult.data ?? [],
     inventoryItems: itemsResult.data ?? [],

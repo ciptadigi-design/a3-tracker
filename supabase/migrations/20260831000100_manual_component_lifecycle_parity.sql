@@ -103,3 +103,21 @@ begin
 end $$;
 revoke all on function public.reconcile_manual_component_assignment(uuid,uuid,uuid,uuid) from public,anon,service_role;
 grant execute on function public.reconcile_manual_component_assignment(uuid,uuid,uuid,uuid) to authenticated;
+
+create or replace function public.get_manual_component_reconciliation_candidate(target_account_id uuid, target_assignment_id uuid)
+returns jsonb language plpgsql security definer set search_path='' as $$
+declare a public.machine_component_assignments%rowtype; m public.machines%rowtype; p public.machine_model_components%rowtype; eligible boolean := false; reason text;
+begin
+  select * into a from public.machine_component_assignments where id=target_assignment_id and account_id=target_account_id;
+  select * into m from public.machines where id=a.machine_id and account_id=target_account_id and is_active;
+  select * into p from public.machine_model_components where machine_model_id=m.machine_model_id and component_id=a.component_id and lower(btrim(slot_code))=lower(btrim(a.slot_code)) and is_active and (account_id is null or account_id=target_account_id) order by (account_id is not null) desc, created_at desc, id desc limit 1;
+  if a.id is null or a.source_type <> 'machine_specific' then reason:='Assignment is not a machine-specific component';
+  elsif p.id is null then reason:='No deterministic compatible profile slot is available';
+  elsif exists(select 1 from public.machine_component_profile_exclusions where account_id=target_account_id and machine_id=a.machine_id and model_component_profile_id=p.id and cleared_at is null) then reason:='Active profile exclusion blocks reconciliation';
+  elsif exists(select 1 from public.machine_component_assignments where machine_id=a.machine_id and status='configured' and id<>a.id and lower(btrim(slot_code))=lower(btrim(a.slot_code))) then reason:='A conflicting configured assignment already exists';
+  else eligible:=true;
+  end if;
+  return jsonb_build_object('eligible',eligible,'reason',reason,'machine_component_id',a.id,'current_slot_code',a.slot_code,'profile_slot_id',p.id,'profile_slot_code',p.slot_code,'machine_model',m.machine_model_id,'component',a.component_id,'preserves_identity',true);
+end $$;
+revoke all on function public.get_manual_component_reconciliation_candidate(uuid,uuid) from public,anon,service_role;
+grant execute on function public.get_manual_component_reconciliation_candidate(uuid,uuid) to authenticated;
