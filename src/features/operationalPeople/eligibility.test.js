@@ -15,4 +15,13 @@ test('counter eligibility is active, assigned, and explicitly capable', () => {
 
 test('PIC eligibility includes counter operators and general staff', () => {
   assert.deepEqual(branchOperationalPeople(people, 'one').map((person) => person.id), ['a', 'b'])
+  assert.deepEqual(counterOperatorsForBranch(people, 'one').map((person) => person.id), ['a'])
+})
+
+test('same person is valid in both incident selector roles', () => {
+  const counter = counterOperatorsForBranch(people, 'one')
+  const pic = branchOperationalPeople(people, 'one')
+  assert.ok(counter.some((person) => person.id === 'a'))
+  assert.ok(pic.some((person) => person.id === 'a'))
+  assert.ok(pic.some((person) => person.id === 'b'))
 })

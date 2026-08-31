@@ -8,7 +8,6 @@ use App\Models\AccountMembershipBranch;
 use App\Models\Branch;
 use App\Models\Machine;
 use App\Models\OperationalIncident;
-use App\Models\OperationalPerson;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 

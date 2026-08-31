@@ -37,9 +37,8 @@ class IncidentMachineCostParityTest extends TestCase
         $machine = Machine::create(['account_id' => $account->id, 'branch_id' => $branch->id, 'machine_model_id' => $model->id, 'machine_code' => 'A1', 'display_name' => 'A1']);
         $person = OperationalPerson::create(['account_id' => $account->id, 'name' => 'Operator', 'is_active' => true]);
         $pic = OperationalPerson::create(['account_id' => $account->id, 'name' => 'PIC', 'is_active' => true]);
-        foreach ([$person, $pic] as $p) {
-            OperationalPersonBranch::create(['account_id' => $account->id, 'person_id' => $p->id, 'branch_id' => $branch->id, 'is_active' => true, 'can_record_counter' => true]);
-        }
+        OperationalPersonBranch::create(['account_id' => $account->id, 'person_id' => $person->id, 'branch_id' => $branch->id, 'is_active' => true, 'can_record_counter' => true]);
+        OperationalPersonBranch::create(['account_id' => $account->id, 'person_id' => $pic->id, 'branch_id' => $branch->id, 'is_active' => true, 'can_record_counter' => false]);
 
         return compact('account', 'branch', 'other', 'user', 'machine', 'person', 'pic');
     }
@@ -83,5 +82,24 @@ class IncidentMachineCostParityTest extends TestCase
         $summary = app(MachineCostService::class)->period($f['machine'], '2026-08-31', '2026-08-31');
         $this->assertSame('30000.00', $summary['error_waste_cost']);
         $this->assertNull($summary['machine_cost_per_click']);
+    }
+
+    public function test_same_person_can_be_operator_and_pic(): void
+    {
+        $f = $this->fixture();
+        $incident = $this->createIncident($f, ['responsible_person_id' => $f['person']->id]);
+        $this->assertSame($f['person']->id, $incident->operator_person_id);
+        $this->assertSame($f['person']->id, $incident->responsible_person_id);
+        $this->assertSame('Operator', $incident->operator_name_snapshot);
+        $this->assertSame('Operator', $incident->responsible_name_snapshot);
+    }
+
+    public function test_general_person_can_be_pic_but_not_operator(): void
+    {
+        $f = $this->fixture();
+        $incident = $this->createIncident($f);
+        $this->assertSame($f['pic']->id, $incident->responsible_person_id);
+        $this->expectException(ValidationException::class);
+        $this->createIncident($f, ['operator_person_id' => $f['pic']->id]);
     }
 }
