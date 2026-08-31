@@ -37,6 +37,16 @@ test('mobile Components actions, tabs, and contextual controls stay compact and 
   assert.match(styles, /@media \(max-width: 430px\) \{\s*\.components-shell-header \{ grid-template-columns: minmax\(0,1fr\); \}/)
 })
 
+test('component headers stay operationally compact and detailed lifecycle actions retain hierarchy', () => {
+  assert.doesNotMatch(page, /Standard components for this model belong in Model Profiles/)
+  assert.doesNotMatch(page, /Model Profile defines standard component slots inherited by machines of this model/)
+  assert.match(styles, /\.machine-components-context \{[^}]*grid-template-columns:/)
+  assert.match(styles, /\.initialize-lifecycle-button \{[^}]*box-shadow: none/)
+  assert.match(styles, /\.unknown-lifecycle-body \.row-actions \{[^}]*justify-content: space-between/)
+  assert.match(page, /initialize-lifecycle-button/)
+  assert.match(page, /Remove from Machine/)
+})
+
 test('persistent-draft dialogs share the accessible editable footer contract', () => {
   for (const path of editableDraftForms) {
     const form = source(path)
