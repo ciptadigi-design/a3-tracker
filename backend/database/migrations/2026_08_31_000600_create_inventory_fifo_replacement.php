@@ -180,8 +180,13 @@ return new class extends Migration
         if (Schema::getConnection()->getDriverName() === 'mysql') {
             DB::statement('ALTER TABLE fifo_layers ADD CONSTRAINT fifo_remaining_nonnegative_ck CHECK (remaining_quantity >= 0 AND remaining_quantity <= original_quantity)');
             DB::statement('ALTER TABLE inventory_movements ADD CONSTRAINT inventory_movement_nonzero_ck CHECK (quantity <> 0)');
-            DB::unprepared("CREATE TRIGGER inventory_movements_immutable_update BEFORE UPDATE ON inventory_movements FOR EACH ROW SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'inventory movements are immutable'");
-            DB::unprepared("CREATE TRIGGER inventory_movements_immutable_delete BEFORE DELETE ON inventory_movements FOR EACH ROW SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'inventory movements are immutable'");
+            $variables = DB::selectOne('SELECT @@GLOBAL.log_bin AS log_bin, @@GLOBAL.log_bin_trust_function_creators AS trust_creators');
+            $trustFunctionCreators = (string) ($variables->trust_creators ?? 'OFF') === '1';
+            $binaryLogging = (string) ($variables->log_bin ?? 'OFF') === '1';
+            if (! $binaryLogging || $trustFunctionCreators) {
+                DB::unprepared("CREATE TRIGGER inventory_movements_immutable_update BEFORE UPDATE ON inventory_movements FOR EACH ROW SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'inventory movements are immutable'");
+                DB::unprepared("CREATE TRIGGER inventory_movements_immutable_delete BEFORE DELETE ON inventory_movements FOR EACH ROW SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'inventory movements are immutable'");
+            }
         } elseif (Schema::getConnection()->getDriverName() === 'sqlite') {
             DB::unprepared("CREATE TRIGGER inventory_movements_immutable_update BEFORE UPDATE ON inventory_movements BEGIN SELECT RAISE(ABORT, 'inventory movements are immutable'); END");
             DB::unprepared("CREATE TRIGGER inventory_movements_immutable_delete BEFORE DELETE ON inventory_movements BEGIN SELECT RAISE(ABORT, 'inventory movements are immutable'); END");
