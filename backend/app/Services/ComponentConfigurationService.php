@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\ComponentCatalog;
 use App\Models\ComponentLifecycle;
 use App\Models\Machine;
 use App\Models\MachineComponent;
@@ -61,7 +62,34 @@ class ComponentConfigurationService
             throw new ConflictHttpException('expected baseline is required for machine-specific lifecycle tracking');
         }
 
-        return DB::transaction(fn () => MachineComponent::create(['account_id' => $machine->account_id, 'machine_id' => $machine->id, 'component_id' => $d['component_id'], 'slot_code' => strtoupper(trim($d['slot_code'])), 'source_type' => 'manual', 'status' => 'configured', 'active_key' => 'active', 'display_order' => $d['display_order'] ?? 0, 'tracking_method' => $d['tracking_method'], 'baseline_expected_clicks' => $d['baseline_expected_clicks'], 'notes' => $d['notes'] ?? null]));
+        return DB::transaction(function () use ($machine, $d) {
+            $slotCode = strtoupper(trim((string) $d['slot_code']));
+            $component = ComponentCatalog::where('id', $d['component_id'])
+                ->where(fn ($q) => $q->whereNull('account_id')->orWhere('account_id', $machine->account_id))
+                ->first();
+            if (! $component || ! $component->is_active) {
+                throw new ConflictHttpException('[COMPONENT_NOT_FOUND] Select an active Component Catalog entry for this account.');
+            }
+
+            $standard = ModelProfileSlot::where('is_active', true)
+                ->whereRaw('UPPER(TRIM(slot_code)) = ?', [$slotCode])
+                ->whereHas('profile', fn ($q) => $q->where('machine_model_id', $machine->machine_model_id)
+                    ->where('is_active', true)
+                    ->where(fn ($scope) => $scope->whereNull('account_id')->orWhere('account_id', $machine->account_id)))
+                ->with('profile.machineModel')->first();
+            if ($standard) {
+                $modelName = $standard->profile?->machineModel?->name ?? 'this machine model';
+                if (MachineComponentExclusion::where('machine_id', $machine->id)->where('profile_slot_id', $standard->id)->whereNull('cleared_at')->exists()) {
+                    throw new ConflictHttpException("[PROFILE_SLOT_EXCLUDED] This standard slot is currently excluded from {$modelName}. Restore the Model Profile assignment if the component should be active.");
+                }
+                throw new ConflictHttpException("[STANDARD_PROFILE_SLOT] This slot is already defined as a standard component for {$modelName}. Use Sync Model Profile instead.");
+            }
+            if (MachineComponent::where('machine_id', $machine->id)->where('status', 'configured')->whereRaw('UPPER(TRIM(slot_code)) = ?', [$slotCode])->exists()) {
+                throw new ConflictHttpException("[EXISTING_MACHINE_ASSIGNMENT] This machine already has a component assigned to slot {$slotCode}.");
+            }
+
+            return MachineComponent::create(['account_id' => $machine->account_id, 'machine_id' => $machine->id, 'component_id' => $component->id, 'slot_code' => $slotCode, 'source_type' => 'manual', 'status' => 'configured', 'active_key' => 'active', 'display_order' => $d['display_order'] ?? 0, 'tracking_method' => $d['tracking_method'], 'baseline_expected_clicks' => $d['baseline_expected_clicks'], 'notes' => $d['notes'] ?? null]);
+        });
     }
 
     public function exclude(MachineComponent $mc, string $reason, ?string $requestId = null): void

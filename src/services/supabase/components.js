@@ -54,6 +54,11 @@ export async function saveComponent({ accountId, component, values }) {
     manufacturer_id: values.manufacturerId || null, part_number: optional(values.partNumber),
     default_tracking_method: values.trackingMethod,
   }
+  if (!component) {
+    const { data: duplicate, error: duplicateError } = await supabase.from('components').select('id, code, name').eq('code', payload.code).or(`account_id.is.null,account_id.eq.${accountId}`).limit(1)
+    if (duplicateError) throw duplicateError
+    if (duplicate?.length) { const error = new Error('A Component Catalog entry with this code already exists. Select the existing component instead.'); error.code = 'DUPLICATE_COMPONENT_CODE'; throw error }
+  }
   const query = component
     ? supabase.from('components').update(payload).eq('id', component.id).eq('account_id', accountId)
     : supabase.from('components').insert({ ...payload, account_id: accountId })

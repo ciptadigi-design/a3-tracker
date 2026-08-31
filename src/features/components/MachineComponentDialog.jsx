@@ -7,17 +7,31 @@ export function MachineComponentDialog({
   components,
   onClose,
   onSave,
+  onCreateNewComponent,
+  initialValue,
+  profiles = [],
+  existingAssignments = [],
+  exclusions = [],
 }) {
   const [value, setValue] = useState({
-    componentId: "",
+    componentId: initialValue?.componentId ?? "",
     slotCode: "",
     trackingMethod: "counter_based",
     baselineExpectedClicks: "",
     notes: "",
     clientRequestId: crypto.randomUUID(),
+    ...initialValue,
   });
   const [error, setError] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [search, setSearch] = useState("");
+  const visibleComponents = components
+    .filter((item) => item.is_active)
+    .filter((item) => `${item.name} ${item.code}`.toLowerCase().includes(search.trim().toLowerCase()));
+  const standardSlot = profiles.find((profile) => profile.is_active && profile.machine_model_id === machine.machine_model_id && profile.slot_code?.trim().toUpperCase() === value.slotCode.trim().toUpperCase());
+  const normalizedSlot = value.slotCode.trim().toUpperCase();
+  const existingAssignment = existingAssignments.find((item) => item.assignment_status !== 'retired' && item.slot_code?.trim().toUpperCase() === normalizedSlot);
+  const excludedSlot = exclusions.find((item) => item.slot_code?.trim().toUpperCase() === normalizedSlot);
   const change = (field, next) =>
     setValue((current) => ({ ...current, [field]: next }));
   async function submit(event) {
@@ -25,11 +39,12 @@ export function MachineComponentDialog({
     if (
       !value.componentId ||
       !value.slotCode.trim() ||
+      standardSlot || existingAssignment || excludedSlot ||
       (value.baselineExpectedClicks !== "" &&
         Number(value.baselineExpectedClicks) <= 0)
     )
       return setError(
-        "Choose a component and enter a unique slot code with a valid expected-click value.",
+        standardSlot ? "This slot is already standard in the active Model Profile. Use Sync Model Profile instead." : existingAssignment ? `This machine already has a component assigned to slot ${normalizedSlot}.` : excludedSlot ? "This standard slot is currently excluded from this machine. Restore the Model Profile assignment instead." : "Choose a component and enter a unique slot code with a valid expected-click value.",
       );
     setBusy(true);
     setError(null);
@@ -59,7 +74,7 @@ export function MachineComponentDialog({
             <span className="card-kicker">Machine-specific configuration</span>
             <h2 id="machine-component-dialog-title">Add Machine-Specific Component</h2>
             <p>
-              {machine.machine_code} · Use this only for this physical machine. Standard components belong in Model Profiles.
+              {machine.machine_code} · Machine-specific components still use Component Catalog as the master part definition. Standard components belong in Model Profiles; use Model Profiles for components that are standard across this machine model.
             </p>
           </div>
         </div>
@@ -76,8 +91,9 @@ export function MachineComponentDialog({
       <form className="machine-form" onSubmit={submit}>
         <div className="machine-form-body">
           <div className="form-grid">
-            <label className="form-field">
-              <span>Component *</span>
+            <label className="form-field form-field-wide">
+              <span>Select a component from Component Catalog *</span>
+              <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search component name or code…" aria-label="Search Component Catalog" />
               <select
                 data-dialog-initial-focus
                 value={value.componentId}
@@ -96,14 +112,14 @@ export function MachineComponentDialog({
                 }}
               >
                 <option value="">Choose component</option>
-                {components
-                  .filter((item) => item.is_active)
-                  .map((item) => (
+                {visibleComponents.map((item) => (
                     <option key={item.id} value={item.id}>
-                      {item.name}
+                      {item.name} · {item.code}
                     </option>
-                  ))}
+                ))}
               </select>
+              {!visibleComponents.length && <button type="button" className="secondary-button catalog-create-inline" onClick={() => onCreateNewComponent?.(value)} disabled={busy}>+ Create New Component</button>}
+              {visibleComponents.length > 0 && !value.componentId && <small className="field-hint">Search by component name or code, then choose an existing Catalog item.</small>}
             </label>
             <label className="form-field">
               <span>Slot code *</span>
@@ -112,6 +128,7 @@ export function MachineComponentDialog({
                 onChange={(event) => change("slotCode", event.target.value)}
                 placeholder="CLEANING_ROLLER"
               />
+              {standardSlot && <div className="form-error" role="alert">Already standard for {machine.machine_model_name ?? machine.model?.name ?? 'this machine model'} · slot {standardSlot.slot_code}. Use Sync Model Profile instead of adding it as Machine-specific.</div>}
             </label>
             <label className="form-field">
               <span>Tracking method</span>

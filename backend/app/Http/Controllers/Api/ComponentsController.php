@@ -27,6 +27,12 @@ class ComponentsController extends Controller
         Gate::authorize('platform.manage');
         $d = $r->validate(['account_id' => 'nullable|uuid', 'code' => 'required|string|max:64', 'name' => 'required|string|max:160', 'description' => 'nullable|string', 'category' => 'nullable|string|max:80']);
 
+        $code = strtoupper(trim($d['code']));
+        if (ComponentCatalog::whereRaw('UPPER(TRIM(code)) = ?', [$code])->where(fn ($q) => $q->whereNull('account_id')->orWhere('account_id', $d['account_id'] ?? null))->exists()) {
+            throw new ConflictHttpException('[DUPLICATE_COMPONENT_CODE] A Component Catalog entry with this code already exists in the selected scope.');
+        }
+        $d['code'] = $code;
+
         return response()->json(['data' => ComponentCatalog::create($d)], 201);
     }
 

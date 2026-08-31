@@ -112,6 +112,7 @@ export function ComponentsPage() {
   const [confirm, setConfirm] = useState(null)
   const [reconcile, setReconcile] = useState(null)
   const [reconcileError, setReconcileError] = useState(null)
+  const [machineDraft, setMachineDraft] = useState(null)
   const [busy, setBusy] = useState(false)
   const viewKey = createUIStateKey({ userId: user.id, accountId: account.id, feature: 'components-view', entityId: 'active' })
   const { value: view, setUIState: setView } = usePersistentUIState({ uiStateKey: viewKey, initialValue: { tab: 'machine', modelId: null, machineId: null, showArchived: false }, validate: validView })
@@ -170,9 +171,14 @@ export function ComponentsPage() {
   const lifecycleMachine = scopedOperational.machines.find((machine) => machine.id === initializingLifecycle?.machine_id)
 
   async function savedComponent(values) {
-    await saveComponent({ accountId: account.id, component: editingComponent, values })
+    const saved = await saveComponent({ accountId: account.id, component: editingComponent, values })
     await refresh()
     setNotice('Component definition saved. Machine-model assignments were not changed.')
+    if (!editingComponent && machineDraft) {
+      setMachineDraft((draft) => ({ ...draft, componentId: saved.id }))
+      setTimeout(() => open('machine-component-add'), 0)
+    }
+    return saved
   }
 
   async function savedProfile(values) {
@@ -355,7 +361,7 @@ export function ComponentsPage() {
 
     {canManage && (workflow.type === 'component-create' || (workflow.type === 'component-edit' && editingComponent)) && <ComponentDialog account={account} component={editingComponent} manufacturers={data.manufacturers} onClose={close} onSave={savedComponent} />}
     {canManage && selectedModel && (workflow.type === 'profile-create' || (workflow.type === 'profile-edit' && editingProfile) || (workflow.type === 'profile-assign' && assigningComponent)) && <ProfileDialog account={account} model={profileModel} models={data.models} profile={editingProfile} components={data.components} initialComponent={workflow.type === 'profile-assign' ? assigningComponent : null} draftEntityId={workflow.type === 'profile-assign' ? `assign-${assigningComponent.id}` : undefined} onClose={close} onSave={savedProfile} />}
-    {canManage && workflow.type === 'machine-component-add' && selectedMachine && <MachineComponentDialog machine={selectedMachine} components={data.components} onClose={close} onSave={savedMachineComponent} />}
+    {canManage && workflow.type === 'machine-component-add' && selectedMachine && <MachineComponentDialog machine={selectedMachine} components={data.components} profiles={data.profiles} existingAssignments={scopedOperational.lifecycles.filter((row) => row.machine_id === selectedMachine.id)} exclusions={scopedOperational.exclusions.filter((row) => row.machine_id === selectedMachine.id)} initialValue={machineDraft} onCreateNewComponent={(draft) => { setMachineDraft(draft); close(); open('component-create') }} onClose={() => { setMachineDraft(null); close() }} onSave={async (values) => { await savedMachineComponent(values); setMachineDraft(null) }} />}
     {canInitialize && workflow.type === 'lifecycle-initialize' && initializingLifecycle && lifecycleMachine && <InitializeLifecycleDialog account={account} machine={lifecycleMachine} lifecycle={initializingLifecycle} onClose={close} onInitialize={initializeLifecycle} />}
     {canReplace && workflow.type === 'lifecycle-replace' && initializingLifecycle?.lifecycle_status === 'active' && lifecycleMachine && <ReplaceComponentDialog account={account} machine={lifecycleMachine} lifecycle={initializingLifecycle} operationalPeople={scopedOperational.operationalPeople} inventoryItems={scopedOperational.inventoryItems} inventoryLocations={scopedOperational.inventoryLocations} inventoryBalances={scopedOperational.inventoryBalances} onClose={close} onReplace={replaceLifecycle} />}
     {workflow.type === 'intelligence-view' && activeIntelligence && <ComponentIntelligenceDialog intelligence={activeIntelligence} samples={data.intelligenceSamples} canManage={canManage} onClose={close} onAdopt={adoptRecommendation} />}
