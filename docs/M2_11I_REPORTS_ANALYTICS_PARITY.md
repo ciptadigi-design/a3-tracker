@@ -64,3 +64,12 @@ Detailed tables use the shared client pagination contract (10/25/50); KPIs and
 charts are based on the complete filtered result, never page 1 only.
 
 Maintenance analytics and hosted operational data generation are out of scope.
+
+## M2.11I UX completion and hosted verification
+
+The final UX commit (`1879873cd65e4cac85e5734a227938578be99dff`) exposes the
+seven sections above and preserves filter context while switching sections.
+Exact-head Database CI `33399811425` and Laravel MySQL CI `33399811562` both
+passed. The hosted Reports URL returned HTTP 200 from Vercel, but authenticated
+interactive smoke could not be completed in this execution because no browser
+instance/session was available. No hosted rows or capabilities were mutated.
