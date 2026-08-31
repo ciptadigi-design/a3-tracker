@@ -1,6 +1,6 @@
 # M2.12 Hostinger production readiness
 
-Status: **M2.12A application backend READY — browser-backed Laravel/MySQL runtime evidence is complete. Hostinger-specific preflight remains pending and deployment is not authorized.**
+Status: **M2.12A application backend READY; M2.12B Hostinger live preflight CONDITIONAL — public HTTPS/PHP evidence is verified, but authenticated hPanel/SSH/database capability checks remain pending. Deployment is not authorized.**
 
 This milestone does not deploy, change DNS, create a Production database, mutate DEV data, disable Vercel/Supabase, or start Maintenance.
 
@@ -10,17 +10,17 @@ The target is one HTTPS origin, `https://a3.ciptagrafika.com`, with static Vite 
 
 | Dependency | Classification | Evidence / action |
 |---|---|---|
-| PHP 8.2+ and listed extensions | CONFIGURATION REQUIRED | `backend/composer.json`; run `scripts/deployment/hostinger-readiness.sh` |
-| MySQL 8+, InnoDB, utf8mb4, PDO MySQL | CONFIGURATION REQUIRED | Laravel migrations and CI use MySQL 8; verify host variables and collation |
-| Apache, `.htaccess`, SSL, document root | PENDING HOSTINGER PREFLIGHT | verify with Hostinger operator |
+| PHP 8.2+ and listed extensions | PHP VERIFIED / EXTENSIONS PENDING | Public `a3.ciptagrafika.com` response reports web PHP 8.3.30; verify CLI and extensions in hPanel/SSH |
+| MySQL 8+, InnoDB, utf8mb4, PDO MySQL | PENDING HOSTINGER PREFLIGHT | Laravel migrations and CI use MySQL 8; verify exact Hostinger engine/version and collation |
+| Apache, `.htaccess`, SSL, document root | SSL VERIFIED / ROOT+REWRITE PENDING | HTTPS and Hostinger edge headers observed; verify origin and rewrite behavior in staging |
 | Node/npm | NOT REQUIRED at runtime | build `npm ci && npm run build` before upload |
 | Redis, WebSockets, Supervisor, systemd, Docker, root | NOT REQUIRED | current code has no persistent worker/realtime requirement |
-| SSH, Composer, Git deployment, cron | PENDING HOSTINGER PREFLIGHT | either SSH Composer or packaged `vendor/`; cron is not required at launch |
+| SSH, Composer, Git deployment, cron | PENDING HOSTINGER PREFLIGHT | Hostinger SSH was unavailable; use packaged `vendor/` unless remote Composer is later verified; cron is not required at launch |
 | writable storage and bootstrap cache | CONFIGURATION REQUIRED | readiness helper checks both; never expose them publicly |
 
 ## Important current blocker
 
-The M2.12A application path is complete and browser-verified: React routes through the Laravel adapters to a disposable MySQL target with no operational Supabase traffic. The remaining work is explicitly Hostinger-specific (PHP/Apache/SSL/permissions/backup/rewrite preflight) and belongs to M2.12B. Supabase remains the reference implementation and is intentionally preserved.
+The M2.12A application path is complete and browser-verified: React routes through the Laravel adapters to a disposable MySQL target with no operational Supabase traffic. M2.12B public inspection verified Hostinger HTTPS and web PHP 8.3.30, but authenticated shell, database, document-root, rewrite, permissions, quota, and backup checks remain conditional. Supabase remains the reference implementation and is intentionally preserved.
 
 ## Runtime contract
 
@@ -52,7 +52,7 @@ Backups: preferred Hostinger/native backup plus an independent logical `mysqldum
 
 ## Readiness classification
 
-Repository architecture, migration history, version endpoint, security model, and runbook artifacts are documented. Hostinger-specific PHP/Apache/SSH/permissions/SSL/backup checks are **PENDING HOSTINGER PREFLIGHT**. Complete Laravel frontend/auth adapter coverage is a **non-destructive blocker before deployment authorization**. Vercel/Supabase DEV and legacy Production remain preserved; DNS and Hostinger remain untouched. Advanced Economics and Maintenance remain out of scope.
+Repository architecture, migration history, version endpoint, security model, and runbook artifacts are documented. Public Hostinger HTTPS/web-PHP evidence is verified; authenticated PHP extensions, database, filesystem, rewrite, permissions, quota, and backup checks are **CONDITIONAL/PENDING** in [the live preflight](M2_12B_HOSTINGER_LIVE_PREFLIGHT.md). Vercel/Supabase DEV and legacy Production remain preserved; DNS and Hostinger remain untouched. Advanced Economics and Maintenance remain out of scope.
 > M2.12A update: production runtime is selected with `VITE_DATA_BACKEND=laravel`; frontend auth/account flows use Laravel session APIs and mobile navigation exposes My Account and Logout from the drawer. Supabase-specific implementation names are retained only in reference adapters and developer documentation.
 ## Application backend parity closure
 

@@ -4,7 +4,7 @@ All Production steps below are **DOCUMENTED / NOT YET EXECUTED IN M2.12**. This 
 
 ## Prerequisites and go/no-go
 
-- [ ] M2.12B Hostinger preflight records PHP, extensions, MySQL/InnoDB, SSH/Composer, document root, SSL, permissions, backup facilities, and cron capability.
+- [ ] M2.12B Hostinger preflight records PHP, extensions, MySQL/InnoDB, SSH/Composer, document root, SSL, permissions, backup facilities, and cron capability. Current evidence and unresolved checks: [M2.12B live preflight](M2_12B_HOSTINGER_LIVE_PREFLIGHT.md).
 - [ ] Laravel frontend/auth/tenant adapter coverage is complete; `VITE_DATA_BACKEND=laravel` is the only Production backend.
 - [ ] Approved Git SHA, release manifest, migration status, data crosswalk, operators, rollback owner, and business acceptance owner are recorded.
 - [ ] Vercel + Supabase DEV and legacy Production remain available as reference/rollback systems.
