@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { loadMachines } from '../../services/supabase/machines.js'
+import { loadMachines } from '../../services/machines.js'
 
 export function useMachines(accountId, branchId) {
   const [machines, setMachines] = useState([])

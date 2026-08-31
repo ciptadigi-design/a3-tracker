@@ -10,7 +10,7 @@ import { useOperationalIncidents } from '../features/incidents/useOperationalInc
 import { useMachines } from '../features/machines/useMachines.js'
 import { createUIStateKey } from '../features/uiState/uiStateKeys.js'
 import { usePersistentUIState } from '../features/uiState/usePersistentUIState.js'
-import { createOperationalIncident } from '../services/supabase/operationalIncidents.js'
+import { createOperationalIncident } from '../services/incidents.js'
 
 const emptyWorkflow = { type: null }
 const isIncidentWorkflow = (value) => value && (value.type === null || value.type === 'create')

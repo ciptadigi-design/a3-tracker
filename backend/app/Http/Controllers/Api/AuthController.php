@@ -6,11 +6,32 @@ use App\Models\User;
 use App\Services\PlatformPrivilegeService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\ValidationException;
 
 class AuthController
 {
+    public function updateAccount(Request $r)
+    {
+        $user = $r->user();
+        $action = $r->validate(['action' => 'required|in:profile,email,password'])['action'];
+        if ($action === 'profile') {
+            $d = $r->validate(['displayName' => 'required|string|max:120', 'username' => ['required', 'string', 'max:80', 'alpha_dash', 'unique:users,username,'.$user->id]]);
+            $user->forceFill(['name' => trim($d['displayName']), 'username' => strtolower(trim($d['username']))])->save();
+        } elseif ($action === 'email') {
+            $d = $r->validate(['email' => ['required', 'email', 'max:254', 'unique:users,email,'.$user->id], 'currentPassword' => 'required|string']);
+            abort_unless(Hash::check($d['currentPassword'], $user->password), 422, 'Current password is incorrect.');
+            $user->forceFill(['email' => strtolower(trim($d['email']))])->save();
+        } else {
+            $d = $r->validate(['currentPassword' => 'required|string', 'password' => 'required|string|min:10|confirmed']);
+            abort_unless(Hash::check($d['currentPassword'], $user->password), 422, 'Current password is incorrect.');
+            $user->forceFill(['password' => $d['password']])->save();
+        }
+
+        return response()->json(['data' => ['user' => $user->only(['id', 'name', 'email', 'username', 'status'])]]);
+    }
+
     public function login(Request $r)
     {
         $d = $r->validate(['login' => 'required_without:identifier|string|max:254', 'identifier' => 'sometimes|string|max:254', 'password' => 'required|string|max:1024']);

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { AlertCircle, FilePenLine, LoaderCircle, X } from 'lucide-react'
 import { BlockingDialog } from '../../components/ui/BlockingDialog.jsx'
-import { correctCounterReading } from '../../services/supabase/counters.js'
+import { correctCounterReading } from '../../services/counters.js'
 import { formatCounter, mapCounterError } from './counterUtils.js'
 
 export function CorrectCounterDialog({ reading, onClose, onCorrected }) {

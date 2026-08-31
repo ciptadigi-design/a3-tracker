@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { loadOperationalIncident, loadOperationalIncidents } from '../../services/supabase/operationalIncidents.js'
+import { loadOperationalIncident, loadOperationalIncidents } from '../../services/incidents.js'
 import { counterOperatorsForBranch } from '../operationalPeople/eligibility.js'
 
 export function useOperationalIncidents(accountId, branchId) {

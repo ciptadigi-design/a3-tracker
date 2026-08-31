@@ -15,7 +15,7 @@ import { useInventoryWorkflowState } from '../features/inventory/useInventoryWor
 import { inventoryItemScope } from '../features/inventory/inventoryItemPresentation.js'
 import { sortPhysicalStockRows } from '../features/inventory/physicalStockModel.js'
 import { InventoryMovementDetailDialog } from '../features/inventory/InventoryMovementDetailDialog.jsx'
-import { adjustInventoryStock, cancelInventoryPurchase, createInventoryPurchase, deleteInventoryItem, deleteInventoryLocation, deleteInventorySupplier, initializeInventoryStock, loadInventory, receiveInventoryPurchase, saveInventoryItem, saveInventoryLocation, saveInventorySupplier, transferInventoryStock } from '../services/supabase/inventory.js'
+import { adjustInventoryStock, cancelInventoryPurchase, createInventoryPurchase, deleteInventoryItem, deleteInventoryLocation, deleteInventorySupplier, initializeInventoryStock, loadInventory, receiveInventoryPurchase, saveInventoryItem, saveInventoryLocation, saveInventorySupplier, transferInventoryStock } from '../services/inventory.js'
 import { userErrorMessage } from '../lib/appErrors.js'
 
 const tabs = [

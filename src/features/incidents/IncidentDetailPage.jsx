@@ -15,7 +15,7 @@ import { categoryLabels, incidentStatusLabels, incidentTypeLabels } from './inci
 import { formatIncidentDate, formatRupiah, mapIncidentError } from './incidentUtils.js'
 import { useOperationalIncident } from './useOperationalIncidents.js'
 import { VoidIncidentDialog } from './VoidIncidentDialog.jsx'
-import { solveOperationalIncident, updateOperationalIncident, voidOperationalIncident } from '../../services/supabase/operationalIncidents.js'
+import { solveOperationalIncident, updateOperationalIncident, voidOperationalIncident } from '../../services/incidents.js'
 import { userErrorMessage } from '../../lib/appErrors.js'
 
 const emptyEditWorkflow = { type: null }

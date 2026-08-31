@@ -53,3 +53,4 @@ Backups: preferred Hostinger/native backup plus an independent logical `mysqldum
 ## Readiness classification
 
 Repository architecture, migration history, version endpoint, security model, and runbook artifacts are documented. Hostinger-specific PHP/Apache/SSH/permissions/SSL/backup checks are **PENDING HOSTINGER PREFLIGHT**. Complete Laravel frontend/auth adapter coverage is a **non-destructive blocker before deployment authorization**. Vercel/Supabase DEV and legacy Production remain preserved; DNS and Hostinger remain untouched. Advanced Economics and Maintenance remain out of scope.
+> M2.12A update: production runtime is selected with `VITE_DATA_BACKEND=laravel`; frontend auth/account flows use Laravel session APIs and mobile navigation exposes My Account and Logout from the drawer. Supabase-specific implementation names are retained only in reference adapters and developer documentation.

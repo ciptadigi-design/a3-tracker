@@ -1,0 +1,16 @@
+import { callBackend } from './dataBackend.js'
+const adapters = { supabase: () => import('./supabase/inventory.js'), laravel: () => import('./laravel/inventory.js') }
+const invoke = (operation, ...args) => callBackend({ domain: 'inventory', operation, args, ...adapters })
+export const loadInventory = (args) => invoke('loadInventory', args)
+export const saveInventorySupplier = (args) => invoke('saveInventorySupplier', args)
+export const deleteInventorySupplier = (args) => invoke('deleteInventorySupplier', args)
+export const createInventoryPurchase = (args) => invoke('createInventoryPurchase', args)
+export const receiveInventoryPurchase = (args) => invoke('receiveInventoryPurchase', args)
+export const cancelInventoryPurchase = (args) => invoke('cancelInventoryPurchase', args)
+export const saveInventoryItem = (args) => invoke('saveInventoryItem', args)
+export const deleteInventoryItem = (args) => invoke('deleteInventoryItem', args)
+export const saveInventoryLocation = (args) => invoke('saveInventoryLocation', args)
+export const deleteInventoryLocation = (args) => invoke('deleteInventoryLocation', args)
+export const initializeInventoryStock = (args) => invoke('initializeInventoryStock', args)
+export const adjustInventoryStock = (args) => invoke('adjustInventoryStock', args)
+export const transferInventoryStock = (args) => invoke('transferInventoryStock', args)

@@ -17,8 +17,8 @@ import { activeAssignmentSummary, machineComponentCapabilities, profileRestoreCo
 import { useComponentWorkflowState } from '../features/components/useComponentWorkflowState.js'
 import { createUIStateKey } from '../features/uiState/uiStateKeys.js'
 import { usePersistentUIState } from '../features/uiState/usePersistentUIState.js'
-import { addMachineComponent, adoptIntelligenceRecommendation, clearMachineComponentExclusion, effectiveProfiles, loadComponentFoundation, removeMachineComponent, reconcileManualComponent, saveComponent, saveProfile, setComponentStatus, setProfileStatus, syncMachineComponents } from '../services/supabase/components.js'
-import { initializeComponentLifecycle, loadMachineComponentLifecycles, replaceComponentLifecycle } from '../services/supabase/componentLifecycles.js'
+import { addMachineComponent, adoptIntelligenceRecommendation, clearMachineComponentExclusion, effectiveProfiles, loadComponentFoundation, removeMachineComponent, reconcileManualComponent, saveComponent, saveProfile, setComponentStatus, setProfileStatus, syncMachineComponents } from '../services/components.js'
+import { initializeComponentLifecycle, loadMachineComponentLifecycles, replaceComponentLifecycle } from '../services/componentLifecycles.js'
 
 const trackingLabels = {
   counter_based: 'Counter based',

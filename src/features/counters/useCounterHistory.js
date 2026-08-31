@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { loadCounterHistory } from '../../services/supabase/counters.js'
+import { loadCounterHistory } from '../../services/counters.js'
 
 export function useCounterHistory(accountId, machineId) {
   const [history, setHistory] = useState([])

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useAuth } from '../auth/useAuth.js'
-import { loadTenantContext } from '../../services/supabase/tenant.js'
+import { loadTenantContext } from '../../services/tenant.js'
 import { LoadingScreen } from '../../components/ui/LoadingScreen.jsx'
 import { ErrorState } from '../../components/ui/ErrorState.jsx'
 import { TenantContext } from './tenantContext.js'

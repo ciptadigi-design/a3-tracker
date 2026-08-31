@@ -20,6 +20,7 @@ Route::prefix('v1')->middleware('request.id')->group(function () {
         Route::middleware(['auth', 'active.user'])->group(function () {
             Route::post('auth/logout', [AuthController::class, 'logout']);
             Route::get('me', [AuthController::class, 'me']);
+            Route::patch('me/account', [AuthController::class, 'updateAccount']);
             Route::get('accounts', [GovernanceController::class, 'accounts']);
             Route::post('accounts', [GovernanceController::class, 'storeAccount']);
             Route::put('accounts/{id}', [GovernanceController::class, 'updateAccount']);

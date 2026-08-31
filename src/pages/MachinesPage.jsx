@@ -7,7 +7,7 @@ import { MachineFormDialog } from '../features/machines/MachineFormDialog.jsx'
 import { useMachineCatalog } from '../features/machines/useMachineCatalog.js'
 import { useMachineWorkflowState } from '../features/machines/useMachineWorkflowState.js'
 import { useMachines } from '../features/machines/useMachines.js'
-import { createMachine } from '../services/supabase/machines.js'
+import { createMachine } from '../services/machines.js'
 import { userErrorMessage } from '../lib/appErrors.js'
 
 function MachineCard({ machine, branchName, onOpen }) {
@@ -57,7 +57,7 @@ export function MachinesPage({ navigate }) {
 
   return (
     <div className="page-stack">
-      <PageHeader eyebrow={`${account?.name} · ${branch?.name}`} title="Machines" description="Physical machines registered to the selected branch, backed by live Supabase data." action={addAction} />
+      <PageHeader eyebrow={`${account?.name} · ${branch?.name}`} title="Machines" description="Physical machines registered to the selected branch." action={addAction} />
       {success && <div className="success-banner" role="status"><CheckCircle2 size={18} /><span>{success}</span><button type="button" onClick={() => setSuccess(null)}>Dismiss</button></div>}
       {!canManage && <div className="permission-banner"><ShieldCheck size={18} /><span>Your {membership?.role ?? 'member'} role has read-only access to machine master data.</span></div>}
       {catalog.error && canManage && <div className="inline-error catalog-error" role="alert"><span>{userErrorMessage(catalog.error, 'Machine catalog could not be loaded. Try again.')}</span><button className="secondary-button" type="button" onClick={catalog.refresh}>Try again</button></div>}
@@ -67,7 +67,7 @@ export function MachinesPage({ navigate }) {
         <div className="list-toolbar"><div><span className="card-kicker">Machine master</span><h2>{isLoading ? 'Loading machines…' : `${activeMachines.length} active ${activeMachines.length === 1 ? 'machine' : 'machines'}`}</h2></div><button className="icon-button" type="button" onClick={refresh} aria-label="Refresh machines" disabled={isLoading}><RefreshCcw size={17} className={isLoading ? 'spin' : ''} /></button></div>
         <div className="machine-view-tabs" role="tablist" aria-label="Machine record state"><button type="button" role="tab" aria-selected={view === 'active'} className={view === 'active' ? 'selected' : ''} onClick={() => setView('active')}>Active <span>{activeMachines.length}</span></button><button type="button" role="tab" aria-selected={view === 'archived'} className={view === 'archived' ? 'selected' : ''} onClick={() => setView('archived')}>Archived <span>{archivedMachines.length}</span></button></div>
 
-        {isLoading ? <div className="machine-loading-state"><RefreshCcw className="spin" size={24} /><strong>Loading real machine records…</strong><span>Reading the selected branch from Supabase.</span></div>
+        {isLoading ? <div className="machine-loading-state"><RefreshCcw className="spin" size={24} /><strong>Loading real machine records…</strong><span>Reading the selected branch.</span></div>
           : error ? <div className="embedded-error" role="alert"><strong>Machines could not be loaded.</strong><span>{userErrorMessage(error, 'Machine records are temporarily unavailable.')}</span><button className="secondary-button" type="button" onClick={refresh}>Try again</button></div>
           : !isLoading && visibleMachines.length === 0 ? <div className="machine-empty-state"><div className="empty-machine-icon">{view === 'active' ? <Printer size={40} strokeWidth={1.35} /> : <Archive size={38} strokeWidth={1.35} />}</div><span className="status-pill neutral-pill">{view === 'active' ? 'Ready for setup' : 'History preserved'}</span><h3>{view === 'active' ? 'No active machines in this branch.' : 'No archived machines in this branch.'}</h3><p>{view === 'active' ? `Register the first physical machine for ${branch?.name} when you are ready.` : 'Retired machines will remain available here without appearing as active.'}</p>{view === 'active' && canManage && <button className="secondary-button" type="button" onClick={openCreate} disabled={addDisabled}><Plus size={17} /> Add machine</button>}</div>
             : <div className="machine-grid">{visibleMachines.map((machine) => <MachineCard key={machine.id} machine={machine} branchName={branches.find((item) => item.id === machine.branch_id)?.name ?? 'Unknown branch'} onOpen={() => navigate(`/machines/${machine.id}`)} />)}</div>}

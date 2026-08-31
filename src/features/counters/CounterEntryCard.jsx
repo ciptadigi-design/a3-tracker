@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { AlertCircle, ArrowRight, CheckCircle2, Clock3, Gauge, LoaderCircle, RotateCcw } from 'lucide-react'
-import { recordCounterReading } from '../../services/supabase/counters.js'
+import { recordCounterReading } from '../../services/counters.js'
 import { formatCounter, mapCounterError, toLocalDateTimeInput } from './counterUtils.js'
 import { createDraftKey } from '../drafts/draftKeys.js'
 import { readLegacyDailyDraft } from '../drafts/draftStorage.js'

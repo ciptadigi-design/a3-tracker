@@ -11,8 +11,8 @@ import { machineCostPeriodPresets, resolveMachineCostPeriod } from '../features/
 import { createUIStateKey } from '../features/uiState/uiStateKeys.js'
 import { usePersistentUIState } from '../features/uiState/usePersistentUIState.js'
 import { userErrorMessage } from '../lib/appErrors.js'
-import { loadMachines } from '../services/supabase/machines.js'
-import { loadOperationalReport } from '../services/supabase/reports.js'
+import { loadMachines } from '../services/machines.js'
+import { loadOperationalReport } from '../services/reports.js'
 
 const idr = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 2 })
 const numeric = new Intl.NumberFormat('en-US', { maximumFractionDigits: 4 })

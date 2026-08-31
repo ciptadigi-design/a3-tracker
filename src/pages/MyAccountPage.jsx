@@ -3,7 +3,7 @@ import { Eye, EyeOff, KeyRound, LoaderCircle, Mail, RotateCcw, UserRound } from 
 import { PageHeader } from '../components/ui/PageHeader.jsx'
 import { useTenant } from '../features/account/useTenant.js'
 import { useAuth } from '../features/auth/useAuth.js'
-import { updateMyEmail, updateMyPassword, updateMyProfile } from '../services/supabase/account.js'
+import { updateMyEmail, updateMyPassword, updateMyProfile } from '../services/account.js'
 import { userErrorMessage } from '../lib/appErrors.js'
 
 const requestId = () => crypto.randomUUID()
@@ -67,10 +67,10 @@ export function MyAccountPage() {
   return <div className="page-stack my-account-page">
     <PageHeader eyebrow="Personal identity" title="My Account" description="Manage your own login identity. Workspace roles, Branch access, and platform privileges remain governance-controlled." />
     <Message {...message} />
-    <section className="settings-card glass-surface"><header><span className="settings-feature-icon"><UserRound size={20} /></span><div><span className="card-kicker">Profile</span><h2>Display name & username</h2><p>Your username and email continue to use one Supabase Auth password.</p></div></header>
+    <section className="settings-card glass-surface"><header><span className="settings-feature-icon"><UserRound size={20} /></span><div><span className="card-kicker">Profile</span><h2>Display name & username</h2><p>Your username, email, and password are managed securely through your account.</p></div></header>
       <form className="machine-form" onSubmit={saveProfile}><div className="machine-form-body"><div className="form-grid"><label className="form-field"><span>Display name *</span><input value={profile.displayName} onChange={(event) => setProfile((current) => ({ ...current, displayName: event.target.value }))} /></label><label className="form-field"><span>Username *</span><input value={profile.username} onChange={(event) => setProfile((current) => ({ ...current, username: event.target.value }))} autoComplete="username" /></label></div></div><footer className="dialog-actions form-action-footer"><button type="button" className="draft-reset-button" aria-label="Reset draft" onClick={() => setProfile({ displayName: tenant.profile?.display_name ?? '', username: tenant.profile?.username ?? '' })}><RotateCcw size={15} />Reset draft</button><button className="primary-button" disabled={busy !== null}>{busy === 'profile' && <LoaderCircle className="spin" size={16} />}Save profile</button></footer></form>
     </section>
-    <section className="settings-card glass-surface"><header><span className="settings-feature-icon"><Mail size={20} /></span><div><span className="card-kicker">Authentication</span><h2>Email</h2><p>Current-password verification protects the authoritative Supabase Auth email change.</p></div></header>
+    <section className="settings-card glass-surface"><header><span className="settings-feature-icon"><Mail size={20} /></span><div><span className="card-kicker">Authentication</span><h2>Email</h2><p>Current-password verification protects email changes.</p></div></header>
       <form className="machine-form" onSubmit={saveEmail}><div className="machine-form-body"><div className="form-grid"><label className="form-field form-field-wide"><span>Email *</span><input type="email" value={email.value} onChange={(event) => setEmail((current) => ({ ...current, value: event.target.value }))} autoComplete="email" /></label><PasswordInput label="Current password *" value={email.currentPassword} onChange={(event) => setEmail((current) => ({ ...current, currentPassword: event.target.value }))} autoComplete="current-password" /></div></div><footer className="dialog-actions form-action-footer"><button className="primary-button" disabled={busy !== null}>{busy === 'email' && <LoaderCircle className="spin" size={16} />}Change email</button></footer></form>
     </section>
     <section className="settings-card glass-surface"><header><span className="settings-feature-icon"><KeyRound size={20} /></span><div><span className="card-kicker">Credential</span><h2>Password</h2><p>The current password is verified before replacement. Password content is never stored in application tables or audit evidence.</p></div></header>

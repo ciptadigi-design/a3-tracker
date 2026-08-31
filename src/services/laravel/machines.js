@@ -1,0 +1,8 @@
+import { apiClient, unwrapData, unwrapCollection } from '../../lib/api/apiClient.js'
+const normalize = (row) => ({ ...row, machine_code: row.machine_code, display_name: row.display_name ?? row.name, is_active: row.is_active ?? row.status === 'active', machine_models: row.model ? { ...row.model, manufacturers: row.model.manufacturer } : row.machine_models })
+export async function loadMachines({ branchId }) { return unwrapCollection(await apiClient.get(`/branches/${branchId}/machines?per_page=50`)).map(normalize) }
+export async function loadMachine({ machineId }) { return normalize(unwrapData(await apiClient.get(`/machines/${machineId}`))) }
+export async function loadMachineCatalog(accountId) { const [manufacturers, models] = await Promise.all([apiClient.get(`/manufacturers?account_id=${encodeURIComponent(accountId)}`), apiClient.get(`/machine-models?account_id=${encodeURIComponent(accountId)}`)]); return { manufacturers: unwrapCollection(manufacturers), models: unwrapCollection(models) } }
+export async function createMachine({ values }) { return normalize(unwrapData(await apiClient.post(`/branches/${values.branchId}/machines`, { machine_model_id: values.machineModelId, machine_code: values.machineCode, display_name: values.displayName, serial_number: values.serialNumber || null, installed_on: values.installedOn || null, status: values.status, timezone: values.timezone || null, notes: values.notes || null }))) }
+export async function updateMachine() { throw new Error('Machine editing is not yet available through the Laravel adapter; no Supabase fallback was attempted.') }
+export async function retireMachine({ machineId }) { return normalize(unwrapData(await apiClient.patch(`/machines/${machineId}/status`, { status: 'retired' }))) }

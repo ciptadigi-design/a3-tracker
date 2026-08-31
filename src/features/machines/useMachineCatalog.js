@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { loadMachineCatalog } from '../../services/supabase/machines.js'
+import { loadMachineCatalog } from '../../services/machines.js'
 
 export function useMachineCatalog(accountId, enabled = true) {
   const [catalog, setCatalog] = useState({ manufacturers: [], models: [] })

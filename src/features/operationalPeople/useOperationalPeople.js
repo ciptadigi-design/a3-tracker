@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { loadOperationalPeopleForBranch } from '../../services/supabase/operationalMasters.js'
+import { loadOperationalPeopleForBranch } from '../../services/operationalMasters.js'
 
 export function useOperationalPeople(accountId, branchId) {
   const [state, setState] = useState({ people: [], isLoading: Boolean(accountId && branchId), error: null })

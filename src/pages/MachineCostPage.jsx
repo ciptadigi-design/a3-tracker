@@ -15,8 +15,8 @@ import { createUIStateKey } from '../features/uiState/uiStateKeys.js'
 import { usePersistentUIState } from '../features/uiState/usePersistentUIState.js'
 import { userErrorMessage } from '../lib/appErrors.js'
 import { contributionPerClickPresentation, contributionPresentation, revenuePresentation, sellingPriceCardPresentation } from '../features/machineCost/sellingPriceModel.js'
-import { createMachineOperatingCost, createMachineSellingPrice, loadMachineCostPeriod, loadMachineOperatingCosts, loadMachineSellingPrices, voidMachineOperatingCost, voidMachineSellingPrice } from '../services/supabase/machineCost.js'
-import { loadMachines } from '../services/supabase/machines.js'
+import { createMachineOperatingCost, createMachineSellingPrice, loadMachineCostPeriod, loadMachineOperatingCosts, loadMachineSellingPrices, voidMachineOperatingCost, voidMachineSellingPrice } from '../services/machineCost.js'
+import { loadMachines } from '../services/machines.js'
 
 const idr = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 2 })
 const number = new Intl.NumberFormat('en-US', { maximumFractionDigits: 4 })

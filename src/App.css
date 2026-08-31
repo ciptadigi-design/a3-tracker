@@ -170,6 +170,13 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .user-summary strong { font-size: 11px; }
 .user-summary span { margin-top: 2px; color: var(--text-muted); font-size: 9px; }
 .mobile-menu-button { display: none; }
+.sidebar-account { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--line); }
+.sidebar-account-identity { display: flex; align-items: center; gap: 10px; padding: 0 12px 10px; }
+.sidebar-account-identity > div { min-width: 0; display: grid; gap: 2px; }
+.sidebar-account-identity strong,.sidebar-account-identity span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sidebar-account-identity span { color: var(--text-soft); font-size: 11px; }
+.sidebar-account .nav-item { width: 100%; border: 0; background: transparent; text-align: left; cursor: pointer; }
+.sidebar-logout { color: var(--text-soft); }
 .mobile-nav-backdrop { display: none; }
 .inline-error { margin: 14px 2px 0; }
 .page-content { width: 100%; max-width: 1440px; min-width: 0; margin: 0 auto; padding: clamp(34px, 5vw, 68px) clamp(8px, 3vw, 42px) 54px; }
@@ -746,7 +753,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   .app-frame { grid-template-columns: minmax(0, 1fr); padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left)); }
   .sidebar-wrap { position: fixed; inset: max(12px, env(safe-area-inset-top)) auto max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left)); width: min(310px, calc(100% - 36px)); max-width: calc(100% - max(24px, env(safe-area-inset-left))); z-index: 20; transform: translateX(calc(-100% - 24px)); transition: transform 220ms ease; }
   .sidebar-wrap-open { transform: translateX(0); }
-  .sidebar { position: static; height: 100%; }
+  .sidebar { position: static; height: 100%; max-height: 100%; overflow-y: auto; padding-bottom: max(16px, env(safe-area-inset-bottom)); }
   .mobile-nav-backdrop { display: block; position: fixed; inset: 0; z-index: 19; pointer-events: none; opacity: 0; background: rgba(5, 8, 14, 0.44); backdrop-filter: blur(4px); transition: opacity 220ms; }
   .mobile-nav-backdrop-open { pointer-events: auto; opacity: 1; }
   .mobile-menu-button { display: inline-grid; }

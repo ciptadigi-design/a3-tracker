@@ -42,7 +42,7 @@ export function LoginPage() {
           <div className="proof-pulse"><span /></div>
           <div>
             <strong>Secure tenant workspace</strong>
-            <p>Access is controlled by your Supabase account membership.</p>
+            <p>Access is controlled by your authenticated account membership.</p>
           </div>
         </div>
       </section>
