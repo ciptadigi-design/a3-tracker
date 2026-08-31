@@ -15,7 +15,11 @@ class ReplaceMachineComponent
     public function execute(MachineComponent $mc, array $d): ComponentReplacement
     {
         return DB::transaction(function () use ($mc, $d) {
-            $old = ComponentReplacement::where('client_request_id', $d['client_request_id'])->first();
+            $mc = MachineComponent::whereKey($mc->id)->lockForUpdate()->firstOrFail();
+            if ($mc->status === 'retired' || ! $mc->machine || $mc->machine->status !== 'active') {
+                throw new ConflictHttpException('retired or inactive machine component cannot be replaced');
+            }
+            $old = ComponentReplacement::where('account_id', $mc->account_id)->where('client_request_id', $d['client_request_id'])->first();
             if ($old) {
                 return $old;
             }$when = $d['replaced_at'] ?? now();
@@ -25,6 +29,9 @@ class ReplaceMachineComponent
             if ($source === 'inventory') {
                 $item = InventoryItem::findOrFail($d['inventory_item_id']);
                 $loc = InventoryLocation::findOrFail($d['inventory_location_id']);
+                if ($item->account_id !== $mc->account_id || $loc->account_id !== $mc->account_id) {
+                    throw new ConflictHttpException('inventory scope does not match component account');
+                }
                 if ($item->component_id !== null && $item->component_id !== $mc->component_id) {
                     throw new ConflictHttpException('inventory item component mismatch');
                 }$movement = app(InventoryLedgerService::class)->outbound($item, $loc, (float) ($d['quantity'] ?? 1), 'replacement_consumption', $d['client_request_id'], null, $d['notes'] ?? null);

@@ -19,4 +19,9 @@ class ComponentReplacement extends Model
     {
         static::creating(fn ($m) => $m->id ??= Str::uuid());
     }
+
+    public function newLifecycle()
+    {
+        return $this->belongsTo(ComponentLifecycle::class, 'new_lifecycle_id');
+    }
 }

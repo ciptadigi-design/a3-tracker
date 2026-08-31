@@ -63,6 +63,7 @@ Route::prefix('v1')->middleware('request.id')->group(function () {
             Route::get('inventory/locations', [InventoryController::class, 'locations']);
             Route::post('purchases', [InventoryController::class, 'createPurchase']);
             Route::post('purchases/{purchase}/receive', [InventoryController::class, 'receive']);
+            Route::post('inventory/opening', [InventoryController::class, 'opening']);
             Route::get('inventory/items/{item}/locations/{location}/balance', [InventoryController::class, 'balance']);
             Route::post('inventory/transfers', [InventoryController::class, 'transfer']);
             Route::post('inventory/adjustments', [InventoryController::class, 'adjust']);

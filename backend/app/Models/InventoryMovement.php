@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
+use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 
 class InventoryMovement extends Model
 {
@@ -18,5 +19,7 @@ class InventoryMovement extends Model
     protected static function booted()
     {
         static::creating(fn ($m) => $m->id ??= Str::uuid());
+        static::updating(fn () => throw new ConflictHttpException('Inventory movements are immutable.'));
+        static::deleting(fn () => throw new ConflictHttpException('Inventory movements are immutable.'));
     }
 }

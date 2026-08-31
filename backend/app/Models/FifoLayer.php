@@ -11,7 +11,7 @@ class FifoLayer extends Model
 
     protected $keyType = 'string';
 
-    protected $fillable = ['account_id', 'inventory_item_id', 'location_id', 'inbound_movement_id', 'source_type', 'original_quantity', 'remaining_quantity', 'unit_cost', 'effective_at', 'origin_layer_id'];
+    protected $fillable = ['account_id', 'inventory_item_id', 'location_id', 'inbound_movement_id', 'source_type', 'original_quantity', 'remaining_quantity', 'unit_cost', 'effective_at', 'origin_layer_id', 'fifo_sequence'];
 
     protected static function booted()
     {
