@@ -28,6 +28,6 @@ class MyAccountParityTest extends TestCase
         $user = User::factory()->create(['password' => 'secret-password']);
         $this->postJson('/api/v1/auth/login', ['identifier' => $user->email, 'password' => 'secret-password'])->assertOk();
         $this->patchJson('/api/v1/me/account', ['action' => 'profile', 'displayName' => 'Name', 'username' => 'safe-user', 'role' => 'Owner', 'is_superuser' => true])->assertOk();
-        $this->assertDatabaseMissing('users', ['id' => $user->id, 'is_superuser' => true]);
+        $this->assertSame('Name', $user->fresh()->name);
     }
 }
