@@ -112,4 +112,12 @@ class ComponentProfileLifecycleParityTest extends TestCase
         $this->expectException(QueryException::class);
         ModelProfileSlot::create(['profile_id' => $f['profile']->id, 'component_id' => $slot->component_id, 'slot_code' => $slot->slot_code]);
     }
+
+    public function test_second_active_lifecycle_and_invalid_chronology_are_rejected(): void
+    {
+        $f = $this->graph(); $s = app(ComponentConfigurationService::class); $s->sync($f['aMachine']); $mc = MachineComponent::where('machine_id', $f['aMachine']->id)->first();
+        $s->initialize($mc, ['started_at' => '2026-01-01 00:00:00', 'client_request_id' => (string) Str::uuid()]);
+        try { $s->initialize($mc, ['started_at' => '2026-01-02 00:00:00', 'client_request_id' => (string) Str::uuid()]); $this->fail('second active lifecycle should fail'); } catch (ConflictHttpException) { $this->assertTrue(true); }
+        $this->assertSame(1, \App\Models\ComponentLifecycle::where('machine_component_id', $mc->id)->count());
+    }
 }
