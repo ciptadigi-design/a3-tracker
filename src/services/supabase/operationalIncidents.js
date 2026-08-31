@@ -49,7 +49,7 @@ export async function loadOperationalIncidents({ accountId, branchId }) {
       .order('occurred_at', { ascending: false })
       .order('created_at', { ascending: false }),
     supabase.rpc('get_account_member_profiles', { target_account_id: accountId }),
-    supabase.from('operational_people').select('id,name,is_active,operational_person_branches!inner(branch_id,is_active)').eq('account_id', accountId).eq('is_active', true).eq('operational_person_branches.branch_id', branchId).eq('operational_person_branches.is_active', true).order('name'),
+    supabase.from('operational_people').select('id,name,is_active,operational_person_branches!inner(branch_id,is_active,can_record_counter)').eq('account_id', accountId).eq('is_active', true).eq('operational_person_branches.branch_id', branchId).eq('operational_person_branches.is_active', true).order('name'),
   ])
 
   if (incidentResult.error) throw incidentResult.error
@@ -80,7 +80,7 @@ export async function loadOperationalIncident({ accountId, branchId, incidentId 
       .eq('incident_id', incidentId)
       .order('changed_at', { ascending: true })
       .order('id', { ascending: true }),
-    supabase.from('operational_people').select('id,name,is_active,operational_person_branches!inner(branch_id,is_active)').eq('account_id', accountId).eq('operational_person_branches.branch_id', branchId).eq('operational_person_branches.is_active', true).order('name'),
+    supabase.from('operational_people').select('id,name,is_active,operational_person_branches!inner(branch_id,is_active,can_record_counter)').eq('account_id', accountId).eq('operational_person_branches.branch_id', branchId).eq('operational_person_branches.is_active', true).order('name'),
   ])
 
   if (revisionResult.error) throw revisionResult.error

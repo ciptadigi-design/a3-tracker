@@ -30,6 +30,6 @@ class OperationalPerson extends Model
 
     public function branches()
     {
-        return $this->belongsToMany(Branch::class, 'operational_person_branches', 'person_id', 'branch_id')->withPivot(['account_id', 'is_active']);
+        return $this->belongsToMany(Branch::class, 'operational_person_branches', 'person_id', 'branch_id')->withPivot(['account_id', 'is_active', 'can_record_counter']);
     }
 }

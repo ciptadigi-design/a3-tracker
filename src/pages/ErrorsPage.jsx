@@ -70,7 +70,7 @@ export function ErrorsPage({ navigate }) {
 
       <IncidentHistory incidents={filteredIncidents} machines={machinesState.machines} timezone={timezone} isLoading={incidentState.isLoading} error={incidentState.error} onRefresh={incidentState.refresh} onOpen={(incidentId) => navigate(`/errors/${incidentId}`)} resetKey={`${branch.id}:${effectiveMachineFilter}`} />
 
-      {canLogErrors && workflow.value.type === 'create' && isReady && <IncidentFormDialog account={account} branch={branch} machines={machinesState.machines} people={incidentState.people} onClose={workflow.clearUIState} onSave={handleCreate} />}
+      {canLogErrors && workflow.value.type === 'create' && isReady && <IncidentFormDialog account={account} branch={branch} machines={machinesState.machines} people={incidentState.people} operatorPeople={incidentState.operatorPeople} onClose={workflow.clearUIState} onSave={handleCreate} />}
     </div>
   )
 }

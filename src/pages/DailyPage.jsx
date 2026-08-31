@@ -12,6 +12,7 @@ import { useTenant } from '../features/account/useTenant.js'
 import { useAuth } from '../features/auth/useAuth.js'
 import { useMachines } from '../features/machines/useMachines.js'
 import { useOperationalPeople } from '../features/operationalPeople/useOperationalPeople.js'
+import { counterOperatorsForBranch } from '../features/operationalPeople/eligibility.js'
 import { createUIStateKey } from '../features/uiState/uiStateKeys.js'
 import { usePersistentUIState } from '../features/uiState/usePersistentUIState.js'
 
@@ -24,6 +25,7 @@ export function DailyPage() {
   const { account, branch, membership } = useTenant()
   const machinesState = useMachines(account?.id, branch?.id)
   const peopleState = useOperationalPeople(account?.id, branch?.id)
+  const counterPeople = useMemo(() => counterOperatorsForBranch(peopleState.people, branch?.id), [peopleState.people, branch?.id])
   const activeMachines = useMemo(() => machinesState.machines.filter((machine) => machine.is_active), [machinesState.machines])
   const selectionKey = createUIStateKey({ userId: user?.id, accountId: account?.id, branchId: branch?.id, feature: 'daily-counter', entityId: 'selected-machine' })
   const legacySelectionKey = createDraftKey({ userId: user?.id, accountId: account?.id, branchId: branch?.id, feature: 'daily-counter', entityId: 'selected-machine' })
@@ -78,7 +80,7 @@ export function DailyPage() {
             <SummaryCard icon={CalendarCheck2} label="Today's Usage" value={summary.todayUsage == null ? '—' : `+${formatCounter(summary.todayUsage)}`} detail={summary.todayEntryCount ? summary.todayUsage == null ? 'Baseline only; no prior delta' : 'Sum of today’s database-derived deltas' : 'No entries today'} tone="green" />
             <SummaryCard icon={Clock3} label="Last Input" value={summary.lastReading ? new Intl.DateTimeFormat('en-GB', { timeZone: timezone, hour: '2-digit', minute: '2-digit' }).format(new Date(summary.lastReading.observed_at)) : '—'} detail={summary.lastReading ? new Intl.DateTimeFormat('en-GB', { timeZone: timezone, dateStyle: 'medium' }).format(new Date(summary.lastReading.observed_at)) : 'No input recorded'} tone="purple" />
           </section>
-          <CounterEntryCard key={`${user.id}:${selectedMachine.id}`} accountId={account.id} branchId={branch.id} userId={user.id} machine={selectedMachine} people={peopleState.people} peopleLoading={peopleState.isLoading} peopleError={peopleState.error} lastReading={summary.lastReading} onRecorded={handleRecorded} />
+          <CounterEntryCard key={`${user.id}:${selectedMachine.id}`} accountId={account.id} branchId={branch.id} userId={user.id} machine={selectedMachine} people={counterPeople} peopleLoading={peopleState.isLoading} peopleError={peopleState.error} lastReading={summary.lastReading} onRecorded={handleRecorded} />
           <CounterHistory history={counterState.history} profiles={counterState.profiles} currentUserId={user?.id} timezone={timezone} isLoading={counterState.isLoading} error={counterState.error} canCorrect={canCorrect} onRefresh={counterState.refresh} onCorrected={handleCorrected} resetKey={`${branch?.id}:${selectedMachine.id}`} />
         </>}
     </div>

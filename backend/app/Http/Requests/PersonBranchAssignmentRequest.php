@@ -13,6 +13,6 @@ class PersonBranchAssignmentRequest extends FormRequest
 
     public function rules(): array
     {
-        return ['is_active' => 'sometimes|boolean'];
+        return ['is_active' => 'sometimes|boolean', 'can_record_counter' => 'sometimes|boolean'];
     }
 }

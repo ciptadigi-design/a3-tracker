@@ -97,7 +97,7 @@ function FieldError({ message }) {
   return message ? <small className="field-error"><AlertCircle size={13} />{message}</small> : null
 }
 
-export function IncidentFormDialog({ account, branch, machines, people, incident = null, mode = 'create', onClose, onSave, onLoadLatest }) {
+export function IncidentFormDialog({ account, branch, machines, people, operatorPeople = people, incident = null, mode = 'create', onClose, onSave, onLoadLatest }) {
   const { user } = useAuth()
   const isEdit = mode === 'edit'
   const [draftContext] = useState(() => ({
@@ -137,7 +137,7 @@ export function IncidentFormDialog({ account, branch, machines, people, incident
   )
 
   useEffect(() => {
-    const next = revalidateIncidentPeople(values, people)
+    const next = revalidateIncidentPeople(values, { operatorPeople, picPeople: people })
     if (next.operatorPersonId !== values.operatorPersonId
       || next.operatorName !== values.operatorName
       || next.responsiblePersonId !== values.responsiblePersonId
@@ -145,7 +145,7 @@ export function IncidentFormDialog({ account, branch, machines, people, incident
       || next.responsiblePersonTouched !== values.responsiblePersonTouched) {
       updateDraft(next)
     }
-  }, [people, updateDraft, values])
+  }, [operatorPeople, people, updateDraft, values])
 
   function change(field, value) {
     updateDraft((current) => ({ ...current, [field]: value }))
@@ -158,7 +158,7 @@ export function IncidentFormDialog({ account, branch, machines, people, incident
   }
 
   function changeOperator(personId) {
-    updateDraft((current) => selectIncidentOperator(current, people.find((item) => item.id === personId)))
+    updateDraft((current) => selectIncidentOperator(current, operatorPeople.find((item) => item.id === personId)))
     setFormError(null)
   }
 
@@ -238,7 +238,7 @@ export function IncidentFormDialog({ account, branch, machines, people, incident
               <label className="form-field"><span>Jenis <RequiredMark /></span><select value={values.incidentType} onChange={(event) => change('incidentType', event.target.value)} aria-invalid={Boolean(errors.incidentType)}><option value="">Pilih jenis</option>{incidentTypes.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}</select><small>“Mesin” berarti kesalahan penggunaan/setting produksi, bukan fault code teknis.</small><FieldError message={errors.incidentType} /></label>
               <label className="form-field"><span>Machine</span><select value={values.machineId} onChange={(event) => change('machineId', event.target.value)}><option value="">Branch / No specific machine</option>{machines.filter((machine) => machine.is_active).map((machine) => <option key={machine.id} value={machine.id}>{machine.machine_code} · {machine.display_name}</option>)}</select><small>Select the production machine explicitly, or keep branch scope when no machine is attributable.</small></label>
               <label className="form-field"><span>Qty Rusak <small>Opsional</small></span><input value={values.qtyAffected} onChange={(event) => changeDigits('qtyAffected', event.target.value)} inputMode="numeric" pattern="[0-9]*" placeholder="0" aria-invalid={Boolean(errors.qtyAffected)} /><FieldError message={errors.qtyAffected} /></label>
-              <label className="form-field"><span>PIC / Operator <small>Opsional</small></span><select value={values.operatorPersonId} onChange={(event) => changeOperator(event.target.value)}><option value="">Tidak ditetapkan</option>{people.map((person) => <option key={person.id} value={person.id}>{person.name}</option>)}</select><small>Orang yang menjalankan atau mencatat aktivitas operasional.</small></label>
+              <label className="form-field"><span>Operator <small>Opsional</small></span><select value={values.operatorPersonId} onChange={(event) => changeOperator(event.target.value)}><option value="">Tidak ditetapkan</option>{operatorPeople.map((person) => <option key={person.id} value={person.id}>{person.name}</option>)}</select><small>Counter Operator yang menjalankan mesin.</small></label>
               <label className="form-field"><span>PIC Terlibat <small>Opsional</small></span><select value={values.responsiblePersonId} onChange={(event) => changeResponsible(event.target.value)}><option value="">Tidak ditetapkan</option>{people.map((person) => <option key={person.id} value={person.id}>{person.name}</option>)}</select><small>Nama disimpan sebagai snapshot audit; pilihan dapat berbeda dari Operator.</small></label>
             </div>
 

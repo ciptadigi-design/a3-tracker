@@ -47,7 +47,7 @@ export async function loadOperationalMasters({ accountId, includeArchived = fals
 export async function loadOperationalPeopleForBranch({ accountId, branchId }) {
   if (!branchId) return []
   const { data, error } = await supabase.from('operational_people')
-    .select('id,account_id,name,linked_user_id,code,is_active,operational_person_branches!inner(branch_id,is_active)')
+    .select('id,account_id,name,linked_user_id,code,is_active,operational_person_branches!inner(branch_id,is_active,can_record_counter)')
     .eq('account_id', accountId).eq('is_active', true)
     .eq('operational_person_branches.branch_id', branchId).eq('operational_person_branches.is_active', true).order('name')
   if (error) throw error

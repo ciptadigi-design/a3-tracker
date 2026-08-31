@@ -35,7 +35,7 @@ class OperationalIncidentService
         }
         foreach (['operator_person_id', 'responsible_person_id'] as $field) {
             if (! empty($v[$field])) {
-                $p = OperationalPerson::where('account_id', $account->id)->where('id', $v[$field])->where('is_active', true)->whereHas('branches', fn ($q) => $q->where('branches.id', $branch->id)->where('operational_person_branches.is_active', true))->first();
+                $p = $field === 'operator_person_id' ? $this->people->eligibleForBranch($branch, $v[$field], true) : $this->people->eligibleForBranch($branch, $v[$field]);
                 if (! $p) {
                     throw ValidationException::withMessages([$field => 'Operational person is not eligible for this branch.']);
                 }

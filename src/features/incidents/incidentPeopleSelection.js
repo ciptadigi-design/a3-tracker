@@ -22,10 +22,9 @@ export function selectIncidentResponsiblePerson(current, person) {
   }
 }
 
-export function revalidateIncidentPeople(current, eligiblePeople) {
-  const byId = new Map(eligiblePeople.map((person) => [person.id, person]))
-  const operator = byId.get(current.operatorPersonId)
-  const responsible = byId.get(current.responsiblePersonId)
+export function revalidateIncidentPeople(current, { operatorPeople, picPeople }) {
+  const operator = new Map((operatorPeople ?? []).map((person) => [person.id, person])).get(current.operatorPersonId)
+  const responsible = new Map((picPeople ?? []).map((person) => [person.id, person])).get(current.responsiblePersonId)
   return {
     ...current,
     operatorPersonId: operator?.id ?? '',

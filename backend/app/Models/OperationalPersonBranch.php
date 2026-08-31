@@ -13,9 +13,9 @@ class OperationalPersonBranch extends Model
 
     protected $keyType = 'string';
 
-    protected $fillable = ['account_id', 'person_id', 'branch_id', 'is_active'];
+    protected $fillable = ['account_id', 'person_id', 'branch_id', 'is_active', 'can_record_counter'];
 
-    protected $casts = ['is_active' => 'boolean'];
+    protected $casts = ['is_active' => 'boolean', 'can_record_counter' => 'boolean'];
 
     protected static function booted(): void
     {

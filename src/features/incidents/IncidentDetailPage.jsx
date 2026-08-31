@@ -130,7 +130,7 @@ export function IncidentDetailPage({ incidentId, navigate }) {
 
       {incident.status === 'resolved' && <section className="resolved-banner"><ShieldCheck size={19} /><div><strong>Incident Diselesaikan</strong><span>{incident.resolution_note || 'Tidak ada resolution note.'}{incident.resolved_by ? ` · ${memberNames.get(incident.resolved_by) || 'User record unavailable'}` : ''}{incident.resolved_at ? ` · ${formatIncidentDate(incident.resolved_at, timezone)}` : ''}</span></div></section>}
       {incident.status === 'voided' && <section className="retired-banner"><FileText size={19} /><div><strong>Voided incident</strong><span>{incident.void_reason} · {formatIncidentDate(incident.voided_at, timezone)}</span></div></section>}
-      {editWorkflow.value.type === 'edit' && canEdit && <IncidentFormDialog mode="edit" incident={incident} account={account} branch={branch} machines={machinesState.machines} people={state.people} onClose={editWorkflow.clearUIState} onSave={handleEdit} onLoadLatest={() => state.refresh({ silent: true })} />}
+      {editWorkflow.value.type === 'edit' && canEdit && <IncidentFormDialog mode="edit" incident={incident} account={account} branch={branch} machines={machinesState.machines} people={state.people} operatorPeople={state.operatorPeople} onClose={editWorkflow.clearUIState} onSave={handleEdit} onLoadLatest={() => state.refresh({ silent: true })} />}
       {showSolve && canResolve && <SolveIncidentDialog incident={incident} onClose={() => setShowSolve(false)} onConfirm={handleSolve} />}
       {showVoid && <VoidIncidentDialog incident={incident} onClose={() => setShowVoid(false)} onConfirm={handleVoid} />}
     </div>

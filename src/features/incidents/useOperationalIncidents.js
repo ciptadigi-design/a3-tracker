@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { loadOperationalIncident, loadOperationalIncidents } from '../../services/supabase/operationalIncidents.js'
+import { counterOperatorsForBranch } from '../operationalPeople/eligibility.js'
 
 export function useOperationalIncidents(accountId, branchId) {
   const [incidents, setIncidents] = useState([])
@@ -29,7 +30,7 @@ export function useOperationalIncidents(accountId, branchId) {
   }, [accountId, branchId])
 
   useEffect(() => { refresh() }, [refresh])
-  return { incidents, members, people, isLoading, error, refresh }
+  return { incidents, members, people, operatorPeople: counterOperatorsForBranch(people, branchId), isLoading, error, refresh }
 }
 
 export function useOperationalIncident(accountId, branchId, incidentId) {
@@ -62,5 +63,5 @@ export function useOperationalIncident(accountId, branchId, incidentId) {
   }, [accountId, branchId, incidentId])
 
   useEffect(() => { refresh() }, [refresh])
-  return { incident, members, people, revisions, isLoading, error, refresh, setIncident }
+  return { incident, members, people, operatorPeople: counterOperatorsForBranch(people, branchId), revisions, isLoading, error, refresh, setIncident }
 }

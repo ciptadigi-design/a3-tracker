@@ -119,7 +119,8 @@ class OperationsController extends Controller
         $p = OperationalPerson::findOrFail($person);
         $b = Branch::findOrFail($branch);
         abort_unless($p->account_id === $b->account_id, 403);
-        $a = OperationalPersonBranch::updateOrCreate(['person_id' => $p->id, 'branch_id' => $b->id], ['account_id' => $b->account_id, 'is_active' => $r->validated()['is_active'] ?? true]);
+        $active = $r->validated()['is_active'] ?? true;
+        $a = OperationalPersonBranch::updateOrCreate(['person_id' => $p->id, 'branch_id' => $b->id], ['account_id' => $b->account_id, 'is_active' => $active, 'can_record_counter' => $active ? ($r->validated()['can_record_counter'] ?? false) : false]);
 
         return response()->json(['data' => $a], 201);
     }
@@ -172,7 +173,7 @@ class OperationsController extends Controller
     {
         $b = Branch::findOrFail($branch);
         abort_unless(app(BranchAccessResolver::class)->canAccess($r->user(), $b), 403);
-        $q = OperationalPerson::where('account_id', $b->account_id)->where('is_active', true)->whereHas('branches', fn ($x) => $x->where('branches.id', $b->id)->where('operational_person_branches.is_active', true));
+        $q = OperationalPerson::where('account_id', $b->account_id)->where('is_active', true)->with(['branches' => fn ($x) => $x->where('branches.id', $b->id)])->whereHas('branches', fn ($x) => $x->where('branches.id', $b->id)->where('operational_person_branches.is_active', true));
 
         return response()->json(['data' => $q->orderBy('name')->get()]);
     }

@@ -38,7 +38,7 @@ class IncidentMachineCostParityTest extends TestCase
         $person = OperationalPerson::create(['account_id' => $account->id, 'name' => 'Operator', 'is_active' => true]);
         $pic = OperationalPerson::create(['account_id' => $account->id, 'name' => 'PIC', 'is_active' => true]);
         foreach ([$person, $pic] as $p) {
-            OperationalPersonBranch::create(['account_id' => $account->id, 'person_id' => $p->id, 'branch_id' => $branch->id, 'is_active' => true]);
+            OperationalPersonBranch::create(['account_id' => $account->id, 'person_id' => $p->id, 'branch_id' => $branch->id, 'is_active' => true, 'can_record_counter' => true]);
         }
 
         return compact('account', 'branch', 'other', 'user', 'machine', 'person', 'pic');

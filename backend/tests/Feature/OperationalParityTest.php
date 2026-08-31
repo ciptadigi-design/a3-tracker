@@ -33,7 +33,7 @@ class OperationalParityTest extends TestCase
         $mod = MachineModel::create(['manufacturer_id' => $man->id, 'model_code' => 'c1070', 'name' => 'C1070']);
         $machine = Machine::create(['account_id' => $a->id, 'branch_id' => $b->id, 'machine_model_id' => $mod->id, 'machine_code' => 'CG-TUP-A3-01', 'display_name' => 'C1070', 'status' => 'active']);
         $p = OperationalPerson::create(['account_id' => $a->id, 'name' => 'Old Name', 'is_active' => true]);
-        OperationalPersonBranch::create(['account_id' => $a->id, 'person_id' => $p->id, 'branch_id' => $b->id, 'is_active' => true]);
+        OperationalPersonBranch::create(['account_id' => $a->id, 'person_id' => $p->id, 'branch_id' => $b->id, 'is_active' => true, 'can_record_counter' => true]);
 
         return compact('a', 'b', 'u', 'machine', 'p');
     }

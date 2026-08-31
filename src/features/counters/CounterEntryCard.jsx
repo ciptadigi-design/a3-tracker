@@ -75,7 +75,7 @@ export function CounterEntryCard({ accountId, branchId, userId, machine, people,
       return
     }
     if (!operatorPersonId || !people.some((person) => person.id === operatorPersonId && person.is_active)) {
-      setError('Choose an active PIC / Operator for this reading.')
+      setError('Choose an eligible Counter Operator for this reading.')
       return
     }
 
@@ -111,7 +111,7 @@ export function CounterEntryCard({ accountId, branchId, userId, machine, people,
         <p className="counter-last-context">{lastReading ? `Last recorded: ${formatCounter(lastReading.reading_value)}` : 'No previous reading; this entry becomes the baseline.'}</p>
         <div className="counter-primary-grid">
           <label className="counter-value-field"><span>New Counter <b>*</b></span><input value={readingValue} onChange={(event) => changeReading(event.target.value)} inputMode="numeric" pattern="[0-9]*" placeholder="207960" autoComplete="off" aria-invalid={Boolean(validationError || error)} /><small>Enter the cumulative number displayed by the machine—not daily usage.</small>{validationError && <span className="field-error"><AlertCircle size={13} />{validationError}</span>}</label>
-          <label className="form-field counter-operator-field"><span>PIC / Operator <b className="required-mark">*</b></span><select value={operatorPersonId} onChange={(event) => markDraftChanged('operatorPersonId', event.target.value)} disabled={peopleLoading || Boolean(peopleError)} aria-invalid={Boolean(error && !operatorPersonId)}><option value="">{peopleLoading ? 'Loading operators…' : 'Choose PIC / Operator'}</option>{people.map((person) => <option key={person.id} value={person.id}>{person.name}</option>)}</select><small>{peopleError ? 'Operator directory is unavailable. Refresh Daily and try again.' : 'The selected name is preserved as a historical snapshot.'}</small></label>
+          <label className="form-field counter-operator-field"><span>Counter Operator <b className="required-mark">*</b></span><select aria-label="Counter Operator" value={operatorPersonId} onChange={(event) => markDraftChanged('operatorPersonId', event.target.value)} disabled={peopleLoading || Boolean(peopleError)} aria-invalid={Boolean(error && !operatorPersonId)}><option value="">{peopleLoading ? 'Loading operators…' : people.length ? 'Choose Counter Operator' : 'No Counter Operators are configured for this branch.'}</option>{people.map((person) => <option key={person.id} value={person.id}>{person.name}</option>)}</select><small>{peopleError ? 'Operator directory is unavailable. Refresh Daily and try again.' : 'The selected name is preserved as a historical snapshot.'}</small></label>
         </div>
         <div className="counter-form-grid">
           <label className="form-field"><span>Shift <small>Optional</small></span><select value={shiftCode} onChange={(event) => markDraftChanged('shiftCode', event.target.value)}><option value="">No shift specified</option><option value="S1">S1</option><option value="S2">S2</option></select></label>

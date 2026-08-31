@@ -28,14 +28,14 @@ test('untouched auto-default follows a later Operator change', () => {
 
 test('Branch eligibility revalidates both canonical people safely', () => {
   const selected = selectIncidentResponsiblePerson(selectIncidentOperator(empty, akmal), bigel)
-  assert.deepEqual(revalidateIncidentPeople(selected, [akmal]), { ...selected, responsiblePersonId: '', responsibleName: '', responsiblePersonTouched: false })
-  assert.equal(revalidateIncidentPeople(selected, [akmal, bigel]).responsiblePersonId, 'bigel')
+  assert.deepEqual(revalidateIncidentPeople(selected, { operatorPeople: [akmal], picPeople: [akmal] }), { ...selected, responsiblePersonId: '', responsibleName: '', responsiblePersonTouched: false })
+  assert.equal(revalidateIncidentPeople(selected, { operatorPeople: [akmal], picPeople: [akmal, bigel] }).responsiblePersonId, 'bigel')
 })
 
 test('form uses one canonical eligible people source and persists both selections', () => {
   const form = readFileSync(new URL('./IncidentFormDialog.jsx', import.meta.url), 'utf8')
   const service = readFileSync(new URL('../../services/supabase/operationalIncidents.js', import.meta.url), 'utf8')
-  assert.equal((form.match(/people\.map/g) ?? []).length, 2)
+  assert.equal((form.match(/people\.map/g) ?? []).length, 1)
   assert.match(form,/operatorPersonId[\s\S]*responsiblePersonId[\s\S]*usePersistentDraft/)
   assert.doesNotMatch(form,/Bigel|Bulan|Epri|Ramdani/)
   assert.match(service,/operational_person_branches!inner/)

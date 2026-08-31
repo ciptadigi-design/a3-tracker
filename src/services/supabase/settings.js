@@ -15,7 +15,7 @@ export async function loadSettings({ accountId }) {
     supabase.from('components').select('id,account_id,is_active').or(`account_id.is.null,account_id.eq.${accountId}`),
     supabase.from('machine_model_components').select('id,account_id,machine_model_id,is_active').or(`account_id.is.null,account_id.eq.${accountId}`),
     supabase.from('inventory_locations').select('id,is_active').eq('account_id', accountId),
-    supabase.from('operational_people').select('id,account_id,name,code,is_active,notes,created_at,updated_at,archived_at,operational_person_branches(branch_id,is_active,branches(name))').eq('account_id', accountId).order('name'),
+    supabase.from('operational_people').select('id,account_id,name,code,is_active,notes,created_at,updated_at,archived_at,operational_person_branches(branch_id,is_active,can_record_counter,branches(name))').eq('account_id', accountId).order('name'),
     supabase.from('manufacturers').select('id,account_id,code,name,website,notes,is_active,created_at,updated_at,archived_at').or(`account_id.is.null,account_id.eq.${accountId}`).order('name'),
     supabase.from('settings_change_events').select('id,action,target_type,actor_name_snapshot,created_at').eq('account_id', accountId).order('created_at', { ascending: false }).limit(8),
   ])
@@ -98,9 +98,9 @@ export async function resetManagedMemberPassword({ accountId, member, password, 
   return data
 }
 
-export async function updateOperationalPersonBranches({ accountId, personId, branchIds, clientRequestId }) {
+export async function updateOperationalPersonBranches({ accountId, personId, branchIds, counterBranchIds = [], clientRequestId }) {
   const { data, error } = await supabase.rpc('manage_operational_person_branches', {
-    target_account_id: accountId, target_person_id: personId, target_branch_ids: branchIds,
+    target_account_id: accountId, target_person_id: personId, target_branch_ids: branchIds, target_counter_branch_ids: counterBranchIds,
     target_client_request_id: clientRequestId,
   })
   if (error) throw operationalError(error, { operation: 'settings.operational-person.branches', accountId, clientRequestId }, 'PIC Branch assignments could not be saved.')
