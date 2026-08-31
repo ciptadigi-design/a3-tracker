@@ -25,11 +25,14 @@ export function MachineComponentDialog({
   const [error, setError] = useState(null);
   const [busy, setBusy] = useState(false);
   const [search, setSearch] = useState("");
+  const [catalogOpen, setCatalogOpen] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(0);
   const visibleComponents = components
     .filter((item) => item.is_active)
     .filter((item) => `${item.name} ${item.code}`.toLowerCase().includes(search.trim().toLowerCase()));
   const standardSlot = profiles.find((profile) => profile.is_active && profile.machine_model_id === machine.machine_model_id && profile.slot_code?.trim().toUpperCase() === value.slotCode.trim().toUpperCase());
   const normalizedSlot = value.slotCode.trim().toUpperCase();
+  const selectedComponent = components.find((item) => item.id === value.componentId);
   const existingAssignment = existingAssignments.find((item) => item.assignment_status !== 'retired' && item.slot_code?.trim().toUpperCase() === normalizedSlot);
   const excludedSlot = exclusions.find((item) => item.slot_code?.trim().toUpperCase() === normalizedSlot);
   const change = (field, next) =>
@@ -56,6 +59,12 @@ export function MachineComponentDialog({
     } finally {
       setBusy(false);
     }
+  }
+  function selectCatalogComponent(component) {
+    setValue((current) => ({ ...current, componentId: component.id, slotCode: current.slotCode || component.code || "", trackingMethod: component.default_tracking_method || current.trackingMethod }));
+    setSearch("");
+    setCatalogOpen(false);
+    setActiveIndex(0);
   }
   return (
     <BlockingDialog
@@ -91,35 +100,35 @@ export function MachineComponentDialog({
       <form className="machine-form" onSubmit={submit}>
         <div className="machine-form-body">
           <div className="form-grid">
-            <label className="form-field form-field-wide">
-              <span>Select a component from Component Catalog *</span>
-              <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search component name or code…" aria-label="Search Component Catalog" />
-              <select
-                data-dialog-initial-focus
-                value={value.componentId}
-                onChange={(event) => {
-                  const component = components.find(
-                    (item) => item.id === event.target.value,
-                  );
-                  setValue((current) => ({
-                    ...current,
-                    componentId: event.target.value,
-                    slotCode: current.slotCode || component?.code || "",
-                    trackingMethod:
-                      component?.default_tracking_method ||
-                      current.trackingMethod,
-                  }));
-                }}
-              >
-                <option value="">Choose component</option>
-                {visibleComponents.map((item) => (
-                    <option key={item.id} value={item.id}>
-                      {item.name} · {item.code}
-                    </option>
-                ))}
-              </select>
-              {!visibleComponents.length && <button type="button" className="secondary-button catalog-create-inline" onClick={() => onCreateNewComponent?.(value)} disabled={busy}>+ Create New Component</button>}
-              {visibleComponents.length > 0 && !value.componentId && <small className="field-hint">Search by component name or code, then choose an existing Catalog item.</small>}
+            <label className="form-field form-field-wide catalog-combobox-field">
+              <span id="machine-component-catalog-label">Component Catalog *</span>
+              <div className="catalog-combobox">
+                <input
+                  data-dialog-initial-focus
+                  role="combobox"
+                  aria-label="Component Catalog"
+                  aria-labelledby="machine-component-catalog-label"
+                  aria-expanded={catalogOpen}
+                  aria-controls="machine-component-catalog-options"
+                  aria-autocomplete="list"
+                  aria-activedescendant={catalogOpen && visibleComponents[activeIndex] ? `catalog-option-${visibleComponents[activeIndex].id}` : undefined}
+                  value={catalogOpen ? search : selectedComponent ? `${selectedComponent.name} · ${selectedComponent.code}` : search}
+                  placeholder="Search or choose component…"
+                  onFocus={() => setCatalogOpen(true)}
+                  onChange={(event) => { setSearch(event.target.value); setCatalogOpen(true); setActiveIndex(0); if (selectedComponent) setValue((current) => ({ ...current, componentId: "" })); }}
+                  onKeyDown={(event) => {
+                    if (event.key === "ArrowDown") { event.preventDefault(); setCatalogOpen(true); setActiveIndex((current) => Math.min(current + 1, Math.max(visibleComponents.length - 1, 0))); }
+                    else if (event.key === "ArrowUp") { event.preventDefault(); setActiveIndex((current) => Math.max(current - 1, 0)); }
+                    else if (event.key === "Enter" && catalogOpen && visibleComponents[activeIndex]) { event.preventDefault(); selectCatalogComponent(visibleComponents[activeIndex]); }
+                    else if (event.key === "Escape") { setCatalogOpen(false); }
+                  }}
+                />
+                {catalogOpen && <div id="machine-component-catalog-options" className="catalog-combobox-options" role="listbox">
+                  {visibleComponents.map((item, index) => <button id={`catalog-option-${item.id}`} className={index === activeIndex ? "catalog-combobox-option active" : "catalog-combobox-option"} role="option" aria-selected={item.id === value.componentId} type="button" key={item.id} onMouseDown={(event) => event.preventDefault()} onClick={() => selectCatalogComponent(item)}><strong>{item.name}</strong><code>{item.code}</code></button>)}
+                  {!visibleComponents.length && <div className="catalog-combobox-empty" role="status"><span>No matching component found.</span><button type="button" className="secondary-button catalog-create-inline" onMouseDown={(event) => event.preventDefault()} onClick={() => onCreateNewComponent?.(value)} disabled={busy}>+ Create New Component</button></div>}
+                </div>}
+              </div>
+              {!selectedComponent && !catalogOpen && <small className="field-hint">Select an existing Component Catalog item. Machine-specific components apply only to this physical machine.</small>}
             </label>
             <label className="form-field">
               <span>Slot code *</span>

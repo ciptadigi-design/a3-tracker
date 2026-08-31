@@ -59,6 +59,30 @@ test("machine-specific add uses BlockingDialog with accessible dismissal and bus
   assert.match(dialog, /Standard components belong in Model Profiles/);
 });
 
+test("machine-specific add uses one searchable Catalog combobox", () => {
+  assert.match(dialog, /role="combobox"/);
+  assert.match(dialog, /aria-controls="machine-component-catalog-options"/);
+  assert.match(dialog, /Search or choose component/);
+  assert.match(dialog, /role="listbox"/);
+  assert.match(dialog, /No matching component found\./);
+  assert.match(dialog, /Create New Component/);
+  assert.doesNotMatch(dialog, /<option value="">Choose component<\/option>/);
+  assert.doesNotMatch(dialog, /Search component name or code/);
+});
+
+test("Catalog combobox preserves explicit creation and supported tracking choices", () => {
+  assert.match(dialog, /onKeyDown/);
+  assert.match(dialog, /ArrowDown/);
+  assert.match(dialog, /ArrowUp/);
+  assert.match(dialog, /event\.key === "Enter"/);
+  assert.match(dialog, /event\.key === "Escape"/);
+  assert.match(dialog, /Consumption based \(Coming soon\)/);
+  assert.match(dialog, /Inspection based \(Coming soon\)/);
+  assert.match(dialog, /value="consumption_based" disabled/);
+  assert.match(dialog, /value="inspection_based" disabled/);
+  assert.match(dialog, /onCreateNewComponent\?\.\(value\)/);
+});
+
 test("zero configuration state does not imply fabricated lifecycle", () => {
   assert.match(page, /No components configured for this machine/);
   assert.match(page, /No lifecycle or inventory movement was fabricated/);

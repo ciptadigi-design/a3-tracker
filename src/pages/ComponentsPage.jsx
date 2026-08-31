@@ -181,6 +181,12 @@ export function ComponentsPage() {
     return saved
   }
 
+  function closeComponentDialog() {
+    const returningToMachine = Boolean(machineDraft && !editingComponent)
+    close()
+    if (returningToMachine) setTimeout(() => open('machine-component-add'), 0)
+  }
+
   async function savedProfile(values) {
     await saveProfile({ accountId: account.id, modelId: values.machineModelId, profile: editingProfile, values })
     setView((current) => ({ ...current, modelId: values.machineModelId }))
@@ -359,7 +365,7 @@ export function ComponentsPage() {
       {loading && <div className="machine-loading-state"><RefreshCcw className="spin" size={24} /><strong>Loading component intelligence…</strong></div>}
     </section>
 
-    {canManage && (workflow.type === 'component-create' || (workflow.type === 'component-edit' && editingComponent)) && <ComponentDialog account={account} component={editingComponent} manufacturers={data.manufacturers} onClose={close} onSave={savedComponent} />}
+    {canManage && (workflow.type === 'component-create' || (workflow.type === 'component-edit' && editingComponent)) && <ComponentDialog account={account} component={editingComponent} manufacturers={data.manufacturers} onClose={closeComponentDialog} onSave={savedComponent} />}
     {canManage && selectedModel && (workflow.type === 'profile-create' || (workflow.type === 'profile-edit' && editingProfile) || (workflow.type === 'profile-assign' && assigningComponent)) && <ProfileDialog account={account} model={profileModel} models={data.models} profile={editingProfile} components={data.components} initialComponent={workflow.type === 'profile-assign' ? assigningComponent : null} draftEntityId={workflow.type === 'profile-assign' ? `assign-${assigningComponent.id}` : undefined} onClose={close} onSave={savedProfile} />}
     {canManage && workflow.type === 'machine-component-add' && selectedMachine && <MachineComponentDialog machine={selectedMachine} components={data.components} profiles={data.profiles} existingAssignments={scopedOperational.lifecycles.filter((row) => row.machine_id === selectedMachine.id)} exclusions={scopedOperational.exclusions.filter((row) => row.machine_id === selectedMachine.id)} initialValue={machineDraft} onCreateNewComponent={(draft) => { setMachineDraft(draft); close(); open('component-create') }} onClose={() => { setMachineDraft(null); close() }} onSave={async (values) => { await savedMachineComponent(values); setMachineDraft(null) }} />}
     {canInitialize && workflow.type === 'lifecycle-initialize' && initializingLifecycle && lifecycleMachine && <InitializeLifecycleDialog account={account} machine={lifecycleMachine} lifecycle={initializingLifecycle} onClose={close} onInitialize={initializeLifecycle} />}
