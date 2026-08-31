@@ -26,7 +26,7 @@ class ComponentProfileLifecycleParityTest extends TestCase
 {
     use RefreshDatabase;
 
-    private function graph(): array
+    private function graph(bool $withProfile = true): array
     {
         $a = Account::create(['code' => 'CMP', 'name' => 'Components']);
         $b = Branch::create(['account_id' => $a->id, 'code' => 'MAIN', 'name' => 'Main']);
@@ -34,19 +34,30 @@ class ComponentProfileLifecycleParityTest extends TestCase
         $c1070 = MachineModel::create(['manufacturer_id' => $man->id, 'model_code' => 'C1070', 'name' => 'C1070']);
         $xerox = MachineModel::create(['manufacturer_id' => $man->id, 'model_code' => 'VERSANT', 'name' => 'Versant']);
         $drum = ComponentCatalog::create(['code' => 'DRUM', 'name' => 'Drum']);
-        $profile = ModelProfile::create(['machine_model_id' => $c1070->id, 'name' => 'C1070 profile']);
-        foreach (['DRUM-C', 'DRUM-M', 'DRUM-Y', 'DRUM-K'] as $i => $slot) {
-            ModelProfileSlot::create(['profile_id' => $profile->id, 'component_id' => $drum->id, 'slot_code' => $slot, 'display_order' => $i]);
-        }
-        for ($i = 4; $i < 28; $i++) {
-            $part = ComponentCatalog::create(['code' => 'P'.$i, 'name' => 'Part '.$i]);
-            ModelProfileSlot::create(['profile_id' => $profile->id, 'component_id' => $part->id, 'slot_code' => 'S'.$i, 'display_order' => $i]);
+        $profile = null;
+        if ($withProfile) {
+            $profile = ModelProfile::create(['machine_model_id' => $c1070->id, 'name' => 'C1070 profile']);
+            foreach (['DRUM-C', 'DRUM-M', 'DRUM-Y', 'DRUM-K'] as $i => $slot) {
+                ModelProfileSlot::create(['profile_id' => $profile->id, 'component_id' => $drum->id, 'slot_code' => $slot, 'display_order' => $i]);
+            }
+            for ($i = 4; $i < 28; $i++) {
+                $part = ComponentCatalog::create(['code' => 'P'.$i, 'name' => 'Part '.$i]);
+                ModelProfileSlot::create(['profile_id' => $profile->id, 'component_id' => $part->id, 'slot_code' => 'S'.$i, 'display_order' => $i]);
+            }
         }
         $aMachine = Machine::create(['account_id' => $a->id, 'branch_id' => $b->id, 'machine_model_id' => $c1070->id, 'machine_code' => 'A', 'display_name' => 'A']);
         $bMachine = Machine::create(['account_id' => $a->id, 'branch_id' => $b->id, 'machine_model_id' => $c1070->id, 'machine_code' => 'B', 'display_name' => 'B']);
         $xMachine = Machine::create(['account_id' => $a->id, 'branch_id' => $b->id, 'machine_model_id' => $xerox->id, 'machine_code' => 'X', 'display_name' => 'X']);
 
         return compact('a', 'profile', 'drum', 'aMachine', 'bMachine', 'xMachine');
+    }
+
+    private function createProfileSlots(array &$f, array $slots = ['DRUM-C']): void
+    {
+        $f['profile'] = ModelProfile::create(['machine_model_id' => $f['aMachine']->machine_model_id, 'name' => 'C1070 profile']);
+        foreach ($slots as $i => $slot) {
+            ModelProfileSlot::create(['profile_id' => $f['profile']->id, 'component_id' => $f['drum']->id, 'slot_code' => $slot, 'display_order' => $i]);
+        }
     }
 
     public function test_model_specific_repeated_slots_and_idempotent_sync(): void
@@ -151,10 +162,11 @@ class ComponentProfileLifecycleParityTest extends TestCase
 
     public function test_manual_reconciliation_preserves_identity_and_lifecycle_history(): void
     {
-        $f = $this->graph();
+        $f = $this->graph(false);
         $service = app(ComponentConfigurationService::class);
-        $slot = ModelProfileSlot::where('slot_code', 'DRUM-C')->first();
         $manual = $service->addManual($f['aMachine'], ['component_id' => $f['drum']->id, 'slot_code' => 'DRUM-C', 'tracking_method' => 'counter_based', 'baseline_expected_clicks' => 100]);
+        $this->createProfileSlots($f);
+        $slot = ModelProfileSlot::where('slot_code', 'DRUM-C')->first();
         $life = $service->initialize($manual, ['started_at' => '2026-01-01 00:00:00', 'evidence_level' => 'A', 'source' => 'manual', 'notes' => 'observed', 'client_request_id' => (string) Str::uuid()]);
         $before = $life->fresh()->toArray();
         $id = $manual->id;
@@ -171,9 +183,11 @@ class ComponentProfileLifecycleParityTest extends TestCase
 
     public function test_reconciliation_rejects_wrong_slot_model_component_exclusion_and_conflict(): void
     {
-        $f = $this->graph();
+        $f = $this->graph(false);
         $service = app(ComponentConfigurationService::class);
         $manual = $service->addManual($f['aMachine'], ['component_id' => $f['drum']->id, 'slot_code' => 'DRUM-C', 'tracking_method' => 'counter_based', 'baseline_expected_clicks' => 100]);
+        $other = $service->addManual($f['bMachine'], ['component_id' => $f['drum']->id, 'slot_code' => 'DRUM-C', 'tracking_method' => 'counter_based', 'baseline_expected_clicks' => 100]);
+        $this->createProfileSlots($f, ['DRUM-C', 'DRUM-M', 'DRUM-Y', 'DRUM-K']);
         $slots = ModelProfileSlot::where('profile_id', $f['profile']->id)->get()->keyBy('slot_code');
         foreach (['DRUM-M', 'DRUM-Y', 'DRUM-K'] as $wrong) {
             try {
@@ -190,15 +204,15 @@ class ComponentProfileLifecycleParityTest extends TestCase
         } catch (ConflictHttpException) {
             $this->assertTrue(true);
         }
-        $other = $service->addManual($f['bMachine'], ['component_id' => $f['drum']->id, 'slot_code' => 'DRUM-C', 'tracking_method' => 'counter_based', 'baseline_expected_clicks' => 100]);
         $this->assertNotSame($manual->id, $other->id);
     }
 
     public function test_ordinary_sync_does_not_reconcile_manual_assignment(): void
     {
-        $f = $this->graph();
+        $f = $this->graph(false);
         $service = app(ComponentConfigurationService::class);
         $manual = $service->addManual($f['aMachine'], ['component_id' => $f['drum']->id, 'slot_code' => 'DRUM-C', 'tracking_method' => 'counter_based', 'baseline_expected_clicks' => 100]);
+        $this->createProfileSlots($f);
         $id = (string) $manual->id;
         $service->sync($f['aMachine']);
         $fresh = $manual->fresh();
@@ -210,10 +224,11 @@ class ComponentProfileLifecycleParityTest extends TestCase
 
     public function test_reconciliation_preserves_replacement_history_join_and_cost_evidence(): void
     {
-        $f = $this->graph();
+        $f = $this->graph(false);
         $service = app(ComponentConfigurationService::class);
-        $slot = ModelProfileSlot::where('slot_code', 'DRUM-C')->first();
         $manual = $service->addManual($f['aMachine'], ['component_id' => $f['drum']->id, 'slot_code' => 'DRUM-C', 'tracking_method' => 'counter_based', 'baseline_expected_clicks' => 100]);
+        $this->createProfileSlots($f);
+        $slot = ModelProfileSlot::where('slot_code', 'DRUM-C')->first();
         $life = $service->initialize($manual, ['client_request_id' => (string) Str::uuid()]);
         $replacementLifecycle = ComponentLifecycle::create(['machine_component_id' => $manual->id, 'status' => 'unknown']);
         $replacement = ComponentReplacement::create(['account_id' => $f['a']->id, 'machine_component_id' => $manual->id, 'new_lifecycle_id' => $replacementLifecycle->id, 'inventory_source' => 'external_untracked', 'quantity' => 1, 'consumed_cost' => 123.45, 'replaced_at' => now(), 'external_reason' => 'historical evidence', 'client_request_id' => (string) Str::uuid()]);

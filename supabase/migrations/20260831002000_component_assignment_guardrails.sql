@@ -11,11 +11,18 @@ begin
   if target_client_request_id is null or normalized_slot='' then raise exception 'client request id and slot code are required' using errcode='22023'; end if;
   perform pg_advisory_xact_lock(hashtextextended(target_account_id::text||':component-assignment',0));
   select * into existing from public.machine_component_assignments where account_id=target_account_id and creation_request_id=target_client_request_id;
-  if found then return existing; end if;
+  if found then
+    if existing.machine_id=target_machine_id and existing.component_id=target_component_id
+      and lower(btrim(existing.slot_code))=lower(normalized_slot)
+      and existing.tracking_method=target_tracking_method
+      and existing.baseline_expected_clicks is not distinct from target_baseline_expected_clicks
+      and existing.notes is not distinct from nullif(btrim(target_notes),'') then return existing; end if;
+    raise exception 'client request id was already used with different assignment data' using errcode='23505';
+  end if;
   select * into machine_record from public.machines where id=target_machine_id and account_id=target_account_id and is_active for update;
   if not found then raise exception '[INVALID_MACHINE_MODEL] active machine not found for this account' using errcode='P0002'; end if;
   select * into catalog_record from public.components where id=target_component_id and is_active and (account_id is null or account_id=target_account_id);
-  if not found then raise exception '[COMPONENT_NOT_FOUND] active Component Catalog entry not found for this account' using errcode='P0002'; end if;
+  if not found then raise exception '[COMPONENT_NOT_FOUND] active Component Catalog entry not found for this account' using errcode='23514'; end if;
   select profile.* into standard_slot from public.machine_model_components profile
     join public.machine_models model on model.id=profile.machine_model_id
     where profile.machine_model_id=machine_record.machine_model_id and profile.is_active

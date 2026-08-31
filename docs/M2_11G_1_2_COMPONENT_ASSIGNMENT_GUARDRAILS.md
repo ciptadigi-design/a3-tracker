@@ -10,4 +10,4 @@ Ordinary Sync remains non-reconciling. The explicit **Reconcile with Model Profi
 
 The Detailed Machine Components cards keep Initialize Lifecycle and Remove from Machine in a shared, bottom-aligned horizontal action row at normal widths, with consistent button typography/dimensions. Narrow mobile layouts may wrap them responsively; lifecycle and reconciliation capability rules are unchanged.
 
-Validation performed for this patch: focused component UX tests, production build, Laravel component parity tests (legacy reconciliation fixtures that intentionally predate this forward-only create guard may require fixture sequencing updates), PHP formatting/syntax review, and `git diff --check`. Supabase pgTAP/reference CI must apply the new migration before hosted/reference execution; no hosted database was mutated locally.
+Validation performed for this patch: focused component UX tests, production build, full Laravel suite, chronologically-sequenced reconciliation fixtures, selected Supabase pgTAP/reference tests, PHP formatting, and `git diff --check`. No hosted database was mutated locally.
