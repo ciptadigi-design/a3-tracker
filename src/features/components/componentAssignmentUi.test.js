@@ -94,5 +94,7 @@ test("shared compact actions preserve content width and responsive wrapping", ()
   assert.match(styles, /\.compact-action \{[^}]*width: fit-content;[^}]*min-height: 32px/);
   assert.match(styles, /\.compact-icon-action \{ width: 32px; padding: 0; \}/);
   assert.match(styles, /\.compact-catalog-actions \{[^}]*flex-wrap: wrap/);
-  assert.match(styles, /\.machine-component-toolbar \{[^}]*flex-wrap: wrap/);
+  assert.match(styles, /\.page-header \.components-page-actions/);
+  assert.equal((page.match(/Sync Model Profile/g) ?? []).length, 1);
+  assert.equal((page.match(/Add Machine-Specific Component/g) ?? []).length, 1);
 });

@@ -33,7 +33,7 @@ test('Components uses one responsive shell and context-row grammar for every tab
 test('mobile Components actions, tabs, and contextual controls stay compact and flexible', () => {
   assert.match(styles, /\.page-header \.components-page-actions \{[^}]*flex-wrap: nowrap/)
   assert.match(styles, /\.components-shell-header > \.machine-view-tabs button \{[^}]*flex: 1 1 0/)
-  assert.match(styles, /\.machine-component-toolbar \{[^}]*grid-template-columns: repeat\(2,minmax\(0,1fr\)\)/)
+  assert.match(styles, /\.page-header \.components-page-actions/)
   assert.match(styles, /@media \(max-width: 430px\) \{\s*\.components-shell-header \{ grid-template-columns: minmax\(0,1fr\); \}/)
 })
 
@@ -45,6 +45,14 @@ test('component headers stay operationally compact and detailed lifecycle action
   assert.match(styles, /\.unknown-lifecycle-body \.row-actions \{[^}]*justify-content: space-between/)
   assert.match(page, /initialize-lifecycle-button/)
   assert.match(page, /Remove from Machine/)
+})
+
+test('Machine Component actions render exactly once in the canonical page header', () => {
+  assert.equal((page.match(/Sync Model Profile/g) ?? []).length, 1)
+  assert.equal((page.match(/Add Machine-Specific Component/g) ?? []).length, 1)
+  const panel = page.slice(page.indexOf('function MachineComponentsPanel'), page.indexOf('function ConfirmDialog'))
+  assert.doesNotMatch(panel, /Sync Model Profile/)
+  assert.doesNotMatch(panel, /Add Machine-Specific Component/)
 })
 
 test('persistent-draft dialogs share the accessible editable footer contract', () => {
