@@ -18,7 +18,7 @@ grant execute on function public.is_counter_operator_for_branch(uuid,uuid,uuid) 
 create or replace function public.validate_counter_operator_capability()
 returns trigger language plpgsql security definer set search_path='' as $$
 begin
-  if new.source <> 'manual' then return new; end if;
+  if new.source <> 'manual' or new.operator_person_id is null then return new; end if;
   if new.operator_person_id is null or not public.is_counter_operator_for_branch(new.account_id, new.operator_person_id, (select branch_id from public.machines where id=new.machine_id and account_id=new.account_id)) then
     raise exception 'counter operator is not eligible for this branch' using errcode='42501';
   end if;
