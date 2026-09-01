@@ -11,9 +11,9 @@ class ComponentLifecycle extends Model
 
     protected $keyType = 'string';
 
-    protected $fillable = ['machine_component_id', 'started_at', 'ended_at', 'status', 'evidence_level', 'source', 'notes', 'client_request_id', 'active_key'];
+    protected $fillable = ['machine_component_id', 'installed_counter', 'removed_counter', 'actual_usage', 'started_at', 'ended_at', 'status', 'evidence_level', 'source', 'notes', 'client_request_id', 'active_key'];
 
-    protected $casts = ['started_at' => 'datetime', 'ended_at' => 'datetime'];
+    protected $casts = ['installed_counter' => 'decimal:4', 'removed_counter' => 'decimal:4', 'actual_usage' => 'decimal:4', 'started_at' => 'datetime', 'ended_at' => 'datetime'];
 
     protected static function booted()
     {

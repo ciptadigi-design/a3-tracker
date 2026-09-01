@@ -1,0 +1,1367 @@
+{
+  "checkpoint": "2B-8",
+  "checkpoint_timestamp": "2026-09-01T10:08:10.937Z",
+  "app_sha": "b69c7e125f083f52dc519f4a3cc3d401ba5a64b0",
+  "source": {
+    "path": "/var/folders/44/bzxc_f7n7r72ht1vgnh43fxm0000gn/T//a3-m212e-source.8SIKM9/final-frozen-source.json",
+    "source_project": "wtslqxjwjqyjgcapfrrz",
+    "captured_at": "2026-09-01T06:22:14.631Z",
+    "counts": {
+      "click_history": 185,
+      "part_replacements": 70,
+      "error_logs": 91,
+      "inventory_parts": 22,
+      "part_purchases": 161
+    },
+    "total": 529,
+    "fingerprints": {
+      "click_history": "a577d071b32150c7ad13fd4b70c0fe6d9c4d3a7be08c27ad3efb8679cdeca537",
+      "part_replacements": "2dc08b4a2d2f6dcaf354732c44823485e895da922aa9583d7b5a2c8f4a2e207e",
+      "error_logs": "65d17c0c54b712ee04c5848e83147a2f892c1face3a48504a19e3d2a1e4cf35b",
+      "inventory_parts": "ffcd9463f006fc531987f7b3a17c0f1d3d9dd58a2c47ffef21252ef3347ca632",
+      "part_purchases": "6354204d285987b56764268ff22a06480003886528470401fdfe19766d7ee306"
+    },
+    "canonical_fingerprints": {
+      "click_history": "a577d071b32150c7ad13fd4b70c0fe6d9c4d3a7be08c27ad3efb8679cdeca537",
+      "part_replacements": "2dc08b4a2d2f6dcaf354732c44823485e895da922aa9583d7b5a2c8f4a2e207e",
+      "error_logs": "65d17c0c54b712ee04c5848e83147a2f892c1face3a48504a19e3d2a1e4cf35b",
+      "inventory_parts": "ffcd9463f006fc531987f7b3a17c0f1d3d9dd58a2c47ffef21252ef3347ca632",
+      "part_purchases": "6354204d285987b56764268ff22a06480003886528470401fdfe19766d7ee306"
+    },
+    "aggregate_fingerprint": "c40886ecc8b1fac40d6e6e4d331414c00e624a40759d8af236d676be023661e1"
+  },
+  "production": {
+    "app_sha": "b69c7e125f083f52dc519f4a3cc3d401ba5a64b0",
+    "database": "u777904340_a3production",
+    "master_user_id": "c83e9f52-9a34-49eb-b99a-de8dcb7b7431",
+    "account_id": "4b26a0ee-e06f-4563-a6cc-9dfc7fbc0e0c",
+    "branch_id": "94051ab9-235c-455f-b7ce-63f255cda3f6",
+    "machine_model_id": "f3b91ad2-7ecc-4d0c-a6ce-648c08691dab",
+    "machine_id": "708e199e-7f77-4219-b278-37d0b94821d4",
+    "account": {
+      "name": "Cipta Grafika"
+    },
+    "branch": {
+      "name": "Tuparev",
+      "account_id": "4b26a0ee-e06f-4563-a6cc-9dfc7fbc0e0c"
+    },
+    "machine": {
+      "code": "CG-TUP-A3-01",
+      "branch_id": "94051ab9-235c-455f-b7ce-63f255cda3f6",
+      "machine_model_id": "f3b91ad2-7ecc-4d0c-a6ce-648c08691dab"
+    }
+  },
+  "disposition": {
+    "IMPORT": 480,
+    "MERGE": 0,
+    "SKIP_DUPLICATE": 2,
+    "ARCHIVE_ONLY": 45,
+    "APPROVED_EXCLUDE": 2,
+    "MANUAL_REVIEW": 0
+  },
+  "domain": {
+    "planned_counter_readings": 183,
+    "latest_counter": 1441597,
+    "planned_component_lifecycles": 47,
+    "planned_purchases": 161,
+    "planned_purchase_units": 208,
+    "planned_purchase_total_idr": 371029998,
+    "planned_operational_incidents": 89,
+    "legacy_receipts": 0,
+    "legacy_inventory_movements": 0,
+    "legacy_fifo_layers": 0,
+    "fake_stock": 0,
+    "unknown_cost_coerced_to_zero": 0,
+    "graha_legacy_rows": 0,
+    "unresolved_mappings": 0
+  },
+  "new_frozen_counters": [
+    {
+      "source_id": "9900bcd0-3754-4e69-9e90-6c84dc2f8b2d",
+      "target_id": "9a3e90b4-9804-50d3-a530-90e1bd9422ab",
+      "date_for": "2026-08-29",
+      "reading_value": 1440494,
+      "observed_at": "2026-08-29T01:16:45.000Z",
+      "raw_operator": "ojan",
+      "operator_person_id": "07d891dd-42ba-508c-b33f-8b9f38ce0a27",
+      "evidence": "MIGRATION_SYNTHETIC_TIME"
+    },
+    {
+      "source_id": "d6f465f3-341d-4230-ae09-e2a87d084e11",
+      "target_id": "c5e940da-9655-585e-9500-1a4295f83c81",
+      "date_for": "2026-08-30",
+      "reading_value": 1440859,
+      "observed_at": "2026-08-30T10:16:12.000Z",
+      "raw_operator": "ojan",
+      "operator_person_id": "07d891dd-42ba-508c-b33f-8b9f38ce0a27",
+      "evidence": "SOURCE_RECORDED_LOCAL_TIME"
+    },
+    {
+      "source_id": "96cddc6e-ac52-4a54-a839-1a9e47fa28e1",
+      "target_id": "852bd03c-70a1-5e2d-9c12-8d41c58dea80",
+      "date_for": "2026-08-31",
+      "reading_value": 1441597,
+      "observed_at": "2026-08-31T13:01:26.000Z",
+      "raw_operator": "ijal",
+      "operator_person_id": null,
+      "evidence": "SOURCE_RECORDED_LOCAL_TIME"
+    }
+  ],
+  "ijal": {
+    "source_rows": 1,
+    "preserved_as_source_evidence": true,
+    "operational_person_id": null,
+    "auth_user_created": false,
+    "invented_mapping": false,
+    "graha_relationship": false,
+    "treatment": "ARCHIVE_TEXT_ONLY"
+  },
+  "future_target_masters": {
+    "classification": "DETERMINISTIC_PLANNED_CREATE_2B9_NOT_CREATED_2B8",
+    "operational_people": [
+      {
+        "id": "07d891dd-42ba-508c-b33f-8b9f38ce0a27",
+        "name": "Akmal Fauzan",
+        "state": "PLANNED_CREATE_2B9",
+        "linked_auth_user_id": null
+      },
+      {
+        "id": "5006f2bb-a2b5-510d-a17d-09b141e91db4",
+        "name": "Bigel",
+        "state": "PLANNED_CREATE_2B9",
+        "linked_auth_user_id": null
+      },
+      {
+        "id": "f06d9c45-6598-5bee-920f-9e27778bc3bc",
+        "name": "Bulan",
+        "state": "PLANNED_CREATE_2B9",
+        "linked_auth_user_id": null
+      },
+      {
+        "id": "0acfc6b0-979a-59e4-8237-22f09e30aa57",
+        "name": "Daniel",
+        "state": "PLANNED_CREATE_2B9",
+        "linked_auth_user_id": null
+      },
+      {
+        "id": "4451746f-bcdc-5e28-b4be-d7ce2126c1f3",
+        "name": "Dhea",
+        "state": "PLANNED_CREATE_2B9",
+        "linked_auth_user_id": null
+      },
+      {
+        "id": "c7945220-f448-5108-9643-914fe8a6fc3b",
+        "name": "Epri",
+        "state": "PLANNED_CREATE_2B9",
+        "linked_auth_user_id": null
+      },
+      {
+        "id": "bee084ee-b15f-5875-b3af-9ce5011ca0a0",
+        "name": "Lydia",
+        "state": "PLANNED_CREATE_2B9",
+        "linked_auth_user_id": null
+      },
+      {
+        "id": "daab19ea-6455-51a1-befa-66a093591716",
+        "name": "Marsya",
+        "state": "PLANNED_CREATE_2B9",
+        "linked_auth_user_id": null
+      },
+      {
+        "id": "5a27e6c0-10d8-591f-8def-de1b15934961",
+        "name": "Muhammad Angga Nugraha",
+        "state": "PLANNED_CREATE_2B9",
+        "linked_auth_user_id": null
+      },
+      {
+        "id": "b8b337e5-3430-5ed0-a713-86b1f99801e9",
+        "name": "Muhammad Daffa Ramadhiansyah",
+        "state": "PLANNED_CREATE_2B9",
+        "linked_auth_user_id": null
+      },
+      {
+        "id": "f58cf163-d340-5a83-9374-db9ce62a268a",
+        "name": "Nabilah",
+        "state": "PLANNED_CREATE_2B9",
+        "linked_auth_user_id": null
+      },
+      {
+        "id": "3e762371-0c0d-5896-9ea5-9979616abc2a",
+        "name": "Pinkan",
+        "state": "PLANNED_CREATE_2B9",
+        "linked_auth_user_id": null
+      },
+      {
+        "id": "54b8b357-826a-58e0-9336-0198a37c0a4e",
+        "name": "Ramdani",
+        "state": "PLANNED_CREATE_2B9",
+        "linked_auth_user_id": null
+      }
+    ],
+    "operational_person_branches": [
+      {
+        "id": "84919aeb-6ef9-5ac2-819b-346506caa9c3",
+        "person_id": "07d891dd-42ba-508c-b33f-8b9f38ce0a27",
+        "branch_id": "94051ab9-235c-455f-b7ce-63f255cda3f6",
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "affebe9e-dd87-513a-b782-7aa359227b29",
+        "person_id": "5006f2bb-a2b5-510d-a17d-09b141e91db4",
+        "branch_id": "94051ab9-235c-455f-b7ce-63f255cda3f6",
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "5eda0306-8232-55b5-877c-5f01becf28ed",
+        "person_id": "f06d9c45-6598-5bee-920f-9e27778bc3bc",
+        "branch_id": "94051ab9-235c-455f-b7ce-63f255cda3f6",
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "10cfafce-a2ba-537c-9557-de34a80798fd",
+        "person_id": "0acfc6b0-979a-59e4-8237-22f09e30aa57",
+        "branch_id": "94051ab9-235c-455f-b7ce-63f255cda3f6",
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "eebbe0b2-e201-5bda-a64c-0b87912a86be",
+        "person_id": "4451746f-bcdc-5e28-b4be-d7ce2126c1f3",
+        "branch_id": "94051ab9-235c-455f-b7ce-63f255cda3f6",
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "178240d6-46bf-5eff-b39f-21365db51f5c",
+        "person_id": "c7945220-f448-5108-9643-914fe8a6fc3b",
+        "branch_id": "94051ab9-235c-455f-b7ce-63f255cda3f6",
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "215b5f62-b247-51c6-ab92-3274690deeee",
+        "person_id": "bee084ee-b15f-5875-b3af-9ce5011ca0a0",
+        "branch_id": "94051ab9-235c-455f-b7ce-63f255cda3f6",
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "2124ca68-6c0f-5de6-9883-0a20803474d3",
+        "person_id": "daab19ea-6455-51a1-befa-66a093591716",
+        "branch_id": "94051ab9-235c-455f-b7ce-63f255cda3f6",
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "6b8e0a80-9930-5521-8a85-4f2b7d27cb81",
+        "person_id": "5a27e6c0-10d8-591f-8def-de1b15934961",
+        "branch_id": "94051ab9-235c-455f-b7ce-63f255cda3f6",
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "92d4d1d4-ad22-5b47-ad09-8e707e013c6b",
+        "person_id": "b8b337e5-3430-5ed0-a713-86b1f99801e9",
+        "branch_id": "94051ab9-235c-455f-b7ce-63f255cda3f6",
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "6618bf4b-e838-56e1-9c66-9d454b3298e2",
+        "person_id": "f58cf163-d340-5a83-9374-db9ce62a268a",
+        "branch_id": "94051ab9-235c-455f-b7ce-63f255cda3f6",
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "543bd5f6-fea1-5e06-b0b3-4ff02c9773c6",
+        "person_id": "3e762371-0c0d-5896-9ea5-9979616abc2a",
+        "branch_id": "94051ab9-235c-455f-b7ce-63f255cda3f6",
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "bc90bf1d-09a0-5b43-9e70-63a7df28af61",
+        "person_id": "54b8b357-826a-58e0-9336-0198a37c0a4e",
+        "branch_id": "94051ab9-235c-455f-b7ce-63f255cda3f6",
+        "state": "PLANNED_CREATE_2B9"
+      }
+    ],
+    "component_catalogs": [
+      {
+        "id": "b14a0c72-0f4f-51d7-8d3a-4c0553fbe7d8",
+        "code": "CHARGING_CORONA_C",
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "56ace062-3dcd-5e07-889b-89b0868cae53",
+        "code": "CHARGING_CORONA_K",
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "34cfb7c8-197d-540e-8c22-3de43f52054a",
+        "code": "CHARGING_CORONA_M",
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "926595e1-47a5-5d3e-b2d9-5596f2545865",
+        "code": "CHARGING_CORONA_Y",
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "b7da20d3-1b48-594d-936d-38cc137a0442",
+        "code": "CLEANING_BLADE",
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "fb781d10-544f-5dc4-a259-319f42b72af9",
+        "code": "CLEANING_UNIT",
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "a4e118da-c2f3-5fc3-b045-b68fb263ee35",
+        "code": "DEVELOPER_C",
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "1cb55494-acdc-56c5-9be9-f573321ed336",
+        "code": "DEVELOPER_K",
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "86932e5f-c201-537d-bf42-5ac3ad3720b4",
+        "code": "DEVELOPER_M",
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "fe5af98a-d321-5351-a454-37f17bf2e496",
+        "code": "DEVELOPER_Y",
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "f5e8835f-037b-5dcc-a6a9-50a28f665ad9",
+        "code": "DEVELOPING_UNIT_C",
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "43cdc9fc-c866-5fcd-afaf-6c7cbe84226f",
+        "code": "DEVELOPING_UNIT_K",
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "dd7c717a-d22f-5172-b5f7-d68eb46db215",
+        "code": "DEVELOPING_UNIT_M",
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "4bef9e41-c500-5b07-abb5-bc173630a2cc",
+        "code": "DEVELOPING_UNIT_Y",
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "96a04877-8797-57ea-8023-448df27aa246",
+        "code": "DRUM_C",
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "168ed0f5-9d00-5a64-8a3e-aca1a188af0b",
+        "code": "DRUM_K",
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "1a95bbbc-c843-5634-a130-6309ed851937",
+        "code": "DRUM_M",
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "0848d74d-6e0d-556a-a4cb-5cd04f928266",
+        "code": "DRUM_Y",
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "18621311-7b36-56ac-b470-1841a2d22c59",
+        "code": "FUSER_BELT",
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "5650affc-6bb1-572f-a28c-8fcd41cd18ab",
+        "code": "GEAR",
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "9d6e55b2-fa0e-53c6-b691-060cd16f1ddb",
+        "code": "IBT",
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "4a7105f2-147e-5c92-b7a0-585b3074c882",
+        "code": "LASER_UNIT",
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "3e46c520-0c1b-540b-a3d1-09b27bb24617",
+        "code": "ROLL_MESIN",
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "033e106e-77d3-5fe5-950e-72d4a41375da",
+        "code": "SENSOR",
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "c42fe878-ab48-5188-9d28-16e33cad0e46",
+        "code": "TONER_C",
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "9bb09fd5-ca96-5a49-ad1d-8b7b6204e38a",
+        "code": "TONER_K",
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "a4c7ff16-d0cd-5721-b250-5b71eba5781e",
+        "code": "TONER_M",
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "a642ca29-0cc1-5e84-965e-c68c9b920521",
+        "code": "TONER_Y",
+        "state": "PLANNED_CREATE_2B9"
+      }
+    ],
+    "model_profile": {
+      "id": "a89eca88-322f-51f0-9b4a-049f5e2a0f5b",
+      "machine_model_id": "f3b91ad2-7ecc-4d0c-a6ce-648c08691dab",
+      "name": "Legacy Approved C1070 Profile",
+      "state": "PLANNED_CREATE_2B9"
+    },
+    "model_profile_slots": [
+      {
+        "id": "bf8ceb7c-6766-5898-bd4d-7aa4f0e0ee1b",
+        "profile_id": "a89eca88-322f-51f0-9b4a-049f5e2a0f5b",
+        "component_id": "b14a0c72-0f4f-51d7-8d3a-4c0553fbe7d8",
+        "slot_code": "CHARGING_CORONA_C",
+        "display_order": 1,
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "5dc2c7e4-3a9b-56f1-8b7c-8eb129a94f71",
+        "profile_id": "a89eca88-322f-51f0-9b4a-049f5e2a0f5b",
+        "component_id": "56ace062-3dcd-5e07-889b-89b0868cae53",
+        "slot_code": "CHARGING_CORONA_K",
+        "display_order": 2,
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "3b92068b-db24-53ff-a28c-50fd7bd67aac",
+        "profile_id": "a89eca88-322f-51f0-9b4a-049f5e2a0f5b",
+        "component_id": "34cfb7c8-197d-540e-8c22-3de43f52054a",
+        "slot_code": "CHARGING_CORONA_M",
+        "display_order": 3,
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "9279779b-a17c-5099-911c-dee89a6c49f3",
+        "profile_id": "a89eca88-322f-51f0-9b4a-049f5e2a0f5b",
+        "component_id": "926595e1-47a5-5d3e-b2d9-5596f2545865",
+        "slot_code": "CHARGING_CORONA_Y",
+        "display_order": 4,
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "1298037e-20f7-5e52-85cf-d1519e8bdc42",
+        "profile_id": "a89eca88-322f-51f0-9b4a-049f5e2a0f5b",
+        "component_id": "b7da20d3-1b48-594d-936d-38cc137a0442",
+        "slot_code": "CLEANING_BLADE",
+        "display_order": 5,
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "768b4d40-3b7e-548e-a362-059429d8a219",
+        "profile_id": "a89eca88-322f-51f0-9b4a-049f5e2a0f5b",
+        "component_id": "fb781d10-544f-5dc4-a259-319f42b72af9",
+        "slot_code": "CLEANING_UNIT",
+        "display_order": 6,
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "ca9e6e38-9903-520e-9bdc-172bf3623274",
+        "profile_id": "a89eca88-322f-51f0-9b4a-049f5e2a0f5b",
+        "component_id": "a4e118da-c2f3-5fc3-b045-b68fb263ee35",
+        "slot_code": "DEVELOPER_C",
+        "display_order": 7,
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "2aad1ad6-9d96-5b2c-9de6-e3202ee1bea8",
+        "profile_id": "a89eca88-322f-51f0-9b4a-049f5e2a0f5b",
+        "component_id": "1cb55494-acdc-56c5-9be9-f573321ed336",
+        "slot_code": "DEVELOPER_K",
+        "display_order": 8,
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "a4627c1a-5d85-5802-8bee-7be2435a1551",
+        "profile_id": "a89eca88-322f-51f0-9b4a-049f5e2a0f5b",
+        "component_id": "86932e5f-c201-537d-bf42-5ac3ad3720b4",
+        "slot_code": "DEVELOPER_M",
+        "display_order": 9,
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "b593db9d-39bf-5bfa-8afd-2d4b29d9d502",
+        "profile_id": "a89eca88-322f-51f0-9b4a-049f5e2a0f5b",
+        "component_id": "fe5af98a-d321-5351-a454-37f17bf2e496",
+        "slot_code": "DEVELOPER_Y",
+        "display_order": 10,
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "fb7be3df-45e0-540e-b820-07700f4947d5",
+        "profile_id": "a89eca88-322f-51f0-9b4a-049f5e2a0f5b",
+        "component_id": "f5e8835f-037b-5dcc-a6a9-50a28f665ad9",
+        "slot_code": "DEVELOPING_UNIT_C",
+        "display_order": 11,
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "7ed94820-d201-5040-8915-9c7fac6b292d",
+        "profile_id": "a89eca88-322f-51f0-9b4a-049f5e2a0f5b",
+        "component_id": "43cdc9fc-c866-5fcd-afaf-6c7cbe84226f",
+        "slot_code": "DEVELOPING_UNIT_K",
+        "display_order": 12,
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "014126c2-2fe1-5736-9220-720826943035",
+        "profile_id": "a89eca88-322f-51f0-9b4a-049f5e2a0f5b",
+        "component_id": "dd7c717a-d22f-5172-b5f7-d68eb46db215",
+        "slot_code": "DEVELOPING_UNIT_M",
+        "display_order": 13,
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "825b40be-251a-58ad-8d11-8e6773c99d64",
+        "profile_id": "a89eca88-322f-51f0-9b4a-049f5e2a0f5b",
+        "component_id": "4bef9e41-c500-5b07-abb5-bc173630a2cc",
+        "slot_code": "DEVELOPING_UNIT_Y",
+        "display_order": 14,
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "4e544f7d-86bb-5e58-8d10-c8a9ef6a6223",
+        "profile_id": "a89eca88-322f-51f0-9b4a-049f5e2a0f5b",
+        "component_id": "96a04877-8797-57ea-8023-448df27aa246",
+        "slot_code": "DRUM_C",
+        "display_order": 15,
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "15d56292-4859-5c8d-bf21-71e7b2a7e034",
+        "profile_id": "a89eca88-322f-51f0-9b4a-049f5e2a0f5b",
+        "component_id": "168ed0f5-9d00-5a64-8a3e-aca1a188af0b",
+        "slot_code": "DRUM_K",
+        "display_order": 16,
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "81b1064b-f7ea-53ba-b0ad-1a6f9b05327f",
+        "profile_id": "a89eca88-322f-51f0-9b4a-049f5e2a0f5b",
+        "component_id": "1a95bbbc-c843-5634-a130-6309ed851937",
+        "slot_code": "DRUM_M",
+        "display_order": 17,
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "7664f483-0b0e-5762-b31b-f0b0387ec034",
+        "profile_id": "a89eca88-322f-51f0-9b4a-049f5e2a0f5b",
+        "component_id": "0848d74d-6e0d-556a-a4cb-5cd04f928266",
+        "slot_code": "DRUM_Y",
+        "display_order": 18,
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "2e380348-dda1-5755-90d3-79ffc5db661e",
+        "profile_id": "a89eca88-322f-51f0-9b4a-049f5e2a0f5b",
+        "component_id": "18621311-7b36-56ac-b470-1841a2d22c59",
+        "slot_code": "FUSER_BELT",
+        "display_order": 19,
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "21a36881-fac4-5b7f-9c6b-775f89059053",
+        "profile_id": "a89eca88-322f-51f0-9b4a-049f5e2a0f5b",
+        "component_id": "5650affc-6bb1-572f-a28c-8fcd41cd18ab",
+        "slot_code": "GEAR",
+        "display_order": 20,
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "f3b077d5-429b-5bc8-825b-6c661c92b52e",
+        "profile_id": "a89eca88-322f-51f0-9b4a-049f5e2a0f5b",
+        "component_id": "9d6e55b2-fa0e-53c6-b691-060cd16f1ddb",
+        "slot_code": "IBT",
+        "display_order": 21,
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "c6242aef-c3b5-5941-989d-7f3c270b73d8",
+        "profile_id": "a89eca88-322f-51f0-9b4a-049f5e2a0f5b",
+        "component_id": "4a7105f2-147e-5c92-b7a0-585b3074c882",
+        "slot_code": "LASER_UNIT",
+        "display_order": 22,
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "b329af66-4003-584a-8da7-711aa42d8683",
+        "profile_id": "a89eca88-322f-51f0-9b4a-049f5e2a0f5b",
+        "component_id": "3e46c520-0c1b-540b-a3d1-09b27bb24617",
+        "slot_code": "ROLL_MESIN",
+        "display_order": 23,
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "4452ef17-0373-568f-bd51-12f18dc85212",
+        "profile_id": "a89eca88-322f-51f0-9b4a-049f5e2a0f5b",
+        "component_id": "033e106e-77d3-5fe5-950e-72d4a41375da",
+        "slot_code": "SENSOR",
+        "display_order": 24,
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "7020ec42-9c3f-5582-aec9-ebb0f45eb2fc",
+        "profile_id": "a89eca88-322f-51f0-9b4a-049f5e2a0f5b",
+        "component_id": "c42fe878-ab48-5188-9d28-16e33cad0e46",
+        "slot_code": "TONER_C",
+        "display_order": 25,
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "1065af1e-a8a5-57ac-9644-db4d32663f6e",
+        "profile_id": "a89eca88-322f-51f0-9b4a-049f5e2a0f5b",
+        "component_id": "9bb09fd5-ca96-5a49-ad1d-8b7b6204e38a",
+        "slot_code": "TONER_K",
+        "display_order": 26,
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "a0146fc0-b117-5ee4-99ee-6acda227fec6",
+        "profile_id": "a89eca88-322f-51f0-9b4a-049f5e2a0f5b",
+        "component_id": "a4c7ff16-d0cd-5721-b250-5b71eba5781e",
+        "slot_code": "TONER_M",
+        "display_order": 27,
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "67ef2ace-e28d-561e-b433-6647178dcbad",
+        "profile_id": "a89eca88-322f-51f0-9b4a-049f5e2a0f5b",
+        "component_id": "a642ca29-0cc1-5e84-965e-c68c9b920521",
+        "slot_code": "TONER_Y",
+        "display_order": 28,
+        "state": "PLANNED_CREATE_2B9"
+      }
+    ],
+    "machine_components": [
+      {
+        "id": "9afdc32c-efbd-5a9d-859b-c8bd0a0e8cd7",
+        "machine_id": "708e199e-7f77-4219-b278-37d0b94821d4",
+        "component_id": "b14a0c72-0f4f-51d7-8d3a-4c0553fbe7d8",
+        "profile_slot_id": "bf8ceb7c-6766-5898-bd4d-7aa4f0e0ee1b",
+        "slot_code": "CHARGING_CORONA_C",
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "1bd46c6e-6843-5a09-b198-2b49146040c4",
+        "machine_id": "708e199e-7f77-4219-b278-37d0b94821d4",
+        "component_id": "56ace062-3dcd-5e07-889b-89b0868cae53",
+        "profile_slot_id": "5dc2c7e4-3a9b-56f1-8b7c-8eb129a94f71",
+        "slot_code": "CHARGING_CORONA_K",
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "3e086464-5746-5fcb-91e2-913d7f238601",
+        "machine_id": "708e199e-7f77-4219-b278-37d0b94821d4",
+        "component_id": "34cfb7c8-197d-540e-8c22-3de43f52054a",
+        "profile_slot_id": "3b92068b-db24-53ff-a28c-50fd7bd67aac",
+        "slot_code": "CHARGING_CORONA_M",
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "38aee41e-19f5-5b6f-9b31-e6acc0a7ae86",
+        "machine_id": "708e199e-7f77-4219-b278-37d0b94821d4",
+        "component_id": "926595e1-47a5-5d3e-b2d9-5596f2545865",
+        "profile_slot_id": "9279779b-a17c-5099-911c-dee89a6c49f3",
+        "slot_code": "CHARGING_CORONA_Y",
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "a9b9558f-4d9b-5b27-a921-667a7501c403",
+        "machine_id": "708e199e-7f77-4219-b278-37d0b94821d4",
+        "component_id": "b7da20d3-1b48-594d-936d-38cc137a0442",
+        "profile_slot_id": "1298037e-20f7-5e52-85cf-d1519e8bdc42",
+        "slot_code": "CLEANING_BLADE",
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "1a514537-c83a-518d-86a7-d88a4e2c0db6",
+        "machine_id": "708e199e-7f77-4219-b278-37d0b94821d4",
+        "component_id": "fb781d10-544f-5dc4-a259-319f42b72af9",
+        "profile_slot_id": "768b4d40-3b7e-548e-a362-059429d8a219",
+        "slot_code": "CLEANING_UNIT",
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "d2a71703-1181-5d1f-b425-3d34fb0724f1",
+        "machine_id": "708e199e-7f77-4219-b278-37d0b94821d4",
+        "component_id": "a4e118da-c2f3-5fc3-b045-b68fb263ee35",
+        "profile_slot_id": "ca9e6e38-9903-520e-9bdc-172bf3623274",
+        "slot_code": "DEVELOPER_C",
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "9ab69895-1fc8-5ae6-bc0e-076796c95469",
+        "machine_id": "708e199e-7f77-4219-b278-37d0b94821d4",
+        "component_id": "1cb55494-acdc-56c5-9be9-f573321ed336",
+        "profile_slot_id": "2aad1ad6-9d96-5b2c-9de6-e3202ee1bea8",
+        "slot_code": "DEVELOPER_K",
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "27051b91-837c-5728-8d42-3fbebdb75f2e",
+        "machine_id": "708e199e-7f77-4219-b278-37d0b94821d4",
+        "component_id": "86932e5f-c201-537d-bf42-5ac3ad3720b4",
+        "profile_slot_id": "a4627c1a-5d85-5802-8bee-7be2435a1551",
+        "slot_code": "DEVELOPER_M",
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "4810892d-9cfb-5275-90b3-1b30e7083732",
+        "machine_id": "708e199e-7f77-4219-b278-37d0b94821d4",
+        "component_id": "fe5af98a-d321-5351-a454-37f17bf2e496",
+        "profile_slot_id": "b593db9d-39bf-5bfa-8afd-2d4b29d9d502",
+        "slot_code": "DEVELOPER_Y",
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "c8eef596-a2b3-5a71-9cb9-5412f63e9bbe",
+        "machine_id": "708e199e-7f77-4219-b278-37d0b94821d4",
+        "component_id": "f5e8835f-037b-5dcc-a6a9-50a28f665ad9",
+        "profile_slot_id": "fb7be3df-45e0-540e-b820-07700f4947d5",
+        "slot_code": "DEVELOPING_UNIT_C",
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "31728a4b-9da9-578d-bd3a-3c00d96c5f3f",
+        "machine_id": "708e199e-7f77-4219-b278-37d0b94821d4",
+        "component_id": "43cdc9fc-c866-5fcd-afaf-6c7cbe84226f",
+        "profile_slot_id": "7ed94820-d201-5040-8915-9c7fac6b292d",
+        "slot_code": "DEVELOPING_UNIT_K",
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "e5fa2c2b-998b-5825-b78f-ec2cc7b74fcb",
+        "machine_id": "708e199e-7f77-4219-b278-37d0b94821d4",
+        "component_id": "dd7c717a-d22f-5172-b5f7-d68eb46db215",
+        "profile_slot_id": "014126c2-2fe1-5736-9220-720826943035",
+        "slot_code": "DEVELOPING_UNIT_M",
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "b6fab789-d529-5da8-a370-22308a4c89bb",
+        "machine_id": "708e199e-7f77-4219-b278-37d0b94821d4",
+        "component_id": "4bef9e41-c500-5b07-abb5-bc173630a2cc",
+        "profile_slot_id": "825b40be-251a-58ad-8d11-8e6773c99d64",
+        "slot_code": "DEVELOPING_UNIT_Y",
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "92589f2e-b431-5bca-b1d9-872f862b7263",
+        "machine_id": "708e199e-7f77-4219-b278-37d0b94821d4",
+        "component_id": "96a04877-8797-57ea-8023-448df27aa246",
+        "profile_slot_id": "4e544f7d-86bb-5e58-8d10-c8a9ef6a6223",
+        "slot_code": "DRUM_C",
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "f13b8dcb-4144-531f-9754-af977350fe10",
+        "machine_id": "708e199e-7f77-4219-b278-37d0b94821d4",
+        "component_id": "168ed0f5-9d00-5a64-8a3e-aca1a188af0b",
+        "profile_slot_id": "15d56292-4859-5c8d-bf21-71e7b2a7e034",
+        "slot_code": "DRUM_K",
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "47ce9b75-cc81-5ddd-967b-9f3203445d74",
+        "machine_id": "708e199e-7f77-4219-b278-37d0b94821d4",
+        "component_id": "1a95bbbc-c843-5634-a130-6309ed851937",
+        "profile_slot_id": "81b1064b-f7ea-53ba-b0ad-1a6f9b05327f",
+        "slot_code": "DRUM_M",
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "cda2c386-233b-5ca3-adcf-7b2e868a8ea6",
+        "machine_id": "708e199e-7f77-4219-b278-37d0b94821d4",
+        "component_id": "0848d74d-6e0d-556a-a4cb-5cd04f928266",
+        "profile_slot_id": "7664f483-0b0e-5762-b31b-f0b0387ec034",
+        "slot_code": "DRUM_Y",
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "cd9b1e65-c435-509e-b9e7-8c912963f91e",
+        "machine_id": "708e199e-7f77-4219-b278-37d0b94821d4",
+        "component_id": "18621311-7b36-56ac-b470-1841a2d22c59",
+        "profile_slot_id": "2e380348-dda1-5755-90d3-79ffc5db661e",
+        "slot_code": "FUSER_BELT",
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "dab5a080-92fb-59b0-99c9-92e852280586",
+        "machine_id": "708e199e-7f77-4219-b278-37d0b94821d4",
+        "component_id": "5650affc-6bb1-572f-a28c-8fcd41cd18ab",
+        "profile_slot_id": "21a36881-fac4-5b7f-9c6b-775f89059053",
+        "slot_code": "GEAR",
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "f26c011e-e501-53db-9098-87e7a0f3dc63",
+        "machine_id": "708e199e-7f77-4219-b278-37d0b94821d4",
+        "component_id": "9d6e55b2-fa0e-53c6-b691-060cd16f1ddb",
+        "profile_slot_id": "f3b077d5-429b-5bc8-825b-6c661c92b52e",
+        "slot_code": "IBT",
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "46855819-3df8-51a5-931c-072244382ac0",
+        "machine_id": "708e199e-7f77-4219-b278-37d0b94821d4",
+        "component_id": "4a7105f2-147e-5c92-b7a0-585b3074c882",
+        "profile_slot_id": "c6242aef-c3b5-5941-989d-7f3c270b73d8",
+        "slot_code": "LASER_UNIT",
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "e583745a-0ab9-585e-87bb-40b6763b6d7a",
+        "machine_id": "708e199e-7f77-4219-b278-37d0b94821d4",
+        "component_id": "3e46c520-0c1b-540b-a3d1-09b27bb24617",
+        "profile_slot_id": "b329af66-4003-584a-8da7-711aa42d8683",
+        "slot_code": "ROLL_MESIN",
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "5a72fbc7-b2fb-5c69-ac4c-8f4b9d4971a1",
+        "machine_id": "708e199e-7f77-4219-b278-37d0b94821d4",
+        "component_id": "033e106e-77d3-5fe5-950e-72d4a41375da",
+        "profile_slot_id": "4452ef17-0373-568f-bd51-12f18dc85212",
+        "slot_code": "SENSOR",
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "a5847ed8-669d-53e9-9adc-0b3597735484",
+        "machine_id": "708e199e-7f77-4219-b278-37d0b94821d4",
+        "component_id": "c42fe878-ab48-5188-9d28-16e33cad0e46",
+        "profile_slot_id": "7020ec42-9c3f-5582-aec9-ebb0f45eb2fc",
+        "slot_code": "TONER_C",
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "4bd113a6-7c63-5a1e-996e-a148a618c3e6",
+        "machine_id": "708e199e-7f77-4219-b278-37d0b94821d4",
+        "component_id": "9bb09fd5-ca96-5a49-ad1d-8b7b6204e38a",
+        "profile_slot_id": "1065af1e-a8a5-57ac-9644-db4d32663f6e",
+        "slot_code": "TONER_K",
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "224f699a-189d-5245-837b-4bd38d5da8f8",
+        "machine_id": "708e199e-7f77-4219-b278-37d0b94821d4",
+        "component_id": "a4c7ff16-d0cd-5721-b250-5b71eba5781e",
+        "profile_slot_id": "a0146fc0-b117-5ee4-99ee-6acda227fec6",
+        "slot_code": "TONER_M",
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "64db17ee-aeab-595c-a720-0a23331b7634",
+        "machine_id": "708e199e-7f77-4219-b278-37d0b94821d4",
+        "component_id": "a642ca29-0cc1-5e84-965e-c68c9b920521",
+        "profile_slot_id": "67ef2ace-e28d-561e-b433-6647178dcbad",
+        "slot_code": "TONER_Y",
+        "state": "PLANNED_CREATE_2B9"
+      }
+    ],
+    "suppliers": [
+      {
+        "id": "04606aa7-c00e-5beb-bd8d-26eafe754314",
+        "name": "Elynor",
+        "code": "LEG-9A24C9FAB5",
+        "alreadyExists": false,
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "076d37ba-1350-5015-bdcb-0ecb6c7abe05",
+        "name": "asli makmur perkasa",
+        "code": "LEG-06F3421345",
+        "alreadyExists": false,
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "14b51ae4-885a-5ffa-a7d1-c48885ab9505",
+        "name": "Legacy supplier not recorded",
+        "code": "LEG-ADF1A9D4CA",
+        "alreadyExists": false,
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "21960ddd-78bd-5c81-ac5c-c2d3bed4415c",
+        "name": "Surya Timur Terang",
+        "code": "LEG-F03DA78A4D",
+        "alreadyExists": false,
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "359ca211-4c3b-5bbd-b0ec-a4d4bfddb9cd",
+        "name": "ss bersaudara",
+        "code": "LEG-F78617F12F",
+        "alreadyExists": false,
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "99710006-34f9-55c2-a50e-9dbca314a826",
+        "name": "Pramono (regist assy)",
+        "code": "LEG-72C3C624DC",
+        "alreadyExists": false,
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "d59a168d-6b87-5ab4-82e4-3d5c67ef5030",
+        "name": "JFP",
+        "code": "LEG-46EAE36323",
+        "alreadyExists": false,
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "e3307b7a-b168-59e0-a217-41f311510530",
+        "name": "Sprinter",
+        "code": "LEG-B2F3A3D702",
+        "alreadyExists": false,
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "f417fee0-c0a6-59bf-be4d-6732ded107ec",
+        "name": "SS",
+        "code": "LEG-8E1A16F289",
+        "alreadyExists": false,
+        "state": "PLANNED_CREATE_2B9"
+      }
+    ],
+    "inventory_items": [
+      {
+        "id": "160c7951-8712-5380-af40-f34b2540984a",
+        "name": "Toner Magenta",
+        "sku": "LEG-E0AFD1111F7E",
+        "componentId": "a4c7ff16-d0cd-5721-b250-5b71eba5781e",
+        "alreadyExists": false,
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "188ea069-7024-5f87-b701-ae59bd0c2d20",
+        "name": "Toner Black",
+        "sku": "LEG-E72F7369C462",
+        "componentId": "9bb09fd5-ca96-5a49-ad1d-8b7b6204e38a",
+        "alreadyExists": false,
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "2df3d971-d64e-5848-a692-55e87462dfcd",
+        "name": "Charging Corona",
+        "sku": "LEG-9A4651D9958B",
+        "componentId": null,
+        "alreadyExists": false,
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "30b264c3-88fe-56fc-932e-5100ceabcddc",
+        "name": "Drum Unit Magenta",
+        "sku": "LEG-C1BC98204817",
+        "componentId": "1a95bbbc-c843-5634-a130-6309ed851937",
+        "alreadyExists": false,
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "3fde87fe-85b2-51b3-8a76-5c4f09e88e8b",
+        "name": "Gear",
+        "sku": "LEG-8F147C9FF559",
+        "componentId": "5650affc-6bb1-572f-a28c-8fcd41cd18ab",
+        "alreadyExists": false,
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "42d28b19-0ff7-587b-a860-32e31c3b19cd",
+        "name": "Intermediate Transfer Belt (IBT)",
+        "sku": "LEG-071D299EF807",
+        "componentId": "9d6e55b2-fa0e-53c6-b691-060cd16f1ddb",
+        "alreadyExists": false,
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "462f9acb-8227-5db5-9041-57af99f513a9",
+        "name": "Developer Black",
+        "sku": "LEG-A716C2875E28",
+        "componentId": "1cb55494-acdc-56c5-9be9-f573321ed336",
+        "alreadyExists": false,
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "5ff0e888-81d9-5744-9121-fa4593c49272",
+        "name": "Fuser Belt",
+        "sku": "LEG-EF6AB944F62B",
+        "componentId": "18621311-7b36-56ac-b470-1841a2d22c59",
+        "alreadyExists": false,
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "77813cde-21ce-5e6d-889a-1640072e8fdd",
+        "name": "Sensor",
+        "sku": "LEG-929617538EA0",
+        "componentId": "033e106e-77d3-5fe5-950e-72d4a41375da",
+        "alreadyExists": false,
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "798a72dd-71f5-59bc-a4aa-15683c2e9e56",
+        "name": "Developing Unit",
+        "sku": "LEG-F1DA7B02D89D",
+        "componentId": null,
+        "alreadyExists": false,
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "7bb0d561-a95a-5cc4-878d-d3d8a7bed97c",
+        "name": "Drum Unit",
+        "sku": "LEG-6305D4ABBB98",
+        "componentId": null,
+        "alreadyExists": false,
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "811e5e29-ab25-50d8-adc7-1aec8d80e921",
+        "name": "Developer Cyan",
+        "sku": "LEG-92E9BD7FBE4E",
+        "componentId": "a4e118da-c2f3-5fc3-b045-b68fb263ee35",
+        "alreadyExists": false,
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "a9c3105c-4f64-5b17-81d5-ebde175ab5f6",
+        "name": "Charging Corona Cyan",
+        "sku": "LEG-8574623BBFB4",
+        "componentId": "b14a0c72-0f4f-51d7-8d3a-4c0553fbe7d8",
+        "alreadyExists": false,
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "aac823b4-c546-5fa7-a46a-0e1d2735524e",
+        "name": "Laser Unit",
+        "sku": "LEG-4D7788D4A79D",
+        "componentId": "4a7105f2-147e-5c92-b7a0-585b3074c882",
+        "alreadyExists": false,
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "bd81eddc-6db2-58b7-99e8-0199d5bc1123",
+        "name": "Other Part",
+        "sku": "LEG-968E7EC9D745",
+        "componentId": null,
+        "alreadyExists": false,
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "c45988e2-3366-5e8b-8678-b65627313b8e",
+        "name": "Drum Unit Cyan",
+        "sku": "LEG-D94F678A5B61",
+        "componentId": "96a04877-8797-57ea-8023-448df27aa246",
+        "alreadyExists": false,
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "ca18fdae-27df-58dc-9696-bc5d524163ba",
+        "name": "Charging Corona Magenta",
+        "sku": "LEG-E266D6B15A87",
+        "componentId": "34cfb7c8-197d-540e-8c22-3de43f52054a",
+        "alreadyExists": false,
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "ce59c692-f8b3-5a9b-a992-96a405b6c074",
+        "name": "Developer Yellow",
+        "sku": "LEG-2C0BDE09798F",
+        "componentId": "fe5af98a-d321-5351-a454-37f17bf2e496",
+        "alreadyExists": false,
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "d215640c-0b45-57e3-9b24-4b4871abd25f",
+        "name": "Cleaning Blade",
+        "sku": "LEG-2C0ED25772BA",
+        "componentId": "b7da20d3-1b48-594d-936d-38cc137a0442",
+        "alreadyExists": false,
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "e218124d-fb22-5bec-93cb-e6bfc5029f75",
+        "name": "Developing Unit Yellow",
+        "sku": "LEG-E755143AB5EE",
+        "componentId": "4bef9e41-c500-5b07-abb5-bc173630a2cc",
+        "alreadyExists": false,
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "eac3b968-1488-583e-aac6-1da8abfaeee8",
+        "name": "Toner Cyan",
+        "sku": "LEG-6528F6C5B1A1",
+        "componentId": "c42fe878-ab48-5188-9d28-16e33cad0e46",
+        "alreadyExists": false,
+        "state": "PLANNED_CREATE_2B9"
+      },
+      {
+        "id": "f4e88d11-d72a-59dc-9adf-e5749db29289",
+        "name": "Toner Yellow",
+        "sku": "LEG-37BE10C07146",
+        "componentId": "a642ca29-0cc1-5e84-965e-c68c9b920521",
+        "alreadyExists": false,
+        "state": "PLANNED_CREATE_2B9"
+      }
+    ],
+    "inventory_location": {
+      "required_for_legacy_writes": false,
+      "reason": "Purchases are acquisition evidence only; no receipts, movements, FIFO, or opening stock."
+    }
+  },
+  "validation": {
+    "source_fingerprints": "PASS",
+    "production_crosswalk": "PASS",
+    "dev_target_uuid_leakage": [],
+    "source_uuid_blind_reuse": [],
+    "test_component": false,
+    "fabricated_boundary_counter": false,
+    "unresolved_mappings": 0,
+    "production_master_identity": "PASS",
+    "production_schema_set": "PASS",
+    "graha_leakage": "PASS",
+    "production_database_mutated": false,
+    "legacy_import": "NOT_RUN",
+    "public_activation": "NOT_RUN",
+    "idempotency": "PASS"
+  },
+  "planned_writeset_fingerprint": "cd98faa5306e76c0de08bc8838ee843605ead58231dcb266d7b74f23d0e9acbf",
+  "production_read_only_evidence": {
+    "remote_read_only_verification": "PASS",
+    "failed_invariants": [],
+    "production_master_identity": "PASS",
+    "migration_ledger": "15/15",
+    "pending_migrations": 0,
+    "master_user_exists": true,
+    "master_user_id_match": "PASS",
+    "master_user_status": "active",
+    "master_user_status_valid": "PASS",
+    "account_exists": true,
+    "account_name": "Cipta Grafika",
+    "account_identity": "PASS",
+    "branch_exists": true,
+    "branch_name": "Tuparev",
+    "branch_account_id": "4b26a0ee-e06f-4563-a6cc-9dfc7fbc0e0c",
+    "branch_relationship": "PASS",
+    "machine_model_exists": true,
+    "machine_model_identity": "PASS",
+    "machine_exists": true,
+    "machine_code": "CG-TUP-A3-01",
+    "machine_branch_id": "94051ab9-235c-455f-b7ce-63f255cda3f6",
+    "machine_model_id": "f3b91ad2-7ecc-4d0c-a6ce-648c08691dab",
+    "machine_relationship": "PASS",
+    "operational_people": 0,
+    "counter_readings": 0,
+    "component_lifecycles": 0,
+    "purchases": 0,
+    "operational_incidents": 0,
+    "graha_records": 0,
+    "backend_env_symlink": "PASS",
+    "current_symlink": "ABSENT",
+    "public_html_touched": "NO",
+    "default_php_sha_unchanged": true,
+    "counts": {
+      "operational_people": 0,
+      "counter_readings": 0,
+      "component_lifecycles": 0,
+      "purchases": 0,
+      "operational_incidents": 0
+    },
+    "bootstrap_reference_counts": {
+      "users": 1,
+      "accounts": 1,
+      "branches": 1,
+      "manufacturers": 1,
+      "machine_models": 1,
+      "machines": 1,
+      "account_memberships": 1,
+      "account_membership_branches": 1,
+      "platform_user_privileges": 1
+    },
+    "graha_reference_rows": 0,
+    "config_cache_present": false,
+    "production_database_mutated": false,
+    "legacy_import": "NOT_RUN",
+    "public_activation": "NOT_RUN",
+    "state": {
+      "master_user": {
+        "id": "c83e9f52-9a34-49eb-b99a-de8dcb7b7431",
+        "name": "Imad Prakoso",
+        "email": "imadprakoso@gmail.com",
+        "username": "imadprakoso",
+        "status": "active"
+      },
+      "account": {
+        "id": "4b26a0ee-e06f-4563-a6cc-9dfc7fbc0e0c",
+        "code": "CG",
+        "name": "Cipta Grafika",
+        "status": "active"
+      },
+      "branch": {
+        "id": "94051ab9-235c-455f-b7ce-63f255cda3f6",
+        "account_id": "4b26a0ee-e06f-4563-a6cc-9dfc7fbc0e0c",
+        "code": "CG-TUP",
+        "name": "Tuparev",
+        "is_active": 1
+      },
+      "machine_model": {
+        "id": "f3b91ad2-7ecc-4d0c-a6ce-648c08691dab",
+        "account_id": null,
+        "manufacturer_id": "6f3423b2-6ba9-4187-96fe-c5d56168e262",
+        "model_code": "accuriopress_c1070",
+        "name": "AccurioPress C1070",
+        "is_active": 1
+      },
+      "machine": {
+        "id": "708e199e-7f77-4219-b278-37d0b94821d4",
+        "account_id": "4b26a0ee-e06f-4563-a6cc-9dfc7fbc0e0c",
+        "branch_id": "94051ab9-235c-455f-b7ce-63f255cda3f6",
+        "machine_model_id": "f3b91ad2-7ecc-4d0c-a6ce-648c08691dab",
+        "machine_code": "CG-TUP-A3-01",
+        "status": "active"
+      },
+      "manufacturer": {
+        "id": "6f3423b2-6ba9-4187-96fe-c5d56168e262",
+        "code": "konica_minolta",
+        "name": "Konica Minolta",
+        "is_active": 1
+      },
+      "membership_count": 1,
+      "branch_membership_count": 1,
+      "graha_reference_rows": 0,
+      "graha_records": 0,
+      "operational_counts": {
+        "operational_people": 0,
+        "counter_readings": 0,
+        "component_lifecycles": 0,
+        "purchases": 0,
+        "operational_incidents": 0
+      },
+      "deferred_master_counts": {
+        "component_catalogs": 0,
+        "model_profiles": 0,
+        "model_profile_slots": 0,
+        "machine_components": 0,
+        "inventory_items": 0,
+        "inventory_locations": 0,
+        "inventory_suppliers": 0
+      },
+      "schema_tables": [
+        "accounts",
+        "account_memberships",
+        "account_membership_branches",
+        "account_operational_permissions",
+        "branches",
+        "cache",
+        "cache_locks",
+        "component_catalogs",
+        "component_lifecycles",
+        "component_replacements",
+        "counter_readings",
+        "counter_types",
+        "failed_jobs",
+        "fifo_allocations",
+        "fifo_layers",
+        "governance_audit_logs",
+        "inventory_items",
+        "inventory_locations",
+        "inventory_movements",
+        "inventory_suppliers",
+        "jobs",
+        "job_batches",
+        "machines",
+        "machine_components",
+        "machine_component_exclusions",
+        "machine_models",
+        "machine_operating_costs",
+        "machine_selling_prices",
+        "manufacturers",
+        "migrations",
+        "model_profiles",
+        "model_profile_slots",
+        "operational_incidents",
+        "operational_incident_revisions",
+        "operational_people",
+        "operational_person_branches",
+        "password_reset_tokens",
+        "personal_access_tokens",
+        "platform_user_privileges",
+        "purchases",
+        "purchase_lines",
+        "receipts",
+        "receipt_lines",
+        "sessions",
+        "users"
+      ],
+      "migration_count": 15,
+      "legacy_import_markers": 0,
+      "runtime_config": {
+        "app_env": "production",
+        "app_debug": false,
+        "db_connection": "mysql"
+      },
+      "config_cache_present": false,
+      "backend_env_symlink": true,
+      "current_symlink": false,
+      "public_html_touched": false,
+      "default_php_sha": "aba5b5856471c610e4dd52c322c7a72a895fc9bf98ac1d027528d0e7de1f7e45",
+      "public_html_entries": [
+        "default.php",
+        "staging"
+      ],
+      "migration_files": 15,
+      "pending_migrations": 0,
+      "actual_base_table_count": 45,
+      "actual_view_count": 0
+    },
+    "checks": {
+      "master_user_id": true,
+      "master_user_exists": true,
+      "master_user_status_valid": true,
+      "account_identity": true,
+      "branch_identity": true,
+      "machine_identity": true,
+      "model_relationship": true,
+      "canonical_active": true,
+      "master_active": true,
+      "membership_relationship": true,
+      "graha_operational_leakage_zero": true,
+      "operational_empty": true,
+      "deferred_masters_empty": true,
+      "legacy_import_not_run": true,
+      "production_schema_set": true,
+      "migration_count_15": true,
+      "migration_files_15": true,
+      "pending_migrations_zero": true,
+      "backend_env_symlink": true,
+      "runtime_config": true,
+      "config_cache_audited": true,
+      "current_symlink_absent": true,
+      "public_root_entries": true,
+      "default_php_sha_unchanged": true
+    },
+    "production_schema_set": "PASS",
+    "actual_base_table_count": 45,
+    "actual_view_count": 0,
+    "actual_total_table_like_count": 45,
+    "missing_tables": [],
+    "unexpected_tables": []
+  }
+}

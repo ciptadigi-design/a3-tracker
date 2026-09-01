@@ -126,13 +126,16 @@ class ComponentConfigurationService
             if (isset($d['ended_at']) && $start && $d['ended_at'] <= $start) {
                 throw new ConflictHttpException('invalid lifecycle chronology');
             }
+            if (isset($d['installed_counter'], $d['removed_counter']) && $d['installed_counter'] !== null && $d['removed_counter'] !== null && (float) $d['removed_counter'] < (float) $d['installed_counter']) {
+                throw new ConflictHttpException('invalid lifecycle counter chronology');
+            }
             if ($start && $mc->lifecycles()->whereNotNull('started_at')->where(function ($q) use ($start) {
                 $q->whereNull('ended_at')->orWhere('ended_at', '>', $start);
             })->exists()) {
                 throw new ConflictHttpException('lifecycle interval overlaps existing history');
             }
 
-            return ComponentLifecycle::create(['machine_component_id' => $mc->id, 'started_at' => $start, 'status' => $start ? 'active' : 'unknown', 'evidence_level' => $d['evidence_level'] ?? null, 'source' => $d['source'] ?? 'manual', 'notes' => $d['notes'] ?? null, 'client_request_id' => $d['client_request_id'] ?? null, 'active_key' => 'active']);
+            return ComponentLifecycle::create(['machine_component_id' => $mc->id, 'installed_counter' => $d['installed_counter'] ?? null, 'removed_counter' => $d['removed_counter'] ?? null, 'started_at' => $start, 'ended_at' => $d['ended_at'] ?? null, 'status' => $start ? 'active' : 'unknown', 'evidence_level' => $d['evidence_level'] ?? null, 'source' => $d['source'] ?? 'manual', 'notes' => $d['notes'] ?? null, 'client_request_id' => $d['client_request_id'] ?? null, 'active_key' => 'active']);
         });
     }
 
