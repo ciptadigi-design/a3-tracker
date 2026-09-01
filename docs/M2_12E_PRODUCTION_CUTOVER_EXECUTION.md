@@ -86,4 +86,24 @@ The following rehearsal/staging gates are proven: deterministic crosswalk, unres
 - Production root backup: `/home/u777904340/m2-12e-backups/20260901T131557+0700/production-public_html.tar.gz`, 6,034 bytes, SHA-256 `92f9facfcbcbd60505d40f9500f05412b52e27bb3ff939c6a1275569caebc76d`; gzip integrity passed. Metadata manifest is `/home/u777904340/m2-12e-backups/20260901T131557+0700/production-public_html.manifest` (mode 600). The archive includes `default.php` and `staging/`; backed-up `default.php` hash remains `aba5b5856471c610e4dd52c322c7a72a895fc9bf98ac1d027528d0e7de1f7e45`.
 - `/home/u777904340/a3-production-app` remains absent. No Production file was altered or removed.
 - Final-source dry-run planning accounted for all 529 rows: `IMPORT=480` (477 baseline imports plus the three new counters), `MERGE=0`, `SKIP_DUPLICATE=2`, `ARCHIVE_ONLY=45`, `APPROVED_EXCLUDE=2`, `MANUAL_REVIEW=0`, unexplained remainder `0`. Planned counters: 183. Purchases: 161 rows / 208 units / IDR 371,029,998. Replacements/lifecycles: 47. Incidents: 89. Legacy opening stock, receipts, movements, and FIFO: 0. Unresolved required mappings: 0; planned Graha legacy rows: 0; fake stock: 0; unknown-cost coercions: 0. The three added counter IDs receive deterministic UUIDs/timestamps and `ojan`/`ijal` operator evidence; no Production target was written.
-- Phase 2A STOP gate: dedicated Production database/user creation remains pending through Hostinger hPanel. No migrations, imports, users, `.env`, APP_KEY, release, symlink, public activation, DNS, SSL, cache/CDN, or traffic action was performed.
+- At the time of this evidence capture, dedicated Production database/user creation was pending through Hostinger hPanel. That gate is closed below; no migrations, imports, users, `.env`, APP_KEY, release, symlink, public activation, DNS, SSL, cache/CDN, or traffic action was performed.
+
+## Phase 2A — Production database verification and closure
+
+Manual Hostinger verification completed the dedicated Production database gate. The following evidence was supplied by the authorized operator and contains no credential material:
+
+- Database: `u777904340_a3production`.
+- Dedicated database user: `u777904340_a3production`.
+- First identity query: `SELECT DATABASE()` returned exactly `u777904340_a3production`.
+- Runtime compatibility: `11.8.8-MariaDB-log`; InnoDB is supported and the default engine; charset `utf8mb4`; collation `utf8mb4_unicode_ci`; SQL mode `NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION`; timezone `SYSTEM`; `lower_case_table_names=0`.
+- Empty-target proof: `APPLICATION_TABLE_COUNT=0`; no migrations or application data were present.
+- Authenticated identity: `u777904340_a3production@localhost`; privileges were verified at database level for the dedicated target only. No other database was inspected.
+- The database password was rotated after an earlier accidental hash exposure. Rotation was completed manually; no password, hash, secret, or credential material is recorded here.
+- Minimal post-rotation verification again returned the exact database identity, authenticated identity, and `APPLICATION_TABLE_COUNT=0`.
+- All prior Phase 2A evidence remains valid: `SOURCE_CHANGED_DURING_CAPTURE=NO`; final frozen source `529` rows (`click_history=185`, `part_replacements=70`, `error_logs=91`, `inventory_parts=22`, `part_purchases=161`); latest counter `1,441,597`; source and Production-root backups verified; the recorded Production `default.php` hash remains `aba5b5856471c610e4dd52c322c7a72a895fc9bf98ac1d027528d0e7de1f7e45`; private root absent; deterministic dry-run passed; unresolved mappings, Graha legacy rows, fake stock, unknown-cost coercions, and unexplained remainder all remain `0`.
+
+Phase 2A is closed as documentation-only. No Laravel migration, schema creation, import, bootstrap, secret-file creation, release, filesystem/public-root mutation, traffic activation, or staging redeploy was performed. The selected application SHA remains `b69c7e125f083f52dc519f4a3cc3d401ba5a64b0`.
+
+**Classification:** `M2_12E_PRODUCTION_CUTOVER_PHASE2A_READY`
+
+**Next milestone (not started):** M2.12E Phase 2B — Production Schema Migration + Bootstrap + Frozen Data Import + Reconciliation. Phase 2B must stop before Production public activation.
