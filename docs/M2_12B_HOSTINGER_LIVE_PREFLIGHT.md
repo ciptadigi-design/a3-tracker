@@ -1,30 +1,30 @@
 # M2.12B — Hostinger live environment preflight
 
 Date: 2026-09-01  
-Scope: read-only inspection only. No Hostinger files, settings, database rows, DNS, SSL, cron, or application state were changed.
+Scope: read-only inspection only. No Hostinger files, settings, database rows, DNS, SSL, cron, or application state were changed. Authenticated SSH continuation is recorded in [M2.12B.1](M2_12B_1_AUTHENTICATED_SSH_PREFLIGHT.md).
 
 ## Access and observed identity
 
 The in-app browser had no available signed-in browser session, so hPanel could not be inspected. Public HTTPS inspection of `https://a3.ciptagrafika.com/` returned `HTTP/2 200`, `platform: hostinger`, `panel: hpanel`, `server: hcdn`, and `x-powered-by: PHP/8.3.30`. DNS currently returns Hostinger addresses `185.124.137.0` and `153.92.12.169`; nameservers are `ns1.dns-parking.com` and `ns2.dns-parking.com`. The site currently serves a Hostinger Default page, not this application.
 
-An existing SSH alias was tested read-only but is a separate legacy VPS (`mail.ciptagrafika.com`, `91.108.105.3`, CentOS 7, PHP 8.1.27) and is not treated as the Hostinger target. Hostinger SSH at the known endpoint refused the available keys. No credentials, private keys, cookies, or environment files were read or stored.
+An existing SSH alias is a separate legacy VPS (`mail.ciptagrafika.com`, `91.108.105.3`, CentOS 7, PHP 8.1.27) and was not contacted for this continuation. Hostinger SSH is now authenticated using the hPanel endpoint (`u777904340@145.223.108.179:65002`) and the existing local key. No credentials, private keys, cookies, or environment files were read or stored.
 
 ## Compatibility matrix
 
 | Area | Result | Evidence / decision |
 | --- | --- | --- |
 | Web PHP | VERIFIED | Public response reports PHP 8.3.30; meets Laravel target >=8.2. |
-| CLI PHP | UNKNOWN | Hostinger SSH unavailable. Do not infer from web PHP. |
-| Required PHP extensions | UNKNOWN | Must be checked in hPanel/SSH before staging. |
-| Composer | UNKNOWN | Use CI/local `vendor/` package unless Hostinger SSH later proves Composer 2. |
+| CLI PHP | VERIFIED | Authenticated Hostinger SSH reports PHP 8.2.30 CLI. |
+| Required PHP extensions | VERIFIED | Required Laravel extensions are loaded; see [M2.12B.1](M2_12B_1_AUTHENTICATED_SSH_PREFLIGHT.md). |
+| Composer | VERIFIED | Composer 2.9.8 is available over authenticated SSH. |
 | Node/npm | NOT REQUIRED | Frontend must be built locally/CI. |
 | HTTPS/SSL | VERIFIED | `https://a3.ciptagrafika.com` responds successfully with Hostinger edge headers. |
 | Subdomain | VERIFIED (exists) | `a3.ciptagrafika.com` resolves and serves Hostinger content. Custom root remains UNKNOWN. |
 | Web server | CONDITIONAL | Hostinger CDN (`hcdn`) is visible; origin Apache/LiteSpeed and `.htaccess` behavior require hPanel/SSH confirmation. |
 | SPA/API rewrites | UNKNOWN | Must verify in isolated staging; no `.htaccess` was uploaded. |
-| MySQL/MariaDB engine/version | UNKNOWN | No safe Hostinger database credentials or panel session available. |
+| MySQL/MariaDB engine/version | UNKNOWN | Only MariaDB client 11.8.8 is observable; no server connection or credentials were used. |
 | InnoDB/utf8mb4/SQL mode/locking | UNKNOWN | Must be verified on the disposable staging database. |
-| Filesystem/document root | UNKNOWN | `public_html` and Laravel private-root layout require hPanel/SSH inspection. |
+| Filesystem/document root | PARTIAL VERIFIED | `domains/a3.ciptagrafika.com/public_html` exists and currently contains only Hostinger `default.php`; private Laravel layout remains uncreated. |
 | Writable storage and `bootstrap/cache` | UNKNOWN | Must be checked before staging install; no permissions changed. |
 | Logs | UNKNOWN | Determine hPanel/server log path and Laravel daily-log access during staging. |
 | Cron | UNKNOWN; not launch-required | Current architecture uses `QUEUE_CONNECTION=sync`; scheduler required at launch is NO. |

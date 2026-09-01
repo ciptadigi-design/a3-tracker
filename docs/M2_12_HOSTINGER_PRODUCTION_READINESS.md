@@ -1,6 +1,6 @@
 # M2.12 Hostinger production readiness
 
-Status: **M2.12A application backend READY; M2.12B Hostinger live preflight CONDITIONAL — public HTTPS/PHP evidence is verified, but authenticated hPanel/SSH/database capability checks remain pending. Deployment is not authorized.**
+Status: **M2.12A application backend READY; M2.12B.1 authenticated Hostinger SSH preflight READY FOR ISOLATED STAGING — PHP/extensions/Composer and the target document root are verified, while database-server, rewrite, writable-layout, backup, and quota facts remain conditional. Deployment is not authorized.**
 
 This milestone does not deploy, change DNS, create a Production database, mutate DEV data, disable Vercel/Supabase, or start Maintenance.
 
