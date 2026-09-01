@@ -24,6 +24,10 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
+        // API guests must be rendered as JSON even when a client omits Accept: application/json.
+        // Returning null prevents Laravel's default route('login') fallback from throwing before
+        // the API exception renderer can produce its deterministic 401 response.
+        $middleware->redirectGuestsTo(fn (Request $request) => $request->is('api/*') ? null : route('login'));
         $middleware->statefulApi();
         $middleware->alias(['request.id' => RequestId::class, 'active.user' => EnsureActiveUser::class]);
     })
