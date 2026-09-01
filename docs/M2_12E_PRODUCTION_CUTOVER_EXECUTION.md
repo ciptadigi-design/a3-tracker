@@ -74,3 +74,16 @@ The following rehearsal/staging gates are proven: deterministic crosswalk, unres
 - Laravel tests: `54 passed, 2 skipped` (MySQL integration assertion is reserved for target CI).
 - Application tree comparison against b69: no non-documentation differences.
 - Existing exact-SHA CI: Database `33470449131` success; Laravel MySQL Target `33470449136` success.
+
+## Phase 2A — freeze, verified backups, and dry-run evidence
+
+- Freeze recorded: `2026-09-01T13:15:57+07:00` (`2026-09-01T06:15:57Z`); the authoritative source remained operationally frozen.
+- Final frozen source remains the original mode-600 file supplied for this phase: `/var/folders/44/bzxc_f7n7r72ht1vgnh43fxm0000gn/T//a3-m212e-source.8SIKM9/final-frozen-source.json`.
+- GET-only stability re-check passed: `SOURCE_CHANGED_DURING_CAPTURE=NO`.
+- Final source totals: 529 rows — `click_history=185`, `part_replacements=70`, `error_logs=91`, `inventory_parts=22`, `part_purchases=161`. The +3 delta versus the 526-row baseline is exactly three newer `click_history` rows (counters 1,440,494; 1,440,859; 1,441,597).
+- Final fingerprints: click history `a577d071b32150c7ad13fd4b70c0fe6d9c4d3a7be08c27ad3efb8679cdeca537`; all other table fingerprints remain the accepted baseline values.
+- Final source backup: `/var/folders/44/bzxc_f7n7r72ht1vgnh43fxm0000gn/T//a3-m212e-backup.zTSJgQ/final-frozen-source-20260901T131557+0700.json.gz`, 26,955 bytes, SHA-256 `33b0cf4f3be5ff2a03cf8c1156c7e556fdf762a5f971975b984fadcc233d036f`; `gzip -t` passed; mode 600.
+- Production root backup: `/home/u777904340/m2-12e-backups/20260901T131557+0700/production-public_html.tar.gz`, 6,034 bytes, SHA-256 `92f9facfcbcbd60505d40f9500f05412b52e27bb3ff939c6a1275569caebc76d`; gzip integrity passed. Metadata manifest is `/home/u777904340/m2-12e-backups/20260901T131557+0700/production-public_html.manifest` (mode 600). The archive includes `default.php` and `staging/`; backed-up `default.php` hash remains `aba5b5856471c610e4dd52c322c7a72a895fc9bf98ac1d027528d0e7de1f7e45`.
+- `/home/u777904340/a3-production-app` remains absent. No Production file was altered or removed.
+- Final-source dry-run planning accounted for all 529 rows: `IMPORT=480` (477 baseline imports plus the three new counters), `MERGE=0`, `SKIP_DUPLICATE=2`, `ARCHIVE_ONLY=45`, `APPROVED_EXCLUDE=2`, `MANUAL_REVIEW=0`, unexplained remainder `0`. Planned counters: 183. Purchases: 161 rows / 208 units / IDR 371,029,998. Replacements/lifecycles: 47. Incidents: 89. Legacy opening stock, receipts, movements, and FIFO: 0. Unresolved required mappings: 0; planned Graha legacy rows: 0; fake stock: 0; unknown-cost coercions: 0. The three added counter IDs receive deterministic UUIDs/timestamps and `ojan`/`ijal` operator evidence; no Production target was written.
+- Phase 2A STOP gate: dedicated Production database/user creation remains pending through Hostinger hPanel. No migrations, imports, users, `.env`, APP_KEY, release, symlink, public activation, DNS, SSL, cache/CDN, or traffic action was performed.
