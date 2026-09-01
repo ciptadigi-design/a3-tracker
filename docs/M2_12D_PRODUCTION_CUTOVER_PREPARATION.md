@@ -7,9 +7,9 @@ This milestone prepares and rehearses the eventual cutover. **No Production muta
 ## Baseline and rehearsal evidence
 
 - Starting repository SHA: `8dac737c816fabb4a04a6c79e367eb9316724a2c` on `develop`; application SHA accepted from M2.12C: `b69c7e125f083f52dc519f4a3cc3d401ba5a64b0`.
-- The closest full migration rehearsal is the committed non-Production M2.11 disposable rehearsal (`scripts/migration/reconciliation/m2-11/6a8f4bb8-1f31-4e03-a9db-fdd9821e8d78`). It ran from an empty target through migrations, deterministic bootstrap, import, reconciliation, failure rollback, and a repeat apply.
+- The closest full migration rehearsal is the committed non-Production M2.11 disposable rehearsal (`scripts/migration/reconciliation/m2-11/6a8f4bb8-1f31-4e03-a9db-fdd9821e8d78`). Its target was the local Docker container `supabase_db_konica-tracker-next` (`DISPOSABLE_REHEARSAL`), not a hosted project. It ran from an empty target through migrations, deterministic bootstrap, import, reconciliation, failure rollback, and a repeat apply.
 - Hostinger M2.12C isolated restore (`u777904340_stagingrestore`) proved backup/restore of the staging schema and synthetic data; it is not a Production-data source and was not used for a destructive import.
-- Rehearsal target engine: disposable PostgreSQL reference target (project ref `wtslqxjwjqyjgcapfrrz`); Hostinger staging runtime remains MariaDB 11.8.8/InnoDB/utf8mb4 and is covered by M2.12C MySQL CI and runtime evidence.
+- Rehearsal target engine: local disposable PostgreSQL container `supabase_db_konica-tracker-next`; source project ref `wtslqxjwjqyjgcapfrrz` was the read-only legacy source. Hostinger staging runtime remains MariaDB 11.8.8/InnoDB/utf8mb4 and is covered by M2.12C MySQL CI and runtime evidence.
 
 ## Source inventory and locked dispositions
 
