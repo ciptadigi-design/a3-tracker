@@ -1,6 +1,6 @@
 # M2.12 data cutover matrix
 
-This matrix is a planning artifact. No Production import is executed in M2.12. Final source selection requires a freeze snapshot and explicit approval.
+This matrix is a planning artifact. M2.12D remains conditional and performs no Production import. Final source selection requires a freeze snapshot and explicit approval; the locked counts, fingerprints, dispositions, and invariants are recorded in [M2.12D preparation](M2_12D_PRODUCTION_CUTOVER_PREPARATION.md).
 
 | Domain | Source | Transformation / identity | Target | Validation | Rollback / readiness |
 |---|---|---|---|---|---|

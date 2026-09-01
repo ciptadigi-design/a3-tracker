@@ -1,10 +1,12 @@
 # M2.12 deployment checklist
 
+M2.12D preparation is **CONDITIONAL**; no Production mutation has occurred. Use the [M2.12D preparation record](M2_12D_PRODUCTION_CUTOVER_PREPARATION.md) as the authoritative gate ledger.
+
 All boxes are for a future authorized cutover. M2.12 performs no Production action.
 
 ## Pre-cutover
 
-- [ ] Hostinger preflight complete (PHP/extensions/MySQL/SSH/Apache/SSL/permissions/backups). Public HTTPS/web PHP is verified; authenticated shell/database/root/rewrite/backup checks remain conditional per [M2.12B live preflight](M2_12B_HOSTINGER_LIVE_PREFLIGHT.md).
+- [ ] Production Hostinger preflight complete (PHP/extensions/MySQL/SSH/Apache/SSL/permissions/backups). Staging is accepted; Production target backup and access remain conditional.
 - [ ] Laravel frontend/auth/tenant adapters complete; no Supabase Production dependency.
 - [ ] Approved SHA and release manifest recorded.
 - [ ] `npm ci && npm run build` and Composer production install pass.

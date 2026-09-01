@@ -1,6 +1,6 @@
 # M2.12 Hostinger production readiness
 
-Status: **M2.12A application backend READY; M2.12B.1 authenticated Hostinger SSH preflight READY FOR ISOLATED STAGING — PHP/extensions/Composer and the target document root are verified, while database-server, rewrite, writable-layout, backup, and quota facts remain conditional. Deployment is not authorized.**
+Status: **M2.12D production cutover preparation CONDITIONAL. M2.12C isolated staging rehearsal is READY and browser-tested; Production remains read-only and Production-source freeze, target backup, and cutover authorization are pending.**
 
 This milestone does not deploy, change DNS, create a Production database, mutate DEV data, disable Vercel/Supabase, or start Maintenance.
 
@@ -20,7 +20,7 @@ The target is one HTTPS origin, `https://a3.ciptagrafika.com`, with static Vite 
 
 ## Important current blocker
 
-The M2.12A application path is complete and browser-verified: React routes through the Laravel adapters to a disposable MySQL target with no operational Supabase traffic. M2.12B public inspection verified Hostinger HTTPS and web PHP 8.3.30, but authenticated shell, database, document-root, rewrite, permissions, quota, and backup checks remain conditional. Supabase remains the reference implementation and is intentionally preserved.
+The M2.12A application path and M2.12C staging rehearsal are complete, including authenticated responsive browser smoke and zero operational Supabase requests. M2.12D's full disposable migration rehearsal is reconciled, but Production source freeze/backup, target backup, and explicit bootstrap/cutover authorization remain conditional. Supabase remains reference-only and is intentionally preserved.
 
 ## Runtime contract
 
