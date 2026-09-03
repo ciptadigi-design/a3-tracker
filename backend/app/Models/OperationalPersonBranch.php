@@ -21,4 +21,9 @@ class OperationalPersonBranch extends Model
     {
         static::creating(fn ($m) => $m->id ??= Str::uuid());
     }
+
+    public function branch()
+    {
+        return $this->belongsTo(Branch::class);
+    }
 }

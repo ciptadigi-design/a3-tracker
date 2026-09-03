@@ -10,6 +10,7 @@ use App\Http\Requests\MachineRequest;
 use App\Http\Requests\ManufacturerRequest;
 use App\Http\Requests\OperationalPersonRequest;
 use App\Http\Requests\PersonBranchAssignmentRequest;
+use App\Http\Resources\OperationalPersonResource;
 use App\Models\Account;
 use App\Models\Branch;
 use App\Models\CounterReading;
@@ -213,16 +214,21 @@ class OperationsController extends Controller
     {
         $b = Branch::findOrFail($branch);
         abort_unless(app(BranchAccessResolver::class)->canAccess($r->user(), $b), 403);
-        $q = OperationalPerson::where('account_id', $b->account_id)->where('is_active', true)->with(['branches' => fn ($x) => $x->where('branches.id', $b->id)])->whereHas('branches', fn ($x) => $x->where('branches.id', $b->id)->where('operational_person_branches.is_active', true));
+        $q = OperationalPerson::where('account_id', $b->account_id)->where('is_active', true)
+            ->with(['branchAssignments' => fn ($x) => $x->where('branch_id', $b->id)->where('is_active', true)->with('branch')])
+            ->whereHas('branchAssignments', fn ($x) => $x->where('branch_id', $b->id)->where('is_active', true));
 
-        return response()->json(['data' => $q->orderBy('name')->get()]);
+        return response()->json(['data' => OperationalPersonResource::collection($q->orderBy('name')->get())]);
     }
 
     public function governancePeople(Request $r, string $account)
     {
         Gate::authorize('platform.manage');
 
-        return response()->json(['data' => OperationalPerson::where('account_id', $account)->with('branches')->orderBy('name')->paginate(min((int) $r->integer('per_page', 25), 50))]);
+        $page = OperationalPerson::where('account_id', $account)->with('branchAssignments.branch')->orderBy('name')->paginate(min((int) $r->integer('per_page', 25), 50));
+        $page->through(fn ($person) => (new OperationalPersonResource($person))->resolve($r));
+
+        return response()->json(['data' => $page]);
     }
 
     public function counters(Request $r, string $machine)

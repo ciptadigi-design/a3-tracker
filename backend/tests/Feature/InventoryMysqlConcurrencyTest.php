@@ -38,7 +38,8 @@ class InventoryMysqlConcurrencyTest extends TestCase
         }
         $results = array_map(fn (Process $p) => json_decode($p->getOutput(), true), $processes);
         $successes = count(array_filter($results, fn ($r) => $r['ok'] ?? false));
-        $this->assertSame(1, $successes);
+        $diagnostic = array_map(fn (Process $p, $result) => ['exit_code' => $p->getExitCode(), 'result' => $result, 'stderr' => trim($p->getErrorOutput())], $processes, $results);
+        $this->assertSame(1, $successes, json_encode($diagnostic, JSON_PRETTY_PRINT));
         $this->assertSame(0.0, app(InventoryLedgerService::class)->balance($item->id, $loc->id));
         $this->assertSame(0.0, (float) DB::table('fifo_layers')->where('inventory_item_id', $item->id)->sum('remaining_quantity'));
         $this->assertSame(1, DB::table('fifo_allocations')->count());

@@ -17,4 +17,9 @@ class InventoryItem extends Model
     {
         static::creating(fn ($m) => $m->id ??= Str::uuid());
     }
+
+    public function component()
+    {
+        return $this->belongsTo(ComponentCatalog::class, 'component_id');
+    }
 }

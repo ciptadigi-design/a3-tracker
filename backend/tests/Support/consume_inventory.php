@@ -5,6 +5,10 @@ use App\Models\InventoryLocation;
 use App\Services\InventoryLedgerService;
 use Illuminate\Contracts\Console\Kernel;
 
+// Keep the subprocess protocol machine-readable when a newer local PHP emits
+// dependency deprecations that are unrelated to the concurrency assertion.
+error_reporting(E_ALL & ~E_DEPRECATED & ~E_USER_DEPRECATED);
+
 require __DIR__.'/../../vendor/autoload.php';
 
 $app = require __DIR__.'/../../bootstrap/app.php';

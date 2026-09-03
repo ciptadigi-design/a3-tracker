@@ -3,12 +3,14 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\OperationalPersonResource;
 use App\Models\Account;
 use App\Models\Branch;
 use App\Models\InventoryItem;
 use App\Models\InventoryLocation;
 use App\Models\InventorySupplier;
 use App\Models\MachineComponent;
+use App\Models\OperationalPerson;
 use App\Services\AccountAccessResolver;
 use App\Services\BranchAccessResolver;
 use App\Services\InventoryLedgerService;
@@ -24,15 +26,21 @@ class InventoryController extends Controller
     {
         $a = Account::findOrFail($account);
         abort_unless(app(AccountAccessResolver::class)->canAccess($r->user(), $a), 403);
-        abort_unless(app(BranchAccessResolver::class)->canAccess($r->user(), Branch::findOrFail($branch)), 403);
+        $b = Branch::where('id', $branch)->where('account_id', $account)->firstOrFail();
+        abort_unless(app(BranchAccessResolver::class)->canAccess($r->user(), $b), 403);
         $items = InventoryItem::where('account_id', $account)->where('is_active', true)->with('component')->orderBy('name')->get();
         $locations = InventoryLocation::where('account_id', $account)->where('branch_id', $branch)->where('is_active', true)->orderBy('name')->get();
         $ledger = app(InventoryLedgerService::class);
         $balances = $locations->flatMap(fn ($l) => $items->map(fn ($i) => ['account_id' => $account, 'inventory_item_id' => $i->id, 'location_id' => $l->id, 'quantity' => $ledger->balance($i->id, $l->id)]))->values();
-        $purchases = DB::table('purchases')->where('account_id', $account)->orderByDesc('purchase_date')->get();
+        $purchases = DB::table('purchases')->where('account_id', $account)->where('branch_id', $branch)->orderByDesc('purchase_date')->get();
         $purchaseIds = $purchases->pluck('id');
+        $locationIds = $locations->pluck('id');
+        $people = OperationalPerson::where('account_id', $account)->where('is_active', true)
+            ->with(['branchAssignments' => fn ($q) => $q->where('branch_id', $branch)->where('is_active', true)->with('branch')])
+            ->whereHas('branchAssignments', fn ($q) => $q->where('branch_id', $branch)->where('is_active', true))
+            ->orderBy('name')->get();
 
-        return response()->json(['data' => ['branchId' => $branch, 'items' => $items, 'locations' => $locations, 'suppliers' => InventorySupplier::where('account_id', $account)->where('is_active', true)->orderBy('name')->get(), 'balances' => $balances, 'totals' => $items->map(fn ($i) => ['account_id' => $account, 'inventory_item_id' => $i->id, 'quantity' => $balances->where('inventory_item_id', $i->id)->sum('quantity')])->values(), 'movements' => DB::table('inventory_movements')->where('account_id', $account)->whereIn('location_id', $locations->pluck('id'))->orderByDesc('occurred_at')->limit(500)->get(), 'components' => DB::table('component_catalogs')->where('is_active', true)->orderBy('name')->get(), 'people' => DB::table('operational_people')->where('account_id', $account)->where('is_active', true)->orderBy('name')->get(), 'purchases' => $purchases, 'purchaseLines' => $purchaseIds->isEmpty() ? collect() : DB::table('purchase_lines')->whereIn('purchase_id', $purchaseIds)->get(), 'receipts' => $purchaseIds->isEmpty() ? collect() : DB::table('receipts')->whereIn('purchase_id', $purchaseIds)->get(), 'lastPrices' => [], 'costHistory' => [], 'costPositions' => []]]);
+        return response()->json(['data' => ['branchId' => $branch, 'items' => $items, 'locations' => $locations, 'suppliers' => InventorySupplier::where('account_id', $account)->where('is_active', true)->orderBy('name')->get(), 'balances' => $balances, 'totals' => $items->map(fn ($i) => ['account_id' => $account, 'inventory_item_id' => $i->id, 'quantity' => $balances->where('inventory_item_id', $i->id)->sum('quantity')])->values(), 'movements' => DB::table('inventory_movements')->where('account_id', $account)->whereIn('location_id', $locationIds)->orderByDesc('occurred_at')->limit(500)->get(), 'components' => DB::table('component_catalogs')->where('is_active', true)->where(fn ($q) => $q->whereNull('account_id')->orWhere('account_id', $account))->orderBy('name')->get(), 'people' => OperationalPersonResource::collection($people), 'purchases' => $purchases, 'purchaseLines' => $purchaseIds->isEmpty() ? collect() : DB::table('purchase_lines')->where('account_id', $account)->whereIn('purchase_id', $purchaseIds)->get(), 'receipts' => $purchaseIds->isEmpty() || $locationIds->isEmpty() ? collect() : DB::table('receipts')->where('account_id', $account)->whereIn('purchase_id', $purchaseIds)->whereIn('location_id', $locationIds)->get(), 'lastPrices' => [], 'costHistory' => [], 'costPositions' => []]]);
     }
 
     public function suppliers(Request $r)
