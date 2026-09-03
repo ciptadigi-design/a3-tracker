@@ -54,6 +54,7 @@ Route::prefix('v1')->middleware('request.id')->group(function () {
             Route::put('accounts/{account}/operational-people/{id}', [OperationsController::class, 'updatePerson']);
             Route::patch('operational-people/{id}/status', [OperationsController::class, 'setPersonStatus']);
             Route::post('operational-people/{person}/branches/{branch}', [OperationsController::class, 'assignPerson']);
+            Route::put('operational-people/{person}/branches', [OperationsController::class, 'replacePersonBranches']);
             Route::get('machines/{machine}/counters', [OperationsController::class, 'counters']);
             Route::post('machines/{machine}/counters', [OperationsController::class, 'createCounter']);
             Route::post('counter-readings/{reading}/correction', [OperationsController::class, 'correctCounter']);

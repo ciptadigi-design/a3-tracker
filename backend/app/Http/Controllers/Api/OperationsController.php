@@ -27,7 +27,9 @@ use App\Services\CreateCounterReading;
 use App\Services\MachineAccessResolver;
 use App\Services\MachineTimezoneResolver;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 
 class OperationsController extends Controller
@@ -164,6 +166,49 @@ class OperationsController extends Controller
         $a = OperationalPersonBranch::updateOrCreate(['person_id' => $p->id, 'branch_id' => $b->id], ['account_id' => $b->account_id, 'is_active' => $active, 'can_record_counter' => $active ? ($r->validated()['can_record_counter'] ?? false) : false]);
 
         return response()->json(['data' => $a], 201);
+    }
+
+    public function replacePersonBranches(Request $r, string $person)
+    {
+        Gate::authorize('platform.manage');
+        $validated = $r->validate([
+            'assignments' => 'present|array',
+            'assignments.*.branch_id' => 'required|uuid|distinct',
+            'assignments.*.can_record_counter' => 'required|boolean',
+        ]);
+
+        $result = DB::transaction(function () use ($person, $validated) {
+            $operationalPerson = OperationalPerson::lockForUpdate()->findOrFail($person);
+            $requested = collect($validated['assignments'])->keyBy('branch_id');
+            $branches = Branch::where('account_id', $operationalPerson->account_id)
+                ->whereIn('id', $requested->keys())
+                ->lockForUpdate()
+                ->get()
+                ->keyBy(fn ($branch) => (string) $branch->id);
+
+            if ($branches->count() !== $requested->count()) {
+                throw ValidationException::withMessages(['assignments' => 'Every requested Branch must belong to the operational person account.']);
+            }
+            if ($branches->contains(fn ($branch) => ! $branch->is_active)) {
+                throw ValidationException::withMessages(['assignments' => 'Inactive Branch assignments cannot be activated.']);
+            }
+
+            OperationalPersonBranch::where('person_id', $operationalPerson->id)
+                ->where('is_active', true)
+                ->whereNotIn('branch_id', $requested->keys())
+                ->update(['is_active' => false, 'can_record_counter' => false, 'updated_at' => now()]);
+
+            foreach ($requested as $branchId => $assignment) {
+                OperationalPersonBranch::updateOrCreate(
+                    ['person_id' => $operationalPerson->id, 'branch_id' => $branchId],
+                    ['account_id' => $operationalPerson->account_id, 'is_active' => true, 'can_record_counter' => $assignment['can_record_counter']],
+                );
+            }
+
+            return $operationalPerson->load(['branchAssignments.branch']);
+        });
+
+        return response()->json(['data' => (new OperationalPersonResource($result))->resolve($r)]);
     }
 
     public function manufacturers(Request $r)

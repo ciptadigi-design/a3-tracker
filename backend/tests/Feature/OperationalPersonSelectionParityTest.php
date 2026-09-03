@@ -108,4 +108,37 @@ class OperationalPersonSelectionParityTest extends TestCase
             ->assertJsonPath('data.data.0.id', (string) $person->id)
             ->assertJsonPath('data.data.0.operational_person_branches.0.branch_id', $f['tuparev']->id);
     }
+
+    public function test_full_set_assignment_replacement_deactivates_omissions_and_preserves_counter_capability(): void
+    {
+        $f = $this->fixture();
+        $person = OperationalPerson::create(['account_id' => $f['account']->id, 'name' => 'Full Set Person', 'is_active' => true]);
+        OperationalPersonBranch::create(['account_id' => $f['account']->id, 'person_id' => $person->id, 'branch_id' => $f['tuparev']->id, 'is_active' => true, 'can_record_counter' => true]);
+        OperationalPersonBranch::create(['account_id' => $f['account']->id, 'person_id' => $person->id, 'branch_id' => $f['graha']->id, 'is_active' => true, 'can_record_counter' => false]);
+
+        $this->actingAs($f['user'])->putJson("/api/v1/operational-people/{$person->id}/branches", [
+            'assignments' => [['branch_id' => $f['graha']->id, 'can_record_counter' => true]],
+        ])->assertOk()
+            ->assertJsonPath('data.operational_person_branches.0.branch_id', $f['graha']->id)
+            ->assertJsonPath('data.operational_person_branches.0.can_record_counter', true);
+
+        $this->assertDatabaseHas('operational_person_branches', ['person_id' => $person->id, 'branch_id' => $f['tuparev']->id, 'is_active' => false, 'can_record_counter' => false]);
+        $this->assertDatabaseHas('operational_person_branches', ['person_id' => $person->id, 'branch_id' => $f['graha']->id, 'is_active' => true, 'can_record_counter' => true]);
+    }
+
+    public function test_full_set_assignment_replacement_is_atomic_for_cross_account_input(): void
+    {
+        $f = $this->fixture();
+        $person = OperationalPerson::create(['account_id' => $f['account']->id, 'name' => 'Atomic Person', 'is_active' => true]);
+        OperationalPersonBranch::create(['account_id' => $f['account']->id, 'person_id' => $person->id, 'branch_id' => $f['tuparev']->id, 'is_active' => true, 'can_record_counter' => true]);
+        $otherAccount = Account::create(['code' => 'OTHER', 'name' => 'Other', 'status' => 'active']);
+        $otherBranch = Branch::create(['account_id' => $otherAccount->id, 'code' => 'OTHER', 'name' => 'Other', 'is_active' => true]);
+
+        $this->actingAs($f['user'])->putJson("/api/v1/operational-people/{$person->id}/branches", [
+            'assignments' => [['branch_id' => $otherBranch->id, 'can_record_counter' => false]],
+        ])->assertUnprocessable();
+
+        $this->assertDatabaseHas('operational_person_branches', ['person_id' => $person->id, 'branch_id' => $f['tuparev']->id, 'is_active' => true, 'can_record_counter' => true]);
+        $this->assertDatabaseMissing('operational_person_branches', ['person_id' => $person->id, 'branch_id' => $otherBranch->id]);
+    }
 }

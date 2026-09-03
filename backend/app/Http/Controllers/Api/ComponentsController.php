@@ -4,12 +4,14 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\ComponentCatalog;
+use App\Models\CounterReading;
 use App\Models\Machine;
 use App\Models\MachineComponent;
 use App\Models\MachineComponentExclusion;
 use App\Models\ModelProfile;
 use App\Models\ModelProfileSlot;
 use App\Services\ComponentConfigurationService;
+use App\Services\MachineAccessResolver;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
@@ -109,13 +111,35 @@ class ComponentsController extends Controller
 
     public function machineComponents(Request $r, string $machine)
     {
-        $m = Machine::findOrFail($machine);
+        $m = Machine::with(['account', 'branch.account'])->findOrFail($machine);
+        abort_unless(app(MachineAccessResolver::class)->canAccess($r->user(), $m), 403);
 
-        return response()->json(['data' => MachineComponent::where('machine_id', $m->id)->with(['component', 'profileSlot', 'lifecycles' => fn ($q) => $q->where('status', 'active')])->get()->map(function ($x) {
-            $x->configuration_state = $x->status === 'retired' ? 'RETIRED' : ($x->lifecycles->isEmpty() ? 'UNKNOWN' : 'INITIALIZED');
+        $latestCounter = CounterReading::where('machine_id', $m->id)
+            ->where('account_id', $m->account_id)
+            ->where('status', 'effective')
+            ->whereHas('counterType', fn ($q) => $q->whereRaw('LOWER(TRIM(code)) = ?', ['total_impressions']))
+            ->orderByDesc('observed_at')
+            ->orderByDesc('created_at')
+            ->orderByDesc('id')
+            ->first();
 
-            return $x;
-        })]);
+        return response()->json(['data' => MachineComponent::where('machine_id', $m->id)
+            ->with([
+                'component',
+                'profileSlot',
+                'lifecycles' => fn ($q) => $q->orderBy('created_at')->orderBy('id'),
+            ])
+            ->orderBy('display_order')
+            ->orderBy('slot_code')
+            ->get()
+            ->map(function ($x) use ($latestCounter) {
+                $activeLifecycle = $x->lifecycles->firstWhere('status', 'active');
+                $x->configuration_state = $x->status === 'retired' ? 'RETIRED' : ($activeLifecycle ? 'INITIALIZED' : 'UNKNOWN');
+                $x->latest_effective_counter = $latestCounter?->reading_value;
+                $x->latest_counter_observed_at = $latestCounter?->observed_at;
+
+                return $x;
+            })]);
     }
 
     public function sync(Request $r, string $machine)

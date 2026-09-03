@@ -1,0 +1,75 @@
+{
+  "checkpoint": "M2.12F",
+  "status": "PENDING_AUTHENTICATED_READ_ONLY_EVIDENCE",
+  "production_runtime_source_of_truth": "HOSTINGER_MARIADB",
+  "new_supabase": {
+    "project_ref": "sxitqjxljoqsnpepymrl",
+    "role": "READ_ONLY_REFERENCE",
+    "capture_status": "HTTP_401_WITH_PUBLISHABLE_KEY",
+    "operator_capture_required": true
+  },
+  "legacy_supabase": {
+    "project_ref": "wtslqxjwjqyjgcapfrrz",
+    "role": "HISTORICAL_MIGRATION_PROVENANCE_ONLY",
+    "freeze": "REMAINS_ACTIVE"
+  },
+  "known_production_evidence": {
+    "component_catalogs": 28,
+    "c1070_model_profiles": 1,
+    "c1070_model_profile_slots": 28,
+    "c1070_machine_components": 28,
+    "c1070_component_lifecycles": 47,
+    "c1070_active_lifecycles": 0,
+    "c1070_closed_lifecycles": 47,
+    "counter_readings": 183,
+    "latest_counter": 1441597,
+    "purchases": 161,
+    "purchase_units": 208,
+    "purchase_total_idr": 371029998,
+    "incidents": 89
+  },
+  "domains": {
+    "accounts_branches": { "status": "PENDING_CROSSWALK" },
+    "machines_models": { "status": "PENDING_CROSSWALK", "deferred_scope": ["XEROX", "GRAHA"] },
+    "component_catalog": { "status": "PENDING_SEMANTIC_CROSSWALK" },
+    "model_profiles_slots": { "status": "PENDING_SEMANTIC_CROSSWALK" },
+    "machine_components": { "status": "PRODUCTION_CONFIGURATION_PRESENT_NO_WRITE_APPROVED" },
+    "component_lifecycle_history": { "status": "PRODUCTION_HISTORY_PRESENT_NO_WRITE_APPROVED" },
+    "daily_counters": { "status": "PENDING_POST_FREEZE_CROSSWALK" },
+    "operational_people": { "status": "PENDING_CROSSWALK" },
+    "inventory": { "status": "PENDING_CROSSWALK_NO_STOCK_INFERENCE" },
+    "purchases_receipts_movements": { "status": "PENDING_POST_FREEZE_CROSSWALK" },
+    "incidents": { "status": "PENDING_POST_FREEZE_CROSSWALK" },
+    "machine_cost": { "status": "MIXED_DERIVED_TOTALS_PLUS_PERSISTED_INPUT_FACTS_AUDIT_PENDING", "source_of_truth": "MIXED", "missing_facts": null, "calculated_totals_migrated": false },
+    "reports": { "status": "DERIVED_PROJECTION_SOURCE_FACT_AUDIT_PENDING", "report_totals_migrated": false },
+    "settings_policies": { "status": "PENDING_CROSSWALK", "assignment_full_set_parity_fix": "IMPLEMENTED_NOT_DEPLOYED" },
+    "auth": { "status": "PRODUCTION_LOCAL_ONLY", "supabase_auth_copy": "FORBIDDEN" }
+  },
+  "classification_counts": {
+    "matched": null,
+    "production_only_valid": null,
+    "supabase_only_canonical": null,
+    "supabase_only_operational_valid": null,
+    "already_migrated_legacy": null,
+    "duplicate": null,
+    "test_dummy": null,
+    "dev_only": null,
+    "ambiguous": null,
+    "requires_user_approval": null,
+    "unexplained": null
+  },
+  "write_plan": {
+    "status": "NOT_GENERATED_WITHOUT_COMPLETE_EVIDENCE",
+    "create": 0,
+    "update": 0,
+    "planned_writes": 0,
+    "executed": false
+  },
+  "safety": {
+    "full_supabase_bulk_migration": "REJECTED",
+    "production_mutation": false,
+    "production_database_mutation": false,
+    "public_html_mutation": false,
+    "production_deployment": false
+  }
+}
