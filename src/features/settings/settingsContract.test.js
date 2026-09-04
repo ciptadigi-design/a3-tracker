@@ -95,3 +95,9 @@ test('Advanced Economics copy preserves Standard and forbids fabricated costs', 
   assert.match(page, /Standard remains unchanged/)
   assert.match(page, /does not create or backfill costs/)
 })
+
+test('Members section derives branch names from canonical data instead of a nonexistent API field', () => {
+  assert.doesNotMatch(page, /member\.branch_names/)
+  assert.match(page, /resolveMemberBranchNames\(member, data\.branches\)/)
+  assert.match(page, /from '..\/features\/settings\/memberBranchNames\.js'/)
+})
