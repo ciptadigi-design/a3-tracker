@@ -134,7 +134,17 @@ class ComponentsController extends Controller
             ->get()
             ->map(function ($x) use ($latestCounter) {
                 $activeLifecycle = $x->lifecycles->firstWhere('status', 'active');
-                $x->configuration_state = $x->status === 'retired' ? 'RETIRED' : ($activeLifecycle ? 'INITIALIZED' : 'UNKNOWN');
+                $baselineLifecycle = $activeLifecycle ? null : $x->lifecycles->first(
+                    fn ($lifecycle) => $lifecycle->status === 'unknown' && $lifecycle->installed_counter !== null
+                );
+                $x->configuration_state = $x->status === 'retired'
+                    ? 'RETIRED'
+                    : ($activeLifecycle ? 'INITIALIZED' : ($baselineLifecycle ? 'BASELINE_KNOWN' : 'UNKNOWN'));
+                // BASELINE_KNOWN: no active lifecycle exists, but a status='unknown' lifecycle carries a real
+                // installed_counter derived from prior history. There is no factual installation date, so this
+                // must never be presented as INITIALIZED/active or given a fabricated started_at/health score.
+                $x->baseline_lifecycle_id = $baselineLifecycle?->id;
+                $x->baseline_installed_counter = $baselineLifecycle?->installed_counter;
                 $x->latest_effective_counter = $latestCounter?->reading_value;
                 $x->latest_counter_observed_at = $latestCounter?->observed_at;
 

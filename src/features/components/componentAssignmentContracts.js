@@ -88,17 +88,24 @@ export function effectiveProfiles(profiles, accountId, modelId) {
   );
 }
 
+// UNINITIALIZED_UNKNOWN ('unknown': zero lifecycle evidence) and BASELINE_KNOWN ('baseline_known': a
+// status='unknown' lifecycle row with a real installed_counter but no factual installation date) both
+// remain eligible to Initialize (confirm a real started_at) or Remove — neither is treated as active.
+function isUninitializedLifecycleStatus(lifecycleStatus) {
+  return lifecycleStatus === "unknown" || lifecycleStatus === "baseline_known";
+}
+
 export function machineComponentCapabilities({ assignment, canManage }) {
   const config = effectiveTrackingConfiguration(assignment)
   return {
     canRemove: Boolean(
       canManage &&
-        assignment?.lifecycle_status === "unknown" &&
+        isUninitializedLifecycleStatus(assignment?.lifecycle_status) &&
         assignment?.lifecycle_id == null,
     ),
     canInitialize: Boolean(
       canManage &&
-        assignment?.lifecycle_status === "unknown" &&
+        isUninitializedLifecycleStatus(assignment?.lifecycle_status) &&
         assignment?.assignment_status !== 'retired' &&
         config.complete,
     ),
