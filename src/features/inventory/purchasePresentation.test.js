@@ -14,8 +14,16 @@ const legacyPurchase = {
   supplier_name_snapshot: null,
 }
 
+// IDR currency formatting via Intl.NumberFormat is ICU-data-dependent: full-ICU
+// runtimes (e.g. local macOS Node, browsers) render a ",00" minor-unit suffix,
+// while small-ICU runtimes (e.g. CI's Linux Node build) omit it. Both are a
+// correct rendering of the same IDR value — the suffix is optional, but the
+// integer/grouped-thousands portion must match exactly, so an incorrect
+// numeric value still fails these assertions on every runtime.
+const IDR = (integer) => new RegExp(`^Rp\\s?${integer.replace(/\./g, '\\.')}(,\\d{2})?$`)
+
 test('a fully-populated purchase renders its real numeric total, never NaN', () => {
-  assert.match(formatPurchaseTotal(legacyPurchase), /^Rp\s?1\.800\.000,00$/)
+  assert.match(formatPurchaseTotal(legacyPurchase), IDR('1.800.000'))
   assert.equal(purchaseLineCount(legacyPurchase), 1)
   assert.equal(purchaseFullyReceivedLineCount(legacyPurchase), 0)
   assert.equal(purchaseReceivingProgressPercent(legacyPurchase), 0)
@@ -41,7 +49,7 @@ test('a raw backend row with none of the derived fields (the historical Laravel 
   // purchase_total / line_count / fully_received_line_count /
   // receiving_progress_percent / supplier_name_snapshot.
   const rawRow = { id: 'p3', account_id: 'a1', purchase_number: 'LEGACY-9', purchase_date: '2025-01-01', currency_code: 'IDR', status: 'draft', notes: null }
-  assert.match(formatPurchaseTotal(rawRow), /^Rp\s?0,00$/)
+  assert.match(formatPurchaseTotal(rawRow), IDR('0'))
   assert.equal(purchaseLineCount(rawRow), 0)
   assert.equal(purchaseFullyReceivedLineCount(rawRow), 0)
   assert.equal(purchaseReceivingProgressPercent(rawRow), 0)
