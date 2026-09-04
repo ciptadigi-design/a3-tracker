@@ -40,7 +40,7 @@ class InventoryWorkspaceParityTest extends TestCase
 
         $purchaseId = (string) Str::uuid();
         DB::table('purchases')->insert(['id' => $purchaseId, 'account_id' => $account->id, 'branch_id' => $tuparev->id, 'purchase_number' => 'TUP-1', 'purchase_date' => '2026-09-01', 'currency_code' => 'IDR', 'status' => 'draft', 'client_request_id' => (string) Str::uuid(), 'created_at' => now(), 'updated_at' => now()]);
-        DB::table('purchase_lines')->insert(['id' => (string) Str::uuid(), 'account_id' => $account->id, 'purchase_id' => $purchaseId, 'inventory_item_id' => $item->id, 'ordered_quantity' => 1, 'unit_cost' => null, 'created_at' => now(), 'updated_at' => now()]);
+        DB::table('purchase_lines')->insert(['id' => (string) Str::uuid(), 'account_id' => $account->id, 'purchase_id' => $purchaseId, 'inventory_item_id' => $item->id, 'ordered_quantity' => 2, 'unit_cost' => 15000, 'created_at' => now(), 'updated_at' => now()]);
 
         $otherAccount = Account::create(['code' => 'OTHER', 'name' => 'Other', 'status' => 'active']);
         $otherComponent = ComponentCatalog::create(['account_id' => $otherAccount->id, 'code' => 'PRIVATE', 'name' => 'Other Account Component', 'is_active' => true]);
@@ -58,7 +58,16 @@ class InventoryWorkspaceParityTest extends TestCase
             ->assertJsonPath('data.items.0.component.id', (string) $f['component']->id)
             ->assertJsonPath('data.locations.0.id', (string) $f['location']->id)
             ->assertJsonPath('data.balances.0.quantity', 3)
-            ->assertJsonPath('data.purchases.0.id', $f['purchaseId'])
+            ->assertJsonPath('data.purchases.0.purchase_id', $f['purchaseId'])
+            ->assertJsonPath('data.purchases.0.line_count', 1)
+            ->assertJsonPath('data.purchases.0.purchase_total', 30000)
+            ->assertJsonPath('data.purchases.0.fully_received_line_count', 0)
+            ->assertJsonPath('data.purchases.0.receiving_progress_percent', 0)
+            ->assertJsonPath('data.purchases.0.status', 'draft')
+            ->assertJsonPath('data.purchaseLines.0.purchase_id', $f['purchaseId'])
+            ->assertJsonPath('data.purchaseLines.0.item_name_snapshot', 'Drum Black')
+            ->assertJsonPath('data.purchaseLines.0.ordered_quantity', 2)
+            ->assertJsonPath('data.purchaseLines.0.remaining_quantity', 2)
             ->assertJsonPath('data.people.0.id', (string) $f['person']->id);
 
         $this->assertTrue($f['item']->component()->is($f['component']));
