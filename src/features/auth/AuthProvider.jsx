@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
-import { completePasswordSetup, restoreSession, signIn, signOut, subscribeToSession } from '../../services/auth.js'
+import { completePasswordSetup, restoreSession, signIn, signOut, signOutLocal, subscribeToSession } from '../../services/auth.js'
 import { AuthContext } from './authContext.js'
 import { clearDraftsForUser } from '../drafts/draftStorage.js'
 import { clearUIStateForUser } from '../uiState/uiStateStorage.js'
 import { reportFailure } from '../../lib/appErrors.js'
+import { setPostLoginNotice } from './postLoginNotice.js'
 
 // Supabase reference mode remains available in services/supabase/auth.js (functions.invoke('auth-login')).
 
@@ -55,6 +56,21 @@ export function AuthProvider({ children }) {
         setSession(null)
         clearDraftsForUser(session?.user?.id)
         clearUIStateForUser(session?.user?.id)
+      },
+      // Ends the current session immediately after the signed-in user changed their
+      // OWN password or email. That credential change already invalidated the
+      // server-side session, so no further authenticated request should be attempted
+      // (e.g. a Settings/tenant refetch) before the client transitions to Login —
+      // doing so surfaces a misleading "could not be loaded" error instead of a
+      // clean sign-out. This intentionally does NOT run for an admin resetting
+      // ANOTHER member's credential; that flow keeps the admin's own session.
+      async endSessionForOwnCredentialChange(noticeMessage = 'Your password was changed. Please sign in again.') {
+        const userId = session?.user?.id
+        await signOutLocal()
+        clearDraftsForUser(userId)
+        clearUIStateForUser(userId)
+        setPostLoginNotice(noticeMessage)
+        setSession(null)
       },
     }),
     [configurationError, isLoading, needsPasswordSetup, session],

@@ -136,6 +136,37 @@ class GovernanceParityTest extends TestCase
         $this->actingAs($g['u'])->getJson('/api/v1/accounts/'.$g['b']->id.'/branches')->assertForbidden();
     }
 
+    public function test_self_password_change_does_not_invalidate_the_laravel_session(): void
+    {
+        // Laravel's session guard authenticates by cookie/session identity, not by
+        // re-checking the stored password hash on every request. Unlike the Supabase
+        // Admin API path (which revokes the caller's own token when the password
+        // changes), changing your own password through this endpoint must not by
+        // itself invalidate the current Laravel session — a follow-up request in the
+        // same session still succeeds.
+        $g = $this->graph();
+        $this->actingAs($g['u']);
+        $this->patchJson('/api/v1/me/account', [
+            'action' => 'password', 'currentPassword' => 'password',
+            'password' => 'new-secret-password', 'password_confirmation' => 'new-secret-password',
+        ])->assertOk();
+        $this->getJson('/api/v1/me')->assertOk()->assertJsonPath('data.user.id', $g['u']->id);
+    }
+
+    public function test_admin_resetting_another_members_password_preserves_the_admins_own_session(): void
+    {
+        $g = $this->graph();
+        $owner = User::factory()->create(['status' => 'active']);
+        AccountMembership::create(['account_id' => $g['a']->id, 'user_id' => $owner->id, 'role' => 'owner', 'status' => 'active', 'accepted_at' => now()]);
+        $this->actingAs($owner);
+        $this->postJson('/api/v1/accounts/'.$g['a']->id.'/members/'.$g['m']->id.'/password', [
+            'password' => 'another-members-new-password', 'password_confirmation' => 'another-members-new-password',
+        ])->assertOk();
+        // The admin's own session must still be authenticated as the admin, not the
+        // member whose password was just reset.
+        $this->getJson('/api/v1/me')->assertOk()->assertJsonPath('data.user.id', $owner->id);
+    }
+
     public function test_me_payload_is_safe_and_explicit(): void
     {
         $g = $this->graph();

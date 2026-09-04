@@ -39,3 +39,17 @@ export async function completePasswordSetup(password) {
 }
 
 export async function signOut() { const { error } = await requireClient().auth.signOut(); if (error) throw error; return null }
+
+// Clears the current browser session without calling the network revoke endpoint.
+// Used right after the caller's own password/email credential changed server-side:
+// the previously issued token may already be invalid there, so a normal (global-scope)
+// signOut() call could itself fail with 401 and block the local session teardown.
+export async function signOutLocal() {
+  const client = requireClient()
+  try {
+    await client.auth.signOut({ scope: 'local' })
+  } catch {
+    // Local session state is cleared by the caller regardless of this outcome.
+  }
+  return null
+}
