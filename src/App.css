@@ -410,6 +410,8 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .master-management { overflow: hidden; border-radius: 28px; }
 .machine-economics-setting { min-width: 0; display: grid; grid-template-columns: auto minmax(0,1fr) auto; align-items: center; gap: 14px; padding: 19px 21px; border-radius: 22px; }
 .settings-feature-icon { width: 42px; height: 42px; display: grid; place-items: center; color: var(--blue); border-radius: 13px; background: var(--blue-soft); }
+.settings-card-heading { min-width: 0; display: flex; align-items: center; gap: 14px; }
+.settings-card-heading > div { min-width: 0; }
 .machine-economics-setting > div { min-width: 0; }.machine-economics-setting h2 { margin: 4px 0; font-size: 17px; }.machine-economics-setting p { max-width: 760px; margin: 0; color: var(--text-muted); font-size: 9px; line-height: 1.55; }.machine-economics-setting small { color: var(--text-muted); font-size: 8px; line-height: 1.45; }
 .feature-switch { display: grid; grid-template-columns: 42px auto; align-items: center; gap: 8px; cursor: pointer; }.feature-switch input { position: absolute; width: 1px; height: 1px; opacity: 0; }.feature-switch > span { width: 42px; height: 24px; position: relative; border: 1px solid var(--border-subtle); border-radius: 99px; background: var(--surface-muted); transition: .18s ease; }.feature-switch > span::after { content: ''; width: 17px; height: 17px; position: absolute; left: 3px; top: 2px; border-radius: 50%; background: var(--text-muted); transition: .18s ease; }.feature-switch input:checked + span { border-color: color-mix(in srgb,var(--green) 40%,transparent); background: color-mix(in srgb,var(--green) 18%,var(--surface-muted)); }.feature-switch input:checked + span::after { left: 20px; background: var(--green); }.feature-switch input:focus-visible + span { outline: 3px solid color-mix(in srgb,var(--blue) 28%,transparent); outline-offset: 2px; }.feature-switch input:disabled + span { opacity: .55; cursor: not-allowed; }.feature-switch strong { font-size: 9px; text-transform: uppercase; }
 .machine-economics-setting > .inline-error,.settings-feature-readonly { grid-column: 2 / -1; }.settings-feature-busy { display: inline-flex; align-items: center; gap: 6px; color: var(--text-muted); font-size: 8px; }
@@ -1419,6 +1421,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   .settings-section-nav { position: static; display: flex; overflow-x: auto; padding: 7px; scroll-snap-type: x proximity; }
   .settings-section-nav button { flex: 0 0 auto; scroll-snap-align: start; }
   .settings-card > header { align-items: flex-start; flex-direction: column; padding: 16px; }
+  .settings-card > header .settings-card-heading { flex-direction: column; align-items: flex-start; gap: 10px; }
   .settings-card > header > button,.settings-header-actions { width: 100%; }
   .settings-card > header > button,.settings-header-actions button { justify-content: center; flex: 1; }
   .settings-detail-list { grid-template-columns: minmax(0,1fr); }

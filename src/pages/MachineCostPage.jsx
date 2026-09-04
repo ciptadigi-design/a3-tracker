@@ -3,7 +3,7 @@ import { AlertCircle, BarChart3, Boxes, CalendarRange, CircleDollarSign, Gauge, 
 import { PageHeader } from '../components/ui/PageHeader.jsx'
 import { useAuth } from '../features/auth/useAuth.js'
 import { useTenant } from '../features/account/useTenant.js'
-import { machineCostPeriodPresets, resolveMachineCostPeriod, validMachineCostFilters } from '../features/machineCost/machineCostPeriods.js'
+import { CANONICAL_PERIOD_TIMEZONE, machineCostPeriodPresets, resolveMachineCostPeriod, validMachineCostFilters } from '../features/machineCost/machineCostPeriods.js'
 import { counterEvidencePresentation, knownConsumptionPresentation, primaryCostPerClickPresentation, summaryStatusPresentation } from '../features/machineCost/machineCostPresentation.js'
 import { OperatingCostDialog } from '../features/machineCost/OperatingCostDialog.jsx'
 import { OperatingCostsPanel } from '../features/machineCost/OperatingCostsPanel.jsx'
@@ -94,7 +94,7 @@ export function MachineCostPage() {
   const [priceDialog, setPriceDialog] = useState(false)
   const [priceHistoryDialog, setPriceHistoryDialog] = useState(false)
   const selectedMachine = machines.find((machine) => machine.id === filters.machineId) ?? machines[0] ?? null
-  const timezone = selectedMachine?.timezone || branch?.timezone || account.default_timezone || 'Asia/Jakarta'
+  const timezone = selectedMachine?.timezone || branch?.timezone || account.default_timezone || CANONICAL_PERIOD_TIMEZONE
   const resolvedPeriod = useMemo(() => resolveMachineCostPeriod({ preset: filters.preset, timezone, customStart: filters.customStart, customEnd: filters.customEnd }), [filters.customEnd, filters.customStart, filters.preset, timezone])
   const validPeriod = Boolean(resolvedPeriod.start && resolvedPeriod.end && resolvedPeriod.start <= resolvedPeriod.end)
 

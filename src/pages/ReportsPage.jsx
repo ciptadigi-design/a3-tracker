@@ -7,7 +7,7 @@ import { buildReportExport, downloadCsv } from '../features/reports/reportExport
 import { removePersistedReportBranch, reportStatus, reportTabs, validReportFilters } from '../features/reports/reportModel.js'
 import { useAuth } from '../features/auth/useAuth.js'
 import { useTenant } from '../features/account/useTenant.js'
-import { machineCostPeriodPresets, resolveMachineCostPeriod } from '../features/machineCost/machineCostPeriods.js'
+import { CANONICAL_PERIOD_TIMEZONE, machineCostPeriodPresets, resolveMachineCostPeriod } from '../features/machineCost/machineCostPeriods.js'
 import { createUIStateKey } from '../features/uiState/uiStateKeys.js'
 import { usePersistentUIState } from '../features/uiState/usePersistentUIState.js'
 import { userErrorMessage } from '../lib/appErrors.js'
@@ -35,7 +35,7 @@ export function ReportsPage() {
   const stateKey = createUIStateKey({ userId: user.id, accountId: account.id, feature: 'reports-filters', entityId: 'workspace' })
   const { value: filters, setUIState: setFilters } = usePersistentUIState({ uiStateKey: stateKey, initialValue: { tab: 'overview', machineId: '', preset: 'this_month', customStart: '', customEnd: '', errorCategory: '', errorStatus: '' }, validate: validReportFilters })
   const [machines, setMachines] = useState([]); const [report, setReport] = useState(null); const [loading, setLoading] = useState(true); const [error, setError] = useState(null); const requestId = useRef(0)
-  const selectedMachine = machines.find((machine) => machine.id === filters.machineId) ?? null; const timezone = selectedMachine?.timezone || branch?.timezone || account.default_timezone || 'UTC'
+  const selectedMachine = machines.find((machine) => machine.id === filters.machineId) ?? null; const timezone = selectedMachine?.timezone || branch?.timezone || account.default_timezone || CANONICAL_PERIOD_TIMEZONE
   const period = useMemo(() => resolveMachineCostPeriod({ preset: filters.preset, timezone, customStart: filters.customStart, customEnd: filters.customEnd }), [filters.customEnd, filters.customStart, filters.preset, timezone]); const validPeriod = Boolean(period.start && period.end && period.start <= period.end); const resetKey = `${branch?.id}:${filters.tab}:${filters.machineId}:${period.start}:${period.end}:${filters.errorCategory}:${filters.errorStatus}`
   useEffect(() => { let active = true; setMachines([]); if (branch?.id) loadMachines({ accountId: account.id, branchId: branch.id }).then((rows) => { if (active) setMachines(rows.filter((machine) => machine.is_active)) }).catch((loadError) => { if (active) setError(loadError) }); return () => { active = false } }, [account.id, branch?.id])
   useEffect(() => { if (Object.hasOwn(filters, 'branchId')) setFilters((current) => removePersistedReportBranch(current)) }, [filters, setFilters]); useEffect(() => { if (filters.machineId && !machines.some((machine) => machine.id === filters.machineId)) setFilters((current) => ({ ...current, machineId: '' })) }, [filters.machineId, machines, setFilters])

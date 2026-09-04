@@ -150,7 +150,7 @@ class OperationsController extends Controller
     {
         Gate::authorize('platform.manage');
         $p = OperationalPerson::where('account_id', $account)->findOrFail($id);
-        $d = $r->validate(['name' => 'required|string|max:160', 'code' => 'nullable|string|max:64', 'linked_user_id' => 'nullable|uuid']);
+        $d = $r->validate(['name' => 'required|string|max:160', 'code' => 'nullable|string|max:64', 'linked_user_id' => 'nullable|uuid', 'is_active' => 'sometimes|boolean']);
         $p->update($d);
 
         return response()->json(['data' => $p]);
