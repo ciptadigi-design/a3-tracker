@@ -126,6 +126,48 @@ class OperationalPersonSelectionParityTest extends TestCase
         $this->assertDatabaseHas('operational_person_branches', ['person_id' => $person->id, 'branch_id' => $f['graha']->id, 'is_active' => true, 'can_record_counter' => true]);
     }
 
+    public function test_assignment_serialization_is_active_first_then_branch_code_regardless_of_insertion_order(): void
+    {
+        $f = $this->fixture();
+        $alpha = Branch::create(['account_id' => $f['account']->id, 'code' => 'ALP', 'name' => 'Alpha', 'is_active' => true]);
+        $zulu = Branch::create(['account_id' => $f['account']->id, 'code' => 'ZUL', 'name' => 'Zulu', 'is_active' => true]);
+        $person = OperationalPerson::create(['account_id' => $f['account']->id, 'name' => 'Canonical Order', 'is_active' => true]);
+
+        foreach ([
+            [$zulu, false, false],
+            [$f['tuparev'], true, false],
+            [$f['graha'], false, false],
+            [$alpha, true, true],
+        ] as [$branch, $isActive, $canRecordCounter]) {
+            OperationalPersonBranch::create([
+                'account_id' => $f['account']->id,
+                'person_id' => $person->id,
+                'branch_id' => $branch->id,
+                'is_active' => $isActive,
+                'can_record_counter' => $canRecordCounter,
+            ]);
+        }
+
+        $expectedBranchIds = [$alpha->id, $f['tuparev']->id, $f['graha']->id, $zulu->id];
+        $expectedCapabilities = [true, false, false, false];
+        $serializedOrders = [];
+
+        for ($attempt = 0; $attempt < 3; $attempt++) {
+            $assignments = $this->actingAs($f['user'])
+                ->getJson("/api/v1/accounts/{$f['account']->id}/operational-people?per_page=100")
+                ->assertOk()
+                ->json('data.data.0.operational_person_branches');
+
+            $serializedOrders[] = array_column($assignments, 'branch_id');
+            $this->assertSame($expectedBranchIds, array_column($assignments, 'branch_id'));
+            $this->assertSame([true, true, false, false], array_column($assignments, 'is_active'));
+            $this->assertSame($expectedCapabilities, array_column($assignments, 'can_record_counter'));
+        }
+
+        $this->assertSame($serializedOrders[0], $serializedOrders[1]);
+        $this->assertSame($serializedOrders[1], $serializedOrders[2]);
+    }
+
     public function test_full_set_assignment_replacement_is_atomic_for_cross_account_input(): void
     {
         $f = $this->fixture();
