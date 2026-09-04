@@ -172,7 +172,7 @@ export function MachineCostPage() {
       <section className="machine-economics-summary-grid">
         <SummaryCard icon={Gauge} label="Total Clicks" value={formatNumber(summary.total_clicks)} hint={summary.counter_status === 'COMPLETE' ? 'Effective Daily Counter usage in this period' : counterDisplay.hint} />
         <SummaryCard icon={Boxes} label="Component Consumption" value={consumptionDisplay.value} hint={consumptionDisplay.hint} tone="purple" />
-        <SummaryCard icon={AlertCircle} label="Error / Waste" value={summary.error_waste_events > 0 && summary.known_error_waste_events === 0 ? '—' : currency(summary.known_error_waste_cost)} hint={`${summary.known_error_waste_events} assessed · ${summary.unknown_error_waste_events} unpriced`} tone="warning" />
+        <SummaryCard icon={AlertCircle} label="Error / Waste" value={Number(summary.error_waste_events ?? 0) > 0 && Number(summary.known_error_waste_events ?? 0) === 0 ? '—' : currency(summary.known_error_waste_cost)} hint={`${Number(summary.known_error_waste_events ?? 0)} assessed · ${Number(summary.unknown_error_waste_events ?? 0)} unpriced`} tone="warning" />
         <SummaryCard icon={BarChart3} label="Cost / Click" value={primaryCostPerClickDisplay.value} hint={primaryCostPerClickDisplay.hint} tone="green" />
       </section>
       <DailyTrendChart rows={summary.daily_trend ?? []} />
