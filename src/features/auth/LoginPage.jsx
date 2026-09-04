@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { ArrowRight, Eye, EyeOff, LockKeyhole, Printer } from 'lucide-react'
 import { useAuth } from './useAuth.js'
+import { consumePostLoginNotice } from './postLoginNotice.js'
 
 export function LoginPage() {
   const { signIn, configurationError } = useAuth()
@@ -9,6 +10,7 @@ export function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState(configurationError)
+  const [notice] = useState(() => consumePostLoginNotice())
 
   async function handleSubmit(event) {
     event.preventDefault()
@@ -72,6 +74,7 @@ export function LoginPage() {
                 </button>
               </div>
             </label>
+            {notice && !error && <div className="success-banner" role="status"><span>{notice}</span></div>}
             {error && <div className="auth-error" role="alert">{error}</div>}
             <button className="primary-button login-button" type="submit" disabled={isSubmitting || Boolean(configurationError)}>
               <span>{isSubmitting ? 'Signing in…' : 'Sign in securely'}</span>

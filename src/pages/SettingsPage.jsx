@@ -109,7 +109,7 @@ function ConfirmDialog({ title, message, confirmLabel, danger = false, onClose, 
 function OverviewCard({ icon, label, value, detail, onClick }) { return <button type="button" className="settings-summary-card glass-surface" onClick={onClick}><span>{createElement(icon, { size: 19 })}</span><div><small>{label}</small><strong>{value}</strong><em>{detail}</em></div></button> }
 
 export function SettingsPage({ navigate, initialSection = null }) {
-  const { user } = useAuth(); const { account, membership, isPlatformSuperuser, refresh: refreshTenant } = useTenant(); const canManage = isPlatformSuperuser
+  const { user, endSessionForOwnCredentialChange } = useAuth(); const { account, membership, isPlatformSuperuser, refresh: refreshTenant } = useTenant(); const canManage = isPlatformSuperuser
   const sectionState = usePersistentUIState({ uiStateKey: createUIStateKey({ userId: user.id, accountId: account.id, feature: 'settings', entityId: 'section' }), initialValue: { section: 'workspace' }, validate: validSection })
   const [data, setData] = useState(null); const [loading, setLoading] = useState(true); const [error, setError] = useState(null); const [notice, setNotice] = useState(null); const [dialog, setDialog] = useState(null); const [policyBusy, setPolicyBusy] = useState(false)
   const [machineMasterView, setMachineMasterView] = useState('manufacturers')
@@ -127,7 +127,18 @@ export function SettingsPage({ navigate, initialSection = null }) {
   async function mutateBranch(branch, action) { await manageBranch({ accountId: account.id, branch, action, clientRequestId: newRequestId() }); await done(`Branch ${action === 'archive' ? 'archived' : 'restored'} without moving or deleting historical data.`, true) }
   async function saveMember(member, values, activate) { if (activate) await activateMember({ accountId: account.id, member, values }); else if (member) await updateMembership({ accountId: account.id, member, role: values.role, status: member.status, branchIds: values.branchIds, username: values.username, displayName: values.displayName, clientRequestId: values.clientRequestId }); else await provisionMember({ accountId: account.id, values }); await done(activate ? 'Member account activated.' : member ? 'Member identity, role, and Branch access saved.' : 'Member account created and activated.') }
   async function changeMemberEmail(member, values) { await updateManagedMemberEmail({ accountId: account.id, member, email: values.email, clientRequestId: values.clientRequestId }); await done('Member email changed through Supabase Auth.') }
-  async function resetMemberPassword(member, values) { await resetManagedMemberPassword({ accountId: account.id, member, password: values.password, clientRequestId: values.clientRequestId }); await done('Member password reset. Existing credentials were not revealed.') }
+  async function resetMemberPassword(member, values) {
+    await resetManagedMemberPassword({ accountId: account.id, member, password: values.password, clientRequestId: values.clientRequestId })
+    // A Platform Superuser can reach their OWN member row from this admin panel.
+    // Resetting your own credential here invalidates your own session server-side
+    // exactly like the My Account flow does, so it must end the session locally and
+    // hand off to Login instead of calling done()/refresh() — which would attempt a
+    // Settings reload with the now-invalid token and surface a misleading
+    // "Settings could not be loaded" error. Resetting ANOTHER member's password
+    // takes the branch below unchanged: the admin's own session is preserved.
+    if (member.user_id === user.id) { await endSessionForOwnCredentialChange('Password changed. Please sign in again.'); return }
+    await done('Member password reset. Existing credentials were not revealed.')
+  }
   async function mutateMemberStatus(member, status) { await updateMembership({ accountId: account.id, member, role: member.role, status, branchIds: member.branch_ids, username: member.username, displayName: member.display_name, clientRequestId: newRequestId() }); await done(`Membership ${status === 'suspended' ? 'suspended' : 'reactivated'}.`) }
   async function togglePolicy(key) { const next = { ...data.policy, [key]: !data.policy[key] }; setPolicyBusy(true); try { const saved = await updateOperationalPermissions({ accountId: account.id, policy: next, clientRequestId: newRequestId() }); setData((current) => ({ ...current, policy: saved })); setNotice('Operational permission policy saved and enforced by the database.') } catch (caught) { setError(caught) } finally { setPolicyBusy(false) } }
   async function toggleAdvanced() { const enabled = !account.machine_economics_advanced_enabled; setPolicyBusy(true); try { await updateAdvancedEconomics({ accountId: account.id, enabled, clientRequestId: newRequestId() }); await done(`Advanced Machine Economics ${enabled ? 'enabled' : 'disabled'}. No operating-cost rows were created.`, true) } catch (caught) { setError(caught) } finally { setPolicyBusy(false) } }

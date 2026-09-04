@@ -14,3 +14,4 @@ export const subscribeToSession = (callback) => {
 export const signIn = (identifier, password) => invoke('signIn', identifier, password)
 export const completePasswordSetup = (password) => invoke('completePasswordSetup', password)
 export const signOut = () => invoke('signOut')
+export const signOutLocal = () => invoke('signOutLocal')

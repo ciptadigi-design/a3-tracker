@@ -19,7 +19,7 @@ function PasswordInput({ label, value, onChange, autoComplete }) {
 }
 
 export function MyAccountPage() {
-  const { user } = useAuth()
+  const { user, endSessionForOwnCredentialChange } = useAuth()
   const tenant = useTenant()
   const [profile, setProfile] = useState({ displayName: tenant.profile?.display_name ?? '', username: tenant.profile?.username ?? '' })
   const [email, setEmail] = useState({ value: user?.email ?? '', currentPassword: '' })
@@ -60,8 +60,11 @@ export function MyAccountPage() {
     try {
       await updateMyPassword({ currentPassword: password.current, password: password.next, clientRequestId: requestId() })
       setPassword({ current: '', next: '', confirm: '' })
-      setMessage({ notice: 'Password changed. Existing role, Branch access, and platform privilege were unchanged.' })
-    } catch (error) { setMessage({ error }) } finally { setBusy(null) }
+      // The credential change already invalidated the current session server-side.
+      // End it locally right away and hand off to Login instead of leaving this
+      // page mounted to attempt further authenticated requests with a dead token.
+      await endSessionForOwnCredentialChange('Password changed. Please sign in again.')
+    } catch (error) { setMessage({ error }); setBusy(null) }
   }
 
   return <div className="page-stack my-account-page">
