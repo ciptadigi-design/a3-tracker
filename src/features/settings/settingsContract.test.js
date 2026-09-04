@@ -11,15 +11,38 @@ const accountPage = readFileSync(new URL('../../pages/MyAccountPage.jsx', import
 const accountService = readFileSync(new URL('../../services/supabase/account.js', import.meta.url), 'utf8')
 const css = readFileSync(new URL('../../App.css', import.meta.url), 'utf8')
 
-test('Settings route and seven-section control-plane IA are active', () => {
+test('Settings route and six-section control-plane IA are active', () => {
   assert.match(app, /path === '\/settings'.*SettingsPage/)
   assert.doesNotMatch(app, /'\/settings': \['Settings'/)
-  for (const label of ['Workspace', 'Branches', 'Members & Roles', 'Permissions', 'Operations', 'Machine Models', 'Advanced']) assert.match(page, new RegExp(label.replace('&', '\\&')))
+  for (const label of ['Workspace', 'Branches', 'Members & Roles', 'Permissions', 'Operations', 'Machine Models']) assert.match(page, new RegExp(label.replace('&', '\\&')))
   assert.match(sidebar, /Settings, active: true/)
   assert.match(sidebar, /isPlatformSuperuser && <NavLink/)
   assert.doesNotMatch(sidebar, /membership\?\.role|\['owner'/)
   assert.match(app, /path === '\/settings'.*tenant\.isPlatformSuperuser/)
   assert.match(app, /Settings is temporarily available only to Platform Superusers/)
+})
+
+test('Advanced Machine Economics is de-scoped from the active Settings navigation, but stays dormant in source', () => {
+  const sectionsLiteral = page.match(/const sections = \[[\s\S]*?\]\n/)?.[0] ?? ''
+  assert.doesNotMatch(sectionsLiteral, /'advanced'/, 'Advanced must not be a selectable Settings section')
+  assert.equal((sectionsLiteral.match(/\[\s*'\w+',/g) ?? []).length, 6, 'exactly six sections should remain navigable')
+
+  // A stale persisted { section: 'advanced' } must not strand the user: validSection
+  // rejects any section not present in the (now Advanced-less) sections array, and
+  // usePersistentUIState's own loadState() falls back to initialValue ({ section:
+  // 'workspace' }) and clears the bad stored entry — no bespoke redirect needed.
+  assert.match(page, /const validSection = \(value\) => value && sections\.some/)
+  assert.match(page, /initialValue: \{ section: 'workspace' \}/)
+
+  // Advanced Machine Economics logic remains present (dormant), not deleted.
+  assert.match(page, /function toggleAdvanced/)
+  assert.match(page, /updateAdvancedEconomics/)
+})
+
+test('Settings does not fetch or depend on Advanced-only data to load its supported sections', () => {
+  // refresh()/loadSettings must not be gated on, or branch on, the advanced flag.
+  const refreshFn = page.match(/const refresh = useCallback\([\s\S]*?\}, \[account\.id\]\)/)?.[0] ?? ''
+  assert.doesNotMatch(refreshFn, /advanced/i)
 })
 
 test('Direct Active member UX creates or activates accounts without invite copy', () => {

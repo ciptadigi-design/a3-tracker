@@ -1,7 +1,8 @@
 import { apiClient, unwrapData } from '../../lib/api/apiClient.js'
+import { machineCostQuery } from '../../features/machineCost/machineCostQuery.js'
 
 export async function loadMachineCostPeriod({ machineId, periodStart, periodEnd }) {
-  return unwrapData(await apiClient.get(`/machines/${machineId}/cost?period_start=${encodeURIComponent(periodStart)}&period_end=${encodeURIComponent(periodEnd)}`))
+  return unwrapData(await apiClient.get(`/machines/${machineId}/cost?${machineCostQuery(periodStart, periodEnd)}`))
 }
 
 export async function loadMachineOperatingCosts(args) { const data = await loadMachineCostPeriod(args); return { costs: data.operating_costs || [], people: [] } }

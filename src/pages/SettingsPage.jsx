@@ -16,10 +16,14 @@ import { saveMachineModel, saveManufacturer, saveOperationalPerson, setMachineMo
 import { activateMember, loadSettings, manageBranch, provisionMember, resetManagedMemberPassword, updateAdvancedEconomics, updateManagedMemberEmail, updateMembership, updateOperationalPermissions, updateOperationalPersonBranches, updateWorkspace } from '../services/settings.js'
 import { userErrorMessage } from '../lib/appErrors.js'
 
+// Advanced Machine Economics is deferred (not launch-critical) and deliberately
+// not in this list: it stays reachable in source/backend for later re-enablement,
+// but is not offered as a navigable Settings section. usePersistentUIState's
+// validate falls back to 'workspace' automatically for any stale persisted
+// section not present here, so no dedicated migration/redirect code is needed.
 const sections = [
   ['workspace', 'Workspace', Building2], ['branches', 'Branches', MapPin], ['members', 'Members & Roles', Users],
   ['permissions', 'Permissions', ShieldCheck], ['operations', 'Operations', Gauge], ['models', 'Machine Models', Workflow],
-  ['advanced', 'Advanced', Settings2],
 ]
 const capabilities = [
   ['operator_can_initialize_component', 'Initialize component lifecycle', false],

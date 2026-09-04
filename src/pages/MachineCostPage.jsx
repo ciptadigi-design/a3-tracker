@@ -123,17 +123,17 @@ export function MachineCostPage() {
   useEffect(() => { refresh() }, [refresh])
 
   const refreshCosts = useCallback(async () => {
-    if (!selectedMachine) return setCostWorkspace({ costs: [], people: [] })
-    try { setCostError(null); setCostWorkspace(await loadMachineOperatingCosts({ accountId: account.id, machineId: selectedMachine.id, branchId: selectedMachine.branch_id })) }
+    if (!selectedMachine || !validPeriod) return setCostWorkspace({ costs: [], people: [] })
+    try { setCostError(null); setCostWorkspace(await loadMachineOperatingCosts({ accountId: account.id, machineId: selectedMachine.id, branchId: selectedMachine.branch_id, periodStart: resolvedPeriod.start, periodEnd: resolvedPeriod.end })) }
     catch (loadError) { setCostError(loadError) }
-  }, [account.id, selectedMachine])
+  }, [account.id, resolvedPeriod.end, resolvedPeriod.start, selectedMachine, validPeriod])
   useEffect(() => { refreshCosts() }, [refreshCosts])
 
   const refreshSellingPrices = useCallback(async () => {
-    if (!selectedMachine) return setSellingPrices([])
-    try { setPriceError(null); setSellingPrices(await loadMachineSellingPrices({ accountId: account.id, machineId: selectedMachine.id })) }
+    if (!selectedMachine || !validPeriod) return setSellingPrices([])
+    try { setPriceError(null); setSellingPrices(await loadMachineSellingPrices({ accountId: account.id, machineId: selectedMachine.id, periodStart: resolvedPeriod.start, periodEnd: resolvedPeriod.end })) }
     catch (loadError) { setPriceError(loadError) }
-  }, [account.id, selectedMachine])
+  }, [account.id, resolvedPeriod.end, resolvedPeriod.start, selectedMachine, validPeriod])
   useEffect(() => { refreshSellingPrices() }, [refreshSellingPrices])
 
   async function saveOperatingCost(values) { await createMachineOperatingCost({ accountId: account.id, machineId: selectedMachine.id, values }); await Promise.all([refresh(), refreshCosts()]) }
