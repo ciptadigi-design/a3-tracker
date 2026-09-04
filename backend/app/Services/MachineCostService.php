@@ -21,8 +21,14 @@ class MachineCostService
         $repls = ComponentReplacement::with('newLifecycle.machineComponent')->where('account_id', $machine->account_id)->whereHas('newLifecycle.machineComponent', fn ($q) => $q->where('machine_id', $machine->id))->where('replaced_at', '>=', $start)->where('replaced_at', '<', $end)->get();
         $known = $repls->whereNotNull('consumed_cost')->sum(fn ($r) => (string) $r->consumed_cost);
         $unknown = $repls->whereNull('consumed_cost')->count();
+        $totalConsumptionEvents = $repls->count();
+        $knownConsumptionEvents = $totalConsumptionEvents - $unknown;
         $incidents = OperationalIncident::where('account_id', $machine->account_id)->where('machine_id', $machine->id)->where('status', '!=', 'voided')->where('occurred_at', '>=', $start)->where('occurred_at', '<', $end)->get();
-        $loss = $incidents->reduce(fn ($c, $i) => $c + (float) $this->incidents->effectiveLoss($i), 0);
+        $incidentLosses = $incidents->map(fn ($i) => (float) $this->incidents->effectiveLoss($i));
+        $errorWasteEvents = $incidents->count();
+        $knownErrorWasteEvents = $incidentLosses->filter(fn ($amount) => $amount > 0)->count();
+        $unknownErrorWasteEvents = $errorWasteEvents - $knownErrorWasteEvents;
+        $loss = $incidentLosses->filter(fn ($amount) => $amount > 0)->sum();
         $type = CounterType::whereRaw('lower(code)=?', ['total_impressions'])->first();
         $clicks = null;
         $rows = collect();
@@ -34,10 +40,47 @@ class MachineCostService
                 return $p ? max(0, (float) $r->reading_value - (float) $p->reading_value) : 0;
             });
         }
+        // Canonical "has usable counter data for this period" decision. This mirrors the
+        // Supabase-authoritative get_machine_cost_period boundary: COMPLETE whenever at
+        // least one effective Total Impressions reading falls inside the period (the same
+        // $rows collection that total_clicks/daily_trend are derived from), NO_DATA
+        // otherwise. Total Clicks and the Daily Trend must never disagree with this flag.
+        $counterStatus = $rows->isNotEmpty() ? 'COMPLETE' : 'NO_DATA';
         $standard = (float) $known + (float) $loss;
+        $standardCostPerClick = $counterStatus === 'COMPLETE' && $clicks > 0 ? number_format($standard / $clicks, 4, '.', '') : null;
         $dailyTrend = $this->dailyTrend($rows, $repls, $incidents, $tz);
 
-        return ['machine_id' => $machine->id, 'machine_code' => $machine->machine_code, 'machine_name' => $machine->display_name, 'resolved_timezone' => $tz, 'period_start' => $from, 'period_end' => $to, 'period_clicks' => $clicks, 'total_clicks' => $clicks, 'known_consumption_cost' => number_format((float) $known, 2, '.', ''), 'component_consumption_cost' => number_format((float) $known, 2, '.', ''), 'unknown_consumption_events' => $unknown, 'unknown_component_cost_events' => $unknown, 'error_waste_cost' => number_format((float) $loss, 2, '.', ''), 'standard_machine_cost' => number_format($standard, 2, '.', ''), 'standard_cost_per_click' => $clicks > 0 ? number_format($standard / $clicks, 4, '.', '') : null, 'machine_cost_per_click' => $clicks > 0 ? number_format($standard / $clicks, 4, '.', '') : null, 'economics_status' => $unknown ? 'PARTIAL' : 'COMPLETE', 'partial' => $unknown > 0, 'daily_trend' => $dailyTrend];
+        return [
+            'machine_id' => $machine->id,
+            'machine_code' => $machine->machine_code,
+            'machine_name' => $machine->display_name,
+            'resolved_timezone' => $tz,
+            'period_start' => $from,
+            'period_end' => $to,
+            'period_clicks' => $clicks,
+            'total_clicks' => $clicks,
+            'counter_status' => $counterStatus,
+            'known_consumption_cost' => number_format((float) $known, 2, '.', ''),
+            'component_consumption_cost' => number_format((float) $known, 2, '.', ''),
+            'total_consumption_events' => $totalConsumptionEvents,
+            'known_consumption_events' => $knownConsumptionEvents,
+            'unknown_consumption_events' => $unknown,
+            'unknown_component_cost_events' => $unknown,
+            'error_waste_events' => $errorWasteEvents,
+            'known_error_waste_events' => $knownErrorWasteEvents,
+            'unknown_error_waste_events' => $unknownErrorWasteEvents,
+            'known_error_waste_cost' => number_format((float) $loss, 2, '.', ''),
+            'error_waste_cost' => number_format((float) $loss, 2, '.', ''),
+            'unknown_evidence_events' => $unknown + $unknownErrorWasteEvents,
+            'standard_machine_cost' => number_format($standard, 2, '.', ''),
+            'known_standard_machine_cost' => number_format($standard, 2, '.', ''),
+            'standard_cost_per_click' => $standardCostPerClick,
+            'known_standard_cost_per_click' => $standardCostPerClick,
+            'machine_cost_per_click' => $standardCostPerClick,
+            'economics_status' => $unknown + $unknownErrorWasteEvents > 0 ? 'PARTIAL' : 'COMPLETE',
+            'partial' => $unknown > 0,
+            'daily_trend' => $dailyTrend,
+        ];
     }
 
     /**
