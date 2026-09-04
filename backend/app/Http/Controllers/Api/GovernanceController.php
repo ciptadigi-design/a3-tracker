@@ -83,9 +83,15 @@ class GovernanceController extends Controller
     public function branches(Request $r, string $id)
     {
         $a = Account::findOrFail($id);
-        abort_unless(app(AccountAccessResolver::class)->canAccess($r->user(), $a), 403);
+        $resolver = app(AccountAccessResolver::class);
+        abort_unless($resolver->canAccess($r->user(), $a), 403);
+        $branchIds = $resolver->authorizedBranchIds($r->user(), $a);
+        $query = $a->branches()->orderBy('name');
+        if ($branchIds !== null) {
+            $query->whereIn('id', $branchIds);
+        }
 
-        return response()->json(['data' => $a->branches()->orderBy('name')->paginate(min((int) $r->integer('per_page', 10), 50))]);
+        return response()->json(['data' => $query->paginate(min((int) $r->integer('per_page', 10), 50))]);
     }
 
     public function storeBranch(BranchRequest $r, string $id)

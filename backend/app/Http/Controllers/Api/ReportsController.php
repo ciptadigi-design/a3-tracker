@@ -29,8 +29,9 @@ class ReportsController extends Controller
             abort_unless($this->branches->canAccess($request->user(), $branch), 403);
         }
         if (! empty($v['machine_id'])) {
-            $machine = Machine::where('id', $v['machine_id'])->where('account_id', $account->id)->firstOrFail();
+            $machine = Machine::with('branch')->where('id', $v['machine_id'])->where('account_id', $account->id)->firstOrFail();
             abort_unless(! $branch || $machine->branch_id === $branch->id, 422);
+            abort_unless($machine->branch && $this->branches->canAccess($request->user(), $machine->branch), 403);
         }
 
         return response()->json($this->reports->build($account->id, $branch?->id, $v['machine_id'] ?? null, $v['period_start'], $v['period_end'], $v['category'] ?? null, $v['status'] ?? null));

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Account;
 use App\Models\Branch;
 use App\Models\OperationalIncident;
+use App\Services\BranchAccessResolver;
 use App\Services\OperationalIncidentService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -13,11 +14,12 @@ use Illuminate\Support\Str;
 
 class IncidentsController extends Controller
 {
-    public function __construct(private OperationalIncidentService $service) {}
+    public function __construct(private OperationalIncidentService $service, private BranchAccessResolver $branches) {}
 
     public function index(Request $r, Account $account, Branch $branch)
     {
         abort_unless($branch->account_id === $account->id, 404);
+        abort_unless($this->branches->canAccess($r->user(), $branch), 403);
 
         return response()->json(['incidents' => OperationalIncident::where('account_id', $account->id)->where('branch_id', $branch->id)->latest('occurred_at')->get()]);
     }
@@ -32,6 +34,7 @@ class IncidentsController extends Controller
     public function show(Request $r, Account $account, Branch $branch, OperationalIncident $incident)
     {
         abort_unless($incident->account_id === $account->id && $incident->branch_id === $branch->id, 404);
+        abort_unless($this->branches->canAccess($r->user(), $branch), 403);
 
         return response()->json(['incident' => $incident]);
     }
