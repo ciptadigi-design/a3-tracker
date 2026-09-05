@@ -16,7 +16,7 @@ test('Settings exposes compact Manufacturer and Model governance', () => {
   assert.match(view, /onEdit/)
   assert.match(view, /Archive/)
   assert.match(view, /Restore/)
-  assert.match(view, /Platform shared master · Read only/)
+  assert.match(view, /Platform shared master/)
   assert.match(page, /machine-master-status/)
 })
 
@@ -34,9 +34,14 @@ test('Manufacturer and Model rows share one aligned identity, fact, status, and 
   assert.match(view, /manufacturer\?\.name/)
   assert.match(view, /scope-pill/)
   assert.match(view, /machine-master-actions/)
-  assert.match(view, /shared \? <><span aria-hidden="true" \/><span aria-hidden="true" \/><\/>/)
+  assert.match(view, /const manufacturer = view === 'models' \? record\.manufacturer : null/)
   assert.match(view, /aria-label={`Edit \$\{record\.name\}`}/)
   assert.match(view, /aria-label={`\$\{record\.is_active \? 'Archive' : 'Restore'\} \$\{record\.name\}`}/)
+})
+
+test('every row — including migrated Platform shared masters — exposes the same edit action to a Superuser', () => {
+  assert.doesNotMatch(view, /shared \? <>.*<\/> : <>/)
+  assert.doesNotMatch(view, /span aria-hidden="true"/)
 })
 
 test('Machine Models layout becomes a stacked mobile list without horizontal grid dependence', () => {

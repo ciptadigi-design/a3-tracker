@@ -13,6 +13,6 @@ class MachineModelRequest extends FormRequest
 
     public function rules(): array
     {
-        return ['manufacturer_id' => 'required|uuid', 'model_code' => 'required|string|max:64', 'name' => 'required|string|max:160', 'account_id' => 'nullable|uuid'];
+        return ['manufacturer_id' => 'required|uuid', 'model_code' => 'required|string|max:64', 'name' => 'required|string|max:160', 'machine_category' => 'nullable|string|max:40', 'color_capability' => 'nullable|string|max:20', 'description' => 'nullable|string', 'notes' => 'nullable|string', 'account_id' => 'nullable|uuid'];
     }
 }

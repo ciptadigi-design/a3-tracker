@@ -13,6 +13,6 @@ class ManufacturerRequest extends FormRequest
 
     public function rules(): array
     {
-        return ['code' => 'required|string|max:64', 'name' => 'required|string|max:160', 'account_id' => 'nullable|uuid'];
+        return ['code' => 'required|string|max:64', 'name' => 'required|string|max:160', 'notes' => 'nullable|string', 'account_id' => 'nullable|uuid'];
     }
 }

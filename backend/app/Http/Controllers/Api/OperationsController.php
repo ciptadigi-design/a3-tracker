@@ -60,7 +60,9 @@ class OperationsController extends Controller
     {
         Gate::authorize('platform.manage');
         $m = Manufacturer::findOrFail($id);
-        $d = $r->validate(['code' => 'required|string|max:64', 'name' => 'required|string|max:160', 'account_id' => 'nullable|uuid']);
+        $d = $r->validate(['code' => 'required|string|max:64', 'name' => 'required|string|max:160', 'notes' => 'nullable|string', 'account_id' => 'nullable|uuid']);
+        $duplicate = Manufacturer::where('id', '!=', $id)->whereRaw('lower(trim(code)) = ?', [strtolower(trim($d['code']))])->when($d['account_id'] ?? null, fn ($q, $accountId) => $q->where('account_id', $accountId), fn ($q) => $q->whereNull('account_id'))->exists();
+        abort_if($duplicate, 409, 'Manufacturer code already exists in this scope.');
         $m->update($d);
 
         return response()->json(['data' => $m]);
@@ -90,7 +92,9 @@ class OperationsController extends Controller
     {
         Gate::authorize('platform.manage');
         $m = MachineModel::findOrFail($id);
-        $d = $r->validate(['manufacturer_id' => 'required|uuid', 'model_code' => 'required|string|max:64', 'name' => 'required|string|max:160', 'account_id' => 'nullable|uuid']);
+        $d = $r->validate(['manufacturer_id' => 'required|uuid', 'model_code' => 'required|string|max:64', 'name' => 'required|string|max:160', 'machine_category' => 'nullable|string|max:40', 'color_capability' => 'nullable|string|max:20', 'description' => 'nullable|string', 'notes' => 'nullable|string', 'account_id' => 'nullable|uuid']);
+        $duplicate = MachineModel::where('id', '!=', $id)->where('manufacturer_id', $d['manufacturer_id'])->whereRaw('lower(trim(model_code)) = ?', [strtolower(trim($d['model_code']))])->when($d['account_id'] ?? null, fn ($q, $accountId) => $q->where('account_id', $accountId), fn ($q) => $q->whereNull('account_id'))->exists();
+        abort_if($duplicate, 409, 'Machine model code already exists in this scope.');
         $m->update($d);
 
         return response()->json(['data' => $m->load('manufacturer')]);
