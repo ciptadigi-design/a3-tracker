@@ -104,6 +104,46 @@ test('a status=active lifecycle with a real started_at is still classified activ
   assert.notEqual(row.health_status, 'unknown')
 })
 
+// M2.12I.2: the canonical new-Supabase machine_component_health view computes usage/remaining/health
+// purely from status='active' + installed_counter + expected life + latest counter — it never
+// references started_at at all. This proves the Laravel projection already matches that contract:
+// an active lifecycle with started_at left null still gets full, real, non-fabricated health figures.
+test('a status=active lifecycle with no started_at still projects full real health (never falls back to baseline_known/unknown)', () => {
+  const [row] = projectLaravelMachineComponents([{
+    id: 'assignment-healthy', machine_id: MACHINE_ID, component_id: 'component-healthy', component: { code: 'IBT', name: 'IBT' }, slot_code: 'IBT', source_type: 'inherited', status: 'configured', display_order: 0, baseline_expected_clicks: 200000, latest_effective_counter: '1441597',
+    lifecycles: [{ id: 'lifecycle-healthy', status: 'active', installed_counter: '1406276', removed_counter: null, started_at: null, source: 'reconciliation_active' }],
+  }])
+
+  assert.equal(row.lifecycle_status, 'active')
+  assert.notEqual(row.lifecycle_status, 'baseline_known')
+  assert.notEqual(row.lifecycle_status, 'unknown')
+  assert.equal(row.installed_counter, 1406276)
+  assert.equal(row.current_usage, 1441597 - 1406276)
+  assert.equal(row.remaining_percent, Math.round(((200000 - (1441597 - 1406276)) / 200000) * 10000) / 100)
+  assert.equal(row.health_status, 'healthy')
+})
+
+test('a status=active lifecycle with no started_at correctly reaches overdue (negative remaining percent) health', () => {
+  const [row] = projectLaravelMachineComponents([{
+    id: 'assignment-overdue', machine_id: MACHINE_ID, component_id: 'component-overdue', component: { code: 'CHARGING_CORONA_K', name: 'Charging Corona Black' }, slot_code: 'CHARGING_CORONA_K', source_type: 'inherited', status: 'configured', display_order: 0, baseline_expected_clicks: 40000, latest_effective_counter: '1441597',
+    lifecycles: [{ id: 'lifecycle-overdue', status: 'active', installed_counter: '1283795', removed_counter: null, started_at: null, source: 'reconciliation_active' }],
+  }])
+
+  assert.equal(row.lifecycle_status, 'active')
+  assert.ok(row.remaining_percent < 0, 'a component used well past its expected life must show a negative remaining percentage, never be clamped or hidden')
+  assert.equal(row.health_status, 'overdue')
+})
+
+test('a status=active lifecycle with no started_at can also land in warning territory', () => {
+  const [row] = projectLaravelMachineComponents([{
+    id: 'assignment-warning', machine_id: MACHINE_ID, component_id: 'component-warning', component: { code: 'CHARGING_CORONA_C', name: 'Charging Corona Cyan' }, slot_code: 'CHARGING_CORONA_C', source_type: 'inherited', status: 'configured', display_order: 0, baseline_expected_clicks: 40000, healthy_threshold_percent: 30, watch_threshold_percent: 15, warning_threshold_percent: 5, critical_threshold_percent: 0, latest_effective_counter: '1441597',
+    lifecycles: [{ id: 'lifecycle-warning', status: 'active', installed_counter: '1405775', removed_counter: null, started_at: null, source: 'reconciliation_active' }],
+  }])
+
+  assert.equal(row.lifecycle_status, 'active')
+  assert.equal(row.health_status, 'warning')
+})
+
 test('47 closed lifecycle rows project once into replacement history without fabricating current lifecycle state', () => {
   const fixture = productionFixture()
   fixture[0].lifecycles.push({ ...fixture[0].lifecycles[0] }) // duplicate id: dedupe should keep the count at 47

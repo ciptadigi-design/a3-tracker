@@ -107,6 +107,32 @@ class ComponentProjectionParityTest extends TestCase
         $this->assertSame('INITIALIZED', $row['configuration_state']);
     }
 
+    // M2.12I.2: the canonical new-Supabase/Vercel domain contract (machine_component_health view)
+    // treats a lifecycle as fully operational whenever status='active' and installed_counter is
+    // known — it never requires started_at for health/usage/remaining-percent computation. This
+    // proves Production's own Laravel projection already honors that same contract: a status='active'
+    // lifecycle with started_at left NULL still renders as INITIALIZED with real, non-fabricated
+    // health/progress figures (never a fake install date, never suppressed to BASELINE_KNOWN/UNKNOWN).
+    public function test_a_status_active_lifecycle_with_no_started_at_is_fully_initialized_with_real_health(): void
+    {
+        $fixture = $this->c1070Fixture();
+        // Row 15 has no pre-existing current lifecycle (rows 11-27 start with zero evidence).
+        $assignment = MachineComponent::where('machine_id', $fixture['machine']->id)->orderBy('display_order')->skip(15)->first();
+        ComponentLifecycle::create(['machine_component_id' => $assignment->id, 'installed_counter' => 1400000, 'removed_counter' => null, 'started_at' => null, 'status' => 'active', 'source' => 'reconciliation_active']);
+
+        $response = $this->actingAs($fixture['user'])->getJson("/api/v1/machines/{$fixture['machine']->id}/components")->assertOk();
+        $row = collect($response->json('data'))->firstWhere('id', $assignment->id);
+
+        $this->assertSame('INITIALIZED', $row['configuration_state']);
+        $this->assertNotSame('BASELINE_KNOWN', $row['configuration_state']);
+        $this->assertNotSame('UNKNOWN', $row['configuration_state']);
+        $activeLifecycle = collect($row['lifecycles'])->firstWhere('status', 'active');
+        $this->assertNotNull($activeLifecycle);
+        $this->assertNull($activeLifecycle['started_at']);
+        $this->assertSame(1400000.0, (float) $activeLifecycle['installed_counter']);
+        $this->assertSame(1441597.0, (float) $row['latest_effective_counter']);
+    }
+
     public function test_machine_component_projection_enforces_account_and_branch_isolation(): void
     {
         $fixture = $this->c1070Fixture();
