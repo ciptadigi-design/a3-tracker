@@ -11,6 +11,7 @@ import { SellingPriceDialog } from '../features/machineCost/SellingPriceDialog.j
 import { SellingPriceHistoryDialog } from '../features/machineCost/SellingPriceHistoryDialog.jsx'
 import { VoidOperatingCostDialog } from '../features/machineCost/VoidOperatingCostDialog.jsx'
 import { formatDailyClicks, hasDailyClickActivity, normalizeDailyTrend } from '../features/machineCost/dailyTrendModel.js'
+import { formatIdrTotal, formatIdrUnit } from '../features/machineCost/currencyFormat.js'
 import { createUIStateKey } from '../features/uiState/uiStateKeys.js'
 import { usePersistentUIState } from '../features/uiState/usePersistentUIState.js'
 import { userErrorMessage } from '../lib/appErrors.js'
@@ -18,10 +19,8 @@ import { contributionPerClickPresentation, contributionPresentation, revenuePres
 import { createMachineOperatingCost, createMachineSellingPrice, loadMachineCostPeriod, loadMachineOperatingCosts, loadMachineSellingPrices, voidMachineOperatingCost, voidMachineSellingPrice } from '../services/machineCost.js'
 import { loadMachines } from '../services/machines.js'
 
-const idr = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 2 })
 const number = new Intl.NumberFormat('en-US', { maximumFractionDigits: 4 })
 
-function currency(value) { return idr.format(Number(value ?? 0)) }
 function formatNumber(value) { return value == null ? 'Unavailable' : number.format(Number(value)) }
 
 function SummaryCard({ icon, label, value, hint, tone = 'blue', actions, secondary }) {
@@ -142,13 +141,13 @@ export function MachineCostPage() {
   async function voidSellingPrice(price, reason) { await voidMachineSellingPrice({ priceId: price.id, reason, clientRequestId: crypto.randomUUID() }); await Promise.all([refresh(), refreshSellingPrices()]) }
 
   const counterDisplay = summary ? counterEvidencePresentation(summary) : null
-  const consumptionDisplay = summary ? knownConsumptionPresentation(summary, currency) : null
-  const primaryCostPerClickDisplay = summary ? primaryCostPerClickPresentation(summary, currency) : null
+  const consumptionDisplay = summary ? knownConsumptionPresentation(summary, formatIdrTotal) : null
+  const primaryCostPerClickDisplay = summary ? primaryCostPerClickPresentation(summary, formatIdrUnit) : null
   const canManageCosts = ['owner', 'admin'].includes(membership?.role)
-  const sellingPriceDisplay = summary ? sellingPriceCardPresentation(summary, currency) : null
-  const revenueDisplay = summary ? revenuePresentation(summary, currency, formatNumber) : null
-  const contributionDisplay = summary ? contributionPresentation(summary, currency) : null
-  const contributionPerClickDisplay = summary ? contributionPerClickPresentation(summary, currency) : null
+  const sellingPriceDisplay = summary ? sellingPriceCardPresentation(summary, formatIdrUnit) : null
+  const revenueDisplay = summary ? revenuePresentation(summary, formatIdrTotal, formatNumber) : null
+  const contributionDisplay = summary ? contributionPresentation(summary, formatIdrTotal) : null
+  const contributionPerClickDisplay = summary ? contributionPerClickPresentation(summary, formatIdrUnit) : null
   const advancedEnabled = Boolean(summary?.advanced_machine_economics_enabled ?? account.machine_economics_advanced_enabled)
   const activeTab = filters.view === 'operating' ? 'operating' : 'summary'
 
@@ -172,7 +171,7 @@ export function MachineCostPage() {
       <section className="machine-economics-summary-grid">
         <SummaryCard icon={Gauge} label="Total Clicks" value={formatNumber(summary.total_clicks)} hint={summary.counter_status === 'COMPLETE' ? 'Effective Daily Counter usage in this period' : counterDisplay.hint} />
         <SummaryCard icon={Boxes} label="Component Consumption" value={consumptionDisplay.value} hint={consumptionDisplay.hint} tone="purple" />
-        <SummaryCard icon={AlertCircle} label="Error / Waste" value={Number(summary.error_waste_events ?? 0) > 0 && Number(summary.known_error_waste_events ?? 0) === 0 ? '—' : currency(summary.known_error_waste_cost)} hint={`${Number(summary.known_error_waste_events ?? 0)} assessed · ${Number(summary.unknown_error_waste_events ?? 0)} unpriced`} tone="warning" />
+        <SummaryCard icon={AlertCircle} label="Error / Waste" value={Number(summary.error_waste_events ?? 0) > 0 && Number(summary.known_error_waste_events ?? 0) === 0 ? '—' : formatIdrTotal(summary.known_error_waste_cost)} hint={`${Number(summary.known_error_waste_events ?? 0)} assessed · ${Number(summary.unknown_error_waste_events ?? 0)} unpriced`} tone="warning" />
         <SummaryCard icon={BarChart3} label="Cost / Click" value={primaryCostPerClickDisplay.value} hint={primaryCostPerClickDisplay.hint} tone="green" />
       </section>
       <DailyTrendChart rows={summary.daily_trend ?? []} />
@@ -183,7 +182,7 @@ export function MachineCostPage() {
         <SummaryCard icon={HandCoins} label="Contribution / Click" value={contributionPerClickDisplay.value} hint={contributionPerClickDisplay.hint} tone="blue" />
         <SummaryCard icon={HandCoins} label="Estimated Contribution" value={contributionDisplay.value} secondary={contributionDisplay.margin == null ? null : `Margin ${number.format(contributionDisplay.margin)}%`} hint={contributionDisplay.hint} tone="green" />
       </section>
-      {advancedEnabled && <section className="machine-cost-panel glass-surface advanced-economics-panel"><header><div><span className="card-kicker">Advanced</span><h2>Full Machine Economics</h2><p>Full economics is shown separately. Standard Machine Cost and Standard Contribution keep the same meaning.</p></div></header><div className="machine-economics-layers"><div><span>Advanced Operating Costs</span><strong>{currency(summary.known_advanced_operating_cost)}</strong><small>{summary.operating_cost_records ? `${summary.operating_cost_records} posted period record${summary.operating_cost_records === 1 ? '' : 's'}` : 'No advanced operating costs recorded for this period.'}</small></div><div><span>Standard Machine Cost</span><strong>{currency(summary.known_standard_machine_cost)}</strong></div><div className="total"><span>Full Machine Operating Cost</span><strong>{currency(summary.known_full_machine_operating_cost)}</strong></div><div className="total"><span>Full Operating Cost / Click</span><strong>{summary.known_full_operating_cost_per_click == null ? 'Unavailable' : currency(summary.known_full_operating_cost_per_click)}</strong></div><div className="total"><span>Full Contribution</span><strong>{summary.estimated_full_contribution == null ? 'Unavailable' : currency(summary.estimated_full_contribution)}</strong><small>{summary.full_contribution_margin_percent == null ? 'Complete price coverage is required.' : `Margin ${number.format(Number(summary.full_contribution_margin_percent))}%`}</small></div><div className="total"><span>Full Contribution / Click</span><strong>{summary.full_contribution_per_click == null ? 'Unavailable' : currency(summary.full_contribution_per_click)}</strong></div></div></section>}
+      {advancedEnabled && <section className="machine-cost-panel glass-surface advanced-economics-panel"><header><div><span className="card-kicker">Advanced</span><h2>Full Machine Economics</h2><p>Full economics is shown separately. Standard Machine Cost and Standard Contribution keep the same meaning.</p></div></header><div className="machine-economics-layers"><div><span>Advanced Operating Costs</span><strong>{formatIdrTotal(summary.known_advanced_operating_cost)}</strong><small>{summary.operating_cost_records ? `${summary.operating_cost_records} posted period record${summary.operating_cost_records === 1 ? '' : 's'}` : 'No advanced operating costs recorded for this period.'}</small></div><div><span>Standard Machine Cost</span><strong>{formatIdrTotal(summary.known_standard_machine_cost)}</strong></div><div className="total"><span>Full Machine Operating Cost</span><strong>{formatIdrTotal(summary.known_full_machine_operating_cost)}</strong></div><div className="total"><span>Full Operating Cost / Click</span><strong>{summary.known_full_operating_cost_per_click == null ? 'Unavailable' : formatIdrUnit(summary.known_full_operating_cost_per_click)}</strong></div><div className="total"><span>Full Contribution</span><strong>{summary.estimated_full_contribution == null ? 'Unavailable' : formatIdrTotal(summary.estimated_full_contribution)}</strong><small>{summary.full_contribution_margin_percent == null ? 'Complete price coverage is required.' : `Margin ${number.format(Number(summary.full_contribution_margin_percent))}%`}</small></div><div className="total"><span>Full Contribution / Click</span><strong>{summary.full_contribution_per_click == null ? 'Unavailable' : formatIdrUnit(summary.full_contribution_per_click)}</strong></div></div></section>}
     </> : null}
     {costDialog && selectedMachine && advancedEnabled && <OperatingCostDialog account={account} branch={branch} machine={selectedMachine} people={costWorkspace.people} onClose={() => setCostDialog(false)} onSave={saveOperatingCost} />}
     {voidTarget && <VoidOperatingCostDialog cost={voidTarget} onClose={() => setVoidTarget(null)} onVoid={voidOperatingCost} />}
