@@ -11,7 +11,7 @@ use Illuminate\Support\Collection;
 
 class MachineCostService
 {
-    public function __construct(private MachineTimezoneResolver $tz, private OperationalIncidentService $incidents, private EffectiveCounterSequence $sequence) {}
+    public function __construct(private MachineTimezoneResolver $tz, private OperationalIncidentService $incidents, private EffectiveCounterSequence $sequence, private EffectiveSellingPriceResolver $prices) {}
 
     public function period(Machine $machine, string $from, string $to): array
     {
@@ -46,6 +46,8 @@ class MachineCostService
         $standard = (float) $known + (float) $loss;
         $standardCostPerClick = $counterStatus === 'COMPLETE' && $clicks > 0 ? number_format($standard / $clicks, 4, '.', '') : null;
         $dailyTrend = $this->dailyTrend($rows, $repls, $incidents, $tz);
+        $economicsStatus = $unknown + $unknownErrorWasteEvents > 0 ? 'PARTIAL' : 'COMPLETE';
+        $business = $this->businessProjection($machine, $rows, $end, $clicks, $counterStatus, $standard, $economicsStatus);
 
         return [
             'machine_id' => $machine->id,
@@ -74,9 +76,90 @@ class MachineCostService
             'standard_cost_per_click' => $standardCostPerClick,
             'known_standard_cost_per_click' => $standardCostPerClick,
             'machine_cost_per_click' => $standardCostPerClick,
-            'economics_status' => $unknown + $unknownErrorWasteEvents > 0 ? 'PARTIAL' : 'COMPLETE',
+            'economics_status' => $economicsStatus,
             'partial' => $unknown > 0,
             'daily_trend' => $dailyTrend,
+        ] + $business;
+    }
+
+    /**
+     * Ports the Supabase oracle's get_machine_economics_period price/revenue/
+     * contribution layer (supabase/migrations/20260828001200_machine_selling_price_revenue_contribution.sql)
+     * on top of the canonical effective counter sequence already used for
+     * total_clicks/daily_trend above, so revenue can never double-count or
+     * miss a click relative to those figures. $rows is that same
+     * period-filtered effective sequence (each with ->usage already computed
+     * against its true chronological predecessor, possibly outside the
+     * period — see EffectiveCounterSequence).
+     */
+    private function businessProjection(Machine $machine, Collection $rows, $periodEnd, ?float $clicks, string $counterStatus, float $standardCost, string $economicsStatus): array
+    {
+        $prices = $this->prices->postedPrices($machine->id);
+        $currentPrice = $this->prices->effectiveAt($prices, Carbon::now());
+        $periodEndPrice = $this->prices->effectiveBefore($prices, $periodEnd);
+
+        $pricedClicks = 0.0;
+        $unpricedClicks = 0.0;
+        $revenueSum = 0.0;
+        $havePricedRow = false;
+        $distinctPrices = [];
+        foreach ($rows as $r) {
+            $usage = $r->usage;
+            if ($usage === null || $usage <= 0) {
+                continue;
+            }
+            $priceRow = $this->prices->effectiveAt($prices, $r->observed_at);
+            if ($priceRow) {
+                $pricedClicks += $usage;
+                $revenueSum += $usage * (float) $priceRow->price_per_click;
+                $havePricedRow = true;
+                $distinctPrices[(string) $priceRow->price_per_click] = true;
+            } else {
+                $unpricedClicks += $usage;
+            }
+        }
+
+        $totalClicks = (float) ($clicks ?? 0);
+        $revenueStatus = match (true) {
+            $counterStatus === 'COMPLETE' && $totalClicks == 0.0 => 'NO_CLICKS',
+            $totalClicks > 0 && $pricedClicks == 0.0 => 'NO_PRICE',
+            $unpricedClicks > 0 || $counterStatus !== 'COMPLETE' => 'PARTIAL',
+            default => 'COMPLETE',
+        };
+        // Mirrors the oracle exactly: revenue stays null (not 0) whenever no
+        // priced click was found at all, so "unavailable" is never confused
+        // with a real known zero. It is forced to an exact 0 only for
+        // NO_CLICKS (COMPLETE counter data, genuinely zero clicks).
+        $revenue = $revenueStatus === 'NO_CLICKS' ? 0.0 : ($havePricedRow ? round($revenueSum, 2) : null);
+
+        $contributionStatus = match (true) {
+            $revenueStatus === 'NO_CLICKS' => 'NO_CLICKS',
+            $revenueStatus !== 'COMPLETE' => 'UNAVAILABLE_REVENUE',
+            (float) $revenue === 0.0 => 'ZERO_REVENUE',
+            $economicsStatus === 'PARTIAL' => 'PARTIAL_COST',
+            default => 'COMPLETE',
+        };
+        $contribution = null;
+        $contributionPerClick = null;
+        $margin = null;
+        if ($revenueStatus === 'COMPLETE' && $revenue > 0) {
+            $contribution = round($revenue - $standardCost, 2);
+            $contributionPerClick = $totalClicks > 0 ? round($contribution / $totalClicks, 4) : null;
+            $margin = round($contribution / $revenue * 100, 4);
+        }
+
+        return [
+            'current_selling_price_per_click' => $currentPrice ? (float) $currentPrice->price_per_click : null,
+            'period_end_selling_price_per_click' => $periodEndPrice ? (float) $periodEndPrice->price_per_click : null,
+            'period_price_count' => count($distinctPrices),
+            'priced_clicks' => $pricedClicks,
+            'unpriced_clicks' => $unpricedClicks,
+            'estimated_revenue' => $revenue,
+            'revenue_status' => $revenueStatus,
+            'standard_contribution_per_click' => $contributionPerClick,
+            'estimated_standard_contribution' => $contribution,
+            'standard_contribution_margin_percent' => $margin,
+            'standard_contribution_status' => $contributionStatus,
         ];
     }
 
