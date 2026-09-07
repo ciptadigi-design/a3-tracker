@@ -220,9 +220,9 @@ class MachineCostBusinessProjectionTest extends TestCase
         $f = $this->fixture();
         $m = $f['machine'];
         $earlier = $this->price($f, $m, 700, '2026-08-01T00:00:00+07:00');
-        \Illuminate\Support\Facades\DB::table('machine_selling_prices')->where('id', $earlier->id)->update(['created_at' => '2026-08-01T00:00:00Z']);
+        \Illuminate\Support\Facades\DB::table('machine_selling_prices')->where('id', $earlier->id)->update(['created_at' => \Illuminate\Support\Carbon::parse('2026-08-01T00:00:00Z')]);
         $later = $this->price($f, $m, 720, '2026-08-01T00:00:00+07:00');
-        \Illuminate\Support\Facades\DB::table('machine_selling_prices')->where('id', $later->id)->update(['created_at' => '2026-08-01T00:00:01Z']);
+        \Illuminate\Support\Facades\DB::table('machine_selling_prices')->where('id', $later->id)->update(['created_at' => \Illuminate\Support\Carbon::parse('2026-08-01T00:00:01Z')]);
         $r0 = $this->reading($f, $m, 1000, '2026-07-31T17:00:00Z');
         $this->reading($f, $m, 1100, '2026-08-10T10:00:00+07:00', 'effective', $r0->id);
 
