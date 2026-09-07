@@ -12,6 +12,7 @@ import { SellingPriceHistoryDialog } from '../features/machineCost/SellingPriceH
 import { VoidOperatingCostDialog } from '../features/machineCost/VoidOperatingCostDialog.jsx'
 import { formatDailyClicks, hasDailyClickActivity, normalizeDailyTrend } from '../features/machineCost/dailyTrendModel.js'
 import { formatIdrTotal, formatIdrUnit } from '../features/machineCost/currencyFormat.js'
+import { resolveMachineCostTab } from '../features/machineCost/operatingCostGate.js'
 import { createUIStateKey } from '../features/uiState/uiStateKeys.js'
 import { usePersistentUIState } from '../features/uiState/usePersistentUIState.js'
 import { userErrorMessage } from '../lib/appErrors.js'
@@ -149,7 +150,11 @@ export function MachineCostPage() {
   const contributionDisplay = summary ? contributionPresentation(summary, formatIdrTotal) : null
   const contributionPerClickDisplay = summary ? contributionPerClickPresentation(summary, formatIdrUnit) : null
   const advancedEnabled = Boolean(summary?.advanced_machine_economics_enabled ?? account.machine_economics_advanced_enabled)
-  const activeTab = filters.view === 'operating' ? 'operating' : 'summary'
+  const activeTab = resolveMachineCostTab(filters.view, advancedEnabled)
+
+  useEffect(() => {
+    if (filters.view === 'operating' && !advancedEnabled) setFilters((current) => ({ ...current, view: 'summary' }))
+  }, [advancedEnabled, filters.view, setFilters])
 
   return <div className="page-stack machine-cost-page">
     <PageHeader eyebrow="Operational economics" title="Machine Cost" description="Recorded clicks, tracked machine cost, utilization revenue, and contribution for the selected period." />
@@ -161,7 +166,7 @@ export function MachineCostPage() {
       <button className="secondary-button" type="button" onClick={refresh} disabled={loading || !selectedMachine || !validPeriod} aria-label="Refresh machine cost"><RefreshCcw size={15} />Refresh</button>
     </section>
 
-    <div className="machine-cost-section-nav"><nav className="machine-cost-tabs" aria-label="Machine cost sections" role="tablist"><button type="button" role="tab" aria-selected={activeTab === 'summary'} className={activeTab === 'summary' ? 'active' : ''} onClick={() => setFilters((current) => ({ ...current, view: 'summary' }))}>Summary</button><button type="button" role="tab" aria-selected={activeTab === 'operating'} className={activeTab === 'operating' ? 'active' : ''} onClick={() => setFilters((current) => ({ ...current, view: 'operating' }))}>Operating Costs</button></nav>{summary && activeTab === 'summary' && <SummaryStatusBadge summary={summary} />}</div>
+    <div className="machine-cost-section-nav"><nav className="machine-cost-tabs" aria-label="Machine cost sections" role="tablist"><button type="button" role="tab" aria-selected={activeTab === 'summary'} className={activeTab === 'summary' ? 'active' : ''} onClick={() => setFilters((current) => ({ ...current, view: 'summary' }))}>Summary</button>{advancedEnabled && <button type="button" role="tab" aria-selected={activeTab === 'operating'} className={activeTab === 'operating' ? 'active' : ''} onClick={() => setFilters((current) => ({ ...current, view: 'operating' }))}>Operating Costs</button>}</nav>{summary && activeTab === 'summary' && <SummaryStatusBadge summary={summary} />}</div>
 
     {error && <div className="inline-error" role="alert">{userErrorMessage(error, 'Machine Cost could not be loaded for this scope.')}</div>}
     {activeTab === 'operating' && selectedMachine ? <><OperatingCostsPanel costs={costWorkspace.costs} canManage={canManageCosts} enabled={advancedEnabled} onAdd={() => setCostDialog(true)} onVoid={setVoidTarget} />{costError && <div className="inline-error" role="alert">{costError.message}</div>}</> : loading ? <div className="machine-loading-state glass-surface"><RefreshCcw className="spin" size={24} /><strong>Loading machine cost evidence…</strong><span>Reading effective counter usage, component consumption, and assessed Error / Waste.</span></div> : !selectedMachine ? <div className="machine-empty-state glass-surface"><span className="empty-machine-icon"><Printer size={38} /></span><h3>No active machine in this branch</h3><p>Add or activate a machine before querying operational component cost.</p></div> : summary && activeTab === 'summary' ? <>

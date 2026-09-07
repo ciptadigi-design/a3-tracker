@@ -28,7 +28,7 @@ export function CounterHistory({ history, profiles, currentUserId, timezone, isL
 
   return (
     <section className="counter-history-card glass-surface">
-      <header className="history-header"><div><span className="card-kicker">Counter history</span><h2>Effective and corrected readings</h2><p>Usage is calculated by PostgreSQL from each reading's linked previous effective value.</p></div><button className="icon-button" type="button" onClick={onRefresh} disabled={isLoading} aria-label="Refresh counter history"><RefreshCcw size={17} className={isLoading ? 'spin' : ''} /></button></header>
+      <header className="history-header"><div><span className="card-kicker">Counter history</span><h2>Effective and corrected readings</h2><p>Usage is calculated from each effective reading's chronological previous effective value.</p></div><button className="icon-button" type="button" onClick={onRefresh} disabled={isLoading} aria-label="Refresh counter history"><RefreshCcw size={17} className={isLoading ? 'spin' : ''} /></button></header>
       {isLoading ? <div className="history-state"><RefreshCcw className="spin" size={23} /><strong>Loading counter history…</strong></div>
         : error ? <div className="history-state error-state"><strong>Counter history could not be loaded.</strong><span>{userErrorMessage(error, 'Counter history is temporarily unavailable.')}</span><button className="secondary-button" type="button" onClick={onRefresh}>Try again</button></div>
           : history.length === 0 ? <div className="history-state"><span className="history-empty-icon"><History size={27} /></span><strong>No counter history yet.</strong><span>The first real submission will establish the cumulative baseline.</span></div>
@@ -37,11 +37,11 @@ export function CounterHistory({ history, profiles, currentUserId, timezone, isL
               <div className="history-value"><span>Reading</span><strong>{formatCounter(reading.reading_value)}</strong></div>
               <div className="history-value usage"><span>Usage</span><strong>{formatUsage(reading.usage)}</strong></div>
               <div className="history-status"><span className={`reading-status reading-status-${reading.status}`}>{reading.status}</span>{reading.source === 'correction' && <small>Correction</small>}</div>
-              {canCorrect && reading.reading_id === latestEffective?.reading_id ? <button className="history-correct-button" type="button" onClick={() => setCorrectingReading(reading)}><FilePenLine size={15} /> Correct latest</button> : <span />}
+              {canCorrect && reading.status === 'effective' ? <button className="history-correct-button" type="button" onClick={() => setCorrectingReading(reading)}><FilePenLine size={15} /> {reading.reading_id === latestEffective?.reading_id ? 'Correct latest' : 'Correct reading'}</button> : <span />}
               {reading.correction_reason && <div className="history-correction-note"><strong>Correction reason</strong><span>{reading.correction_reason}</span></div>}
               {reading.notes && <div className="history-notes">{reading.notes}</div>}
             </article>)}</div><Pagination total={history.length} {...pagination} onPageChange={pagination.setPage} onPageSizeChange={pagination.setPageSize} label="counter readings" /></>}
-      {correctingReading && <CorrectCounterDialog reading={correctingReading} onClose={() => setCorrectingReading(null)} onCorrected={onCorrected} />}
+      {correctingReading && <CorrectCounterDialog reading={correctingReading} isLatest={correctingReading.reading_id === latestEffective?.reading_id} timezone={timezone} onClose={() => setCorrectingReading(null)} onCorrected={onCorrected} />}
     </section>
   )
 }

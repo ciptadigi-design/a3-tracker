@@ -10,10 +10,12 @@ use App\Http\Requests\MachineRequest;
 use App\Http\Requests\ManufacturerRequest;
 use App\Http\Requests\OperationalPersonRequest;
 use App\Http\Requests\PersonBranchAssignmentRequest;
+use App\Http\Resources\CounterReadingResource;
 use App\Http\Resources\OperationalPersonResource;
 use App\Models\Account;
 use App\Models\Branch;
 use App\Models\CounterReading;
+use App\Models\CounterType;
 use App\Models\Machine;
 use App\Models\MachineModel;
 use App\Models\Manufacturer;
@@ -24,6 +26,7 @@ use App\Services\BranchAccessResolver;
 use App\Services\CorrectCounterReading;
 use App\Services\CounterPeriodService;
 use App\Services\CreateCounterReading;
+use App\Services\EffectiveCounterSequence;
 use App\Services\MachineAccessResolver;
 use App\Services\MachineTimezoneResolver;
 use Illuminate\Http\Request;
@@ -284,16 +287,33 @@ class OperationsController extends Controller
     {
         $m = Machine::findOrFail($machine);
         abort_unless(app(MachineAccessResolver::class)->canAccess($r->user(), $m), 403);
-        $q = CounterReading::where('machine_id', $m->id)->with(['operator', 'previous'])->orderByDesc('observed_at')->orderByDesc('created_at');
+        $type = CounterType::whereRaw('lower(code)=?', ['total_impressions'])->first();
 
+        // Usage/previous-value for every currently-effective reading is derived
+        // once from the single canonical sequence, so this list can never
+        // disagree with Machine Cost totals or Daily Click Trend after a
+        // correction or void. Voided/superseded rows are still listed (for
+        // audit) but carry no usage/previous value since they are outside the
+        // effective sequence.
+        $usageById = [];
+        $previousById = [];
+        if ($type) {
+            foreach (app(EffectiveCounterSequence::class)->forMachine($m->id, $type->id) as $row) {
+                $usageById[$row->id] = $row->usage;
+                $previousById[$row->id] = $row->usage === null ? null : (float) $row->reading_value - $row->usage;
+            }
+        }
+
+        $q = CounterReading::where('machine_id', $m->id)->orderByDesc('observed_at')->orderByDesc('created_at')->orderByDesc('id');
         $page = $q->paginate(min((int) $r->integer('per_page', 25), 50));
-        $page->getCollection()->transform(function ($row) {
-            $row->usage = $row->previous_reading_id ? (float) $row->reading_value - (float) optional($row->previous)->reading_value : null;
+        $page->getCollection()->transform(function ($row) use ($usageById, $previousById) {
+            $row->usage = $usageById[$row->id] ?? null;
+            $row->setAttribute('previous_value_override', $previousById[$row->id] ?? null);
 
             return $row;
         });
 
-        return response()->json(['data' => $page]);
+        return response()->json(['data' => CounterReadingResource::collection($page)->response()->getData(true)]);
     }
 
     public function createCounter(CounterRequest $r, string $machine)
@@ -301,7 +321,7 @@ class OperationsController extends Controller
         $m = Machine::findOrFail($machine);
         $row = app(CreateCounterReading::class)->execute($r->user(), $m, $r->validated());
 
-        return response()->json(['data' => $row->load('operator')], 201);
+        return response()->json(['data' => new CounterReadingResource($row->load('operator'))], 201);
     }
 
     public function correctCounter(CorrectionRequest $r, string $reading)
@@ -309,7 +329,7 @@ class OperationsController extends Controller
         $row = CounterReading::with('machine.account')->findOrFail($reading);
         $corrected = app(CorrectCounterReading::class)->execute($r->user(), $row, $r->validated());
 
-        return response()->json(['data' => $corrected->load('operator')]);
+        return response()->json(['data' => new CounterReadingResource($corrected->load('operator'))]);
     }
 
     public function period(Request $r, string $machine)

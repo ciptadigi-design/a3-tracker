@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Models\ComponentReplacement;
-use App\Models\CounterReading;
 use App\Models\CounterType;
 use App\Models\Machine;
 use App\Models\OperationalIncident;
@@ -12,7 +11,7 @@ use Illuminate\Support\Collection;
 
 class MachineCostService
 {
-    public function __construct(private MachineTimezoneResolver $tz, private OperationalIncidentService $incidents) {}
+    public function __construct(private MachineTimezoneResolver $tz, private OperationalIncidentService $incidents, private EffectiveCounterSequence $sequence) {}
 
     public function period(Machine $machine, string $from, string $to): array
     {
@@ -33,12 +32,10 @@ class MachineCostService
         $clicks = null;
         $rows = collect();
         if ($type) {
-            $rows = CounterReading::with('previous')->where('account_id', $machine->account_id)->where('machine_id', $machine->id)->where('counter_type_id', $type->id)->where('status', 'effective')->where('observed_at', '>=', $start)->where('observed_at', '<', $end)->orderBy('observed_at')->get();
-            $clicks = $rows->sum(function ($r) {
-                $p = $r->previous;
-
-                return $p ? max(0, (float) $r->reading_value - (float) $p->reading_value) : 0;
-            });
+            $rows = $this->sequence->forMachine($machine->id, $type->id)
+                ->filter(fn ($r) => $r->observed_at->gte($start) && $r->observed_at->lt($end))
+                ->values();
+            $clicks = $rows->sum(fn ($r) => max(0, (float) ($r->usage ?? 0)));
         }
         // Canonical "has usable counter data for this period" decision. This mirrors the
         // Supabase-authoritative get_machine_cost_period boundary: COMPLETE whenever at
@@ -100,8 +97,7 @@ class MachineCostService
         foreach ($rows as $r) {
             $date = Carbon::parse($r->observed_at)->setTimezone($tz)->toDateString();
             $ensure($date);
-            $previous = $r->previous;
-            $usage = $previous ? max(0, (float) $r->reading_value - (float) $previous->reading_value) : 0;
+            $usage = max(0, (float) ($r->usage ?? 0));
             $days[$date]['daily_clicks'] += $usage;
             $days[$date]['counter_readings']++;
         }

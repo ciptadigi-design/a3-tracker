@@ -7,8 +7,10 @@ use App\Models\Machine;
 use App\Services\MachineAccessResolver;
 use App\Services\MachineCostService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 
 class MachineCostController extends Controller
 {
@@ -30,17 +32,47 @@ class MachineCostController extends Controller
     {
         abort_unless($this->access->canAccess($r->user(), $machine, true), 403);
         $d = $r->validate(['price_per_click' => 'required|numeric|gt:0', 'effective_from' => 'required|date', 'notes' => 'nullable|string', 'client_request_id' => 'required|uuid']);
-        $id = (string) Str::uuid();
-        DB::table('machine_selling_prices')->insert(['id' => $id, 'account_id' => $machine->account_id, 'machine_id' => $machine->id] + $d + ['created_by' => $r->user()->id, 'created_at' => now(), 'updated_at' => now()]);
 
-        return response()->json(['data' => DB::table('machine_selling_prices')->find($id)], 201);
+        return DB::transaction(function () use ($r, $machine, $d) {
+            $existing = DB::table('machine_selling_prices')->where('account_id', $machine->account_id)->where('client_request_id', $d['client_request_id'])->lockForUpdate()->first();
+            if ($existing) {
+                $same = (string) $existing->machine_id === (string) $machine->id
+                    && (float) $existing->price_per_click === (float) $d['price_per_click']
+                    && Carbon::parse($existing->effective_from)->eq(Carbon::parse($d['effective_from']));
+                if (! $same) {
+                    throw new ConflictHttpException('client request id was already used for a different selling price');
+                }
+
+                return response()->json(['data' => $existing]);
+            }
+
+            $id = (string) Str::uuid();
+            DB::table('machine_selling_prices')->insert([
+                'id' => $id,
+                'account_id' => $machine->account_id,
+                'machine_id' => $machine->id,
+                'price_per_click' => $d['price_per_click'],
+                'effective_from' => Carbon::parse($d['effective_from'])->utc(),
+                'notes' => $d['notes'] ?? null,
+                'client_request_id' => $d['client_request_id'],
+                'created_by' => $r->user()->id,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            return response()->json(['data' => DB::table('machine_selling_prices')->find($id)], 201);
+        });
     }
 
     public function voidSellingPrice(Request $r, string $price)
     {
         $d = $r->validate(['reason' => 'required|string', 'client_request_id' => 'required|uuid']);
         $row = DB::table('machine_selling_prices')->find($price);
-        abort_unless($row && $this->access->canAccess($r->user(), Machine::find($row->machine_id), true), 403);
+        abort_unless($row, 404);
+        abort_unless($this->access->canAccess($r->user(), Machine::find($row->machine_id), true), 403);
+        if ($row->status === 'voided') {
+            throw new ConflictHttpException('this selling price is already voided');
+        }
         DB::table('machine_selling_prices')->where('id', $price)->update(['status' => 'voided', 'voided_at' => now(), 'voided_by' => $r->user()->id, 'void_reason' => $d['reason'], 'updated_at' => now()]);
 
         return response()->json(['data' => DB::table('machine_selling_prices')->find($price)]);
@@ -50,6 +82,9 @@ class MachineCostController extends Controller
     {
         abort_unless($this->access->canAccess($r->user(), $machine, true), 403);
         $d = $r->validate(['category' => 'required|string', 'amount' => 'required|numeric|gt:0', 'allocation_method' => 'required|string', 'description' => 'required|string', 'effective_at' => 'nullable|date', 'period_start' => 'nullable|date', 'period_end' => 'nullable|date', 'operational_person_id' => 'nullable|uuid', 'external_reference' => 'nullable|string', 'notes' => 'nullable|string', 'client_request_id' => 'required|uuid']);
+        $d['effective_at'] = $d['effective_at'] ? Carbon::parse($d['effective_at'])->utc() : null;
+        $d['period_start'] = $d['period_start'] ? Carbon::parse($d['period_start'])->toDateString() : null;
+        $d['period_end'] = $d['period_end'] ? Carbon::parse($d['period_end'])->toDateString() : null;
         $id = (string) Str::uuid();
         DB::table('machine_operating_costs')->insert(['id' => $id, 'account_id' => $machine->account_id, 'machine_id' => $machine->id, 'source_type' => 'manual', 'status' => 'posted'] + $d + ['created_at' => now(), 'updated_at' => now()]);
 

@@ -13,6 +13,6 @@ class CorrectionRequest extends FormRequest
 
     public function rules(): array
     {
-        return ['correction_reason' => 'required|string|max:500', 'replacement_value' => 'nullable|numeric|min:0', 'replacement_notes' => 'nullable|string', 'client_request_id' => 'nullable|uuid'];
+        return ['correction_reason' => 'required|string|max:500', 'replacement_value' => 'nullable|numeric|min:0', 'replacement_observed_at' => 'nullable|date', 'replacement_notes' => 'nullable|string', 'client_request_id' => 'nullable|uuid'];
     }
 }
