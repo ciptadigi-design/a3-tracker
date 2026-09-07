@@ -288,4 +288,181 @@ class CounterCorrectionIntegrityTest extends TestCase
         $this->assertEquals(1000, $latest['previous_value']);
         $this->assertEquals(200, $latest['usage']);
     }
+
+    /**
+     * M2.12L.2 found that simulateReplacement() computed regression validity
+     * from the minimum usage delta across the machine's ENTIRE effective
+     * history, so one unrelated negative delta anywhere (H1=100 -> H2=90
+     * below) wrongly blocked every other correction on the same machine, even
+     * ones with perfectly valid local neighbours. M2.12L.3 fixes this: only
+     * the resequenced replacement's immediate predecessor/successor deltas
+     * are validated.
+     */
+    /**
+     * Dated well before the fixture's own September readings so it never
+     * trips CreateCounterReading's "observed time is older than the latest
+     * effective reading" guard for the $this->record() calls each test makes
+     * afterward — this pair exists purely as an unrelated historical anomaly
+     * elsewhere in the machine's timeline, not as the machine's actual latest
+     * evidence.
+     */
+    private function seedUnrelatedNegativeHistoryPair(array $f): void
+    {
+        $h1 = CounterReading::create(['account_id' => $f['account']->id, 'machine_id' => $f['machine']->id, 'counter_type_id' => $f['counterTypeId'], 'reading_value' => 100, 'observed_at' => '2026-01-01T00:00:00Z', 'status' => 'effective', 'source' => 'legacy_import', 'client_request_id' => (string) Str::uuid()]);
+        CounterReading::create(['account_id' => $f['account']->id, 'machine_id' => $f['machine']->id, 'counter_type_id' => $f['counterTypeId'], 'reading_value' => 90, 'observed_at' => '2026-01-02T00:00:00Z', 'status' => 'effective', 'source' => 'legacy_import', 'previous_reading_id' => $h1->id, 'client_request_id' => (string) Str::uuid()]);
+    }
+
+    public function test_unrelated_historical_negative_usage_does_not_block_a_locally_valid_correction(): void
+    {
+        $f = $this->fixture();
+        $this->seedUnrelatedNegativeHistoryPair($f);
+
+        $a = $this->record($f, 1000, '2026-09-01T00:00:00Z');
+        $b = $this->record($f, 1100, '2026-09-02T00:00:00Z');
+        $this->record($f, 1300, '2026-09-03T00:00:00Z');
+
+        // 1000 -> 1200 -> 1300 is locally valid; the unrelated 100 -> 90
+        // pair (chronologically after all of this, and never touched) must
+        // not affect the outcome.
+        $this->actingAs($f['owner'])
+            ->postJson("/api/v1/counter-readings/{$b->id}/correction", [
+                'correction_reason' => 'meter misread', 'replacement_value' => 1200, 'client_request_id' => (string) Str::uuid(),
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.status', 'effective');
+
+        $this->assertSame('superseded', $b->fresh()->status);
+
+        // The unrelated anomaly itself must remain completely untouched.
+        $unrelated = CounterReading::where('reading_value', 90)->first();
+        $this->assertSame('effective', $unrelated->status);
+        $this->assertSame('100.0000', CounterReading::where('reading_value', 100)->first()->reading_value);
+    }
+
+    public function test_local_previous_regression_is_still_rejected_even_with_unrelated_history(): void
+    {
+        $f = $this->fixture();
+        $this->seedUnrelatedNegativeHistoryPair($f);
+        $a = $this->record($f, 1000, '2026-09-01T00:00:00Z');
+        $b = $this->record($f, 1100, '2026-09-02T00:00:00Z');
+
+        // previous(A)=1000, replacement=900 -> a genuine local regression.
+        $this->actingAs($f['owner'])
+            ->postJson("/api/v1/counter-readings/{$b->id}/correction", [
+                'correction_reason' => 'bad edit', 'replacement_value' => 900, 'client_request_id' => (string) Str::uuid(),
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['replacement_value']);
+
+        $this->assertSame('effective', $a->fresh()->status);
+        $this->assertSame('effective', $b->fresh()->status);
+    }
+
+    public function test_local_next_regression_is_still_rejected_even_with_unrelated_history(): void
+    {
+        $f = $this->fixture();
+        $this->seedUnrelatedNegativeHistoryPair($f);
+        $this->record($f, 1000, '2026-09-01T00:00:00Z');
+        $b = $this->record($f, 1100, '2026-09-02T00:00:00Z');
+        $c = $this->record($f, 1300, '2026-09-03T00:00:00Z');
+
+        // replacement=1400, next(C)=1300 -> a genuine local regression against the successor.
+        $this->actingAs($f['owner'])
+            ->postJson("/api/v1/counter-readings/{$b->id}/correction", [
+                'correction_reason' => 'bad edit', 'replacement_value' => 1400, 'client_request_id' => (string) Str::uuid(),
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['replacement_value']);
+
+        $this->assertSame('effective', $c->fresh()->status);
+    }
+
+    public function test_local_valid_sequence_between_previous_and_next_is_accepted_with_unrelated_history(): void
+    {
+        $f = $this->fixture();
+        $this->seedUnrelatedNegativeHistoryPair($f);
+        $this->record($f, 1000, '2026-09-01T00:00:00Z');
+        $b = $this->record($f, 1100, '2026-09-02T00:00:00Z');
+        $this->record($f, 1300, '2026-09-03T00:00:00Z');
+
+        $this->actingAs($f['owner'])
+            ->postJson("/api/v1/counter-readings/{$b->id}/correction", [
+                'correction_reason' => 'meter misread', 'replacement_value' => 1200, 'client_request_id' => (string) Str::uuid(),
+            ])
+            ->assertOk();
+    }
+
+    public function test_moving_a_reading_earlier_validates_against_its_new_neighbours_not_the_original_ones(): void
+    {
+        $f = $this->fixture();
+        $this->seedUnrelatedNegativeHistoryPair($f);
+        $a = $this->record($f, 1000, '2026-09-01T00:00:00Z');
+        $b = $this->record($f, 1100, '2026-09-02T00:00:00Z');
+        $c = $this->record($f, 1300, '2026-09-03T00:00:00Z');
+        $d = $this->record($f, 1500, '2026-09-04T00:00:00Z');
+
+        // C sits between B (1100) and D (1500). Move it earlier so it sits
+        // between A (1000) and B (1100); it must be validated against A/B,
+        // not its original B/D neighbours.
+        $this->actingAs($f['owner'])
+            ->postJson("/api/v1/counter-readings/{$c->id}/correction", [
+                'correction_reason' => 'moved earlier', 'replacement_value' => 1050, 'replacement_observed_at' => '2026-09-01T12:00:00Z', 'client_request_id' => (string) Str::uuid(),
+            ])
+            ->assertOk();
+
+        $this->assertSame('effective', $a->fresh()->status);
+        $this->assertSame('effective', $b->fresh()->status);
+        $this->assertSame('effective', $d->fresh()->status);
+    }
+
+    public function test_moving_a_reading_later_validates_against_its_new_neighbours_not_the_original_ones(): void
+    {
+        $f = $this->fixture();
+        $this->seedUnrelatedNegativeHistoryPair($f);
+        $this->record($f, 1000, '2026-09-01T00:00:00Z');
+        $b = $this->record($f, 1100, '2026-09-02T00:00:00Z');
+        $c = $this->record($f, 1300, '2026-09-03T00:00:00Z');
+        $d = $this->record($f, 1500, '2026-09-04T00:00:00Z');
+
+        // B sits between A (1000) and C (1300). Move it later so it sits
+        // between C (1300) and D (1500); it must be validated against C/D.
+        $this->actingAs($f['owner'])
+            ->postJson("/api/v1/counter-readings/{$b->id}/correction", [
+                'correction_reason' => 'moved later', 'replacement_value' => 1400, 'replacement_observed_at' => '2026-09-03T12:00:00Z', 'client_request_id' => (string) Str::uuid(),
+            ])
+            ->assertOk();
+
+        $this->assertSame('effective', $c->fresh()->status);
+        $this->assertSame('effective', $d->fresh()->status);
+    }
+
+    public function test_same_timestamp_correction_validates_against_the_deterministic_neighbour_with_unrelated_history(): void
+    {
+        $f = $this->fixture();
+        $this->seedUnrelatedNegativeHistoryPair($f);
+        $a = $this->record($f, 1000, '2026-09-01T00:00:00Z');
+        $tieLow = CounterReading::create(['account_id' => $f['account']->id, 'machine_id' => $f['machine']->id, 'counter_type_id' => $f['counterTypeId'], 'reading_value' => 1100, 'observed_at' => '2026-09-02T00:00:00Z', 'status' => 'effective', 'source' => 'manual', 'previous_reading_id' => $a->id, 'created_at' => '2026-09-07T00:00:00Z', 'client_request_id' => (string) Str::uuid()]);
+        $tieHigh = CounterReading::create(['account_id' => $f['account']->id, 'machine_id' => $f['machine']->id, 'counter_type_id' => $f['counterTypeId'], 'reading_value' => 1150, 'observed_at' => '2026-09-02T00:00:00Z', 'status' => 'effective', 'source' => 'manual', 'created_at' => '2026-09-07T00:00:01Z', 'client_request_id' => (string) Str::uuid()]);
+        $d = $this->record($f, 1300, '2026-09-03T00:00:00Z');
+
+        // Deterministic order at the tie is (observed_at, created_at, id):
+        // A(1000) -> tieLow(1100, created first) -> tieHigh(1150) -> D(1300).
+        // Correcting tieHigh must validate against tieLow (predecessor) and D
+        // (successor), not against A directly.
+        $this->actingAs($f['owner'])
+            ->postJson("/api/v1/counter-readings/{$tieHigh->id}/correction", [
+                'correction_reason' => 'meter misread', 'replacement_value' => 1200, 'client_request_id' => (string) Str::uuid(),
+            ])
+            ->assertOk();
+
+        $this->assertSame('effective', $tieLow->fresh()->status);
+        $this->assertSame('effective', $d->fresh()->status);
+
+        // A regression against the deterministic predecessor (tieLow=1100) must still be rejected.
+        $this->actingAs($f['owner'])
+            ->postJson("/api/v1/counter-readings/{$d->id}/correction", [
+                'correction_reason' => 'bad edit', 'replacement_value' => 1050, 'client_request_id' => (string) Str::uuid(),
+            ])
+            ->assertUnprocessable();
+    }
 }

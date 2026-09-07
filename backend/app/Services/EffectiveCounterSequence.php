@@ -49,8 +49,17 @@ class EffectiveCounterSequence
      * position using $simulatedId/$simulatedCreatedAt as tie-breakers so the
      * check matches exactly how the real insert will be ordered.
      *
-     * @return array{sequence: Collection, minUsage: ?float} minUsage is the lowest
-     *         usage value produced (null if the simulated row is the only one)
+     * Only the two chronological relationships a correction can actually
+     * change are validated: the resequenced replacement's immediate
+     * predecessor -> replacement, and replacement -> immediate successor.
+     * An unrelated negative delta elsewhere in the machine's history (a
+     * legacy-import anomaly, a still-unresolved earlier data issue, or
+     * anything not touched by this correction) must never block an
+     * otherwise-locally-valid correction — see M2.12L.2's acceptance finding.
+     *
+     * @return array{sequence: Collection, minUsage: ?float} minUsage is the lower
+     *         of the two affected local deltas (null if the replacement has no
+     *         effective neighbour on that side, e.g. it is the first/last reading)
      */
     public function simulateReplacement(string $machineId, string $counterTypeId, string $targetId, float $value, string $observedAt, string $simulatedId, string $simulatedCreatedAt): array
     {
@@ -69,18 +78,20 @@ class EffectiveCounterSequence
 
         $combined = $rows->push($simulated)->all();
         usort($combined, fn ($a, $b) => strcmp((string) $a->observed_at, (string) $b->observed_at) ?: (strcmp((string) $a->created_at, (string) $b->created_at) ?: strcmp((string) $a->id, (string) $b->id)));
-        $sequence = collect($combined);
+        $sequence = collect($combined)->values();
 
-        $previousValue = null;
-        $usages = [];
-        foreach ($sequence as $row) {
-            $usage = $previousValue === null ? null : (float) $row->reading_value - $previousValue;
-            if ($usage !== null) {
-                $usages[] = $usage;
-            }
-            $previousValue = (float) $row->reading_value;
+        $index = $sequence->search(fn ($row) => $row->id === $simulatedId);
+        $previous = $index > 0 ? $sequence[$index - 1] : null;
+        $next = $index < $sequence->count() - 1 ? $sequence[$index + 1] : null;
+
+        $localDeltas = [];
+        if ($previous) {
+            $localDeltas[] = $value - (float) $previous->reading_value;
+        }
+        if ($next) {
+            $localDeltas[] = (float) $next->reading_value - $value;
         }
 
-        return ['sequence' => $sequence, 'minUsage' => $usages === [] ? null : min($usages)];
+        return ['sequence' => $sequence, 'minUsage' => $localDeltas === [] ? null : min($localDeltas)];
     }
 }
