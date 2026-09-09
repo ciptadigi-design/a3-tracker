@@ -14,6 +14,7 @@ import { ErrorsPage } from '../pages/ErrorsPage.jsx'
 import { IncidentDetailPage } from '../features/incidents/IncidentDetailPage.jsx'
 import { ComponentsPage } from '../pages/ComponentsPage.jsx'
 import { SettingsPage } from '../pages/SettingsPage.jsx'
+import { ClickTargetSettingsPage } from '../pages/ClickTargetSettingsPage.jsx'
 import { InventoryPage } from '../pages/InventoryPage.jsx'
 import { MachineCostPage } from '../pages/MachineCostPage.jsx'
 import { ReportsPage } from '../pages/ReportsPage.jsx'
@@ -40,7 +41,7 @@ export function AppShell() {
   function handleNavigate(nextPath) { navigate(nextPath); setMobileNavOpen(false) }
 
   let page
-  if (path === '/') page = <OverviewPage />
+  if (path === '/') page = <OverviewPage navigate={handleNavigate} />
   else if (path === '/machines') page = <MachinesPage navigate={handleNavigate} />
   else if (getMachineIdFromPath(path)) page = <MachineDetailPage machineId={getMachineIdFromPath(path)} navigate={handleNavigate} />
   else if (path === '/daily') page = <DailyPage />
@@ -52,6 +53,7 @@ export function AppShell() {
   else if (path === '/my-account') page = <MyAccountPage />
   else if ((path === '/settings' || path === '/settings/machine-models') && tenant.isPlatformSuperuser) page = <SettingsPage navigate={handleNavigate} initialSection={path === '/settings/machine-models' ? 'models' : null} />
   else if (path === '/settings' || path === '/settings/machine-models') page = <ComingSoonPage title="Access denied" description="Settings is temporarily available only to Platform Superusers." />
+  else if (path === '/settings/click-targets') page = <ClickTargetSettingsPage />
   else if (getIncidentIdFromPath(path)) page = <IncidentDetailPage incidentId={getIncidentIdFromPath(path)} navigate={handleNavigate} />
   else {
     const [title, description] = comingSoonPages[path] ?? ['Page not found', 'This route is not available.']

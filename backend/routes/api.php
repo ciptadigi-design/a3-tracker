@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\ClickTargetController;
 use App\Http\Controllers\Api\ComponentsController;
 use App\Http\Controllers\Api\GovernanceController;
 use App\Http\Controllers\Api\HealthController;
@@ -107,6 +108,12 @@ Route::prefix('v1')->middleware('request.id')->group(function () {
             Route::post('selling-prices/{price}/void', [MachineCostController::class, 'voidSellingPrice']);
             Route::post('machines/{machine}/cost/operating-costs', [MachineCostController::class, 'createOperatingCost']);
             Route::post('operating-costs/{cost}/void', [MachineCostController::class, 'voidOperatingCost']);
+            Route::get('machines/{machine}/click-target', [ClickTargetController::class, 'show']);
+            Route::put('machines/{machine}/click-target', [ClickTargetController::class, 'upsertTarget']);
+            Route::get('machines/{machine}/click-target/history', [ClickTargetController::class, 'history']);
+            Route::get('machines/{machine}/click-target/calendar-exceptions', [ClickTargetController::class, 'listCalendarExceptions']);
+            Route::post('machines/{machine}/click-target/calendar-exceptions', [ClickTargetController::class, 'createCalendarException']);
+            Route::delete('calendar-exceptions/{exception}', [ClickTargetController::class, 'removeCalendarException']);
             Route::get('reports', ReportsController::class);
         });
     });
