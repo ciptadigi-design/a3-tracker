@@ -4,6 +4,8 @@ import {
   dailyPerformanceTooltip,
   exclusionReasonLabel,
   formatClicks,
+  formatCompactClicks,
+  formatCompactSignedClicks,
   formatPercentage,
   formatSignedClicks,
   hasAnyPlannedOrActual,
@@ -11,6 +13,7 @@ import {
   periodCardPresentation,
   requiredPacePresentation,
   targetStatusPresentation,
+  todayContextPresentation,
 } from './clickTargetModel.js'
 
 test('formatClicks renders Unavailable for null and never NaN/undefined', () => {
@@ -107,4 +110,64 @@ test('periodCardPresentation never leaks NaN/undefined strings', () => {
   const presentation = periodCardPresentation(null)
   assert.equal(presentation.actual, 'Unavailable')
   assert.equal(presentation.planned, 'Not configured')
+})
+
+test('formatCompactClicks matches the M2.13.2 compact notation table exactly', () => {
+  const cases = [
+    [0, '0'], [946, '946'], [999, '999'],
+    [1000, '1K'], [1200, '1.2K'], [1249, '1.2K'], [1250, '1.3K'],
+    [1667, '1.7K'], [3636, '3.6K'], [10000, '10K'], [12500, '12.5K'],
+    [20038, '20K'], [100000, '100K'], [1200000, '1.2M'],
+  ]
+  for (const [input, expected] of cases) assert.equal(formatCompactClicks(input), expected, `formatCompactClicks(${input})`)
+})
+
+test('formatCompactClicks never produces a trailing .0', () => {
+  assert.equal(formatCompactClicks(1000), '1K')
+  assert.equal(formatCompactClicks(10000), '10K')
+  assert.equal(formatCompactClicks(2000000), '2M')
+  assert.ok(!formatCompactClicks(1000).includes('.0'))
+})
+
+test('formatCompactClicks uses "." not a locale comma for the decimal separator', () => {
+  assert.equal(formatCompactClicks(1200), '1.2K')
+  assert.ok(!formatCompactClicks(1200).includes(','))
+})
+
+test('formatCompactClicks returns null (never a fabricated number) for null/undefined/non-finite', () => {
+  assert.equal(formatCompactClicks(null), null)
+  assert.equal(formatCompactClicks(undefined), null)
+  assert.equal(formatCompactClicks(NaN), null)
+})
+
+test('formatCompactSignedClicks mirrors the exact compact table with a sign', () => {
+  assert.equal(formatCompactSignedClicks(2200), '+2.2K')
+  assert.equal(formatCompactSignedClicks(-2200), '-2.2K')
+  assert.equal(formatCompactSignedClicks(0), '0')
+  assert.equal(formatCompactSignedClicks(null), null)
+})
+
+test('todayContextPresentation renders the excluded state without implying failure', () => {
+  const presentation = todayContextPresentation({ calendarStatus: 'EXCLUDED', exclusionReason: 'planned_maintenance' })
+  assert.equal(presentation.label, 'Today · Excluded')
+  assert.equal(presentation.detail, 'Planned Maintenance')
+})
+
+test('todayContextPresentation renders the no-target-configured state truthfully', () => {
+  const presentation = todayContextPresentation({ calendarStatus: 'ACTIVE', actual: 0, planned: null, variance: null })
+  assert.equal(presentation.label, 'Today · 0 clicks')
+  assert.equal(presentation.detail, 'Target not configured')
+})
+
+test('todayContextPresentation renders actual/planned/variance in compact notation using the same target projection', () => {
+  const presentation = todayContextPresentation({ calendarStatus: 'ACTIVE', actual: 3891, planned: 1667, variance: 2224 })
+  assert.equal(presentation.label, 'Today · 3.9K / 1.7K planned')
+  assert.equal(presentation.detail, '+2.2K')
+  assert.equal(presentation.tone, 'green')
+})
+
+test('todayContextPresentation falls back to a neutral placeholder when today has no row at all', () => {
+  const presentation = todayContextPresentation(undefined)
+  assert.equal(presentation.label, 'Today')
+  assert.equal(presentation.detail, null)
 })

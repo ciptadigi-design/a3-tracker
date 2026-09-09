@@ -4,8 +4,11 @@ import { PageHeader } from '../components/ui/PageHeader.jsx'
 import { useAuth } from '../features/auth/useAuth.js'
 import { useTenant } from '../features/account/useTenant.js'
 import { useMachines } from '../features/machines/useMachines.js'
-import { CANONICAL_PERIOD_TIMEZONE } from '../features/machineCost/machineCostPeriods.js'
-import { formatClicks, formatPercentage, formatSignedClicks, normalizeDailyPerformance, periodCardPresentation, requiredPacePresentation, targetStatusPresentation } from '../features/clickTargets/clickTargetModel.js'
+import { CANONICAL_PERIOD_TIMEZONE, resolveMachineCostPeriod } from '../features/machineCost/machineCostPeriods.js'
+import { primaryCostPerClickPresentation } from '../features/machineCost/machineCostPresentation.js'
+import { formatIdrUnit } from '../features/machineCost/currencyFormat.js'
+import { loadMachineCostPeriod } from '../services/machineCost.js'
+import { formatClicks, formatPercentage, formatSignedClicks, normalizeDailyPerformance, periodCardPresentation, requiredPacePresentation, targetStatusPresentation, todayContextPresentation } from '../features/clickTargets/clickTargetModel.js'
 import { DailyClickPerformanceChart } from '../features/clickTargets/DailyClickPerformanceChart.jsx'
 import { loadClickTargetProjection } from '../services/clickTargets.js'
 import { createUIStateKey } from '../features/uiState/uiStateKeys.js'
@@ -18,6 +21,22 @@ function currentYearMonth(timezone) {
   const parts = new Intl.DateTimeFormat('en-CA', { timeZone: timezone, year: 'numeric', month: '2-digit' }).formatToParts(new Date())
   const values = Object.fromEntries(parts.map((part) => [part.type, part.value]))
   return { year: Number(values.year), month: Number(values.month) }
+}
+
+function todayDateKey(timezone) {
+  const parts = new Intl.DateTimeFormat('en-CA', { timeZone: timezone, year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date())
+  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]))
+  return `${values.year}-${values.month}-${values.day}`
+}
+
+function CostPerClickCard({ summary, monthLabel }) {
+  const presentation = primaryCostPerClickPresentation(summary, formatIdrUnit)
+  return <article className="overview-period-card glass-surface">
+    <span className="card-kicker">Cost / Click</span>
+    <strong>{presentation.value}</strong>
+    <span className="overview-period-target">Standard machine cost</span>
+    <small>{monthLabel}</small>
+  </article>
 }
 
 function PeriodCard({ label, card }) {
@@ -63,11 +82,25 @@ export function OverviewPage({ navigate }) {
 
   useEffect(() => { refresh() }, [refresh])
 
+  const [costSummary, setCostSummary] = useState(null)
+  useEffect(() => {
+    let active = true
+    if (!selectedMachine) { setCostSummary(null); return undefined }
+    const period = resolveMachineCostPeriod({ preset: 'this_month', timezone })
+    if (!period.start || !period.end) { setCostSummary(null); return undefined }
+    loadMachineCostPeriod({ accountId: account.id, machineId: selectedMachine.id, periodStart: period.start, periodEnd: period.end })
+      .then((summary) => { if (active) setCostSummary(summary) })
+      .catch(() => { if (active) setCostSummary(null) })
+    return () => { active = false }
+  }, [account.id, selectedMachine, timezone])
+
   const monthLabel = monthFormatter.format(new Date(Date.UTC(2000, month - 1, 1)))
   const dailyRows = useMemo(() => normalizeDailyPerformance(projection?.daily), [projection])
   const [statusLabel, statusTone] = targetStatusPresentation(projection?.target_status)
   const requiredPace = requiredPacePresentation(projection)
   const notConfigured = projection?.target_status === 'NOT_CONFIGURED'
+  const todayRow = useMemo(() => dailyRows.find((row) => row.date === todayDateKey(timezone)), [dailyRows, timezone])
+  const todayContext = todayContextPresentation(todayRow)
 
   return (
     <div className="page-stack overview-page">
@@ -115,12 +148,12 @@ export function OverviewPage({ navigate }) {
 
           {projection && (
             <>
-              <section className="overview-period-grid" aria-label="Today, week, and month progress">
-                <PeriodCard label="Today" card={projection.today} />
+              <section className="overview-period-grid" aria-label="Cost per click, week, and month progress">
+                <CostPerClickCard summary={costSummary} monthLabel={monthLabel} />
                 <PeriodCard label="This Week" card={projection.week} />
                 <PeriodCard label="This Month" card={projection.month} />
               </section>
-              <DailyClickPerformanceChart rows={dailyRows} />
+              <DailyClickPerformanceChart rows={dailyRows} todayContext={todayContext} />
             </>
           )}
         </>

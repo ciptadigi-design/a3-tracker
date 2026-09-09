@@ -260,6 +260,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 @media (max-width: 860px) {
   .overview-target-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .overview-period-grid { grid-template-columns: minmax(0, 1fr); }
+  .daily-click-performance-header-meta { align-items: flex-start; width: 100%; }
 }
 .list-toolbar { min-width: 0; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 4px 4px 22px; border-bottom: 1px solid var(--border-subtle); }
 .list-toolbar > div { min-width: 0; }
@@ -484,6 +485,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .settings-card { min-width: 0; overflow: hidden; border-radius: 20px; }
 .settings-card > header { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 18px 20px; border-bottom: 1px solid var(--border-subtle); }
 .settings-card > header > div { min-width: 0; }.settings-card h2 { margin: 3px 0; font-size: 17px; }.settings-card header p { max-width: 720px; margin: 0; color: var(--text-muted); font-size: 9px; line-height: 1.5; }
+.click-target-gateway-readonly { margin: 0; padding: 0 20px 18px; color: var(--text-muted); font-size: 9px; line-height: 1.5; }
 .settings-detail-list { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); margin: 0; }
 .settings-detail-list > div { display: grid; grid-template-columns: minmax(100px,.7fr) minmax(0,1fr); gap: 12px; padding: 14px 20px; border-top: 1px solid var(--border-subtle); }.settings-detail-list > div:nth-child(-n+2) { border-top: 0; }.settings-detail-list dt { color: var(--text-muted); font-size: 9px; }.settings-detail-list dd { margin: 0; overflow-wrap: anywhere; font-size: 10px; font-weight: 700; }
 .settings-row-list { display: grid; }.settings-row-list article { min-width: 0; display: grid; grid-template-columns: auto minmax(0,1fr) auto auto auto; align-items: center; gap: 11px; padding: 13px 20px; border-top: 1px solid var(--border-subtle); }.settings-row-list article:first-child { border-top: 0; }.settings-row-list article.archived { opacity: .66; }.settings-row-list article > div:nth-child(2) { min-width: 0; display: grid; gap: 3px; }.settings-row-list article > div:nth-child(2) > span,.settings-row-list article > div:nth-child(2) > small { color: var(--text-muted); overflow-wrap: anywhere; font-size: 9px; }
@@ -1063,6 +1065,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .trend-click-bar { fill: color-mix(in srgb,var(--blue) 70%,transparent); }
 .trend-click-value { fill: var(--text); font-size: 10px; font-weight: 760; }
 .daily-click-performance-panel header { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.daily-click-performance-header-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
 .daily-click-performance-legend { display: inline-flex; align-items: center; gap: 6px; font-size: 9px; font-weight: 720; color: var(--text-muted); white-space: nowrap; }
 .legend-swatch { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
 .legend-swatch.legend-actual { background: var(--blue); }
@@ -1070,6 +1073,13 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .daily-performance-bar-actual { fill: var(--blue); }
 .daily-performance-bar-target { fill: var(--target-red); }
 .trend-excluded-marker { fill: var(--text-muted); opacity: .35; }
+.daily-performance-label-actual { fill: var(--text); font-size: 9px; font-weight: 760; }
+.daily-performance-label-target { fill: var(--target-red); font-size: 8px; font-weight: 700; }
+.daily-click-performance-today { display: flex; align-items: baseline; gap: 6px; font-size: 10px; font-weight: 720; color: var(--text-soft); white-space: nowrap; }
+.daily-click-performance-today small { font-size: 9px; font-weight: 700; color: var(--text-muted); }
+.daily-click-performance-today.tone-green small { color: var(--green); }
+.daily-click-performance-today.tone-warning small { color: var(--warning); }
+.daily-click-performance-today.tone-blue small { color: var(--blue); }
 
 @media (max-width: 1180px) {
   .machine-cost-summary-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }

@@ -16,6 +16,39 @@ export function formatPercentage(value) {
   return value == null ? 'Unavailable' : `${percentFormatter.format(Number(value))}%`
 }
 
+const compactUnits = [[1_000_000_000, 'B'], [1_000_000, 'M'], [1_000, 'K']]
+
+/**
+ * Compact visualization-only notation ("1.2K", "10K", "1.2M") for chart bar
+ * labels. Deliberately separate from formatClicks (exact, comma-grouped) -
+ * this is presentation-only and must never replace an authoritative value.
+ * Uses "." as the decimal separator regardless of locale to avoid the
+ * ambiguity a locale-grouping comma would create right next to a "K"/"M"
+ * suffix, and always rounds to at most one decimal with no trailing ".0".
+ */
+export function formatCompactClicks(value) {
+  if (value == null) return null
+  const number = Number(value)
+  if (!Number.isFinite(number)) return null
+  const sign = number < 0 ? '-' : ''
+  const abs = Math.abs(number)
+  for (const [threshold, suffix] of compactUnits) {
+    if (abs >= threshold) {
+      const rounded = Math.round((abs / threshold) * 10) / 10
+      const text = Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(1)
+      return `${sign}${text}${suffix}`
+    }
+  }
+  return `${sign}${Math.round(abs)}`
+}
+
+export function formatCompactSignedClicks(value) {
+  if (value == null) return null
+  const number = Number(value)
+  const sign = number > 0 ? '+' : number < 0 ? '-' : ''
+  return `${sign}${formatCompactClicks(Math.abs(number))}`
+}
+
 const targetStatusPresentationMap = {
   NOT_CONFIGURED: ['Not configured', 'neutral'],
   ON_TRACK: ['On track', 'blue'],
@@ -102,6 +135,33 @@ export function periodCardPresentation(card) {
     planned: formatClicks(card.planned),
     achievement: card.achievement_percentage == null ? null : formatPercentage(card.achievement_percentage),
     varianceLabel: variance == null ? null : formatSignedClicks(variance),
+    tone,
+  }
+}
+
+/**
+ * Lightweight "Today" context for the Daily Click Performance header,
+ * replacing the removed large Today KPI card. `todayRow` is today's entry
+ * from normalizeDailyPerformance's output (or undefined if today isn't in
+ * the currently loaded month). Uses the same target projection as the rest
+ * of Overview - no separate Today target logic.
+ */
+export function todayContextPresentation(todayRow) {
+  if (!todayRow) return { label: 'Today', detail: null, tone: 'neutral' }
+  if (todayRow.calendarStatus === 'EXCLUDED') {
+    return { label: 'Today · Excluded', detail: exclusionReasonLabel(todayRow.exclusionReason), tone: 'neutral' }
+  }
+  const actualCompact = formatCompactClicks(todayRow.actual ?? 0)
+  if (todayRow.planned == null) {
+    return { label: `Today · ${actualCompact} clicks`, detail: 'Target not configured', tone: 'neutral' }
+  }
+  const plannedCompact = formatCompactClicks(todayRow.planned)
+  const variance = todayRow.variance
+  const tone = variance == null ? 'neutral' : variance > 0 ? 'green' : variance < 0 ? 'warning' : 'blue'
+
+  return {
+    label: `Today · ${actualCompact} / ${plannedCompact} planned`,
+    detail: variance == null ? null : formatCompactSignedClicks(variance),
     tone,
   }
 }
