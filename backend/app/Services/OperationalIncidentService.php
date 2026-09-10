@@ -8,12 +8,62 @@ use App\Models\AccountMembershipBranch;
 use App\Models\Branch;
 use App\Models\Machine;
 use App\Models\OperationalIncident;
+use App\Models\OperationalPerson;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class OperationalIncidentService
 {
     public function __construct(private BranchAccessResolver $branches, private OperationalPersonEligibilityService $people) {}
+
+    /**
+     * Canonical Incident/Error Operational Person population: every active
+     * person with an active assignment to this branch. Deliberately broader
+     * than the counter-operator population (OperationalPersonEligibilityService) —
+     * an incident's "PIC Terlibat" (responsible person) may be staff who are
+     * not counter operators. The frontend derives the stricter Operator
+     * subset (can_record_counter=true) from this same list itself; it must
+     * not be pre-filtered here. Matches the pre-Laravel-port Supabase
+     * reference query exactly (operational_people joined to
+     * operational_person_branches, account + active + active branch
+     * assignment only — see src/services/supabase/operationalIncidents.js).
+     */
+    public function eligiblePeopleForBranch(Branch $branch)
+    {
+        return OperationalPerson::where('account_id', $branch->account_id)->where('is_active', true)
+            ->with(['branchAssignments' => fn ($q) => $q->where('branch_id', $branch->id)->where('is_active', true)->with('branch')])
+            ->whereHas('branchAssignments', fn ($q) => $q->where('branch_id', $branch->id)->where('is_active', true))
+            ->orderBy('name')->get();
+    }
+
+    /**
+     * Validates operator_person_id/responsible_person_id against their
+     * distinct eligibility rules (operator = strict counter-operator
+     * population, matching Daily/Inventory/Replacement; responsible = the
+     * broader active branch population) and refreshes the paired
+     * *_name_snapshot fields to match. A client cannot bypass this by
+     * submitting an arbitrary id — every write path (create and update)
+     * must call this rather than trusting the submitted id/snapshot pair.
+     * When a field is cleared, its snapshot is cleared too so the two never
+     * drift out of sync.
+     */
+    public function resolvePersonSnapshots(Branch $branch, array $v): array
+    {
+        foreach (['operator_person_id' => 'operator_name_snapshot', 'responsible_person_id' => 'responsible_name_snapshot'] as $field => $snapshotField) {
+            if (! empty($v[$field])) {
+                $p = $field === 'operator_person_id' ? $this->people->eligibleForBranch($branch, $v[$field], true) : $this->people->eligibleForBranch($branch, $v[$field]);
+                if (! $p) {
+                    throw ValidationException::withMessages([$field => 'Operational person is not eligible for this branch.']);
+                }
+                $v[$snapshotField] = $p->name;
+            } else {
+                $v[$field] = null;
+                $v[$snapshotField] = null;
+            }
+        }
+
+        return $v;
+    }
 
     public function create($user, Account $account, Branch $branch, array $v): OperationalIncident
     {
@@ -32,15 +82,7 @@ class OperationalIncidentService
         } else {
             $machine = null;
         }
-        foreach (['operator_person_id', 'responsible_person_id'] as $field) {
-            if (! empty($v[$field])) {
-                $p = $field === 'operator_person_id' ? $this->people->eligibleForBranch($branch, $v[$field], true) : $this->people->eligibleForBranch($branch, $v[$field]);
-                if (! $p) {
-                    throw ValidationException::withMessages([$field => 'Operational person is not eligible for this branch.']);
-                }
-                $v[$field === 'operator_person_id' ? 'operator_name_snapshot' : 'responsible_name_snapshot'] = $p->name;
-            }
-        }
+        $v = $this->resolvePersonSnapshots($branch, $v);
         $existing = OperationalIncident::where('account_id', $account->id)->where('client_request_id', $v['client_request_id'])->first();
         if ($existing) {
             return $existing;
