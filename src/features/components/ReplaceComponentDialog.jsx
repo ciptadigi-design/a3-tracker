@@ -8,6 +8,7 @@ import { learningDefault, removalConditions, replacementReasons } from './compon
 import { resolveReplacementInventorySource } from './lifecycleActions.js'
 import { formatCounterInput, normalizeCounterInput, resolveReplacementPic } from './replacementForm.js'
 import { inventoryItemLabel } from '../inventory/inventoryItemPresentation.js'
+import { counterOperatorsForBranch } from '../operationalPeople/eligibility.js'
 
 function localDateTime() {
   const now = new Date(Date.now() - new Date().getTimezoneOffset() * 60_000)
@@ -60,7 +61,7 @@ export function ReplaceComponentDialog({ account, machine, lifecycle, operationa
   const actualUsage = Number.isFinite(replacementCounter) ? replacementCounter - Number(lifecycle.installed_counter) : null
   const performance = actualUsage != null && Number(lifecycle.expected_at_install) > 0 ? actualUsage / Number(lifecycle.expected_at_install) * 100 : null
   const pic = resolveReplacementPic(operationalPeople, value.performedBy)
-  const activePeople = operationalPeople.filter((person) => person.is_active)
+  const activePeople = counterOperatorsForBranch(operationalPeople, machine.branch_id)
   const performerName = pic.mode === 'manual' ? value.manualPic.trim() : pic.person?.name ?? ''
   const inventorySource = resolveReplacementInventorySource(value.inventorySource)
   const eligibleItems = inventoryItems.filter((item) => item.component_id === lifecycle.component_id)

@@ -10,16 +10,17 @@ use App\Models\InventoryItem;
 use App\Models\InventoryLocation;
 use App\Models\InventorySupplier;
 use App\Models\MachineComponent;
-use App\Models\OperationalPerson;
 use App\Services\AccountAccessResolver;
 use App\Services\BranchAccessResolver;
 use App\Services\InventoryLedgerService;
 use App\Services\MachineAccessResolver;
+use App\Services\OperationalPersonEligibilityService;
 use App\Services\PurchaseReceiptService;
 use App\Services\PurchaseSummaryBuilder;
 use App\Services\ReplaceMachineComponent;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class InventoryController extends Controller
 {
@@ -36,17 +37,33 @@ class InventoryController extends Controller
         $purchases = DB::table('purchases')->where('account_id', $account)->where('branch_id', $branch)->orderByDesc('purchase_date')->get();
         $purchaseIds = $purchases->pluck('id');
         $locationIds = $locations->pluck('id');
-        $people = OperationalPerson::where('account_id', $account)->where('is_active', true)
-            ->with(['branchAssignments' => fn ($q) => $q->where('branch_id', $branch)->where('is_active', true)->with('branch')])
-            ->whereHas('branchAssignments', fn ($q) => $q->where('branch_id', $branch)->where('is_active', true))
-            ->orderBy('name')->get();
+        $people = app(OperationalPersonEligibilityService::class)->forBranch($account, $branch);
         $suppliers = InventorySupplier::where('account_id', $account)->where('is_active', true)->orderBy('name')->get();
         $purchaseLines = $purchaseIds->isEmpty() ? collect() : DB::table('purchase_lines')->where('account_id', $account)->whereIn('purchase_id', $purchaseIds)->get();
         $purchaseLineIds = $purchaseLines->pluck('id');
         $receiptLines = $purchaseLineIds->isEmpty() ? collect() : DB::table('receipt_lines')->where('account_id', $account)->whereIn('purchase_line_id', $purchaseLineIds)->get();
         $purchaseSummary = app(PurchaseSummaryBuilder::class)->build($purchases, $purchaseLines, $receiptLines, $items, $suppliers);
+        $costPositions = $locationIds->isEmpty() ? collect() : DB::table('fifo_layers')
+            ->where('account_id', $account)
+            ->whereIn('location_id', $locationIds)
+            ->where('remaining_quantity', '>', 0)
+            ->get()
+            ->groupBy(fn ($row) => $row->inventory_item_id.'::'.$row->location_id)
+            ->map(function ($rows) {
+                $known = $rows->filter(fn ($row) => $row->unit_cost !== null);
 
-        return response()->json(['data' => ['branchId' => $branch, 'items' => $items, 'locations' => $locations, 'suppliers' => $suppliers, 'balances' => $balances, 'totals' => $items->map(fn ($i) => ['account_id' => $account, 'inventory_item_id' => $i->id, 'quantity' => $balances->where('inventory_item_id', $i->id)->sum('quantity')])->values(), 'movements' => DB::table('inventory_movements')->where('account_id', $account)->whereIn('location_id', $locationIds)->orderByDesc('occurred_at')->limit(500)->get(), 'components' => DB::table('component_catalogs')->where('is_active', true)->where(fn ($q) => $q->whereNull('account_id')->orWhere('account_id', $account))->orderBy('name')->get(), 'people' => OperationalPersonResource::collection($people), 'purchases' => $purchaseSummary['purchases'], 'purchaseLines' => $purchaseSummary['lines'], 'receipts' => $purchaseIds->isEmpty() || $locationIds->isEmpty() ? collect() : DB::table('receipts')->where('account_id', $account)->whereIn('purchase_id', $purchaseIds)->whereIn('location_id', $locationIds)->get(), 'lastPrices' => [], 'costHistory' => [], 'costPositions' => []]]);
+                return [
+                    'inventory_item_id' => $rows->first()->inventory_item_id,
+                    'location_id' => $rows->first()->location_id,
+                    'total_quantity' => (float) $rows->sum('remaining_quantity'),
+                    'known_cost_quantity' => (float) $known->sum('remaining_quantity'),
+                    'unknown_cost_quantity' => (float) $rows->sum('remaining_quantity') - (float) $known->sum('remaining_quantity'),
+                    'known_inventory_cost' => round((float) $known->sum(fn ($row) => $row->remaining_quantity * $row->unit_cost), 2),
+                    'cost_layer_count' => $rows->count(),
+                ];
+            })->values();
+
+        return response()->json(['data' => ['branchId' => $branch, 'items' => $items, 'locations' => $locations, 'suppliers' => $suppliers, 'balances' => $balances, 'totals' => $items->map(fn ($i) => ['account_id' => $account, 'inventory_item_id' => $i->id, 'quantity' => $balances->where('inventory_item_id', $i->id)->sum('quantity')])->values(), 'movements' => DB::table('inventory_movements')->where('account_id', $account)->whereIn('location_id', $locationIds)->orderByDesc('occurred_at')->limit(500)->get(), 'components' => DB::table('component_catalogs')->where('is_active', true)->where(fn ($q) => $q->whereNull('account_id')->orWhere('account_id', $account))->orderBy('name')->get(), 'people' => OperationalPersonResource::collection($people), 'purchases' => $purchaseSummary['purchases'], 'purchaseLines' => $purchaseSummary['lines'], 'receipts' => $purchaseIds->isEmpty() || $locationIds->isEmpty() ? collect() : DB::table('receipts')->where('account_id', $account)->whereIn('purchase_id', $purchaseIds)->whereIn('location_id', $locationIds)->get(), 'lastPrices' => [], 'costHistory' => [], 'costPositions' => $costPositions]]);
     }
 
     public function suppliers(Request $r)
@@ -155,12 +172,13 @@ class InventoryController extends Controller
 
     public function opening(Request $r)
     {
-        $d = $r->validate(['item_id' => 'required|uuid', 'location_id' => 'required|uuid', 'quantity' => 'required|numeric|gt:0', 'unit_cost' => 'nullable|numeric|min:0', 'reason' => 'required|string', 'occurred_at' => 'nullable|date', 'client_request_id' => 'required|uuid']);
+        $d = $r->validate(['item_id' => 'required|uuid', 'location_id' => 'required|uuid', 'quantity' => 'required|numeric|gt:0', 'unit_cost' => 'nullable|numeric|min:0', 'reason' => 'required|string', 'occurred_at' => 'nullable|date', 'person_id' => 'nullable|uuid', 'client_request_id' => 'required|uuid']);
         $item = InventoryItem::findOrFail($d['item_id']);
         $loc = InventoryLocation::findOrFail($d['location_id']);
         abort_unless($this->canAccessLocation($r, $loc, true) && $item->account_id === $loc->account_id, 403);
+        [$personId, $personName] = $this->resolveOperator($loc, $d['person_id'] ?? null);
 
-        return response()->json(['data' => app(InventoryLedgerService::class)->inbound($item, $loc, $d['quantity'], $d['unit_cost'] ?? null, 'opening_balance', $d['client_request_id'], $d['reason'], $d['occurred_at'] ?? null)], 201);
+        return response()->json(['data' => app(InventoryLedgerService::class)->inbound($item, $loc, $d['quantity'], $d['unit_cost'] ?? null, 'opening_balance', $d['client_request_id'], $d['reason'], $d['occurred_at'] ?? null, $personId, $personName, $r->user()->id)], 201);
     }
 
     public function balance(Request $r, string $item, string $location)
@@ -173,37 +191,61 @@ class InventoryController extends Controller
 
     public function transfer(Request $r)
     {
-        $d = $r->validate(['item_id' => 'required|uuid', 'from_location_id' => 'required|uuid', 'to_location_id' => 'required|uuid', 'quantity' => 'required|numeric|min:0.0001', 'client_request_id' => 'required|uuid']);
+        $d = $r->validate(['item_id' => 'required|uuid', 'from_location_id' => 'required|uuid', 'to_location_id' => 'required|uuid', 'quantity' => 'required|numeric|min:0.0001', 'person_id' => 'nullable|uuid', 'client_request_id' => 'required|uuid']);
         $item = InventoryItem::findOrFail($d['item_id']);
         $loc = InventoryLocation::findOrFail($d['from_location_id']);
         $to = InventoryLocation::findOrFail($d['to_location_id']);
         abort_unless($this->canAccessLocation($r, $loc, true) && $this->canAccessLocation($r, $to, true) && $item->account_id === $loc->account_id && $item->account_id === $to->account_id, 403);
+        [$personId, $personName] = $this->resolveOperator($loc, $d['person_id'] ?? null);
 
-        return response()->json(['data' => app(InventoryLedgerService::class)->transfer($item, $loc, $to, $d['quantity'], $d['client_request_id'])], 201);
+        return response()->json(['data' => app(InventoryLedgerService::class)->transfer($item, $loc, $to, $d['quantity'], $d['client_request_id'], $personId, $personName, $r->user()->id)], 201);
     }
 
     public function adjust(Request $r)
     {
-        $d = $r->validate(['item_id' => 'required|uuid', 'location_id' => 'required|uuid', 'quantity' => 'required|numeric|not_in:0', 'reason' => 'required|string', 'unit_cost' => 'nullable|numeric|min:0', 'client_request_id' => 'required|uuid']);
+        $d = $r->validate(['item_id' => 'required|uuid', 'location_id' => 'required|uuid', 'quantity' => 'required|numeric|not_in:0', 'reason' => 'required|string', 'unit_cost' => 'nullable|numeric|min:0', 'person_id' => 'nullable|uuid', 'client_request_id' => 'required|uuid']);
         $item = InventoryItem::findOrFail($d['item_id']);
         $loc = InventoryLocation::findOrFail($d['location_id']);
         abort_unless($this->canAccessLocation($r, $loc, true) && $item->account_id === $loc->account_id, 403);
+        [$personId, $personName] = $this->resolveOperator($loc, $d['person_id'] ?? null);
         $ledger = app(InventoryLedgerService::class);
-        $m = $d['quantity'] > 0 ? $ledger->inbound($item, $loc, $d['quantity'], $d['unit_cost'] ?? null, 'adjustment_in', $d['client_request_id'], $d['reason']) : $ledger->outbound($item, $loc, abs($d['quantity']), 'adjustment_out', $d['client_request_id'], null, $d['reason']);
+        $m = $d['quantity'] > 0 ? $ledger->inbound($item, $loc, $d['quantity'], $d['unit_cost'] ?? null, 'adjustment_in', $d['client_request_id'], $d['reason'], null, $personId, $personName, $r->user()->id) : $ledger->outbound($item, $loc, abs($d['quantity']), 'adjustment_out', $d['client_request_id'], null, $d['reason'], null, $personId, $personName, $r->user()->id);
 
         return response()->json(['data' => $m], 201);
     }
 
     public function replace(Request $r, string $component)
     {
-        $d = $r->validate(['inventory_source' => 'required|in:inventory,external_untracked', 'inventory_item_id' => 'required_if:inventory_source,inventory|nullable|uuid', 'inventory_location_id' => 'required_if:inventory_source,inventory|nullable|uuid', 'quantity' => 'required_if:inventory_source,inventory|nullable|numeric|min:0.0001', 'replaced_at' => 'nullable|date', 'external_reason' => 'required_if:inventory_source,external_untracked|nullable|string', 'notes' => 'nullable|string', 'client_request_id' => 'required|uuid']);
+        $d = $r->validate(['inventory_source' => 'required|in:inventory,external_untracked', 'inventory_item_id' => 'required_if:inventory_source,inventory|nullable|uuid', 'inventory_location_id' => 'required_if:inventory_source,inventory|nullable|uuid', 'quantity' => 'required_if:inventory_source,inventory|nullable|numeric|min:0.0001', 'replaced_at' => 'nullable|date', 'external_reason' => 'required_if:inventory_source,external_untracked|nullable|string', 'notes' => 'nullable|string', 'performed_by_person_id' => 'nullable|uuid', 'performed_by_name' => 'nullable|string|max:160', 'client_request_id' => 'required|uuid']);
         $mc = MachineComponent::findOrFail($component);
         abort_unless(app(MachineAccessResolver::class)->canAccess($r->user(), $mc->machine, true), 403);
         if ($d['inventory_source'] === 'inventory' && $d['inventory_location_id']) {
             abort_unless($this->canAccessLocation($r, InventoryLocation::findOrFail($d['inventory_location_id']), true), 403);
         }
+        if (! empty($d['performed_by_person_id'])) {
+            $person = app(OperationalPersonEligibilityService::class)->eligible($mc->machine, $d['performed_by_person_id']);
+            if (! $person) {
+                throw ValidationException::withMessages(['performed_by_person_id' => 'Selected PIC is not an active canonical Operator for this machine.']);
+            }
+            $d['performed_by_person_id'] = $person->id;
+            $d['performed_by_name'] = $person->name;
+        }
+        $d['entered_by'] = $r->user()->id;
 
         return response()->json(['data' => app(ReplaceMachineComponent::class)->execute($mc, $d)], 201);
+    }
+
+    private function resolveOperator(InventoryLocation $loc, ?string $personId): array
+    {
+        if (! $personId) {
+            return [null, null];
+        }
+        $person = app(OperationalPersonEligibilityService::class)->eligibleOperatorForLocation($loc, $personId);
+        if (! $person) {
+            throw ValidationException::withMessages(['person_id' => 'Selected PIC is not an active canonical Operator for this location.']);
+        }
+
+        return [$person->id, $person->name];
     }
 
     private function canAccessLocation(Request $r, InventoryLocation $loc, bool $write = false): bool

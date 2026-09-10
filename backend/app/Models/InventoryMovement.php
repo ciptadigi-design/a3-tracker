@@ -12,7 +12,7 @@ class InventoryMovement extends Model
 
     protected $keyType = 'string';
 
-    protected $fillable = ['account_id', 'inventory_item_id', 'location_id', 'movement_type', 'quantity', 'occurred_at', 'reference_type', 'reference_id', 'reason', 'client_request_id', 'transfer_id'];
+    protected $fillable = ['account_id', 'inventory_item_id', 'location_id', 'movement_type', 'quantity', 'occurred_at', 'reference_type', 'reference_id', 'reason', 'entered_by', 'operational_person_id', 'operational_person_name_snapshot', 'client_request_id', 'transfer_id'];
 
     protected $casts = ['occurred_at' => 'datetime'];
 

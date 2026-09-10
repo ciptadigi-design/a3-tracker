@@ -34,7 +34,7 @@ class ReplaceMachineComponent
                 }
                 if ($item->component_id !== null && $item->component_id !== $mc->component_id) {
                     throw new ConflictHttpException('inventory item component mismatch');
-                }$movement = app(InventoryLedgerService::class)->outbound($item, $loc, (float) ($d['quantity'] ?? 1), 'replacement_consumption', $d['client_request_id'], null, $d['notes'] ?? null);
+                }$movement = app(InventoryLedgerService::class)->outbound($item, $loc, (float) ($d['quantity'] ?? 1), 'replacement_consumption', $d['client_request_id'], null, $d['notes'] ?? null, null, $d['performed_by_person_id'] ?? null, $d['performed_by_name'] ?? null, $d['entered_by'] ?? null);
                 $cost = FifoAllocationCost::forMovement($movement->id);
             } else {
                 if (empty($d['external_reason'])) {
@@ -47,7 +47,7 @@ class ReplaceMachineComponent
                 $active->update(['status' => 'closed', 'ended_at' => $when, 'active_key' => null]);
             }$next = ComponentLifecycle::create(['machine_component_id' => $mc->id, 'started_at' => $when, 'status' => 'active', 'source' => 'replacement', 'active_key' => 'active', 'notes' => $d['notes'] ?? null]);
 
-            return ComponentReplacement::create(['account_id' => $mc->account_id, 'machine_component_id' => $mc->id, 'inventory_item_id' => $source === 'inventory' ? $item->id : null, 'inventory_location_id' => $source === 'inventory' ? $loc->id : null, 'inventory_movement_id' => $movement?->id, 'previous_lifecycle_id' => $previous, 'new_lifecycle_id' => $next->id, 'inventory_source' => $source, 'quantity' => $source === 'inventory' ? ($d['quantity'] ?? 1) : null, 'consumed_cost' => $cost, 'replaced_at' => $when, 'external_reason' => $source === 'external_untracked' ? $d['external_reason'] : null, 'notes' => $d['notes'] ?? null, 'client_request_id' => $d['client_request_id']]);
+            return ComponentReplacement::create(['account_id' => $mc->account_id, 'machine_component_id' => $mc->id, 'inventory_item_id' => $source === 'inventory' ? $item->id : null, 'inventory_location_id' => $source === 'inventory' ? $loc->id : null, 'inventory_movement_id' => $movement?->id, 'previous_lifecycle_id' => $previous, 'new_lifecycle_id' => $next->id, 'inventory_source' => $source, 'quantity' => $source === 'inventory' ? ($d['quantity'] ?? 1) : null, 'consumed_cost' => $cost, 'replaced_at' => $when, 'external_reason' => $source === 'external_untracked' ? $d['external_reason'] : null, 'notes' => $d['notes'] ?? null, 'entered_by' => $d['entered_by'] ?? null, 'performed_by_person_id' => $d['performed_by_person_id'] ?? null, 'performed_by_name_snapshot' => $d['performed_by_name'] ?? null, 'client_request_id' => $d['client_request_id']]);
         }, 3);
     }
 }

@@ -288,7 +288,7 @@ export function ComponentsPage() {
   }
 
   async function replaceLifecycle(values) {
-    await replaceComponentLifecycle({ accountId: account.id, machineId: lifecycleMachine.id, lifecycleId: initializingLifecycle.lifecycle_id, ...values })
+    await replaceComponentLifecycle({ accountId: account.id, machineId: lifecycleMachine.id, assignmentId: initializingLifecycle.assignment_id, lifecycleId: initializingLifecycle.lifecycle_id, ...values })
     await refresh()
     setNotice(`${initializingLifecycle.component_name} replacement recorded. The previous lifecycle is closed and new tracking starts at the replacement counter.`)
   }

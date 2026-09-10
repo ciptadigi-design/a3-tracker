@@ -11,7 +11,7 @@ class ComponentReplacement extends Model
 
     protected $keyType = 'string';
 
-    protected $fillable = ['account_id', 'machine_component_id', 'inventory_item_id', 'inventory_location_id', 'inventory_movement_id', 'previous_lifecycle_id', 'new_lifecycle_id', 'inventory_source', 'quantity', 'consumed_cost', 'replaced_at', 'external_reason', 'notes', 'client_request_id'];
+    protected $fillable = ['account_id', 'machine_component_id', 'inventory_item_id', 'inventory_location_id', 'inventory_movement_id', 'previous_lifecycle_id', 'new_lifecycle_id', 'inventory_source', 'quantity', 'consumed_cost', 'replaced_at', 'external_reason', 'notes', 'entered_by', 'performed_by_person_id', 'performed_by_name_snapshot', 'client_request_id'];
 
     protected $casts = ['replaced_at' => 'datetime'];
 

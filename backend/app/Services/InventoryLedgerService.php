@@ -18,9 +18,9 @@ class InventoryLedgerService
         return (float) InventoryMovement::where('inventory_item_id', $item)->where('location_id', $location)->sum('quantity');
     }
 
-    public function inbound(InventoryItem $item, InventoryLocation $location, float $quantity, ?float $cost, string $type, string $requestId, ?string $reason = null, $occurredAt = null): InventoryMovement
+    public function inbound(InventoryItem $item, InventoryLocation $location, float $quantity, ?float $cost, string $type, string $requestId, ?string $reason = null, $occurredAt = null, ?string $personId = null, ?string $personName = null, ?string $enteredBy = null): InventoryMovement
     {
-        return DB::transaction(function () use ($item, $location, $quantity, $cost, $type, $requestId, $reason, $occurredAt) {
+        return DB::transaction(function () use ($item, $location, $quantity, $cost, $type, $requestId, $reason, $occurredAt, $personId, $personName, $enteredBy) {
             $this->validateScope($item, $location);
             $item->newQuery()->whereKey($item->id)->lockForUpdate()->first();
             if ($quantity <= 0) {
@@ -28,7 +28,7 @@ class InventoryLedgerService
             }$old = InventoryMovement::where('account_id', $item->account_id)->where('client_request_id', $requestId)->where('movement_type', $type)->first();
             if ($old) {
                 return $old;
-            }$m = InventoryMovement::create(['account_id' => $item->account_id, 'inventory_item_id' => $item->id, 'location_id' => $location->id, 'movement_type' => $type, 'quantity' => $quantity, 'occurred_at' => $occurredAt ?? now(), 'reference_type' => $type, 'reason' => $reason, 'client_request_id' => $requestId]);
+            }$m = InventoryMovement::create(['account_id' => $item->account_id, 'inventory_item_id' => $item->id, 'location_id' => $location->id, 'movement_type' => $type, 'quantity' => $quantity, 'occurred_at' => $occurredAt ?? now(), 'reference_type' => $type, 'reason' => $reason, 'entered_by' => $enteredBy, 'operational_person_id' => $personId, 'operational_person_name_snapshot' => $personName, 'client_request_id' => $requestId]);
             $sequence = ((int) FifoLayer::where('inventory_item_id', $item->id)->where('location_id', $location->id)->max('fifo_sequence')) + 1;
             FifoLayer::create(['account_id' => $item->account_id, 'inventory_item_id' => $item->id, 'location_id' => $location->id, 'inbound_movement_id' => $m->id, 'source_type' => $type, 'original_quantity' => $quantity, 'remaining_quantity' => $quantity, 'unit_cost' => $cost, 'effective_at' => $m->occurred_at, 'fifo_sequence' => $sequence]);
 
@@ -36,14 +36,14 @@ class InventoryLedgerService
         }, 3);
     }
 
-    public function outbound(InventoryItem $item, InventoryLocation $location, float $quantity, string $type, string $requestId, ?string $referenceId = null, ?string $reason = null, ?string $transferId = null): InventoryMovement
+    public function outbound(InventoryItem $item, InventoryLocation $location, float $quantity, string $type, string $requestId, ?string $referenceId = null, ?string $reason = null, ?string $transferId = null, ?string $personId = null, ?string $personName = null, ?string $enteredBy = null): InventoryMovement
     {
-        return DB::transaction(function () use ($item, $location, $quantity, $type, $requestId, $referenceId, $reason, $transferId) {
+        return DB::transaction(function () use ($item, $location, $quantity, $type, $requestId, $referenceId, $reason, $transferId, $personId, $personName, $enteredBy) {
             $this->validateScope($item, $location);
             $item->newQuery()->whereKey($item->id)->lockForUpdate()->first();
             if ($quantity <= 0 || $this->balance($item->id, $location->id) < $quantity) {
                 throw new ConflictHttpException('insufficient stock');
-            }$m = InventoryMovement::create(['account_id' => $item->account_id, 'inventory_item_id' => $item->id, 'location_id' => $location->id, 'movement_type' => $type, 'quantity' => -$quantity, 'occurred_at' => now(), 'reference_type' => $type === 'replacement_consumption' ? 'component_replacement' : $type, 'reference_id' => $referenceId, 'reason' => $reason, 'client_request_id' => $requestId, 'transfer_id' => $transferId]);
+            }$m = InventoryMovement::create(['account_id' => $item->account_id, 'inventory_item_id' => $item->id, 'location_id' => $location->id, 'movement_type' => $type, 'quantity' => -$quantity, 'occurred_at' => now(), 'reference_type' => $type === 'replacement_consumption' ? 'component_replacement' : $type, 'reference_id' => $referenceId, 'reason' => $reason, 'entered_by' => $enteredBy, 'operational_person_id' => $personId, 'operational_person_name_snapshot' => $personName, 'client_request_id' => $requestId, 'transfer_id' => $transferId]);
             $need = $quantity;
             $order = 1;
             $layers = FifoLayer::where('inventory_item_id', $item->id)->where('location_id', $location->id)->where('remaining_quantity', '>', 0)->orderBy('fifo_sequence')->orderBy('effective_at')->orderBy('id')->lockForUpdate()->get();
@@ -63,13 +63,13 @@ class InventoryLedgerService
         }, 3);
     }
 
-    public function transfer(InventoryItem $item, InventoryLocation $from, InventoryLocation $to, float $quantity, string $requestId): array
+    public function transfer(InventoryItem $item, InventoryLocation $from, InventoryLocation $to, float $quantity, string $requestId, ?string $personId = null, ?string $personName = null, ?string $enteredBy = null): array
     {
         if ($from->id === $to->id) {
             throw new ConflictHttpException('locations must differ');
         }
 
-        return DB::transaction(function () use ($item, $from, $to, $quantity, $requestId) {
+        return DB::transaction(function () use ($item, $from, $to, $quantity, $requestId, $personId, $personName, $enteredBy) {
             $item->newQuery()->whereKey($item->id)->lockForUpdate()->first();
             $existingOut = InventoryMovement::where('account_id', $item->account_id)->where('client_request_id', $requestId)->where('movement_type', 'transfer_out')->lockForUpdate()->first();
             $existingIn = InventoryMovement::where('account_id', $item->account_id)->where('client_request_id', $requestId)->where('movement_type', 'transfer_in')->lockForUpdate()->first();
@@ -77,8 +77,8 @@ class InventoryLedgerService
                 return [$existingOut, $existingIn];
             }
             $transfer = (string) Str::uuid();
-            $out = $this->outbound($item, $from, $quantity, 'transfer_out', $requestId, null, 'stock transfer', $transfer);
-            $in = InventoryMovement::create(['account_id' => $item->account_id, 'inventory_item_id' => $item->id, 'location_id' => $to->id, 'movement_type' => 'transfer_in', 'quantity' => $quantity, 'occurred_at' => $out->occurred_at, 'reference_type' => 'stock_transfer', 'client_request_id' => $requestId, 'transfer_id' => $transfer]);
+            $out = $this->outbound($item, $from, $quantity, 'transfer_out', $requestId, null, 'stock transfer', $transfer, $personId, $personName, $enteredBy);
+            $in = InventoryMovement::create(['account_id' => $item->account_id, 'inventory_item_id' => $item->id, 'location_id' => $to->id, 'movement_type' => 'transfer_in', 'quantity' => $quantity, 'occurred_at' => $out->occurred_at, 'reference_type' => 'stock_transfer', 'entered_by' => $enteredBy, 'operational_person_id' => $personId, 'operational_person_name_snapshot' => $personName, 'client_request_id' => $requestId, 'transfer_id' => $transfer]);
             $sequence = ((int) FifoLayer::where('inventory_item_id', $item->id)->where('location_id', $to->id)->max('fifo_sequence'));
             foreach (FifoAllocation::where('outbound_movement_id', $out->id)->orderBy('allocation_order')->get() as $a) {
                 FifoLayer::create(['account_id' => $item->account_id, 'inventory_item_id' => $item->id, 'location_id' => $to->id, 'inbound_movement_id' => $in->id, 'source_type' => 'transfer_in', 'original_quantity' => $a->quantity, 'remaining_quantity' => $a->quantity, 'unit_cost' => $a->unit_cost, 'effective_at' => $in->occurred_at, 'origin_layer_id' => $a->fifo_layer_id, 'fifo_sequence' => ++$sequence]);
