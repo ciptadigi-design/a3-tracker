@@ -39,14 +39,28 @@ function CostPerClickCard({ summary, monthLabel }) {
   </article>
 }
 
-function PeriodCard({ label, card }) {
-  const presentation = periodCardPresentation(card)
+function PeriodComparisonRow({ comparison }) {
+  if (!comparison) return null
+  if (!comparison.available) return <p className="overview-period-comparison tone-neutral"><span>{comparison.unavailableText}</span></p>
+  const summary = comparison.isNewActivity
+    ? `New activity${comparison.periodLabel ? ` vs ${comparison.periodLabel}` : ''}`
+    : `${comparison.arrow ? `${comparison.arrow} ` : ''}${comparison.magnitudeText ?? '—'}${comparison.periodLabel ? ` vs ${comparison.periodLabel}` : ''}`
+
+  return <p className={`overview-period-comparison tone-${comparison.tone}`}>
+    <span>{summary}</span>
+    {comparison.previousValueText && <b>{comparison.previousValueText}</b>}
+  </p>
+}
+
+function PeriodCard({ label, card, monthToDate }) {
+  const presentation = periodCardPresentation(card, { monthToDate })
   return <article className={`overview-period-card glass-surface tone-${presentation.tone}`}>
     <span className="card-kicker">{label}</span>
     <strong>{presentation.actual}</strong>
     <span className="overview-period-target">{presentation.planned === 'Not configured' ? 'Not configured' : `of ${presentation.planned}`}</span>
     {presentation.achievement && <em>{presentation.achievement}</em>}
     {presentation.varianceLabel && <small>{presentation.varianceLabel}</small>}
+    <PeriodComparisonRow comparison={presentation.comparison} />
   </article>
 }
 
@@ -151,7 +165,7 @@ export function OverviewPage({ navigate }) {
               <section className="overview-period-grid" aria-label="Cost per click, week, and month progress">
                 <CostPerClickCard summary={costSummary} monthLabel={monthLabel} />
                 <PeriodCard label="This Week" card={projection.week} />
-                <PeriodCard label="This Month" card={projection.month} />
+                <PeriodCard label="This Month" card={projection.month} monthToDate={projection.month?.is_month_to_date === true} />
               </section>
               <DailyClickPerformanceChart rows={dailyRows} todayContext={todayContext} />
             </>

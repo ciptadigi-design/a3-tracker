@@ -256,11 +256,21 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .overview-period-card.tone-green em { color: var(--green); }
 .overview-period-card.tone-warning em { color: var(--warning); }
 .overview-period-card.tone-blue em { color: var(--blue); }
+.overview-period-comparison { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin: 8px 0 0; padding-top: 8px; border-top: 1px solid var(--border-subtle); font-size: 10px; font-weight: 700; color: var(--text-soft); }
+.overview-period-comparison span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.overview-period-comparison b { font-weight: 700; color: var(--text-muted); white-space: nowrap; }
+.overview-period-comparison.tone-green span { color: var(--green); }
+.overview-period-comparison.tone-warning span { color: var(--warning); }
+.overview-period-comparison.tone-blue span { color: var(--blue); }
+.overview-period-comparison.tone-neutral { color: var(--text-muted); font-weight: 600; }
 
 @media (max-width: 860px) {
   .overview-target-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .overview-period-grid { grid-template-columns: minmax(0, 1fr); }
   .daily-click-performance-header-meta { align-items: flex-start; width: 100%; }
+  /* Keep the percentage + comparison period visible; drop the secondary
+     "Previous: X" value on very narrow widths so the card never grows tall. */
+  .overview-period-comparison b { display: none; }
 }
 .list-toolbar { min-width: 0; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 4px 4px 22px; border-bottom: 1px solid var(--border-subtle); }
 .list-toolbar > div { min-width: 0; }

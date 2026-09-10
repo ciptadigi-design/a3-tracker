@@ -2,12 +2,10 @@
 
 namespace App\Services;
 
-use App\Models\CounterType;
 use App\Models\Machine;
 use App\Models\MachineClickTarget;
 use App\Models\MachineOperationalCalendarException;
 use Carbon\CarbonImmutable;
-use Illuminate\Support\Carbon;
 
 /**
  * Derives the monthly/weekly/daily click plan and pace projection for a
@@ -18,7 +16,7 @@ use Illuminate\Support\Carbon;
  */
 class MachineClickTargetProjectionService
 {
-    public function __construct(private MachineTimezoneResolver $tz, private EffectiveCounterSequence $sequence) {}
+    public function __construct(private MachineTimezoneResolver $tz, private DailyActualUsageService $usage, private PeriodComparisonService $comparison) {}
 
     /**
      * Deterministic integer allocation of $monthlyTarget across $activeDates
@@ -88,6 +86,9 @@ class MachineClickTargetProjectionService
                 'actual_clicks' => $actual,
                 'variance' => $variance,
                 'achievement_percentage' => $achievement,
+                // Never fabricate comparison for a day that has not happened
+                // yet (date > today) or is excluded from operational target.
+                'previous_month' => ($excluded || $date > $today) ? null : $this->comparison->daily($machine, $tz, $date, (float) ($actual ?? 0.0)),
             ];
         }
 
@@ -119,29 +120,16 @@ class MachineClickTargetProjectionService
             'active_days_remaining' => $activeDatesRemaining,
             'required_daily_pace' => $requiredPace,
             'required_pace_status' => $requiredPaceStatus,
-            'today' => $this->periodCard($daily, $today, $today),
-            'week' => $this->weekCard($daily, $today, $tz),
-            'month' => ['actual' => $actualMonthToDate, 'planned' => $monthlyTarget, 'achievement_percentage' => $monthlyTarget > 0 ? round($actualMonthToDate / $monthlyTarget * 100, 1) : null, 'variance' => $monthlyTarget === null ? null : $actualMonthToDate - $monthlyTarget],
+            'today' => $this->todayCard($daily, $today, $machine, $tz, $monthStart, $monthEnd),
+            'week' => $this->weekCard($daily, $today, $tz, $machine, $monthStart, $monthEnd),
+            'month' => $this->monthCard($actualByDate, $actualMonthToDate, $monthlyTarget, $today, $machine, $tz, $monthStart, $monthEnd, $now),
             'daily' => $daily,
         ];
     }
 
-    private function actualClicksByDate(Machine $machine, string $tz, string $from, string $to): array
+    public function actualClicksByDate(Machine $machine, string $tz, string $from, string $to): array
     {
-        $type = CounterType::whereRaw('lower(code)=?', ['total_impressions'])->first();
-        if (! $type) {
-            return [];
-        }
-        [$start, $end] = $this->tz->range($machine, $from, $to);
-        $rows = $this->sequence->forMachine($machine->id, $type->id)->filter(fn ($r) => $r->observed_at->gte($start) && $r->observed_at->lt($end));
-
-        $byDate = [];
-        foreach ($rows as $row) {
-            $date = Carbon::parse($row->observed_at)->setTimezone($tz)->toDateString();
-            $byDate[$date] = ($byDate[$date] ?? 0) + max(0, (float) ($row->usage ?? 0));
-        }
-
-        return $byDate;
+        return $this->usage->byDate($machine, $tz, $from, $to);
     }
 
     private function requiredPace(?int $monthlyTarget, float $actualMonthToDate, int $activeDaysRemaining): array
@@ -203,16 +191,71 @@ class MachineClickTargetProjectionService
     }
 
     /**
+     * "Today" card plus its previous-month same-date comparison. Only
+     * computed when today actually falls within the requested month - a
+     * different month being viewed has no meaningful "today" row to compare.
+     */
+    private function todayCard(array $daily, string $today, Machine $machine, string $tz, CarbonImmutable $monthStart, CarbonImmutable $monthEnd): array
+    {
+        $card = $this->periodCard($daily, $today, $today);
+        $inMonth = $today >= $monthStart->toDateString() && $today <= $monthEnd->toDateString();
+        $card['comparison'] = $inMonth ? $this->comparison->daily($machine, $tz, $today, (float) ($card['actual'] ?? 0.0)) : $this->comparison->daily($machine, $tz, $today, 0.0);
+
+        return $card;
+    }
+
+    /**
      * Monday->Sunday week containing $today, clipped to the dates present in
      * $daily (i.e. to the requested month) so a week spanning a month
      * boundary only counts the days that belong to this month's target.
+     *
+     * The previous-month comparison shifts the exact date range this card
+     * actually measures (the month-clipped intersection, not the full
+     * Monday->Sunday span) one calendar month backward - see M2.14's "Current
+     * Week At Month Boundary" rule.
      */
-    private function weekCard(array $daily, string $today, string $tz): array
+    private function weekCard(array $daily, string $today, string $tz, Machine $machine, CarbonImmutable $monthStart, CarbonImmutable $monthEnd): array
     {
         $todayCarbon = CarbonImmutable::parse($today, $tz);
         $weekStart = $todayCarbon->startOfWeek(CarbonImmutable::MONDAY)->toDateString();
         $weekEnd = $todayCarbon->endOfWeek(CarbonImmutable::SUNDAY)->toDateString();
 
-        return $this->periodCard($daily, $weekStart, $weekEnd) + ['week_start' => $weekStart, 'week_end' => $weekEnd];
+        $card = $this->periodCard($daily, $weekStart, $weekEnd) + ['week_start' => $weekStart, 'week_end' => $weekEnd];
+
+        $representedStart = max($weekStart, $monthStart->toDateString());
+        $representedEnd = min($weekEnd, $monthEnd->toDateString());
+        $card['comparison'] = $representedStart > $representedEnd
+            ? ['available' => false, 'comparison_status' => 'UNAVAILABLE', 'direction' => 'UNAVAILABLE', 'current_period' => null, 'previous_period' => null, 'delta_clicks' => null, 'delta_percentage' => null]
+            : $this->comparison->range($machine, $tz, $representedStart, $representedEnd, (float) ($card['actual'] ?? 0.0));
+
+        return $card;
+    }
+
+    /**
+     * "This Month" card plus its previous-month comparison.
+     *
+     * Current month (today falls inside it): compares month-to-date against
+     * the same month-to-date cutoff one month earlier, capped to the
+     * previous month's last valid day when the cutoff day itself doesn't
+     * exist there (e.g. Oct 31 MTD caps to Sep 30) - the MTD-only exception.
+     * Past/future requested months compare the full represented month, also
+     * capped, since the request is inherently not fabricating anything: past
+     * months already have their real actuals, future months simply have none
+     * yet.
+     */
+    private function monthCard(array $actualByDate, float $actualMonthToDate, ?int $monthlyTarget, string $today, Machine $machine, string $tz, CarbonImmutable $monthStart, CarbonImmutable $monthEnd, CarbonImmutable $now): array
+    {
+        $isCurrentMonth = $monthStart->format('Y-m') === $now->format('Y-m');
+        $currentEnd = $isCurrentMonth ? $today : $monthEnd->toDateString();
+        $currentActual = (float) array_sum(array_filter($actualByDate, fn ($v, $d) => $d <= $currentEnd, ARRAY_FILTER_USE_BOTH));
+
+        return [
+            'actual' => $actualMonthToDate,
+            'planned' => $monthlyTarget,
+            'achievement_percentage' => $monthlyTarget > 0 ? round($actualMonthToDate / $monthlyTarget * 100, 1) : null,
+            'variance' => $monthlyTarget === null ? null : $actualMonthToDate - $monthlyTarget,
+            'is_month_to_date' => $isCurrentMonth,
+            'comparison' => $this->comparison->range($machine, $tz, $monthStart->toDateString(), $currentEnd, $currentActual, true),
+        ];
     }
 }

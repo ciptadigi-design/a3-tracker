@@ -1,6 +1,8 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import {
+  comparisonPeriodLabel,
+  comparisonPresentation,
   dailyPerformanceTooltip,
   exclusionReasonLabel,
   formatClicks,
@@ -170,4 +172,183 @@ test('todayContextPresentation falls back to a neutral placeholder when today ha
   const presentation = todayContextPresentation(undefined)
   assert.equal(presentation.label, 'Today')
   assert.equal(presentation.detail, null)
+})
+
+// ---- M2.14: period-over-period comparison presentation --------------------
+
+test('comparisonPeriodLabel renders a single date for a same-day comparison', () => {
+  const comparison = { previous_period: { start_date: '2026-08-10', end_date: '2026-08-10' } }
+  assert.equal(comparisonPeriodLabel(comparison), 'Aug 10')
+})
+
+test('comparisonPeriodLabel renders a date range for a week comparison', () => {
+  const comparison = { previous_period: { start_date: '2026-08-07', end_date: '2026-08-13' } }
+  assert.equal(comparisonPeriodLabel(comparison), 'Aug 7–13')
+})
+
+test('comparisonPeriodLabel renders "MTD" for an in-progress month comparison', () => {
+  const comparison = { previous_period: { start_date: '2026-08-01', end_date: '2026-08-10' } }
+  assert.equal(comparisonPeriodLabel(comparison, { monthToDate: true }), 'Aug MTD')
+})
+
+test('comparisonPeriodLabel renders just the month name for a full calendar month', () => {
+  const comparison = { previous_period: { start_date: '2026-08-01', end_date: '2026-08-31' } }
+  assert.equal(comparisonPeriodLabel(comparison), 'Aug')
+})
+
+test('comparisonPeriodLabel returns null when there is no previous period at all', () => {
+  assert.equal(comparisonPeriodLabel(null), null)
+  assert.equal(comparisonPeriodLabel({ available: false, previous_period: null }), null)
+})
+
+test('comparisonPresentation formats normal growth with a signed percentage and up arrow', () => {
+  const presentation = comparisonPresentation({
+    available: true, comparison_status: 'OK', direction: 'UP',
+    previous_period: { start_date: '2026-08-10', end_date: '2026-08-10', clicks: 2120 },
+    delta_clicks: 330, delta_percentage: 15.6,
+  })
+  assert.equal(presentation.available, true)
+  assert.equal(presentation.tone, 'green')
+  assert.equal(presentation.arrow, '↑')
+  assert.equal(presentation.signedPercentageText, '+15.6%')
+  assert.equal(presentation.magnitudeText, '15.6%')
+  assert.equal(presentation.deltaClicksText, '+330')
+  assert.equal(presentation.previousValueText, 'Previous 2,120')
+  assert.equal(presentation.periodLabel, 'Aug 10')
+})
+
+test('comparisonPresentation formats a decline with a down arrow and negative sign', () => {
+  const presentation = comparisonPresentation({
+    available: true, comparison_status: 'OK', direction: 'DOWN',
+    previous_period: { start_date: '2026-08-07', end_date: '2026-08-13', clicks: 6302 },
+    delta_clicks: -517, delta_percentage: -8.2,
+  })
+  assert.equal(presentation.tone, 'warning')
+  assert.equal(presentation.arrow, '↓')
+  assert.equal(presentation.signedPercentageText, '-8.2%')
+  assert.equal(presentation.deltaClicksText, '-517')
+})
+
+test('comparisonPresentation never renders Infinity/NaN for base-zero growth', () => {
+  const presentation = comparisonPresentation({
+    available: true, comparison_status: 'BASE_ZERO', direction: 'UP',
+    previous_period: { start_date: '2026-08-10', end_date: '2026-08-10', clicks: 0 },
+    delta_clicks: 500, delta_percentage: null,
+  })
+  assert.equal(presentation.available, true)
+  assert.equal(presentation.isNewActivity, true)
+  assert.equal(presentation.signedPercentageText, null)
+  assert.ok(!JSON.stringify(presentation).includes('Infinity'))
+  assert.ok(!JSON.stringify(presentation).includes('NaN'))
+})
+
+test('comparisonPresentation renders a flat state truthfully for zero vs zero', () => {
+  const presentation = comparisonPresentation({
+    available: true, comparison_status: 'OK', direction: 'FLAT',
+    previous_period: { start_date: '2026-08-10', end_date: '2026-08-10', clicks: 0 },
+    delta_clicks: 0, delta_percentage: 0,
+  })
+  assert.equal(presentation.signedPercentageText, '0.0%')
+  assert.equal(presentation.tone, 'blue')
+})
+
+test('comparisonPresentation reports unavailable without fabricating a zero previous value', () => {
+  const presentation = comparisonPresentation({ available: false, comparison_status: 'UNAVAILABLE', direction: 'UNAVAILABLE', previous_period: null, delta_clicks: null, delta_percentage: null })
+  assert.equal(presentation.available, false)
+  assert.equal(presentation.previousValue, null)
+  assert.equal(presentation.unavailableText, 'Previous month unavailable')
+})
+
+test('comparisonPresentation treats a missing/null comparison the same as unavailable', () => {
+  assert.equal(comparisonPresentation(null).available, false)
+  assert.equal(comparisonPresentation(undefined).available, false)
+})
+
+test('periodCardPresentation surfaces the comparison alongside the existing card fields', () => {
+  const presentation = periodCardPresentation({
+    actual: 5785, planned: 11669, achievement_percentage: 49.6, variance: -5884,
+    comparison: {
+      available: true, comparison_status: 'OK', direction: 'DOWN',
+      previous_period: { start_date: '2026-08-07', end_date: '2026-08-13', clicks: 6302 },
+      delta_clicks: -517, delta_percentage: -8.2,
+    },
+  })
+  assert.equal(presentation.actual, '5,785')
+  assert.equal(presentation.comparison.available, true)
+  assert.equal(presentation.comparison.periodLabel, 'Aug 7–13')
+  assert.equal(presentation.comparison.signedPercentageText, '-8.2%')
+})
+
+test('periodCardPresentation labels an in-progress month comparison as MTD', () => {
+  const presentation = periodCardPresentation({
+    actual: 20038, planned: 50000, achievement_percentage: 40.1, variance: -29962,
+    comparison: {
+      available: true, comparison_status: 'OK', direction: 'UP',
+      previous_period: { start_date: '2026-08-01', end_date: '2026-08-10', clicks: 17828 },
+      delta_clicks: 2210, delta_percentage: 12.4,
+    },
+  }, { monthToDate: true })
+  assert.equal(presentation.comparison.periodLabel, 'Aug MTD')
+})
+
+test('todayContextPresentation appends the previous-month comparison when available', () => {
+  const presentation = todayContextPresentation({
+    calendarStatus: 'ACTIVE', actual: 2450, planned: 1667, variance: 783,
+    previousMonth: {
+      available: true, comparison_status: 'OK', direction: 'UP',
+      previous_period: { start_date: '2026-08-10', end_date: '2026-08-10', clicks: 2120 },
+      delta_clicks: 330, delta_percentage: 15.6,
+    },
+  })
+  assert.equal(presentation.label, 'Today · 2.5K / 1.7K planned · +15.6% vs Aug 10')
+})
+
+test('todayContextPresentation renders base-zero growth as "New activity", never a percentage', () => {
+  const presentation = todayContextPresentation({
+    calendarStatus: 'ACTIVE', actual: 500, planned: 1667, variance: -1167,
+    previousMonth: {
+      available: true, comparison_status: 'BASE_ZERO', direction: 'UP',
+      previous_period: { start_date: '2026-08-10', end_date: '2026-08-10', clicks: 0 },
+      delta_clicks: 500, delta_percentage: null,
+    },
+  })
+  assert.match(presentation.label, /New activity vs Aug 10$/)
+  assert.ok(!presentation.label.includes('Infinity'))
+})
+
+test('todayContextPresentation omits the comparison suffix entirely when unavailable', () => {
+  const presentation = todayContextPresentation({
+    calendarStatus: 'ACTIVE', actual: 2450, planned: 1667, variance: 783,
+    previousMonth: { available: false, comparison_status: 'UNAVAILABLE', direction: 'UNAVAILABLE', previous_period: null, delta_clicks: null, delta_percentage: null },
+  })
+  assert.equal(presentation.label, 'Today · 2.5K / 1.7K planned')
+})
+
+test('dailyPerformanceTooltip appends an exact previous-month block when available', () => {
+  const tooltip = dailyPerformanceTooltip({
+    calendarStatus: 'ACTIVE', actual: 2450, planned: 1667, variance: 783, achievementPercentage: 147,
+    previousMonth: {
+      available: true, comparison_status: 'OK', direction: 'UP',
+      previous_period: { start_date: '2026-08-10', end_date: '2026-08-10', clicks: 2120 },
+      delta_clicks: 330, delta_percentage: 15.6,
+    },
+  })
+  assert.match(tooltip, /PREVIOUS MONTH/)
+  assert.match(tooltip, /Aug 10/)
+  assert.match(tooltip, /2,120 clicks/)
+  assert.match(tooltip, /\+330 · \+15\.6%/)
+})
+
+test('dailyPerformanceTooltip has no previous-month section when the row carries none', () => {
+  const tooltip = dailyPerformanceTooltip({ calendarStatus: 'ACTIVE', actual: 100, planned: 100, variance: 0, achievementPercentage: 100, previousMonth: null })
+  assert.ok(!tooltip.includes('PREVIOUS MONTH'))
+})
+
+test('dailyPerformanceTooltip states unavailable truthfully instead of omitting or faking zero', () => {
+  const tooltip = dailyPerformanceTooltip({
+    calendarStatus: 'ACTIVE', actual: 100, planned: 100, variance: 0, achievementPercentage: 100,
+    previousMonth: { available: false, comparison_status: 'UNAVAILABLE', direction: 'UNAVAILABLE', previous_period: null, delta_clicks: null, delta_percentage: null },
+  })
+  assert.match(tooltip, /PREVIOUS MONTH/)
+  assert.match(tooltip, /Previous month unavailable/)
 })
