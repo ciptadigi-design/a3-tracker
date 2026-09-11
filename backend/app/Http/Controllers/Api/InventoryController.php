@@ -39,17 +39,19 @@ class InventoryController extends Controller
         $purchaseIds = $purchases->pluck('id');
         $locationIds = $locations->pluck('id');
         $people = app(OperationalPersonEligibilityService::class)->forBranch($account, $branch);
-        // A supplier with no branch assignments is available everywhere in the account
-        // (legacy/default behaviour, so existing suppliers never vanish from branches
-        // that never assigned them). Once assigned to at least one branch, it is only
-        // available in the branches it was explicitly assigned to.
         $suppliers = InventorySupplier::where('account_id', $account)->where('is_active', true)
-            ->where(fn ($q) => $q->whereDoesntHave('branchAssignments')->orWhereHas('branchAssignments', fn ($q2) => $q2->where('branch_id', $branch)))
+            ->visibleToBranch($branch)
             ->orderBy('name')->get();
         $purchaseLines = $purchaseIds->isEmpty() ? collect() : DB::table('purchase_lines')->where('account_id', $account)->whereIn('purchase_id', $purchaseIds)->get();
         $purchaseLineIds = $purchaseLines->pluck('id');
         $receiptLines = $purchaseLineIds->isEmpty() ? collect() : DB::table('receipt_lines')->where('account_id', $account)->whereIn('purchase_line_id', $purchaseLineIds)->get();
-        $purchaseSummary = app(PurchaseSummaryBuilder::class)->build($purchases, $purchaseLines, $receiptLines, $items, $suppliers);
+        // M2.17.4.1: historical purchase evidence must resolve the supplier name/code
+        // snapshot regardless of current branch eligibility - a supplier that is later
+        // reassigned away from this branch must not turn its past purchases into
+        // "Unknown supplier". Deliberately unfiltered by branch (unlike $suppliers,
+        // above, which is the current NEW-purchase eligibility set).
+        $supplierLookup = InventorySupplier::where('account_id', $account)->get(['id', 'name', 'code']);
+        $purchaseSummary = app(PurchaseSummaryBuilder::class)->build($purchases, $purchaseLines, $receiptLines, $items, $supplierLookup);
         $costPositions = $locationIds->isEmpty() ? collect() : DB::table('fifo_layers')
             ->where('account_id', $account)
             ->whereIn('location_id', $locationIds)
@@ -73,11 +75,34 @@ class InventoryController extends Controller
         return response()->json(['data' => ['branchId' => $branch, 'items' => $items, 'locations' => $locations, 'suppliers' => $suppliers, 'balances' => $balances, 'totals' => $items->map(fn ($i) => ['account_id' => $account, 'inventory_item_id' => $i->id, 'quantity' => $balances->where('inventory_item_id', $i->id)->sum('quantity')])->values(), 'movements' => DB::table('inventory_movements')->where('account_id', $account)->whereIn('location_id', $locationIds)->orderByDesc('occurred_at')->limit(500)->get(), 'components' => DB::table('component_catalogs')->where('is_active', true)->where(fn ($q) => $q->whereNull('account_id')->orWhere('account_id', $account))->orderBy('name')->get(), 'people' => OperationalPersonResource::collection($people), 'purchases' => $purchaseSummary['purchases'], 'purchaseLines' => $purchaseSummary['lines'], 'receipts' => $purchaseIds->isEmpty() || $locationIds->isEmpty() ? collect() : DB::table('receipts')->where('account_id', $account)->whereIn('purchase_id', $purchaseIds)->whereIn('location_id', $locationIds)->get(), 'lastPrices' => [], 'costHistory' => [], 'costPositions' => $costPositions]]);
     }
 
+    // M2.17.4.1: the Supplier Master list previously ignored branch context entirely and
+    // showed every account supplier regardless of the active branch, while the Purchase
+    // picker (workspace(), above) already enforced branch eligibility - a Production
+    // acceptance test found a supplier restricted to Tuparev still listed while viewing
+    // Graha. This now requires the same account+branch context as workspace() and
+    // applies the identical visibleToBranch() rule, so the two views cannot drift apart.
+    // include_ineligible=1 bypasses the branch filter for the "attach an existing
+    // supplier to this branch" admin workflow - it must never be reachable without
+    // canManageOperational, since it exposes suppliers outside the caller's branch scope.
     public function suppliers(Request $r)
     {
-        $ids = $r->user()->memberships()->where('status', 'active')->pluck('account_id');
+        $d = $r->validate(['account_id' => 'required|uuid', 'branch_id' => 'required|uuid', 'include_ineligible' => 'sometimes|boolean']);
+        $a = Account::findOrFail($d['account_id']);
+        abort_unless(app(AccountAccessResolver::class)->canAccess($r->user(), $a), 403);
+        $b = Branch::where('id', $d['branch_id'])->where('account_id', $a->id)->firstOrFail();
+        abort_unless(app(BranchAccessResolver::class)->canAccess($r->user(), $b), 403);
 
-        return response()->json(['data' => InventorySupplier::whereIn('account_id', $ids)->with('branchAssignments')->orderBy('name')->get()]);
+        $includeIneligible = (bool) ($d['include_ineligible'] ?? false);
+        if ($includeIneligible) {
+            abort_unless(app(AccountAccessResolver::class)->canManageOperational($r->user(), $a), 403);
+        }
+
+        $query = InventorySupplier::where('account_id', $a->id)->with('branchAssignments');
+        if (! $includeIneligible) {
+            $query->visibleToBranch($b->id);
+        }
+
+        return response()->json(['data' => $query->orderBy('name')->get()]);
     }
 
     public function assignSupplierBranch(Request $r, string $id)

@@ -6,11 +6,16 @@ export async function loadInventory({ accountId, branchId }) {
   return unwrapData(await apiClient.get(`/accounts/${accountId}/branches/${branchId}/inventory`))
 }
 
-// Account-wide supplier master list (every branch's suppliers, each with its branch
-// assignments) - distinct from loadInventory()'s `suppliers`, which is branch-scoped for
-// the purchase picker. Admin management (create/edit/archive/assign) always needs the
-// full account list regardless of which branch happens to be selected.
-export async function loadInventorySuppliers() { return unwrapCollection(await apiClient.get('/inventory/suppliers')) }
+// M2.17.4.1: the Supplier Master list now follows the same branch-eligibility rule as
+// the Purchase picker (loadInventory()'s `suppliers`) - a supplier restricted to another
+// branch no longer appears while a different branch is active. `includeIneligible`
+// bypasses that filter (backend requires canManageOperational) for the "attach an
+// existing supplier to this branch" admin workflow only - never for the normal list.
+export async function loadInventorySuppliers({ accountId, branchId, includeIneligible } = {}) {
+  const params = new URLSearchParams({ account_id: accountId, branch_id: branchId })
+  if (includeIneligible) params.set('include_ineligible', '1')
+  return unwrapCollection(await apiClient.get(`/inventory/suppliers?${params}`))
+}
 export async function saveInventorySupplier({ accountId, supplierId, values }) {
   const payload = { account_id: accountId, code: values.supplierCode?.trim(), name: values.name?.trim(), contact_name: optional(values.contactPerson), phone: optional(values.phone), email: optionalEmail(values.email), address: optional(values.address), notes: optional(values.notes), is_active: values.isActive }
   return unwrapData(await (supplierId ? apiClient.put(`/inventory/suppliers/${supplierId}`, payload) : apiClient.post('/inventory/suppliers', payload)))

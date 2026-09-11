@@ -30,6 +30,17 @@ class InventorySupplier extends Model
         return $this->hasMany(SupplierBranchAssignment::class, 'supplier_id');
     }
 
+    // Canonical branch-eligibility rule (M2.17.4.1): a supplier with zero explicit
+    // branch assignments is available to every branch in its account (legacy/default
+    // behaviour, so existing suppliers never vanish from branches that never assigned
+    // them); once assigned to at least one branch, it is only available in the
+    // branches it was explicitly assigned to. Shared by the Purchase picker and the
+    // Supplier Master list so the two views cannot drift apart again.
+    public function scopeVisibleToBranch($query, string $branchId)
+    {
+        return $query->where(fn ($q) => $q->whereDoesntHave('branchAssignments')->orWhereHas('branchAssignments', fn ($q2) => $q2->where('branch_id', $branchId)));
+    }
+
     public function getSupplierCodeAttribute()
     {
         return $this->code;
