@@ -30,7 +30,10 @@ function initialValues(component) {
     description: component.description ?? '',
     manufacturerId: component.manufacturer_id ?? '',
     partNumber: component.part_number ?? '',
-    trackingMethod: component.default_tracking_method,
+    // M2.17.5.2 Part C5: the Laravel backend's real column is `tracking_method` -
+    // `default_tracking_method` is the Supabase adapter's name for the same concept,
+    // which left this permanently undefined (blank label) for every Laravel-backed row.
+    trackingMethod: component.tracking_method ?? component.default_tracking_method,
   }
 }
 
@@ -99,7 +102,7 @@ export function ComponentDialog({ account, component, manufacturers, onClose, on
               <label className="form-field"><span>Manufacturer</span><select value={value.manufacturerId} onChange={(event) => change('manufacturerId', event.target.value)}><option value="">Any manufacturer</option>{manufacturers.map((manufacturer) => <option key={manufacturer.id} value={manufacturer.id}>{manufacturer.name}</option>)}</select><small>Manufacturer describes the definition; model assignment is configured separately.</small></label>
               {selectedCategory === 'Other' && <label className="form-field"><span>Custom category *</span><input value={value.category} onChange={(event) => change('category', event.target.value)} placeholder="Enter a concise category" /></label>}
               <label className="form-field"><span>Part number</span><input value={value.partNumber} onChange={(event) => change('partNumber', event.target.value)} /></label>
-              <label className="form-field"><span>Default tracking</span><select value={value.trackingMethod} onChange={(event) => change('trackingMethod', event.target.value)}><option value="counter_based">Counter based</option><option value="consumption_based">Consumption based</option><option value="inspection_based">Inspection based</option></select></label>
+              <label className="form-field"><span>Default tracking</span><select value={value.trackingMethod} onChange={(event) => change('trackingMethod', event.target.value)}><option value="counter_based">Counter based</option><option value="consumption_based" disabled>Consumption based (Coming soon)</option><option value="inspection_based" disabled>Inspection based (Coming soon)</option></select><small>Counter based is currently the fully supported lifecycle method.</small></label>
               <label className="form-field form-field-wide"><span>Description</span><textarea value={value.description} onChange={(event) => change('description', event.target.value)} rows="3" /></label>
             </div>
             {error && <div className="form-error">{error}</div>}

@@ -363,7 +363,7 @@ export function ComponentsPage() {
             {actions && <div className="compact-catalog-actions">{actions}</div>}
           </> : <>
             <div><span className="component-icon"><Boxes size={18} /></span><span className={component.account_id ? 'scope-pill custom' : 'scope-pill'}>{component.account_id ? 'Workspace' : 'Shared'}</span></div>
-            <h3><ComponentChannelMarker code={component.code} name={component.name} />{component.name}</h3><code>{component.code}</code><p>{manufacturer?.name ?? 'Any manufacturer'} · {trackingLabels[component.default_tracking_method]}</p><span className="catalog-category">{component.category ?? 'Uncategorized'}</span>
+            <h3><ComponentChannelMarker code={component.code} name={component.name} />{component.name}</h3><code>{component.code}</code><p>{manufacturer?.name ?? 'Any manufacturer'} · {trackingLabels[component.tracking_method ?? component.default_tracking_method]}</p><span className="catalog-category">{component.category ?? 'Uncategorized'}</span>
             <div className={assignmentSummary.slotCount ? 'assignment-context assigned' : 'assignment-context'}><Link2 size={14} /><span>{summaryLabel}</span></div>
             {actions && <div className="catalog-actions">{actions}</div>}
           </>}</article>

@@ -11,9 +11,9 @@ class ModelProfileSlot extends Model
 
     protected $keyType = 'string';
 
-    protected $fillable = ['profile_id', 'component_id', 'slot_code', 'slot_name', 'display_order', 'tracking_method', 'baseline_expected_clicks', 'is_active', 'archived_at'];
+    protected $fillable = ['profile_id', 'component_id', 'slot_code', 'slot_name', 'display_order', 'tracking_method', 'baseline_expected_clicks', 'healthy_threshold_percent', 'watch_threshold_percent', 'warning_threshold_percent', 'critical_threshold_percent', 'adaptive_enabled', 'notes', 'is_active', 'archived_at'];
 
-    protected $casts = ['is_active' => 'boolean'];
+    protected $casts = ['is_active' => 'boolean', 'adaptive_enabled' => 'boolean'];
 
     protected static function booted()
     {

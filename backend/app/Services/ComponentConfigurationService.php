@@ -41,7 +41,14 @@ class ComponentConfigurationService
                     continue;
                 } if (MachineComponent::where('machine_id', $machine->id)->where('slot_code', $s->slot_code)->where('status', 'configured')->exists()) {
                     continue;
-                } MachineComponent::create(['account_id' => $machine->account_id, 'machine_id' => $machine->id, 'component_id' => $s->component_id, 'profile_slot_id' => $s->id, 'slot_code' => $s->slot_code, 'source_type' => 'inherited', 'status' => 'configured', 'active_key' => 'active', 'display_order' => $s->display_order]);
+                } MachineComponent::create(['account_id' => $machine->account_id, 'machine_id' => $machine->id, 'component_id' => $s->component_id, 'profile_slot_id' => $s->id, 'slot_code' => $s->slot_code, 'source_type' => 'inherited', 'status' => 'configured', 'active_key' => 'active', 'display_order' => $s->display_order,
+                    // M2.17.5.2 Part D: the Model Profile Slot is the template source of
+                    // truth for these fields; snapshot them onto the new machine component
+                    // at assignment time (never re-synchronized afterwards - see reconcileManual
+                    // for the one other path that also snapshots this way).
+                    'tracking_method' => $s->tracking_method, 'baseline_expected_clicks' => $s->baseline_expected_clicks,
+                    'healthy_threshold_percent' => $s->healthy_threshold_percent, 'watch_threshold_percent' => $s->watch_threshold_percent,
+                    'warning_threshold_percent' => $s->warning_threshold_percent, 'critical_threshold_percent' => $s->critical_threshold_percent]);
                 $n++;
             }
 
@@ -162,7 +169,9 @@ class ComponentConfigurationService
             })->exists()) {
                 throw new ConflictHttpException('a conflicting inherited assignment already exists');
             }
-            $mc->update(['profile_slot_id' => $slot->id, 'source_type' => 'inherited', 'tracking_method' => $slot->tracking_method, 'baseline_expected_clicks' => $slot->baseline_expected_clicks]);
+            $mc->update(['profile_slot_id' => $slot->id, 'source_type' => 'inherited', 'tracking_method' => $slot->tracking_method, 'baseline_expected_clicks' => $slot->baseline_expected_clicks,
+                'healthy_threshold_percent' => $slot->healthy_threshold_percent, 'watch_threshold_percent' => $slot->watch_threshold_percent,
+                'warning_threshold_percent' => $slot->warning_threshold_percent, 'critical_threshold_percent' => $slot->critical_threshold_percent]);
 
             return $mc->fresh();
         });

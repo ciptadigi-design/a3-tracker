@@ -61,7 +61,10 @@ export function MachineComponentDialog({
     }
   }
   function selectCatalogComponent(component) {
-    setValue((current) => ({ ...current, componentId: component.id, slotCode: current.slotCode || component.code || "", trackingMethod: component.default_tracking_method || current.trackingMethod }));
+    // M2.17.5.2 Part C: counter_based is the only lifecycle method this form can
+    // actually save (see the disabled options below) - never prefill from the
+    // catalog's own (unreliable, unwired) default tracking method.
+    setValue((current) => ({ ...current, componentId: component.id, slotCode: current.slotCode || component.code || "", trackingMethod: "counter_based" }));
     setSearch("");
     setCatalogOpen(false);
     setActiveIndex(0);

@@ -16,6 +16,7 @@ use App\Services\AccountAccessResolver;
 use App\Services\ComponentConfigurationService;
 use App\Services\MachineAccessResolver;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 
 class ComponentsController extends Controller
@@ -23,6 +24,21 @@ class ComponentsController extends Controller
     private function authorizeCatalogScope(Request $r, ?string $accountId): void
     {
         abort_unless(app(AccountAccessResolver::class)->canManageCatalogScope($r->user(), $accountId), 403);
+    }
+
+    // M2.17.5.2 Part B2: canonical threshold semantics are healthy > watch > warning >
+    // critical >= 0. Only enforced when all four are present in this request - a
+    // partial edit (e.g. notes-only) must not be forced to resend every threshold.
+    private function validateThresholdOrdering(array $d): void
+    {
+        $keys = ['healthy_threshold_percent', 'watch_threshold_percent', 'warning_threshold_percent', 'critical_threshold_percent'];
+        if (count(array_intersect_key(array_flip($keys), $d)) < 4) {
+            return;
+        }
+        [$healthy, $watch, $warning, $critical] = array_map(fn ($k) => (float) $d[$k], $keys);
+        if (! ($healthy > $watch && $watch > $warning && $warning > $critical && $critical >= 0)) {
+            throw ValidationException::withMessages(['critical_threshold_percent' => 'Thresholds must satisfy healthy > watch > warning > critical >= 0.']);
+        }
     }
 
     public function catalogs(Request $r)
@@ -34,7 +50,13 @@ class ComponentsController extends Controller
 
     public function storeCatalog(Request $r)
     {
-        $d = $r->validate(['account_id' => 'nullable|uuid', 'code' => 'required|string|max:64', 'name' => 'required|string|max:160', 'description' => 'nullable|string', 'category' => 'nullable|string|max:80']);
+        // M2.17.5.2: manufacturer_id is optional metadata on the Component Catalog
+        // identity - it does NOT imply machine-model compatibility (that stays
+        // exclusively configured through Model Profiles/slots), so it deliberately
+        // gets no additional scope check beyond "is this a real manufacturer row",
+        // matching the resolveOperator()-style read-through-validate pattern used
+        // elsewhere for optional foreign selections.
+        $d = $r->validate(['account_id' => 'nullable|uuid', 'manufacturer_id' => 'nullable|uuid|exists:manufacturers,id', 'code' => 'required|string|max:64', 'name' => 'required|string|max:160', 'description' => 'nullable|string', 'category' => 'nullable|string|max:80']);
         $this->authorizeCatalogScope($r, $d['account_id'] ?? null);
 
         $code = strtoupper(trim($d['code']));
@@ -50,7 +72,7 @@ class ComponentsController extends Controller
     {
         $c = ComponentCatalog::findOrFail($id);
         $this->authorizeCatalogScope($r, $c->account_id);
-        $d = $r->validate(['code' => 'required|string|max:64', 'name' => 'required|string|max:160', 'description' => 'nullable|string', 'category' => 'nullable|string|max:80']);
+        $d = $r->validate(['manufacturer_id' => 'nullable|uuid|exists:manufacturers,id', 'code' => 'required|string|max:64', 'name' => 'required|string|max:160', 'description' => 'nullable|string', 'category' => 'nullable|string|max:80']);
         $c->update($d);
 
         return response()->json(['data' => $c]);
@@ -78,14 +100,15 @@ class ComponentsController extends Controller
     public function storeProfile(Request $r, string $model)
     {
         $m = MachineModel::findOrFail($model);
-        $d = $r->validate(['component_id' => 'required|uuid', 'slot_code' => 'required|string|max:80', 'slot_name' => 'nullable|string|max:160', 'display_order' => 'nullable|integer|min:0', 'tracking_method' => 'nullable|string|max:32', 'baseline_expected_clicks' => 'nullable|integer|min:1']);
+        $d = $r->validate(['component_id' => 'required|uuid', 'slot_code' => 'required|string|max:80', 'slot_name' => 'nullable|string|max:160', 'display_order' => 'nullable|integer|min:0', 'tracking_method' => 'nullable|in:counter_based', 'baseline_expected_clicks' => 'nullable|integer|min:1', 'healthy_threshold_percent' => 'nullable|numeric|min:0|max:100', 'watch_threshold_percent' => 'nullable|numeric|min:0|max:100', 'warning_threshold_percent' => 'nullable|numeric|min:0|max:100', 'critical_threshold_percent' => 'nullable|numeric|min:0|max:100', 'adaptive_enabled' => 'nullable|boolean', 'notes' => 'nullable|string']);
+        $this->validateThresholdOrdering($d);
         // An account-owned model is always scoped to its own account; a platform-global
         // model (account_id null) has no account context to assign into, so component
         // assignment against it is Superuser-only, matching every other catalog mutation.
         $this->authorizeCatalogScope($r, $m->account_id);
 
         $profile = ModelProfile::firstOrCreate(['machine_model_id' => $m->id, 'account_id' => $m->account_id, 'is_active' => true], ['name' => trim($m->name).' profile']);
-        $slot = ModelProfileSlot::create(['profile_id' => $profile->id, 'component_id' => $d['component_id'], 'slot_code' => $d['slot_code'], 'slot_name' => $d['slot_name'] ?? null, 'display_order' => $d['display_order'] ?? 0, 'tracking_method' => $d['tracking_method'] ?? 'counter_based', 'baseline_expected_clicks' => $d['baseline_expected_clicks'] ?? null]);
+        $slot = ModelProfileSlot::create(['profile_id' => $profile->id, 'component_id' => $d['component_id'], 'slot_code' => $d['slot_code'], 'slot_name' => $d['slot_name'] ?? null, 'display_order' => $d['display_order'] ?? 0, 'tracking_method' => $d['tracking_method'] ?? 'counter_based', 'baseline_expected_clicks' => $d['baseline_expected_clicks'] ?? null] + array_intersect_key($d, array_flip(['healthy_threshold_percent', 'watch_threshold_percent', 'warning_threshold_percent', 'critical_threshold_percent', 'adaptive_enabled', 'notes'])));
 
         return response()->json(['data' => $slot->load('component')], 201);
     }
@@ -94,7 +117,8 @@ class ComponentsController extends Controller
     {
         $p = ModelProfile::findOrFail($profile);
         $this->authorizeCatalogScope($r, $p->account_id);
-        $d = $r->validate(['component_id' => 'required|uuid', 'slot_code' => 'required|string|max:80', 'slot_name' => 'nullable|string|max:160', 'display_order' => 'nullable|integer|min:0', 'tracking_method' => 'nullable|string|max:32', 'baseline_expected_clicks' => 'nullable|integer|min:1']);
+        $d = $r->validate(['component_id' => 'required|uuid', 'slot_code' => 'required|string|max:80', 'slot_name' => 'nullable|string|max:160', 'display_order' => 'nullable|integer|min:0', 'tracking_method' => 'nullable|in:counter_based', 'baseline_expected_clicks' => 'nullable|integer|min:1', 'healthy_threshold_percent' => 'nullable|numeric|min:0|max:100', 'watch_threshold_percent' => 'nullable|numeric|min:0|max:100', 'warning_threshold_percent' => 'nullable|numeric|min:0|max:100', 'critical_threshold_percent' => 'nullable|numeric|min:0|max:100', 'adaptive_enabled' => 'nullable|boolean', 'notes' => 'nullable|string']);
+        $this->validateThresholdOrdering($d);
 
         return response()->json(['data' => ModelProfileSlot::create($d + ['profile_id' => $profile])->load('component')], 201);
     }
@@ -103,7 +127,12 @@ class ComponentsController extends Controller
     {
         $s = ModelProfileSlot::with('profile')->findOrFail($slot);
         $this->authorizeCatalogScope($r, $s->profile->account_id);
-        $d = $r->validate(['slot_name' => 'nullable|string|max:160', 'display_order' => 'nullable|integer|min:0', 'tracking_method' => 'nullable|string|max:32', 'baseline_expected_clicks' => 'nullable|integer|min:1']);
+        $d = $r->validate(['slot_name' => 'nullable|string|max:160', 'display_order' => 'nullable|integer|min:0', 'tracking_method' => 'nullable|in:counter_based', 'baseline_expected_clicks' => 'nullable|integer|min:1', 'healthy_threshold_percent' => 'nullable|numeric|min:0|max:100', 'watch_threshold_percent' => 'nullable|numeric|min:0|max:100', 'warning_threshold_percent' => 'nullable|numeric|min:0|max:100', 'critical_threshold_percent' => 'nullable|numeric|min:0|max:100', 'adaptive_enabled' => 'nullable|boolean', 'notes' => 'nullable|string']);
+        // M2.17.5.2 Part C4: a forged { tracking_method: "consumption_based" } (etc) on an
+        // existing slot must be rejected the same as on create - `in:counter_based` above
+        // already refuses anything else, this ordering check just also covers the case
+        // where thresholds are edited without tracking_method in the same payload.
+        $this->validateThresholdOrdering($d + ['healthy_threshold_percent' => $d['healthy_threshold_percent'] ?? $s->healthy_threshold_percent, 'watch_threshold_percent' => $d['watch_threshold_percent'] ?? $s->watch_threshold_percent, 'warning_threshold_percent' => $d['warning_threshold_percent'] ?? $s->warning_threshold_percent, 'critical_threshold_percent' => $d['critical_threshold_percent'] ?? $s->critical_threshold_percent]);
         $s->update($d);
 
         return response()->json(['data' => $s->load('component')]);

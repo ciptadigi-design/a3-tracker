@@ -27,7 +27,11 @@ function initialValues({ profile, model, initialComponent }) {
     componentId: initialComponent?.id ?? '',
     slotCode: initialComponent?.code ?? '',
     displayOrder: '0',
-    trackingMethod: initialComponent?.default_tracking_method ?? 'counter_based',
+    // M2.17.5.2 Part C: counter_based is the only lifecycle method this form can
+    // actually save (see the disabled options below) - never prefill from the
+    // catalog's own (unreliable, unwired) default, which could silently seed an
+    // unsupported value the backend would now reject on submit.
+    trackingMethod: 'counter_based',
     baselineExpectedClicks: '',
     adaptiveEnabled: true,
     healthyThreshold: '30',
@@ -112,7 +116,7 @@ export function ProfileDialog({ account, model, models, profile, components, ini
                 : <label className="form-field"><span>Machine model *</span><select value={values.machineModelId} onChange={(event) => change('machineModelId', event.target.value)}><option value="">Choose machine model</option>{models.map((item) => <option key={item.id} value={item.id}>{item.manufacturers?.name} · {item.name}</option>)}</select></label>}
               {isAssignment ? <label className="form-field"><span>Component</span><div className="locked-field"><LockKeyhole size={15} /><span>{initialComponent.name}</span></div><small>Uses catalog component {initialComponent.code}.</small></label>
                 : profile ? <label className="form-field"><span>Component</span><div className="locked-field"><LockKeyhole size={15} /><span>{selectedComponent?.name}</span></div></label>
-                  : <label className="form-field"><span>Component *</span><select value={values.componentId} onChange={(event) => { const component = components.find((item) => item.id === event.target.value); updateDraft((current) => ({ ...current, componentId: event.target.value, slotCode: current.slotCode || component?.code || '', trackingMethod: component?.default_tracking_method === 'counter_based' ? 'counter_based' : 'counter_based' })); setError(null) }}><option value="">Choose component</option>{components.filter((component) => component.is_active).map((component) => <option key={component.id} value={component.id}>{component.name}</option>)}</select></label>}
+                  : <label className="form-field"><span>Component *</span><select value={values.componentId} onChange={(event) => { const component = components.find((item) => item.id === event.target.value); updateDraft((current) => ({ ...current, componentId: event.target.value, slotCode: current.slotCode || component?.code || '', trackingMethod: 'counter_based' })); setError(null) }}><option value="">Choose component</option>{components.filter((component) => component.is_active).map((component) => <option key={component.id} value={component.id}>{component.name}</option>)}</select></label>}
               <label className="form-field"><span>Slot code *</span><input value={values.slotCode} onChange={(event) => change('slotCode', event.target.value)} placeholder="DRUM_C" /></label>
               <label className="form-field"><span>Tracking method</span><select value={values.trackingMethod} onChange={(event) => change('trackingMethod', event.target.value)}><option value="counter_based">Counter based</option><option value="consumption_based" disabled>Consumption based (Coming soon)</option><option value="inspection_based" disabled>Inspection based (Coming soon)</option></select><small>Counter based is currently the fully supported lifecycle method.</small></label>
               <label className="form-field"><span>Baseline expected clicks</span><input type="number" min="1" value={values.baselineExpectedClicks} onChange={(event) => change('baselineExpectedClicks', event.target.value)} /></label>

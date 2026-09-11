@@ -11,7 +11,7 @@ class ComponentCatalog extends Model
 
     protected $keyType = 'string';
 
-    protected $fillable = ['account_id', 'code', 'name', 'description', 'category', 'tracking_method', 'is_active', 'archived_at'];
+    protected $fillable = ['account_id', 'manufacturer_id', 'code', 'name', 'description', 'category', 'tracking_method', 'is_active', 'archived_at'];
 
     protected $casts = ['is_active' => 'boolean', 'archived_at' => 'datetime'];
 
