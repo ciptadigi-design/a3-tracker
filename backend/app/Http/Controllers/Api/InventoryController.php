@@ -15,9 +15,11 @@ use App\Services\AccountAccessResolver;
 use App\Services\BranchAccessResolver;
 use App\Services\InventoryLedgerService;
 use App\Services\MachineAccessResolver;
+use App\Services\MovementSummaryBuilder;
 use App\Services\OperationalPersonEligibilityService;
 use App\Services\PurchaseReceiptService;
 use App\Services\PurchaseSummaryBuilder;
+use App\Services\ReceiptSummaryBuilder;
 use App\Services\ReplaceMachineComponent;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -52,6 +54,18 @@ class InventoryController extends Controller
         // above, which is the current NEW-purchase eligibility set).
         $supplierLookup = InventorySupplier::where('account_id', $account)->get(['id', 'name', 'code']);
         $purchaseSummary = app(PurchaseSummaryBuilder::class)->build($purchases, $purchaseLines, $receiptLines, $items, $supplierLookup);
+        // M2.17.5: Movements and Receipts need the same "resolve names independent of
+        // current branch/active state" treatment $supplierLookup already gets above -
+        // an archived location or a since-deactivated user must not turn historical
+        // evidence blank. Deliberately unfiltered by branch/is_active for this reason.
+        $locationLookup = InventoryLocation::where('account_id', $account)->get(['id', 'name']);
+        $userLookup = DB::table('users')->get(['id', 'name']);
+        $rawMovements = DB::table('inventory_movements')->where('account_id', $account)->whereIn('location_id', $locationIds)->orderByDesc('occurred_at')->limit(500)->get();
+        $movements = app(MovementSummaryBuilder::class)->build($rawMovements, $items, $locationLookup, $userLookup);
+        $rawReceipts = $purchaseIds->isEmpty() || $locationIds->isEmpty() ? collect() : DB::table('receipts')->where('account_id', $account)->whereIn('purchase_id', $purchaseIds)->whereIn('location_id', $locationIds)->get();
+        $receiptLinesForReceipts = $receiptLines->whereIn('receipt_id', $rawReceipts->pluck('id'));
+        $receiptMovements = $rawReceipts->isEmpty() ? collect() : DB::table('inventory_movements')->where('account_id', $account)->where('movement_type', 'receipt')->get();
+        $receipts = app(ReceiptSummaryBuilder::class)->build($rawReceipts, $receiptLinesForReceipts, $purchases, $items, $supplierLookup, $locationLookup, $receiptMovements);
         $costPositions = $locationIds->isEmpty() ? collect() : DB::table('fifo_layers')
             ->where('account_id', $account)
             ->whereIn('location_id', $locationIds)
@@ -72,7 +86,7 @@ class InventoryController extends Controller
                 ];
             })->values();
 
-        return response()->json(['data' => ['branchId' => $branch, 'items' => $items, 'locations' => $locations, 'suppliers' => $suppliers, 'balances' => $balances, 'totals' => $items->map(fn ($i) => ['account_id' => $account, 'inventory_item_id' => $i->id, 'quantity' => $balances->where('inventory_item_id', $i->id)->sum('quantity')])->values(), 'movements' => DB::table('inventory_movements')->where('account_id', $account)->whereIn('location_id', $locationIds)->orderByDesc('occurred_at')->limit(500)->get(), 'components' => DB::table('component_catalogs')->where('is_active', true)->where(fn ($q) => $q->whereNull('account_id')->orWhere('account_id', $account))->orderBy('name')->get(), 'people' => OperationalPersonResource::collection($people), 'purchases' => $purchaseSummary['purchases'], 'purchaseLines' => $purchaseSummary['lines'], 'receipts' => $purchaseIds->isEmpty() || $locationIds->isEmpty() ? collect() : DB::table('receipts')->where('account_id', $account)->whereIn('purchase_id', $purchaseIds)->whereIn('location_id', $locationIds)->get(), 'lastPrices' => [], 'costHistory' => [], 'costPositions' => $costPositions]]);
+        return response()->json(['data' => ['branchId' => $branch, 'items' => $items, 'locations' => $locations, 'suppliers' => $suppliers, 'balances' => $balances, 'totals' => $items->map(fn ($i) => ['account_id' => $account, 'inventory_item_id' => $i->id, 'quantity' => $balances->where('inventory_item_id', $i->id)->sum('quantity')])->values(), 'movements' => $movements, 'components' => DB::table('component_catalogs')->where('is_active', true)->where(fn ($q) => $q->whereNull('account_id')->orWhere('account_id', $account))->orderBy('name')->get(), 'people' => OperationalPersonResource::collection($people), 'purchases' => $purchaseSummary['purchases'], 'purchaseLines' => $purchaseSummary['lines'], 'receipts' => $receipts, 'lastPrices' => [], 'costHistory' => [], 'costPositions' => $costPositions]]);
     }
 
     // M2.17.4.1: the Supplier Master list previously ignored branch context entirely and
@@ -234,11 +248,16 @@ class InventoryController extends Controller
 
     public function receive(Request $r, string $purchase)
     {
-        $d = $r->validate(['location_id' => 'required|uuid', 'client_request_id' => 'required|uuid', 'lines' => 'required|array|min:1']);
+        // M2.17.5: unlike opening()/adjust()/transfer(), this endpoint never accepted or
+        // resolved person_id at all - the frontend already sent it, but it was silently
+        // dropped by validate()'s whitelist, so every Goods Receipt movement persisted
+        // with a null PIC regardless of what the operator selected.
+        $d = $r->validate(['location_id' => 'required|uuid', 'person_id' => 'nullable|uuid', 'client_request_id' => 'required|uuid', 'lines' => 'required|array|min:1']);
         $loc = InventoryLocation::findOrFail($d['location_id']);
         abort_unless($this->canAccessLocation($r, $loc, true), 403);
+        [$personId, $personName] = $this->resolveOperator($loc, $d['person_id'] ?? null);
 
-        return response()->json(['data' => app(PurchaseReceiptService::class)->receive($purchase, $loc, $d['lines'], $d['client_request_id'])], 201);
+        return response()->json(['data' => app(PurchaseReceiptService::class)->receive($purchase, $loc, $d['lines'], $d['client_request_id'], $personId, $personName, $r->user()->id)], 201);
     }
 
     public function opening(Request $r)

@@ -28,6 +28,11 @@ const tabs = [
 const movementLabels = {
   opening_balance: 'Opening Balance', receipt: 'Receipt', issue: 'Issue', adjustment_in: 'Adjustment In',
   adjustment_out: 'Adjustment Out', transfer_in: 'Transfer In', transfer_out: 'Transfer Out',
+  // M2.17.5: a real Component Replacement's outbound movement (ReplaceMachineComponent
+  // -> InventoryLedgerService::outbound(..., 'replacement_consumption', ...)) rendered
+  // with no visible label at all - this key was missing entirely, so
+  // movementLabels[row.movement_type] silently evaluated to undefined.
+  replacement_consumption: 'Component Replacement',
 }
 
 function validView(value) { return value && tabs.some((tab) => tab.id === value.tab) && typeof value.showArchived === 'boolean' }

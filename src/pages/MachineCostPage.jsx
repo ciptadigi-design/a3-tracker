@@ -11,7 +11,7 @@ import { SellingPriceDialog } from '../features/machineCost/SellingPriceDialog.j
 import { SellingPriceHistoryDialog } from '../features/machineCost/SellingPriceHistoryDialog.jsx'
 import { VoidOperatingCostDialog } from '../features/machineCost/VoidOperatingCostDialog.jsx'
 import { formatDailyClicks, hasDailyClickActivity, normalizeDailyTrend } from '../features/machineCost/dailyTrendModel.js'
-import { formatIdrTotal, formatIdrUnit } from '../features/machineCost/currencyFormat.js'
+import { formatIdrTotal } from '../features/machineCost/currencyFormat.js'
 import { resolveMachineCostTab } from '../features/machineCost/operatingCostGate.js'
 import { createUIStateKey } from '../features/uiState/uiStateKeys.js'
 import { usePersistentUIState } from '../features/uiState/usePersistentUIState.js'
@@ -143,12 +143,15 @@ export function MachineCostPage() {
 
   const counterDisplay = summary ? counterEvidencePresentation(summary) : null
   const consumptionDisplay = summary ? knownConsumptionPresentation(summary, formatIdrTotal) : null
-  const primaryCostPerClickDisplay = summary ? primaryCostPerClickPresentation(summary, formatIdrUnit) : null
+  // M2.17.5: Cost/Click, Selling Price/Click, and Contribution/Click all now render
+  // whole-Rupiah like every other user-facing IDR value (product decision change) -
+  // all reuse the same canonical formatIdrTotal(), no competing fractional formatter.
+  const primaryCostPerClickDisplay = summary ? primaryCostPerClickPresentation(summary, formatIdrTotal) : null
   const canManageCosts = ['owner', 'admin'].includes(membership?.role)
-  const sellingPriceDisplay = summary ? sellingPriceCardPresentation(summary, formatIdrUnit) : null
+  const sellingPriceDisplay = summary ? sellingPriceCardPresentation(summary, formatIdrTotal) : null
   const revenueDisplay = summary ? revenuePresentation(summary, formatIdrTotal, formatNumber) : null
   const contributionDisplay = summary ? contributionPresentation(summary, formatIdrTotal) : null
-  const contributionPerClickDisplay = summary ? contributionPerClickPresentation(summary, formatIdrUnit) : null
+  const contributionPerClickDisplay = summary ? contributionPerClickPresentation(summary, formatIdrTotal) : null
   const advancedEnabled = Boolean(summary?.advanced_machine_economics_enabled ?? account.machine_economics_advanced_enabled)
   const activeTab = resolveMachineCostTab(filters.view, advancedEnabled)
 
@@ -187,7 +190,7 @@ export function MachineCostPage() {
         <SummaryCard icon={HandCoins} label="Contribution / Click" value={contributionPerClickDisplay.value} hint={contributionPerClickDisplay.hint} tone="blue" />
         <SummaryCard icon={HandCoins} label="Estimated Contribution" value={contributionDisplay.value} secondary={contributionDisplay.margin == null ? null : `Margin ${number.format(contributionDisplay.margin)}%`} hint={contributionDisplay.hint} tone="green" />
       </section>
-      {advancedEnabled && <section className="machine-cost-panel glass-surface advanced-economics-panel"><header><div><span className="card-kicker">Advanced</span><h2>Full Machine Economics</h2><p>Full economics is shown separately. Standard Machine Cost and Standard Contribution keep the same meaning.</p></div></header><div className="machine-economics-layers"><div><span>Advanced Operating Costs</span><strong>{formatIdrTotal(summary.known_advanced_operating_cost)}</strong><small>{summary.operating_cost_records ? `${summary.operating_cost_records} posted period record${summary.operating_cost_records === 1 ? '' : 's'}` : 'No advanced operating costs recorded for this period.'}</small></div><div><span>Standard Machine Cost</span><strong>{formatIdrTotal(summary.known_standard_machine_cost)}</strong></div><div className="total"><span>Full Machine Operating Cost</span><strong>{formatIdrTotal(summary.known_full_machine_operating_cost)}</strong></div><div className="total"><span>Full Operating Cost / Click</span><strong>{summary.known_full_operating_cost_per_click == null ? 'Unavailable' : formatIdrUnit(summary.known_full_operating_cost_per_click)}</strong></div><div className="total"><span>Full Contribution</span><strong>{summary.estimated_full_contribution == null ? 'Unavailable' : formatIdrTotal(summary.estimated_full_contribution)}</strong><small>{summary.full_contribution_margin_percent == null ? 'Complete price coverage is required.' : `Margin ${number.format(Number(summary.full_contribution_margin_percent))}%`}</small></div><div className="total"><span>Full Contribution / Click</span><strong>{summary.full_contribution_per_click == null ? 'Unavailable' : formatIdrUnit(summary.full_contribution_per_click)}</strong></div></div></section>}
+      {advancedEnabled && <section className="machine-cost-panel glass-surface advanced-economics-panel"><header><div><span className="card-kicker">Advanced</span><h2>Full Machine Economics</h2><p>Full economics is shown separately. Standard Machine Cost and Standard Contribution keep the same meaning.</p></div></header><div className="machine-economics-layers"><div><span>Advanced Operating Costs</span><strong>{formatIdrTotal(summary.known_advanced_operating_cost)}</strong><small>{summary.operating_cost_records ? `${summary.operating_cost_records} posted period record${summary.operating_cost_records === 1 ? '' : 's'}` : 'No advanced operating costs recorded for this period.'}</small></div><div><span>Standard Machine Cost</span><strong>{formatIdrTotal(summary.known_standard_machine_cost)}</strong></div><div className="total"><span>Full Machine Operating Cost</span><strong>{formatIdrTotal(summary.known_full_machine_operating_cost)}</strong></div><div className="total"><span>Full Operating Cost / Click</span><strong>{summary.known_full_operating_cost_per_click == null ? 'Unavailable' : formatIdrTotal(summary.known_full_operating_cost_per_click)}</strong></div><div className="total"><span>Full Contribution</span><strong>{summary.estimated_full_contribution == null ? 'Unavailable' : formatIdrTotal(summary.estimated_full_contribution)}</strong><small>{summary.full_contribution_margin_percent == null ? 'Complete price coverage is required.' : `Margin ${number.format(Number(summary.full_contribution_margin_percent))}%`}</small></div><div className="total"><span>Full Contribution / Click</span><strong>{summary.full_contribution_per_click == null ? 'Unavailable' : formatIdrTotal(summary.full_contribution_per_click)}</strong></div></div></section>}
     </> : null}
     {costDialog && selectedMachine && advancedEnabled && <OperatingCostDialog account={account} branch={branch} machine={selectedMachine} people={costWorkspace.people} onClose={() => setCostDialog(false)} onSave={saveOperatingCost} />}
     {voidTarget && <VoidOperatingCostDialog cost={voidTarget} onClose={() => setVoidTarget(null)} onVoid={voidOperatingCost} />}

@@ -1,5 +1,10 @@
 const referenceLabels = {
   opening_balance: 'Opening Balance',
+  // InventoryLedgerService::inbound() sets reference_type = movement_type for a
+  // receipt, i.e. literally 'receipt' - 'purchase_receipt' was never the value this
+  // ever actually took, so this branch's Reference > Type row always fell through to
+  // the raw-string fallback ("receipt") instead of this label.
+  receipt: 'Purchase Receipt',
   purchase_receipt: 'Purchase Receipt',
   component_replacement: 'Component Replacement',
   toner_refill: 'Toner Refill',
@@ -11,6 +16,7 @@ const referenceLabels = {
 const movementLabels = {
   opening_balance: 'Opening Balance', receipt: 'Receipt', issue: 'Issue', adjustment_in: 'Adjustment In',
   adjustment_out: 'Adjustment Out', transfer_in: 'Transfer In', transfer_out: 'Transfer Out',
+  replacement_consumption: 'Component Replacement',
 }
 
 export function buildMovementDetail(row, relatedMovement, { formatCurrency, formatQuantity, formatTime }) {

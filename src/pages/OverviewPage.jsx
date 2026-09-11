@@ -6,7 +6,7 @@ import { useTenant } from '../features/account/useTenant.js'
 import { useMachines } from '../features/machines/useMachines.js'
 import { CANONICAL_PERIOD_TIMEZONE, resolveMachineCostPeriod } from '../features/machineCost/machineCostPeriods.js'
 import { primaryCostPerClickPresentation } from '../features/machineCost/machineCostPresentation.js'
-import { formatIdrUnit } from '../features/machineCost/currencyFormat.js'
+import { formatIdrTotal } from '../features/machineCost/currencyFormat.js'
 import { loadMachineCostPeriod } from '../services/machineCost.js'
 import { formatClicks, formatPercentage, formatSignedClicks, normalizeDailyPerformance, periodCardPresentation, requiredPacePresentation, targetStatusPresentation, todayContextPresentation } from '../features/clickTargets/clickTargetModel.js'
 import { DailyClickPerformanceChart } from '../features/clickTargets/DailyClickPerformanceChart.jsx'
@@ -30,7 +30,11 @@ function todayDateKey(timezone) {
 }
 
 function CostPerClickCard({ summary, monthLabel }) {
-  const presentation = primaryCostPerClickPresentation(summary, formatIdrUnit)
+  // M2.17.5: product decision changed - Cost / Click now renders whole-Rupiah like
+  // every other user-facing IDR value, reusing the same canonical formatIdrTotal()
+  // rather than a competing fractional formatter. Only the final display value is
+  // rounded; the underlying cost-per-click calculation keeps full precision.
+  const presentation = primaryCostPerClickPresentation(summary, formatIdrTotal)
   return <article className="overview-period-card glass-surface">
     <span className="card-kicker">Cost / Click</span>
     <strong>{presentation.value}</strong>

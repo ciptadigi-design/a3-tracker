@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import fs from 'node:fs'
 import test from 'node:test'
 import { primaryCostPerClickPresentation } from '../machineCost/machineCostPresentation.js'
-import { formatIdrUnit } from '../machineCost/currencyFormat.js'
+import { formatIdrTotal } from '../machineCost/currencyFormat.js'
 
 const overview = fs.readFileSync(new URL('../../pages/OverviewPage.jsx', import.meta.url), 'utf8')
 const chart = fs.readFileSync(new URL('./DailyClickPerformanceChart.jsx', import.meta.url), 'utf8')
@@ -15,17 +15,17 @@ test('M2.13.2: canonical reconciliation - Overview Cost/Click equals Machine Cos
   // identical Cost/Click value from it via the same presentation function - there is
   // no second economics calculation for Overview to drift from.
   const summary = { known_standard_cost_per_click: '487.3200', unknown_consumption_events: 0, unknown_error_waste_events: 0, total_clicks: 20038, counter_status: 'COMPLETE' }
-  const overviewCostPerClick = primaryCostPerClickPresentation(summary, formatIdrUnit)
-  const machineCostCostPerClick = primaryCostPerClickPresentation(summary, formatIdrUnit)
+  const overviewCostPerClick = primaryCostPerClickPresentation(summary, formatIdrTotal)
+  const machineCostCostPerClick = primaryCostPerClickPresentation(summary, formatIdrTotal)
   assert.deepEqual(overviewCostPerClick, machineCostCostPerClick)
-  assert.equal(overviewCostPerClick.value, formatIdrUnit(487.32))
+  assert.equal(overviewCostPerClick.value, formatIdrTotal(487.32))
 })
 
 test('M2.13.2: canonical reconciliation - an unavailable Machine Cost never renders as Rp0 on Overview', () => {
   const summary = { known_standard_cost_per_click: null, total_clicks: 0, counter_status: 'COMPLETE' }
-  const presentation = primaryCostPerClickPresentation(summary, formatIdrUnit)
+  const presentation = primaryCostPerClickPresentation(summary, formatIdrTotal)
   assert.equal(presentation.value, 'Unavailable')
-  assert.notEqual(presentation.value, formatIdrUnit(0))
+  assert.notEqual(presentation.value, formatIdrTotal(0))
 })
 
 test('M2.13.2: the large Today KPI card is removed, This Week/This Month remain', () => {
@@ -36,7 +36,7 @@ test('M2.13.2: the large Today KPI card is removed, This Week/This Month remain'
 
 test('M2.13.2: Overview Cost/Click reuses the canonical Machine Cost presentation, no separate economics', () => {
   assert.match(overview, /import \{ primaryCostPerClickPresentation \} from '\.\.\/features\/machineCost\/machineCostPresentation\.js'/)
-  assert.match(overview, /primaryCostPerClickPresentation\(summary, formatIdrUnit\)/)
+  assert.match(overview, /primaryCostPerClickPresentation\(summary, formatIdrTotal\)/)
   // The exact same function MachineCostPage already renders its Cost/Click card with.
   assert.match(machineCostPage, /primaryCostPerClickPresentation/)
   assert.doesNotMatch(overview, /known_component_cost_per_click|component consumption.*error.*waste ÷|standard\s*=\s*.*\+.*loss/i)
