@@ -73,8 +73,8 @@ class OperationsController extends Controller
 
     public function storeModel(MachineModelRequest $r)
     {
-        Gate::authorize('platform.manage');
         $d = $r->validated();
+        abort_unless(app(AccountAccessResolver::class)->canManageCatalogScope($r->user(), $d['account_id'] ?? null), 403);
         $duplicate = MachineModel::where('manufacturer_id', $d['manufacturer_id'])->whereRaw('lower(trim(model_code)) = ?', [strtolower(trim($d['model_code']))])->when($d['account_id'] ?? null, fn ($q, $id) => $q->where('account_id', $id), fn ($q) => $q->whereNull('account_id'))->exists();
         abort_if($duplicate, 409, 'Machine model code already exists in this scope.');
 
@@ -83,8 +83,8 @@ class OperationsController extends Controller
 
     public function setModelStatus(Request $r, string $id)
     {
-        Gate::authorize('platform.manage');
         $m = MachineModel::findOrFail($id);
+        abort_unless(app(AccountAccessResolver::class)->canManageCatalogScope($r->user(), $m->account_id), 403);
         $active = $r->validate(['is_active' => 'required|boolean'])['is_active'];
         $m->update(['is_active' => $active, 'archived_at' => $active ? null : now()]);
 
@@ -93,10 +93,13 @@ class OperationsController extends Controller
 
     public function updateModel(Request $r, string $id)
     {
-        Gate::authorize('platform.manage');
         $m = MachineModel::findOrFail($id);
-        $d = $r->validate(['manufacturer_id' => 'required|uuid', 'model_code' => 'required|string|max:64', 'name' => 'required|string|max:160', 'machine_category' => 'nullable|string|max:40', 'color_capability' => 'nullable|string|max:20', 'description' => 'nullable|string', 'notes' => 'nullable|string', 'account_id' => 'nullable|uuid']);
-        $duplicate = MachineModel::where('id', '!=', $id)->where('manufacturer_id', $d['manufacturer_id'])->whereRaw('lower(trim(model_code)) = ?', [strtolower(trim($d['model_code']))])->when($d['account_id'] ?? null, fn ($q, $accountId) => $q->where('account_id', $accountId), fn ($q) => $q->whereNull('account_id'))->exists();
+        abort_unless(app(AccountAccessResolver::class)->canManageCatalogScope($r->user(), $m->account_id), 403);
+        // account_id (ownership scope) is intentionally not accepted here - moving a model
+        // between accounts, or between account-owned and platform-global, is not a routine
+        // edit and must not be reachable by spoofing this field in the request body.
+        $d = $r->validate(['manufacturer_id' => 'required|uuid', 'model_code' => 'required|string|max:64', 'name' => 'required|string|max:160', 'machine_category' => 'nullable|string|max:40', 'color_capability' => 'nullable|string|max:20', 'description' => 'nullable|string', 'notes' => 'nullable|string']);
+        $duplicate = MachineModel::where('id', '!=', $id)->where('manufacturer_id', $d['manufacturer_id'])->whereRaw('lower(trim(model_code)) = ?', [strtolower(trim($d['model_code']))])->when($m->account_id, fn ($q, $accountId) => $q->where('account_id', $accountId), fn ($q) => $q->whereNull('account_id'))->exists();
         abort_if($duplicate, 409, 'Machine model code already exists in this scope.');
         $m->update($d);
 

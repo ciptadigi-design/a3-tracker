@@ -15,7 +15,7 @@ import { useInventoryWorkflowState } from '../features/inventory/useInventoryWor
 import { inventoryItemScope } from '../features/inventory/inventoryItemPresentation.js'
 import { sortPhysicalStockRows } from '../features/inventory/physicalStockModel.js'
 import { InventoryMovementDetailDialog } from '../features/inventory/InventoryMovementDetailDialog.jsx'
-import { adjustInventoryStock, cancelInventoryPurchase, createInventoryPurchase, deleteInventoryItem, deleteInventoryLocation, deleteInventorySupplier, initializeInventoryStock, loadInventory, receiveInventoryPurchase, saveInventoryItem, saveInventoryLocation, saveInventorySupplier, transferInventoryStock } from '../services/inventory.js'
+import { adjustInventoryStock, assignSupplierBranch, cancelInventoryPurchase, createInventoryPurchase, deleteInventoryItem, deleteInventoryLocation, deleteInventorySupplier, initializeInventoryStock, loadInventory, loadInventorySuppliers, receiveInventoryPurchase, saveInventoryItem, saveInventoryLocation, saveInventorySupplier, transferInventoryStock, unassignSupplierBranch } from '../services/inventory.js'
 import { userErrorMessage } from '../lib/appErrors.js'
 
 const tabs = [
@@ -84,7 +84,7 @@ function LocationsPanel({ locations, showArchived, canManage, onEdit, onDelete }
 }
 
 export function InventoryPage() {
-  const { user } = useAuth(); const { account, branch, membership, operationalPermissions } = useTenant()
+  const { user } = useAuth(); const { account, branch, branches, membership, operationalPermissions } = useTenant()
   const canManage = ['owner', 'admin'].includes(membership?.role)
   const canAdjust = canManage || (membership?.role === 'operator' && operationalPermissions?.operator_can_adjust_inventory)
   const canTransfer = canManage || (membership?.role === 'operator' && operationalPermissions?.operator_can_transfer_inventory)
@@ -96,9 +96,17 @@ export function InventoryPage() {
   const [loadedData, setData] = useState(() => emptyInventoryData())
   const data = loadedData.branchId === branch?.id ? loadedData : emptyInventoryData(branch?.id)
   const [loading, setLoading] = useState(true); const [error, setError] = useState(null); const [notice, setNotice] = useState(null)
+  // Admin supplier management (create/edit/archive/branch-assign) always needs every
+  // account supplier, not just the ones visible from the currently selected branch -
+  // so it is loaded separately from the branch-scoped `data.suppliers` used by the
+  // purchase picker.
+  const [accountSuppliers, setAccountSuppliers] = useState([])
+  const refreshSuppliers = useCallback(async () => { if (canManage) setAccountSuppliers(await loadInventorySuppliers({ accountId: account.id })) }, [account.id, canManage])
   const refresh = useCallback(async () => { setLoading(true); setError(null); try { setData(await loadInventory({ accountId: account.id, branchId: branch?.id, includeArchived: canManage })) } catch (loadError) { setError(loadError) } finally { setLoading(false) } }, [account.id, branch?.id, canManage])
   useEffect(() => { refresh() }, [refresh])
+  useEffect(() => { refreshSuppliers().catch((loadError) => setError(loadError)) }, [refreshSuppliers])
   async function completed(message) { setNotice(message); await refresh() }
+  async function completedSupplier(message) { setNotice(message); await refreshSuppliers() }
   async function saveItem(values) { await saveInventoryItem({ accountId: account.id, itemId: workflow.inventoryItemId, values }); await completed('Inventory item saved.') }
   async function createItemFromPurchase(values) {
     const item = await saveInventoryItem({ accountId: account.id, itemId: null, values })
@@ -107,7 +115,9 @@ export function InventoryPage() {
     return item
   }
   async function saveLocation(values) { await saveInventoryLocation({ accountId: account.id, locationId: workflow.locationId, values: { ...values, branchId: branch.id } }); await completed('Inventory location saved.') }
-  async function saveSupplier(values) { await saveInventorySupplier({ accountId: account.id, supplierId: workflow.supplierId, values }); await completed('Supplier saved.') }
+  async function saveSupplier(values) { await saveInventorySupplier({ accountId: account.id, supplierId: workflow.supplierId, values }); await completedSupplier('Supplier saved.') }
+  async function assignBranch(supplierId, branchId) { await assignSupplierBranch({ supplierId, branchId }); await refreshSuppliers() }
+  async function unassignBranch(supplierId, branchId) { await unassignSupplierBranch({ supplierId, branchId }); await refreshSuppliers() }
   async function createPurchase(values, clientRequestId) { await createInventoryPurchase({ accountId: account.id, branchId: branch.id, values, clientRequestId }); await completed('Purchase created. Stock remains unchanged until receiving.') }
   async function receivePurchase(values, clientRequestId) { await receiveInventoryPurchase({ accountId: account.id, purchaseId: workflow.purchaseId, values, clientRequestId }); await completed('Goods received and inventory stock increased atomically.') }
   async function cancelPurchase(reason, clientRequestId) { await cancelInventoryPurchase({ accountId: account.id, purchaseId: workflow.purchaseId, reason, clientRequestId }); await completed('Purchase cancelled. Existing receipt history and stock were not changed.') }
@@ -119,15 +129,15 @@ export function InventoryPage() {
     await completed(workflow.type === 'stock:transfer' ? 'Stock transferred atomically.' : 'Inventory movement posted.')
   }
   async function removeMaster() {
-    if (workflow.type === 'item:delete') await deleteInventoryItem({ accountId: account.id, itemId: workflow.inventoryItemId })
-    else if (workflow.type === 'location:delete') await deleteInventoryLocation({ accountId: account.id, locationId: workflow.locationId })
-    else await deleteInventorySupplier({ accountId: account.id, supplierId: workflow.supplierId })
-    await completed('Unreferenced inventory master deleted.')
+    if (workflow.type === 'item:delete') { await deleteInventoryItem({ accountId: account.id, itemId: workflow.inventoryItemId }); await completed('Unreferenced inventory master deleted.'); return }
+    if (workflow.type === 'location:delete') { await deleteInventoryLocation({ accountId: account.id, locationId: workflow.locationId }); await completed('Unreferenced inventory master deleted.'); return }
+    await deleteInventorySupplier({ accountId: account.id, supplierId: workflow.supplierId })
+    await completedSupplier('Unreferenced inventory master deleted.')
   }
   const activeItems = data.items.filter((item) => item.is_active); const activeLocations = data.locations.filter((location) => location.is_active)
   const workflowItem = data.items.find((item) => item.id === workflow.inventoryItemId) ?? null
   const workflowLocation = data.locations.find((location) => location.id === workflow.locationId) ?? null
-  const workflowSupplier = data.suppliers.find((supplier) => supplier.id === workflow.supplierId) ?? null
+  const workflowSupplier = accountSuppliers.find((supplier) => supplier.id === workflow.supplierId) ?? null
   const workflowPurchase = data.purchases.find((purchase) => purchase.purchase_id === workflow.purchaseId) ?? null
   const workflowPurchaseLines = data.purchaseLines.filter((line) => line.purchase_id === workflow.purchaseId)
   const workflowMovement = data.movements.find((movement) => movement.movement_id === workflow.movementId) ?? null
@@ -162,7 +172,7 @@ export function InventoryPage() {
       <div className="inventory-content">{loading ? <div className="inventory-empty"><RefreshCcw className="spin" size={25} /><strong>Loading inventory ledger…</strong></div> : !error && <>
         {viewState.value.tab === 'stock' && <StockPanel data={data} showArchived={viewState.value.showArchived} canManage={canManage} canAdjust={canAdjust} canTransfer={canTransfer} onEdit={(item) => openWorkflow('item:edit', { inventoryItemId: item.id, entityActiveAtOpen: item.is_active })} onDelete={(item) => openWorkflow('item:delete', { inventoryItemId: item.id, entityActiveAtOpen: item.is_active })} onOpening={(item) => openWorkflow('stock:opening', { inventoryItemId: item.id, entityActiveAtOpen: true })} onAdjust={(item) => openWorkflow('stock:adjustment', { inventoryItemId: item.id, entityActiveAtOpen: true })} onTransfer={(item) => openWorkflow('stock:transfer', { inventoryItemId: item.id, entityActiveAtOpen: true })} />}
         {viewState.value.tab === 'movements' && <MovementPanel key={branch.id} data={data} account={account} onView={(movement) => openWorkflow('movement:detail', { movementId: movement.movement_id })} />}
-        {viewState.value.tab === 'purchasing' && <PurchasingPanel userId={user.id} account={account} branchId={branch.id} data={data} canManage={canManage} canCreatePurchase={canCreatePurchase} onCreateSupplier={() => openWorkflow('supplier:create')} onEditSupplier={(supplier) => openWorkflow('supplier:edit', { supplierId: supplier.id, entityActiveAtOpen: supplier.is_active })} onDeleteSupplier={(supplier) => openWorkflow('supplier:delete', { supplierId: supplier.id, entityActiveAtOpen: supplier.is_active })} onCreatePurchase={() => openWorkflow('purchase:create')} onOpenPurchase={(purchase) => openWorkflow('purchase:detail', { purchaseId: purchase.purchase_id })} />}
+        {viewState.value.tab === 'purchasing' && <PurchasingPanel userId={user.id} account={account} branchId={branch.id} branches={branches} data={data} suppliers={accountSuppliers} canManage={canManage} canCreatePurchase={canCreatePurchase} onCreateSupplier={() => openWorkflow('supplier:create')} onEditSupplier={(supplier) => openWorkflow('supplier:edit', { supplierId: supplier.id, entityActiveAtOpen: supplier.is_active })} onDeleteSupplier={(supplier) => openWorkflow('supplier:delete', { supplierId: supplier.id, entityActiveAtOpen: supplier.is_active })} onAssignBranch={assignBranch} onUnassignBranch={unassignBranch} onCreatePurchase={() => openWorkflow('purchase:create')} onOpenPurchase={(purchase) => openWorkflow('purchase:detail', { purchaseId: purchase.purchase_id })} />}
         {viewState.value.tab === 'locations' && <LocationsPanel locations={data.locations} showArchived={viewState.value.showArchived} canManage={canManage} onEdit={(location) => openWorkflow('location:edit', { locationId: location.id, entityActiveAtOpen: location.is_active })} onDelete={(location) => openWorkflow('location:delete', { locationId: location.id, entityActiveAtOpen: location.is_active })} />}
       </>}</div>
     </section>

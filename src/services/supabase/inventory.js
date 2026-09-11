@@ -50,6 +50,15 @@ export async function loadInventory({ accountId, branchId, includeArchived = fal
   }
 }
 
+// Supabase/dev-legacy has no branch-assignment table yet - every account supplier is
+// already visible account-wide here, so this simply mirrors that existing scope rather
+// than reintroducing Laravel's branch-narrowing rule for the dev backend.
+export async function loadInventorySuppliers({ accountId }) {
+  const { data, error } = await supabase.from('inventory_suppliers').select(supplierFields).eq('account_id', accountId).order('name')
+  if (error) throw error
+  return (data ?? []).map((supplier) => ({ ...supplier, branch_assignments: [] }))
+}
+
 export async function saveInventorySupplier({ accountId, supplierId, values }) {
   const payload = {
     supplier_code: values.supplierCode.trim(), name: values.name.trim(), contact_person: optional(values.contactPerson),

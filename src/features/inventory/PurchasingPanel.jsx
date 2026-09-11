@@ -1,4 +1,5 @@
-import { Archive, Building2, CalendarCheck, Edit3, Eye, PackageCheck, Plus, ReceiptText, Trash2 } from 'lucide-react'
+import { useState } from 'react'
+import { Archive, Building2, CalendarCheck, Edit3, Eye, PackageCheck, Plus, ReceiptText, Trash2, X } from 'lucide-react'
 import { createUIStateKey } from '../uiState/uiStateKeys.js'
 import { usePersistentUIState } from '../uiState/usePersistentUIState.js'
 import { Pagination } from '../../components/ui/Pagination.jsx'
@@ -18,9 +19,32 @@ function PurchaseList({ purchases, canManage, onCreate, onOpen, resetKey }) {
   </>
 }
 
-function SupplierList({ suppliers, showArchived, canManage, onCreate, onEdit, onDelete }) {
+function SupplierBranches({ supplier, branches, canManage, onAssignBranch, onUnassignBranch }) {
+  const [busy, setBusy] = useState(false)
+  const assignedIds = new Set((supplier.branch_assignments ?? []).map((assignment) => assignment.branch_id))
+  const unassignedBranches = branches.filter((branch) => !assignedIds.has(branch.id))
+  async function toggle(action, branchId) {
+    setBusy(true)
+    try { await action(supplier.id, branchId) } finally { setBusy(false) }
+  }
+  return <div className="supplier-branch-scope">
+    <span className="supplier-branch-scope-label">{assignedIds.size === 0 ? 'Available to every branch' : 'Available to:'}</span>
+    <div className="supplier-branch-chips">
+      {[...assignedIds].map((branchId) => {
+        const branchName = branches.find((branch) => branch.id === branchId)?.name ?? branchId
+        return <span className="branch-chip" key={branchId}>{branchName}{canManage && <button type="button" disabled={busy} onClick={() => toggle(onUnassignBranch, branchId)} aria-label={`Remove ${branchName} from ${supplier.name}`}><X size={12} /></button>}</span>
+      })}
+      {canManage && unassignedBranches.length > 0 && <select value="" disabled={busy} onChange={(event) => event.target.value && toggle(onAssignBranch, event.target.value)} aria-label={`Assign ${supplier.name} to a branch`}>
+        <option value="">{assignedIds.size === 0 ? 'Restrict to branch…' : 'Add branch…'}</option>
+        {unassignedBranches.map((branch) => <option key={branch.id} value={branch.id}>{branch.name}</option>)}
+      </select>}
+    </div>
+  </div>
+}
+
+function SupplierList({ suppliers, branches, showArchived, canManage, onCreate, onEdit, onDelete, onAssignBranch, onUnassignBranch }) {
   const visible = suppliers.filter((supplier) => showArchived ? !supplier.is_active : supplier.is_active)
-  return <><div className="inventory-section-toolbar"><div><span className="card-kicker">Supplier master</span><h2>{visible.length} {showArchived ? 'archived' : 'active'} suppliers</h2><p>Supplier identities are workspace-owned and snapshotted into purchase history.</p></div>{canManage && <button className="primary-button" type="button" onClick={onCreate}><Plus size={16} />Add supplier</button>}</div>{visible.length === 0 ? <div className="inventory-empty"><Building2 size={25} /><strong>No {showArchived ? 'archived' : 'active'} suppliers.</strong><span>Owner/admin can maintain account-scoped supplier records here.</span></div> : <div className="supplier-list">{visible.map((supplier) => <article className={supplier.is_active ? '' : 'archived'} key={supplier.id}><span className="inventory-item-icon"><Building2 size={18} /></span><div><strong>{supplier.name}</strong><span>{supplier.supplier_code}{supplier.contact_person ? ` · ${supplier.contact_person}` : ''}</span><small>{supplier.email || supplier.phone || supplier.address || 'No contact details'}</small></div>{!supplier.is_active && <span className="scope-pill archived"><Archive size={12} />Archived</span>}{canManage && <div className="inventory-row-actions"><button type="button" onClick={() => onEdit(supplier)} aria-label={`Edit ${supplier.name}`}><Edit3 size={15} /></button><button type="button" onClick={() => onDelete(supplier)} aria-label={`Delete ${supplier.name}`}><Trash2 size={15} /></button></div>}</article>)}</div>}</>
+  return <><div className="inventory-section-toolbar"><div><span className="card-kicker">Supplier master</span><h2>{visible.length} {showArchived ? 'archived' : 'active'} suppliers</h2><p>Supplier identities are account-owned and snapshotted into purchase history. Branch scope only controls where a supplier is offered when creating a purchase.</p></div>{canManage && <button className="primary-button" type="button" onClick={onCreate}><Plus size={16} />Add supplier</button>}</div>{visible.length === 0 ? <div className="inventory-empty"><Building2 size={25} /><strong>No {showArchived ? 'archived' : 'active'} suppliers.</strong><span>Owner/admin can maintain account-scoped supplier records here.</span></div> : <div className="supplier-list">{visible.map((supplier) => <article className={supplier.is_active ? '' : 'archived'} key={supplier.id}><span className="inventory-item-icon"><Building2 size={18} /></span><div><strong>{supplier.name}</strong><span>{supplier.supplier_code}{supplier.contact_person ? ` · ${supplier.contact_person}` : ''}</span><small>{supplier.email || supplier.phone || supplier.address || 'No contact details'}</small>{supplier.is_active && branches.length > 1 && <SupplierBranches supplier={supplier} branches={branches} canManage={canManage} onAssignBranch={onAssignBranch} onUnassignBranch={onUnassignBranch} />}</div>{!supplier.is_active && <span className="scope-pill archived"><Archive size={12} />Archived</span>}{canManage && <div className="inventory-row-actions"><button type="button" onClick={() => onEdit(supplier)} aria-label={`Edit ${supplier.name}`}><Edit3 size={15} /></button><button type="button" onClick={() => onDelete(supplier)} aria-label={`Delete ${supplier.name}`}><Trash2 size={15} /></button></div>}</article>)}</div>}</>
 }
 
 function ReceiptList({ receipts, timeZone, resetKey }) {
@@ -30,12 +54,12 @@ function ReceiptList({ receipts, timeZone, resetKey }) {
   return receipts.length === 0 ? <div className="inventory-empty"><CalendarCheck size={25} /><strong>No receiving history.</strong><span>Posted physical receipts will appear here with immutable purchase-cost evidence.</span></div> : <><div className="receipt-history-list">{visibleReceipts.map((line) => <article key={line.receipt_line_id}><span className="movement-direction movement-in"><CalendarCheck size={17} /></span><div><strong>{line.item_name_snapshot}</strong><span>{[line.item_sku_snapshot, line.receipt_number].filter(Boolean).join(' · ')}</span></div><div><span>Received</span><strong>+{quantity(line.quantity)} {line.unit_snapshot}</strong></div><div><span>Purchase</span><strong>{line.purchase_number_snapshot}</strong><small>{line.supplier_name_snapshot}</small></div><div><span>Acquisition price</span><strong>{money.format(Number(line.unit_price_snapshot))}</strong><small>{money.format(Number(line.acquisition_value))} received value</small></div><div><span>Location / PIC</span><strong>{line.location_name}</strong><small>{line.operational_person_name_snapshot}</small></div><time>{formatter.format(new Date(line.received_at))}</time></article>)}</div><Pagination total={receipts.length} {...pagination} onPageChange={pagination.setPage} onPageSizeChange={pagination.setPageSize} label="receipts" /></>
 }
 
-export function PurchasingPanel({ userId, account, branchId, data, canManage, canCreatePurchase = canManage, onCreateSupplier, onEditSupplier, onDeleteSupplier, onCreatePurchase, onOpenPurchase }) {
+export function PurchasingPanel({ userId, account, branchId, branches = [], data, suppliers = data.suppliers, canManage, canCreatePurchase = canManage, onCreateSupplier, onEditSupplier, onDeleteSupplier, onAssignBranch, onUnassignBranch, onCreatePurchase, onOpenPurchase }) {
   const key = createUIStateKey({ userId, accountId: account.id, branchId, feature: 'inventory-purchasing-view', entityId: 'workspace' })
   const state = usePersistentUIState({ uiStateKey: key, initialValue: { section: 'purchases', showArchivedSuppliers: false }, validate: validSection })
   return <div className="purchasing-workspace"><div className="purchasing-subtabs" role="tablist" aria-label="Purchasing sections">{sections.map((section) => <button key={section.id} type="button" role="tab" aria-selected={state.value.section === section.id} className={state.value.section === section.id ? 'selected' : ''} onClick={() => state.setUIState((current) => ({ ...current, section: section.id }))}><section.icon size={15} />{section.label}{section.id === 'receiving' && <span>{data.receipts.length}</span>}</button>)}</div>{state.value.section === 'suppliers' && canManage && <div className="inventory-record-toggle"><button className={!state.value.showArchivedSuppliers ? 'selected' : ''} onClick={() => state.setUIState((current) => ({ ...current, showArchivedSuppliers: false }))}>Active</button><button className={state.value.showArchivedSuppliers ? 'selected' : ''} onClick={() => state.setUIState((current) => ({ ...current, showArchivedSuppliers: true }))}>Archived</button></div>}<div className="purchasing-content">
     {state.value.section === 'purchases' && <PurchaseList purchases={data.purchases} canManage={canCreatePurchase} onCreate={onCreatePurchase} onOpen={onOpenPurchase} resetKey={branchId} />}
-    {state.value.section === 'suppliers' && <SupplierList suppliers={data.suppliers} showArchived={state.value.showArchivedSuppliers} canManage={canManage} onCreate={onCreateSupplier} onEdit={onEditSupplier} onDelete={onDeleteSupplier} />}
+    {state.value.section === 'suppliers' && <SupplierList suppliers={suppliers} branches={branches} showArchived={state.value.showArchivedSuppliers} canManage={canManage} onCreate={onCreateSupplier} onEdit={onEditSupplier} onDelete={onDeleteSupplier} onAssignBranch={onAssignBranch} onUnassignBranch={onUnassignBranch} />}
     {state.value.section === 'receiving' && <ReceiptList receipts={data.receipts} timeZone={account.default_timezone} resetKey={branchId} />}
   </div></div>
 }

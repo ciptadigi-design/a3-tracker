@@ -36,6 +36,25 @@ class AccountAccessResolver
     }
 
     /**
+     * Authorization for catalog-shaped resources (Component Catalog, Machine Model,
+     * Model Profile/Slot) that may be either platform-global (account_id null, shared
+     * across every tenant) or account-owned (account_id set). A null scope always
+     * requires platform Superuser; a set scope requires owner/admin membership in
+     * that specific account. The caller must pass the resource's own persisted
+     * account_id when authorizing an existing record - never a client-supplied value -
+     * so a forged account_id in a request payload cannot grant cross-tenant access.
+     */
+    public function canManageCatalogScope(User $user, ?string $accountId): bool
+    {
+        if ($accountId === null) {
+            return $this->platform->isSuperuser($user);
+        }
+        $account = Account::find($accountId);
+
+        return $account !== null && $this->canManageOperational($user, $account);
+    }
+
+    /**
      * The branch ids this user is authorized to see within the given account.
      * Returns null when the user has unrestricted (all-branch) visibility -
      * platform superuser or account owner - matching BranchAccessResolver's

@@ -3,6 +3,7 @@ import { AlertCircle, Building2, CalendarCheck, LoaderCircle, PackageCheck, Plus
 import { useAuth } from '../auth/useAuth.js'
 import { createDraftKey } from '../drafts/draftKeys.js'
 import { usePersistentDraft } from '../drafts/usePersistentDraft.js'
+import { describeApiError } from '../../lib/api/apiClient.js'
 import { DialogFrame, InventoryItemDialog } from './InventoryDialogs.jsx'
 import { discoverPurchaseItems, inventoryItemLabel } from './purchaseItemDiscovery.js'
 import { describePurchaseStatus, formatPurchaseTotal, purchaseReceivingProgressPercent, purchaseSupplierName, safeNumber } from './purchasePresentation.js'
@@ -33,7 +34,7 @@ export function InventorySupplierDialog({ account, supplier, onClose, onSave }) 
     if (!draft.value.supplierCode.trim() || !draft.value.name.trim()) return setError('Supplier code and name are required.')
     setBusy(true)
     try { await onSave(draft.value); draft.clearDraft(); onClose() }
-    catch (saveError) { setError(saveError.code === '23505' ? 'That supplier code already exists in this workspace.' : saveError.message) }
+    catch (saveError) { setError(saveError.code === '23505' || saveError.status === 409 ? 'That supplier code already exists in this workspace.' : describeApiError(saveError)) }
     finally { setBusy(false) }
   }
   return <DialogFrame icon={Building2} kicker="Supplier master" title={`${supplier ? 'Edit' : 'Add'} supplier`} description="Account-owned supplier identity used by immutable purchase and receipt evidence." titleId="inventory-supplier-title" busy={busy} onClose={onClose}>

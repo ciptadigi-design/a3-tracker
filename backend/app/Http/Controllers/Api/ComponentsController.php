@@ -3,21 +3,28 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Account;
 use App\Models\ComponentCatalog;
 use App\Models\CounterReading;
 use App\Models\Machine;
 use App\Models\MachineComponent;
 use App\Models\MachineComponentExclusion;
+use App\Models\MachineModel;
 use App\Models\ModelProfile;
 use App\Models\ModelProfileSlot;
+use App\Services\AccountAccessResolver;
 use App\Services\ComponentConfigurationService;
 use App\Services\MachineAccessResolver;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Gate;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 
 class ComponentsController extends Controller
 {
+    private function authorizeCatalogScope(Request $r, ?string $accountId): void
+    {
+        abort_unless(app(AccountAccessResolver::class)->canManageCatalogScope($r->user(), $accountId), 403);
+    }
+
     public function catalogs(Request $r)
     {
         $ids = $r->user()->memberships()->where('status', 'active')->pluck('account_id');
@@ -27,8 +34,8 @@ class ComponentsController extends Controller
 
     public function storeCatalog(Request $r)
     {
-        Gate::authorize('platform.manage');
         $d = $r->validate(['account_id' => 'nullable|uuid', 'code' => 'required|string|max:64', 'name' => 'required|string|max:160', 'description' => 'nullable|string', 'category' => 'nullable|string|max:80']);
+        $this->authorizeCatalogScope($r, $d['account_id'] ?? null);
 
         $code = strtoupper(trim($d['code']));
         if (ComponentCatalog::whereRaw('UPPER(TRIM(code)) = ?', [$code])->where(fn ($q) => $q->whereNull('account_id')->orWhere('account_id', $d['account_id'] ?? null))->exists()) {
@@ -41,8 +48,8 @@ class ComponentsController extends Controller
 
     public function updateCatalog(Request $r, string $id)
     {
-        Gate::authorize('platform.manage');
         $c = ComponentCatalog::findOrFail($id);
+        $this->authorizeCatalogScope($r, $c->account_id);
         $d = $r->validate(['code' => 'required|string|max:64', 'name' => 'required|string|max:160', 'description' => 'nullable|string', 'category' => 'nullable|string|max:80']);
         $c->update($d);
 
@@ -51,8 +58,8 @@ class ComponentsController extends Controller
 
     public function setCatalogStatus(Request $r, string $id)
     {
-        Gate::authorize('platform.manage');
         $c = ComponentCatalog::findOrFail($id);
+        $this->authorizeCatalogScope($r, $c->account_id);
         $active = $r->validate(['is_active' => 'required|boolean'])['is_active'];
         if (! $active && ModelProfileSlot::where('component_id', $c->id)->where('is_active', true)->exists()) {
             throw new ConflictHttpException('catalog is referenced by an active profile slot');
@@ -63,29 +70,59 @@ class ComponentsController extends Controller
 
     public function profiles(Request $r, string $model)
     {
-        return response()->json(['data' => ModelProfile::where('machine_model_id', $model)->with(['slots.component'])->where('is_active', true)->get()]);
+        $ids = $r->user()->memberships()->where('status', 'active')->pluck('account_id');
+
+        return response()->json(['data' => ModelProfile::where('machine_model_id', $model)->where(fn ($q) => $q->whereNull('account_id')->orWhereIn('account_id', $ids))->with(['slots.component'])->where('is_active', true)->get()]);
     }
 
     public function storeProfile(Request $r, string $model)
     {
-        Gate::authorize('platform.manage');
-        $d = $r->validate(['account_id' => 'nullable|uuid', 'name' => 'required|string|max:160']);
+        $m = MachineModel::findOrFail($model);
+        $d = $r->validate(['component_id' => 'required|uuid', 'slot_code' => 'required|string|max:80', 'slot_name' => 'nullable|string|max:160', 'display_order' => 'nullable|integer|min:0', 'tracking_method' => 'nullable|string|max:32', 'baseline_expected_clicks' => 'nullable|integer|min:1']);
+        // An account-owned model is always scoped to its own account; a platform-global
+        // model (account_id null) has no account context to assign into, so component
+        // assignment against it is Superuser-only, matching every other catalog mutation.
+        $this->authorizeCatalogScope($r, $m->account_id);
 
-        return response()->json(['data' => ModelProfile::create($d + ['machine_model_id' => $model])], 201);
+        $profile = ModelProfile::firstOrCreate(['machine_model_id' => $m->id, 'account_id' => $m->account_id, 'is_active' => true], ['name' => trim($m->name).' profile']);
+        $slot = ModelProfileSlot::create(['profile_id' => $profile->id, 'component_id' => $d['component_id'], 'slot_code' => $d['slot_code'], 'slot_name' => $d['slot_name'] ?? null, 'display_order' => $d['display_order'] ?? 0, 'tracking_method' => $d['tracking_method'] ?? 'counter_based', 'baseline_expected_clicks' => $d['baseline_expected_clicks'] ?? null]);
+
+        return response()->json(['data' => $slot->load('component')], 201);
     }
 
     public function storeSlot(Request $r, string $profile)
     {
-        Gate::authorize('platform.manage');
-        $d = $r->validate(['component_id' => 'required|uuid', 'slot_code' => 'required|string|max:80', 'slot_name' => 'nullable|string', 'display_order' => 'nullable|integer|min:0', 'baseline_expected_clicks' => 'nullable|integer|min:1']);
+        $p = ModelProfile::findOrFail($profile);
+        $this->authorizeCatalogScope($r, $p->account_id);
+        $d = $r->validate(['component_id' => 'required|uuid', 'slot_code' => 'required|string|max:80', 'slot_name' => 'nullable|string|max:160', 'display_order' => 'nullable|integer|min:0', 'tracking_method' => 'nullable|string|max:32', 'baseline_expected_clicks' => 'nullable|integer|min:1']);
 
-        return response()->json(['data' => ModelProfileSlot::create($d + ['profile_id' => $profile])], 201);
+        return response()->json(['data' => ModelProfileSlot::create($d + ['profile_id' => $profile])->load('component')], 201);
+    }
+
+    public function updateSlot(Request $r, string $slot)
+    {
+        $s = ModelProfileSlot::with('profile')->findOrFail($slot);
+        $this->authorizeCatalogScope($r, $s->profile->account_id);
+        $d = $r->validate(['slot_name' => 'nullable|string|max:160', 'display_order' => 'nullable|integer|min:0', 'tracking_method' => 'nullable|string|max:32', 'baseline_expected_clicks' => 'nullable|integer|min:1']);
+        $s->update($d);
+
+        return response()->json(['data' => $s->load('component')]);
+    }
+
+    public function setSlotStatus(Request $r, string $slot)
+    {
+        $s = ModelProfileSlot::with('profile')->findOrFail($slot);
+        $this->authorizeCatalogScope($r, $s->profile->account_id);
+        $active = $r->validate(['is_active' => 'required|boolean'])['is_active'];
+        $s->update(['is_active' => $active, 'archived_at' => $active ? null : now()]);
+
+        return response()->json(['data' => $s->load('component')]);
     }
 
     public function setProfileStatus(Request $r, string $id)
     {
-        Gate::authorize('platform.manage');
         $p = ModelProfile::findOrFail($id);
+        $this->authorizeCatalogScope($r, $p->account_id);
         $active = $r->validate(['is_active' => 'required|boolean'])['is_active'];
         $p->update(['is_active' => $active, 'archived_at' => $active ? null : now()]);
 

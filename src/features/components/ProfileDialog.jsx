@@ -43,9 +43,9 @@ function validDraft(value) {
 }
 
 function profileErrorMessage(error) {
-  if (error?.code === '23505') return 'That active slot is already assigned for this machine model. Choose a unique slot code.'
+  if (error?.code === '23505' || error?.status === 409) return 'That active slot is already assigned for this machine model. Choose a unique slot code.'
   if (error?.code === '23514') return 'The expected clicks or lifecycle thresholds are outside the allowed range.'
-  if (error?.code === '42501') return 'Your current workspace role is not allowed to assign this component.'
+  if (error?.code === '42501' || error?.status === 403) return 'Your current workspace role is not allowed to assign this component.'
   return error?.message ?? 'The profile could not be saved.'
 }
 

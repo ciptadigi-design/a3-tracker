@@ -67,6 +67,8 @@ Route::prefix('v1')->middleware('request.id')->group(function () {
             Route::get('machine-models/{model}/profiles', [ComponentsController::class, 'profiles']);
             Route::post('machine-models/{model}/profiles', [ComponentsController::class, 'storeProfile']);
             Route::post('model-profiles/{profile}/slots', [ComponentsController::class, 'storeSlot']);
+            Route::put('model-profile-slots/{slot}', [ComponentsController::class, 'updateSlot']);
+            Route::patch('model-profile-slots/{slot}/status', [ComponentsController::class, 'setSlotStatus']);
             Route::patch('model-profiles/{id}/status', [ComponentsController::class, 'setProfileStatus']);
             Route::get('machines/{machine}/components', [ComponentsController::class, 'machineComponents']);
             Route::post('machines/{machine}/components/sync', [ComponentsController::class, 'sync']);
@@ -83,6 +85,8 @@ Route::prefix('v1')->middleware('request.id')->group(function () {
             Route::post('inventory/suppliers', [InventoryController::class, 'saveSupplier']);
             Route::put('inventory/suppliers/{id}', [InventoryController::class, 'saveSupplier']);
             Route::delete('inventory/suppliers/{id}', [InventoryController::class, 'deleteSupplier']);
+            Route::post('inventory/suppliers/{id}/branches', [InventoryController::class, 'assignSupplierBranch']);
+            Route::delete('inventory/suppliers/{id}/branches/{branchId}', [InventoryController::class, 'unassignSupplierBranch']);
             Route::post('inventory/items', [InventoryController::class, 'saveItem']);
             Route::put('inventory/items/{id}', [InventoryController::class, 'saveItem']);
             Route::patch('inventory/items/{id}', [InventoryController::class, 'deleteItem']);

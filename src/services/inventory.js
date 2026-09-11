@@ -2,8 +2,11 @@ import { callBackend } from './dataBackend.js'
 const adapters = { supabase: () => import('./supabase/inventory.js'), laravel: () => import('./laravel/inventory.js') }
 const invoke = (operation, ...args) => callBackend({ domain: 'inventory', operation, args, ...adapters })
 export const loadInventory = (args) => invoke('loadInventory', args)
+export const loadInventorySuppliers = (args) => invoke('loadInventorySuppliers', args)
 export const saveInventorySupplier = (args) => invoke('saveInventorySupplier', args)
 export const deleteInventorySupplier = (args) => invoke('deleteInventorySupplier', args)
+export const assignSupplierBranch = (args) => invoke('assignSupplierBranch', args)
+export const unassignSupplierBranch = (args) => invoke('unassignSupplierBranch', args)
 export const createInventoryPurchase = (args) => invoke('createInventoryPurchase', args)
 export const receiveInventoryPurchase = (args) => invoke('receiveInventoryPurchase', args)
 export const cancelInventoryPurchase = (args) => invoke('cancelInventoryPurchase', args)

@@ -9,7 +9,7 @@ import { ProfileDialog } from '../features/components/ProfileDialog.jsx'
 import { MachineComponentDialog } from '../features/components/MachineComponentDialog.jsx'
 import { InitializeLifecycleDialog } from '../features/components/InitializeLifecycleDialog.jsx'
 import { ReplaceComponentDialog } from '../features/components/ReplaceComponentDialog.jsx'
-import { ReplacementHistory } from '../features/components/ReplacementHistory.jsx'
+import { ReplacementHistoryDialog, ReplacementHistorySummaryCard } from '../features/components/ReplacementHistory.jsx'
 import { ComponentIntelligenceDialog } from '../features/components/ComponentIntelligenceDialog.jsx'
 import { ComponentChannelMarker } from '../features/components/ComponentChannelMarker.jsx'
 import { lifecycleActionFor } from '../features/components/lifecycleActions.js'
@@ -53,6 +53,7 @@ function DensityControl({ density, onChange }) {
 }
 
 function MachineComponentsPanel({ branchName, machines, lifecycles, exclusions, profiles, components, replacementHistory, selectedMachine, onMachineChange, canManage, canInitialize, canReplace, onRemove, onClearExclusion, onInitialize, onReplace, onReconcile, density, busy }) {
+  const [historyOpen, setHistoryOpen] = useState(false)
   const rows = lifecycles.filter((row) => row.machine_id === selectedMachine?.id)
   const initialized = rows.filter((row) => row.lifecycle_status === 'active').length
   const baselineKnownCount = rows.filter((row) => row.lifecycle_status === 'baseline_known').length
@@ -92,7 +93,8 @@ function MachineComponentsPanel({ branchName, machines, lifecycles, exclusions, 
       </article>
     })}</div>
     {!selectedMachine ? <div className="component-empty"><strong>No active machines in {branchName ?? 'this branch'}.</strong><span>Machine Components follows the global Branch. Model Profiles and Component Catalog remain account-wide.</span></div> : !rows.length && <div className="component-empty"><strong>No components configured for this machine model.</strong><span>No lifecycle or inventory movement was fabricated.</span></div>}
-    {selectedMachine && density === 'detailed' && <ReplacementHistory history={replacementHistory} machine={selectedMachine} />}
+    {selectedMachine && density === 'detailed' && <ReplacementHistorySummaryCard history={replacementHistory} machine={selectedMachine} onViewHistory={() => setHistoryOpen(true)} />}
+    {historyOpen && selectedMachine && <ReplacementHistoryDialog history={replacementHistory} machine={selectedMachine} onClose={() => setHistoryOpen(false)} />}
   </>
 }
 

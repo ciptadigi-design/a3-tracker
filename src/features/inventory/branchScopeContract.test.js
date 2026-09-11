@@ -18,5 +18,15 @@ test('Branch switch invalidates Inventory children and Location creation cannot 
   assert.match(page, /loadedData\.branchId === branch\?\.id/)
   assert.match(page, /values: \{ \.\.\.values, branchId: branch\.id \}/)
   assert.match(page, /<MovementPanel key=\{branch\.id\}/)
-  assert.doesNotMatch(page, /branches=\{branches\}/)
+  assert.doesNotMatch(page, /<LocationsPanel[^>]*branches=\{branches\}/)
+  assert.doesNotMatch(page, /<MovementPanel[^>]*branches=\{branches\}/)
+  assert.doesNotMatch(page, /<StockPanel[^>]*branches=\{branches\}/)
+})
+
+// M2.17.3: Supplier identity is account-owned, but where a supplier is *offered* can be
+// narrowed to specific branches (supplier_branch_assignments). Managing that narrowing is
+// the one legitimate place the full authorized branch list is allowed into an Inventory
+// component - it never widens what branch physical stock/movements/locations operate on.
+test('Only the Purchasing/Supplier panel receives the account branch list, for branch-scoped supplier assignment', () => {
+  assert.match(page, /<PurchasingPanel[^>]*branches=\{branches\}/)
 })

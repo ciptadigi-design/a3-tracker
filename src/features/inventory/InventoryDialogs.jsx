@@ -4,6 +4,7 @@ import { BlockingDialog } from '../../components/ui/BlockingDialog.jsx'
 import { useAuth } from '../auth/useAuth.js'
 import { createDraftKey } from '../drafts/draftKeys.js'
 import { usePersistentDraft } from '../drafts/usePersistentDraft.js'
+import { isReferenceConflict } from '../../lib/api/apiClient.js'
 import { inventoryItemLabel } from './inventoryItemPresentation.js'
 
 const units = [
@@ -153,6 +154,6 @@ export function InventoryMovementDialog({ kind, account, branchId, item, items, 
 
 export function DeleteInventoryMasterDialog({ kind, label, onClose, onDelete }) {
   const [busy, setBusy] = useState(false); const [error, setError] = useState(null)
-  async function remove() { setBusy(true); try { await onDelete(); onClose() } catch (deleteError) { setError(deleteError.code === '23503' ? 'This record has ledger history or another reference. Archive it instead.' : deleteError.message) } finally { setBusy(false) } }
+  async function remove() { setBusy(true); try { await onDelete(); onClose() } catch (deleteError) { setError(isReferenceConflict(deleteError) ? 'This record has ledger history or another reference. Archive it instead.' : deleteError.message) } finally { setBusy(false) } }
   return <BlockingDialog className="confirm-dialog glass-surface" labelledBy="inventory-delete-title" onClose={onClose} busy={busy}><span className="danger-dialog-icon"><Trash2 size={22} /></span><h2 id="inventory-delete-title">Delete {kind}?</h2><p><strong>{label}</strong> can only be deleted if it has never been referenced. Posted history is always preserved.</p>{error && <div className="form-error" role="alert">{error}</div>}<div className="dialog-actions"><button className="secondary-button" type="button" onClick={onClose} disabled={busy}>Cancel</button><button className="danger-button" type="button" onClick={remove} disabled={busy}>{busy ? 'Deleting…' : 'Delete permanently'}</button></div></BlockingDialog>
 }

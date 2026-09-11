@@ -10,6 +10,7 @@ use App\Models\InventoryItem;
 use App\Models\InventoryLocation;
 use App\Models\InventorySupplier;
 use App\Models\MachineComponent;
+use App\Models\SupplierBranchAssignment;
 use App\Services\AccountAccessResolver;
 use App\Services\BranchAccessResolver;
 use App\Services\InventoryLedgerService;
@@ -38,7 +39,13 @@ class InventoryController extends Controller
         $purchaseIds = $purchases->pluck('id');
         $locationIds = $locations->pluck('id');
         $people = app(OperationalPersonEligibilityService::class)->forBranch($account, $branch);
-        $suppliers = InventorySupplier::where('account_id', $account)->where('is_active', true)->orderBy('name')->get();
+        // A supplier with no branch assignments is available everywhere in the account
+        // (legacy/default behaviour, so existing suppliers never vanish from branches
+        // that never assigned them). Once assigned to at least one branch, it is only
+        // available in the branches it was explicitly assigned to.
+        $suppliers = InventorySupplier::where('account_id', $account)->where('is_active', true)
+            ->where(fn ($q) => $q->whereDoesntHave('branchAssignments')->orWhereHas('branchAssignments', fn ($q2) => $q2->where('branch_id', $branch)))
+            ->orderBy('name')->get();
         $purchaseLines = $purchaseIds->isEmpty() ? collect() : DB::table('purchase_lines')->where('account_id', $account)->whereIn('purchase_id', $purchaseIds)->get();
         $purchaseLineIds = $purchaseLines->pluck('id');
         $receiptLines = $purchaseLineIds->isEmpty() ? collect() : DB::table('receipt_lines')->where('account_id', $account)->whereIn('purchase_line_id', $purchaseLineIds)->get();
@@ -70,7 +77,29 @@ class InventoryController extends Controller
     {
         $ids = $r->user()->memberships()->where('status', 'active')->pluck('account_id');
 
-        return response()->json(['data' => InventorySupplier::whereIn('account_id', $ids)->orderBy('name')->get()]);
+        return response()->json(['data' => InventorySupplier::whereIn('account_id', $ids)->with('branchAssignments')->orderBy('name')->get()]);
+    }
+
+    public function assignSupplierBranch(Request $r, string $id)
+    {
+        $s = InventorySupplier::findOrFail($id);
+        $a = Account::findOrFail($s->account_id);
+        abort_unless(app(AccountAccessResolver::class)->canManageOperational($r->user(), $a), 403);
+        $d = $r->validate(['branch_id' => 'required|uuid']);
+        $b = Branch::where('id', $d['branch_id'])->where('account_id', $s->account_id)->firstOrFail();
+        $assignment = SupplierBranchAssignment::firstOrCreate(['supplier_id' => $s->id, 'branch_id' => $b->id], ['account_id' => $s->account_id]);
+
+        return response()->json(['data' => $assignment], 201);
+    }
+
+    public function unassignSupplierBranch(Request $r, string $id, string $branchId)
+    {
+        $s = InventorySupplier::findOrFail($id);
+        $a = Account::findOrFail($s->account_id);
+        abort_unless(app(AccountAccessResolver::class)->canManageOperational($r->user(), $a), 403);
+        SupplierBranchAssignment::where('supplier_id', $s->id)->where('branch_id', $branchId)->delete();
+
+        return response()->noContent();
     }
 
     public function saveSupplier(Request $r, ?string $id = null)
