@@ -152,3 +152,33 @@ test('47 closed lifecycle rows project once into replacement history without fab
   assert.equal(new Set(history.map((row) => row.previous_lifecycle_id)).size, 47)
   assert.ok(history.every((row) => row.machine_id === MACHINE_ID))
 })
+
+// M2.17.5.5: TONER_C on CG-TUP-A3-01 - a Model Profile edit (16,000 -> 15,000)
+// must not retroactively change what an already-installed lifecycle's expected
+// life reads as. An active lifecycle's own baseline_expected_clicks_snapshot
+// must always win over the machine component's current (mutable) value.
+test('an active lifecycle keeps its own baseline_expected_clicks_snapshot even after the machine component baseline changes', () => {
+  const [row] = projectLaravelMachineComponents([{
+    id: 'assignment-toner-c', machine_id: MACHINE_ID, component_id: 'component-toner-c', component: { code: 'TONER_C', name: 'Toner Cyan' }, slot_code: 'TONER_C', source_type: 'inherited', status: 'configured', display_order: 0,
+    // The Model Profile / machine component now reads the NEW 15,000 baseline...
+    baseline_expected_clicks: 15000, profile_slot: { baseline_expected_clicks: 15000 }, latest_effective_counter: '1441597',
+    lifecycles: [{
+      id: 'lifecycle-toner-c-active', status: 'active', installed_counter: '1400000', removed_counter: null, started_at: '2026-08-01T00:00:00Z', source: 'replacement',
+      // ...but this lifecycle was installed while the baseline was still 16,000.
+      baseline_expected_clicks_snapshot: 16000,
+    }],
+  }])
+
+  assert.equal(row.effective_expected, 16000, 'the active lifecycle must keep reporting its own install-time baseline, not the current machine component value')
+})
+
+test('a closed historical lifecycle in replacement history keeps its own baseline_expected_clicks_snapshot, not the current machine component value', () => {
+  const row = {
+    id: 'assignment-toner-c-hist', machine_id: MACHINE_ID, component_id: 'component-toner-c', component: { code: 'TONER_C', name: 'Toner Cyan' }, slot_code: 'TONER_C', source_type: 'inherited', status: 'configured',
+    baseline_expected_clicks: 15000,
+    lifecycles: [{ id: 'lifecycle-toner-c-closed', status: 'closed', installed_counter: '1300000', removed_counter: '1400000', actual_usage: '100000', baseline_expected_clicks_snapshot: 16000, replaced_at: '2026-07-01T00:00:00Z' }],
+  }
+
+  const [history] = projectLaravelReplacementHistory([row])
+  assert.equal(history.expected_at_install, 16000, 'closed historical lifecycle must keep reporting its own install-time baseline, not the current machine component value')
+})

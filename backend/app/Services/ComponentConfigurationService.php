@@ -115,6 +115,30 @@ class ComponentConfigurationService
         $e->update(['cleared_at' => now(), 'cleared_by' => $user]);
     }
 
+    // M2.17.5.5: the effective baseline for a NEW lifecycle. For an 'inherited'
+    // component still linked to its profile slot, this resolves the slot's
+    // CURRENT baseline_expected_clicks fresh (not the possibly-stale snapshot
+    // already sitting on machine_components - sync() only snapshots that once,
+    // at row creation - see sync() above). This is safe without touching
+    // sync()/reconcileManual() at all: source_type='inherited' with a non-null
+    // profile_slot_id is a reliable signal that this row has never been given a
+    // manual override (no code path lets those two states mix - there is no
+    // "edit machine component baseline directly" endpoint; the only way to
+    // change an inherited row's baseline is via the profile slot itself).
+    // 'manual' components (profile_slot_id null) always use their own
+    // machine_components.baseline_expected_clicks, which is user-owned.
+    public function resolveEffectiveBaseline(MachineComponent $mc): ?int
+    {
+        if ($mc->source_type === 'inherited' && $mc->profile_slot_id) {
+            $slot = ModelProfileSlot::find($mc->profile_slot_id);
+            if ($slot && $slot->is_active && $slot->baseline_expected_clicks !== null) {
+                return (int) $slot->baseline_expected_clicks;
+            }
+        }
+
+        return $mc->baseline_expected_clicks !== null ? (int) $mc->baseline_expected_clicks : null;
+    }
+
     public function initialize(MachineComponent $mc, array $d): ComponentLifecycle
     {
         return DB::transaction(function () use ($mc, $d) {
@@ -142,7 +166,7 @@ class ComponentConfigurationService
                 throw new ConflictHttpException('lifecycle interval overlaps existing history');
             }
 
-            return ComponentLifecycle::create(['machine_component_id' => $mc->id, 'installed_counter' => $d['installed_counter'] ?? null, 'removed_counter' => $d['removed_counter'] ?? null, 'started_at' => $start, 'ended_at' => $d['ended_at'] ?? null, 'status' => $start ? 'active' : 'unknown', 'evidence_level' => $d['evidence_level'] ?? null, 'source' => $d['source'] ?? 'manual', 'notes' => $d['notes'] ?? null, 'client_request_id' => $d['client_request_id'] ?? null, 'active_key' => 'active']);
+            return ComponentLifecycle::create(['machine_component_id' => $mc->id, 'installed_counter' => $d['installed_counter'] ?? null, 'removed_counter' => $d['removed_counter'] ?? null, 'baseline_expected_clicks_snapshot' => $this->resolveEffectiveBaseline($mc), 'started_at' => $start, 'ended_at' => $d['ended_at'] ?? null, 'status' => $start ? 'active' : 'unknown', 'evidence_level' => $d['evidence_level'] ?? null, 'source' => $d['source'] ?? 'manual', 'notes' => $d['notes'] ?? null, 'client_request_id' => $d['client_request_id'] ?? null, 'active_key' => 'active']);
         });
     }
 

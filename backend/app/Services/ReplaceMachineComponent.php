@@ -13,6 +13,8 @@ use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 
 class ReplaceMachineComponent
 {
+    public function __construct(private ComponentConfigurationService $configService) {}
+
     // M2.17.5: the new lifecycle created here was never given an `installed_counter`
     // baseline (nor was the closed lifecycle given a `removed_counter`/`actual_usage`),
     // so the frontend's health projection (currentUsage = latestCounter -
@@ -73,7 +75,11 @@ class ReplaceMachineComponent
                     ? $baselineCounter - (float) $active->installed_counter
                     : null;
                 $active->update(['status' => 'closed', 'ended_at' => $when, 'active_key' => null, 'removed_counter' => $baselineCounter, 'actual_usage' => $actualUsage]);
-            }$next = ComponentLifecycle::create(['machine_component_id' => $mc->id, 'installed_counter' => $baselineCounter, 'started_at' => $when, 'status' => 'active', 'source' => 'replacement', 'active_key' => 'active', 'notes' => $d['notes'] ?? null]);
+            }
+            // M2.17.5.5: resolve the NEW lifecycle's expected-life baseline fresh at
+            // replacement time (not from the closed lifecycle, which keeps its own
+            // immutable snapshot above) - see ComponentConfigurationService::resolveEffectiveBaseline().
+            $next = ComponentLifecycle::create(['machine_component_id' => $mc->id, 'installed_counter' => $baselineCounter, 'baseline_expected_clicks_snapshot' => $this->configService->resolveEffectiveBaseline($mc), 'started_at' => $when, 'status' => 'active', 'source' => 'replacement', 'active_key' => 'active', 'notes' => $d['notes'] ?? null]);
 
             return ComponentReplacement::create(['account_id' => $mc->account_id, 'machine_component_id' => $mc->id, 'inventory_item_id' => $source === 'inventory' ? $item->id : null, 'inventory_location_id' => $source === 'inventory' ? $loc->id : null, 'inventory_movement_id' => $movement?->id, 'previous_lifecycle_id' => $previous, 'new_lifecycle_id' => $next->id, 'inventory_source' => $source, 'quantity' => $source === 'inventory' ? ($d['quantity'] ?? 1) : null, 'consumed_cost' => $cost, 'replaced_at' => $when, 'external_reason' => $source === 'external_untracked' ? $d['external_reason'] : null, 'notes' => $d['notes'] ?? null, 'entered_by' => $d['entered_by'] ?? null, 'performed_by_person_id' => $d['performed_by_person_id'] ?? null, 'performed_by_name_snapshot' => $d['performed_by_name'] ?? null, 'client_request_id' => $d['client_request_id']]);
         }, 3);
