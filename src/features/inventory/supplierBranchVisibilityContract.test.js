@@ -5,6 +5,7 @@ import test from 'node:test'
 const page = readFileSync(new URL('../../pages/InventoryPage.jsx', import.meta.url), 'utf8')
 const laravelInventory = readFileSync(new URL('../../services/laravel/inventory.js', import.meta.url), 'utf8')
 const purchasingPanel = readFileSync(new URL('./PurchasingPanel.jsx', import.meta.url), 'utf8')
+const purchasingDialogs = readFileSync(new URL('./PurchasingDialogs.jsx', import.meta.url), 'utf8')
 
 // M2.17.4.1: a Production acceptance test found the Supplier Master list ignoring the
 // active branch entirely, while the Purchase picker already enforced branch
@@ -26,10 +27,18 @@ test('allAccountSuppliers is reset when the branch changes, so a stale ineligibl
   assert.match(page, /useEffect\(\(\) => \{ setAllAccountSuppliers\(null\) \}, \[branch\?\.id\]\)/)
 })
 
-test('PurchasingPanel receives the lazy all-suppliers loader for cross-branch admin discovery, not a permanently-unfiltered list', () => {
-  assert.match(page, /<PurchasingPanel[^>]*allSuppliers=\{allAccountSuppliers\}/)
-  assert.match(page, /<PurchasingPanel[^>]*onLoadAllSuppliers=\{loadAllAccountSuppliers\}/)
-  assert.match(purchasingPanel, /function AttachExistingSupplier/)
+// M2.17.5.2: the lazy all-suppliers loader moved from PurchasingPanel (which rendered
+// "Attach existing supplier…" as a second standalone button on the main Supplier list)
+// to the Add Supplier dialog itself, where cross-branch discovery is now offered
+// automatically. AttachExistingSupplier remains the same exported, tested component -
+// just embedded, not a top-level button - so the underlying M2.17.4.1 capability is
+// relocated, not removed.
+test('the Add Supplier dialog receives the lazy all-suppliers loader for cross-branch discovery, not PurchasingPanel', () => {
+  assert.match(page, /<InventorySupplierDialog[^>]*allSuppliers=\{allAccountSuppliers\}/)
+  assert.match(page, /<InventorySupplierDialog[^>]*onLoadAllSuppliers=\{loadAllAccountSuppliers\}/)
+  assert.doesNotMatch(page, /<PurchasingPanel[^>]*allSuppliers=/)
+  assert.match(purchasingPanel, /export function AttachExistingSupplier/)
+  assert.match(purchasingDialogs, /import \{ AttachExistingSupplier \} from '\.\/PurchasingPanel\.jsx'/)
 })
 
 // The subtitle must no longer claim the list is unconditionally account-wide (Phase 11).

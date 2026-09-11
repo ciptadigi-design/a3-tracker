@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Archive, Building2, CalendarCheck, Edit3, Eye, PackageCheck, Plus, ReceiptText, Trash2, X } from 'lucide-react'
 import { createUIStateKey } from '../uiState/uiStateKeys.js'
 import { usePersistentUIState } from '../uiState/usePersistentUIState.js'
@@ -43,12 +43,16 @@ function SupplierBranches({ supplier, branches, canManage, onAssignBranch, onUna
   </div>
 }
 
-// M2.17.4.1: Supplier Master is now branch-filtered, so a supplier restricted to
-// another branch is no longer rendered in the normal list - this is the only way an
-// admin can still find and attach one to the currently active branch without
-// duplicating its identity. Lazily loads the unfiltered account list on first open.
-function AttachExistingSupplier({ branchName, visibleSupplierIds, allSuppliers, onLoadAllSuppliers, onAssignBranch, branchId }) {
-  const [open, setOpen] = useState(false)
+// M2.17.4.1: Supplier Master is branch-filtered, so a supplier restricted to another
+// branch is no longer rendered in the normal list - this is how an admin can still find
+// and attach one to the currently active branch without duplicating its identity.
+// M2.17.5.2: no longer a standalone button on the main Supplier list (that surface now
+// has one primary action, "+ Add supplier") - this same component is embedded inside
+// InventorySupplierDialog's create flow instead (`startOpen`), reached via a secondary
+// link, and via exact-name discovery on submit. Lazily loads the unfiltered account
+// list on first open either way.
+export function AttachExistingSupplier({ branchName, visibleSupplierIds, allSuppliers, onLoadAllSuppliers, onAssignBranch, branchId, startOpen = false, onAttached }) {
+  const [open, setOpen] = useState(startOpen)
   const [loading, setLoading] = useState(false)
   const [selected, setSelected] = useState('')
   const [busy, setBusy] = useState(false)
@@ -56,11 +60,13 @@ function AttachExistingSupplier({ branchName, visibleSupplierIds, allSuppliers, 
     setOpen(true)
     if (!allSuppliers) { setLoading(true); try { await onLoadAllSuppliers() } finally { setLoading(false) } }
   }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { if (startOpen) reveal() }, [])
   const candidates = (allSuppliers ?? []).filter((supplier) => supplier.is_active && !visibleSupplierIds.has(supplier.id))
   async function attach() {
     if (!selected) return
     setBusy(true)
-    try { await onAssignBranch(selected, branchId); setSelected('') } finally { setBusy(false) }
+    try { await onAssignBranch(selected, branchId); setSelected(''); onAttached?.() } finally { setBusy(false) }
   }
   if (!open) return <button className="secondary-button" type="button" onClick={reveal}>Attach existing supplier…</button>
   return <div className="attach-existing-supplier">
@@ -71,14 +77,17 @@ function AttachExistingSupplier({ branchName, visibleSupplierIds, allSuppliers, 
       </select>
       <button className="secondary-button" type="button" disabled={!selected || busy} onClick={attach}>Add to {branchName}</button>
     </>}
-    <button className="secondary-button" type="button" onClick={() => setOpen(false)}>Close</button>
+    {!startOpen && <button className="secondary-button" type="button" onClick={() => setOpen(false)}>Close</button>}
   </div>
 }
 
-function SupplierList({ suppliers, suppliersError, onRetrySuppliers, branches, branchId, showArchived, canManage, allSuppliers, onLoadAllSuppliers, onCreate, onEdit, onDelete, onAssignBranch, onUnassignBranch }) {
+function SupplierList({ suppliers, suppliersError, onRetrySuppliers, branches, branchId, showArchived, canManage, onCreate, onEdit, onDelete, onAssignBranch, onUnassignBranch }) {
   const visible = suppliers.filter((supplier) => showArchived ? !supplier.is_active : supplier.is_active)
   const branchName = branches.find((branch) => branch.id === branchId)?.name ?? 'this branch'
-  return <><div className="inventory-section-toolbar"><div><span className="card-kicker">Supplier master</span><h2>{visible.length} {showArchived ? 'archived' : 'active'} suppliers available to {branchName}</h2><p>Supplier identity stays account-owned and is snapshotted into purchase history; this list reflects which suppliers are currently available to {branchName}.</p></div><div className="inventory-toolbar-actions">{canManage && !showArchived && branches.length > 1 && <AttachExistingSupplier branchName={branchName} branchId={branchId} visibleSupplierIds={new Set(suppliers.map((supplier) => supplier.id))} allSuppliers={allSuppliers} onLoadAllSuppliers={onLoadAllSuppliers} onAssignBranch={onAssignBranch} />}{canManage && <button className="primary-button" type="button" onClick={onCreate}><Plus size={16} />Add supplier</button>}</div></div>
+  // M2.17.5.2: "Attach existing supplier…" is no longer a second large button here -
+  // the Add Supplier dialog now offers account-wide existing-supplier discovery itself
+  // (see InventorySupplierDialog). This page keeps exactly one primary action.
+  return <><div className="inventory-section-toolbar"><div><span className="card-kicker">Supplier master</span><h2>{visible.length} {showArchived ? 'archived' : 'active'} suppliers available to {branchName}</h2><p>Supplier identity stays account-owned and is snapshotted into purchase history; this list reflects which suppliers are currently available to {branchName}.</p></div><div className="inventory-toolbar-actions">{canManage && <button className="primary-button" type="button" onClick={onCreate}><Plus size={16} />Add supplier</button>}</div></div>
     {/* M2.17.4.2: a failed supplier fetch must read as a distinct, retriable error - not
     silently render as "0 active suppliers", which was indistinguishable from the true
     empty state and left an admin unable to tell whether there really were no suppliers
@@ -104,12 +113,12 @@ function ReceiptList({ receipts, timeZone, resetKey }) {
   return receipts.length === 0 ? <div className="inventory-empty"><CalendarCheck size={25} /><strong>No receiving history.</strong><span>Posted physical receipts will appear here with immutable purchase-cost evidence.</span></div> : <><div className="receipt-history-list">{visibleReceipts.map((line) => <article key={line.receipt_line_id}><span className="movement-direction movement-in"><CalendarCheck size={17} /></span><div><strong>{line.item_name_snapshot}</strong><span>{[line.item_sku_snapshot, line.receipt_number].filter(Boolean).join(' · ')}</span></div><div><span>Received</span><strong>+{quantity(line.quantity)} {line.unit_snapshot}</strong></div><div><span>Purchase</span><strong>{line.purchase_number_snapshot || 'Unknown'}</strong><small>{line.supplier_name_snapshot || 'Unknown supplier'}</small></div><div><span>Acquisition price</span><strong>{receiptUnitPrice(line)}</strong>{receiptAcquisitionValue(line) && <small>{receiptAcquisitionValue(line)}</small>}</div><div><span>Location / PIC</span><strong>{line.location_name || 'Unknown location'}</strong><small>{line.operational_person_name_snapshot || 'Not recorded'}</small></div><time>{formatter.format(new Date(line.received_at))}</time></article>)}</div><Pagination total={receipts.length} {...pagination} onPageChange={pagination.setPage} onPageSizeChange={pagination.setPageSize} label="receipts" /></>
 }
 
-export function PurchasingPanel({ userId, account, branchId, branches = [], data, suppliers = data.suppliers, suppliersError, onRetrySuppliers, allSuppliers, onLoadAllSuppliers, canManage, canCreatePurchase = canManage, onCreateSupplier, onEditSupplier, onDeleteSupplier, onAssignBranch, onUnassignBranch, onCreatePurchase, onOpenPurchase }) {
+export function PurchasingPanel({ userId, account, branchId, branches = [], data, suppliers = data.suppliers, suppliersError, onRetrySuppliers, canManage, canCreatePurchase = canManage, onCreateSupplier, onEditSupplier, onDeleteSupplier, onAssignBranch, onUnassignBranch, onCreatePurchase, onOpenPurchase }) {
   const key = createUIStateKey({ userId, accountId: account.id, branchId, feature: 'inventory-purchasing-view', entityId: 'workspace' })
   const state = usePersistentUIState({ uiStateKey: key, initialValue: { section: 'purchases', showArchivedSuppliers: false }, validate: validSection })
   return <div className="purchasing-workspace"><div className="purchasing-subtabs" role="tablist" aria-label="Purchasing sections">{sections.map((section) => <button key={section.id} type="button" role="tab" aria-selected={state.value.section === section.id} className={state.value.section === section.id ? 'selected' : ''} onClick={() => state.setUIState((current) => ({ ...current, section: section.id }))}><section.icon size={15} />{section.label}{section.id === 'receiving' && <span>{data.receipts.length}</span>}</button>)}</div>{state.value.section === 'suppliers' && canManage && <div className="inventory-record-toggle"><button className={!state.value.showArchivedSuppliers ? 'selected' : ''} onClick={() => state.setUIState((current) => ({ ...current, showArchivedSuppliers: false }))}>Active</button><button className={state.value.showArchivedSuppliers ? 'selected' : ''} onClick={() => state.setUIState((current) => ({ ...current, showArchivedSuppliers: true }))}>Archived</button></div>}<div className="purchasing-content">
     {state.value.section === 'purchases' && <PurchaseList purchases={data.purchases} canManage={canCreatePurchase} onCreate={onCreatePurchase} onOpen={onOpenPurchase} resetKey={branchId} />}
-    {state.value.section === 'suppliers' && <SupplierList suppliers={suppliers} suppliersError={suppliersError} onRetrySuppliers={onRetrySuppliers} branches={branches} branchId={branchId} showArchived={state.value.showArchivedSuppliers} canManage={canManage} allSuppliers={allSuppliers} onLoadAllSuppliers={onLoadAllSuppliers} onCreate={onCreateSupplier} onEdit={onEditSupplier} onDelete={onDeleteSupplier} onAssignBranch={onAssignBranch} onUnassignBranch={onUnassignBranch} />}
+    {state.value.section === 'suppliers' && <SupplierList suppliers={suppliers} suppliersError={suppliersError} onRetrySuppliers={onRetrySuppliers} branches={branches} branchId={branchId} showArchived={state.value.showArchivedSuppliers} canManage={canManage} onCreate={onCreateSupplier} onEdit={onEditSupplier} onDelete={onDeleteSupplier} onAssignBranch={onAssignBranch} onUnassignBranch={onUnassignBranch} />}
     {state.value.section === 'receiving' && <ReceiptList receipts={data.receipts} timeZone={account.default_timezone} resetKey={branchId} />}
   </div></div>
 }

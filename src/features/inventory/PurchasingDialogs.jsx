@@ -7,6 +7,7 @@ import { describeApiError } from '../../lib/api/apiClient.js'
 import { DialogFrame, InventoryItemDialog } from './InventoryDialogs.jsx'
 import { discoverPurchaseItems, inventoryItemLabel } from './purchaseItemDiscovery.js'
 import { describePurchaseStatus, formatPurchaseTotal, purchaseReceivingProgressPercent, purchaseSupplierName, safeNumber } from './purchasePresentation.js'
+import { AttachExistingSupplier } from './PurchasingPanel.jsx'
 
 const money = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 2 })
 const quantity = (value) => safeNumber(value).toLocaleString('id-ID', { maximumFractionDigits: 4 })
@@ -22,21 +23,84 @@ function FormError({ error }) {
   return error ? <div className="form-error" role="alert"><AlertCircle size={16} />{error}</div> : null
 }
 
-export function InventorySupplierDialog({ account, supplier, onClose, onSave }) {
+const normalizedSupplierName = (value) => (value || '').trim().toLowerCase()
+
+// M2.17.5.2: the Supplier Master page dropped its standalone "Attach existing
+// supplier…" button down to one primary action ("+ Add supplier"). The underlying
+// M2.17.4.1 anti-duplicate/cross-branch discovery capability is preserved here
+// instead: an exact account-wide name match is checked on submit (create mode only)
+// before a new identity is ever created, and the original browse-and-attach picker
+// remains one click away as a secondary link for cases the exact match misses.
+export function InventorySupplierDialog({ account, supplier, branches = [], branchId, allSuppliers, onLoadAllSuppliers, onAssignBranch, visibleSupplierIds, onClose, onSave }) {
   const { user } = useAuth()
   const initial = { supplierCode: supplier?.supplier_code ?? '', name: supplier?.name ?? '', contactPerson: supplier?.contact_person ?? '', phone: supplier?.phone ?? '', email: supplier?.email ?? '', address: supplier?.address ?? '', notes: supplier?.notes ?? '', isActive: supplier?.is_active ?? true }
   const draftKey = createDraftKey({ userId: user.id, accountId: account.id, feature: 'inventory-supplier', entityId: supplier?.id ?? 'new' })
   const draft = usePersistentDraft({ draftKey, initialValue: initial, validate: (value) => value && typeof value.supplierCode === 'string' && typeof value.name === 'string' && typeof value.isActive === 'boolean' })
   const [busy, setBusy] = useState(false); const [error, setError] = useState(null)
-  const change = (field, value) => { draft.updateDraft((current) => ({ ...current, [field]: value })); setError(null) }
-  async function submit(event) {
-    event.preventDefault()
-    if (!draft.value.supplierCode.trim() || !draft.value.name.trim()) return setError('Supplier code and name are required.')
+  const [checkingExisting, setCheckingExisting] = useState(false)
+  const [discoveryMatch, setDiscoveryMatch] = useState(null)
+  const [showAttachExisting, setShowAttachExisting] = useState(false)
+  const branchName = branches.find((branch) => branch.id === branchId)?.name ?? 'this branch'
+  const change = (field, value) => { draft.updateDraft((current) => ({ ...current, [field]: value })); setError(null); setDiscoveryMatch(null) }
+
+  async function performCreate() {
     setBusy(true)
     try { await onSave(draft.value); draft.clearDraft(); onClose() }
     catch (saveError) { setError(saveError.code === '23505' || saveError.status === 409 ? 'That supplier code already exists in this workspace.' : describeApiError(saveError)) }
     finally { setBusy(false) }
   }
+
+  async function submit(event) {
+    event.preventDefault()
+    if (!draft.value.supplierCode.trim() || !draft.value.name.trim()) return setError('Supplier code and name are required.')
+    if (supplier) return performCreate() // edit mode: no identity to discover, save directly
+    setError(null)
+    setCheckingExisting(true)
+    let all = allSuppliers
+    try { if (!all) all = await onLoadAllSuppliers() } finally { setCheckingExisting(false) }
+    const typed = normalizedSupplierName(draft.value.name)
+    const match = (all ?? []).find((candidate) => candidate.is_active && normalizedSupplierName(candidate.name) === typed)
+    if (match) { setDiscoveryMatch(match); return }
+    await performCreate()
+  }
+
+  async function useExisting() {
+    if (!discoveryMatch) return
+    setBusy(true); setError(null)
+    try {
+      if (!visibleSupplierIds?.has(discoveryMatch.id)) await onAssignBranch(discoveryMatch.id, branchId)
+      draft.clearDraft(); onClose()
+    } catch (saveError) { setError(describeApiError(saveError)) }
+    finally { setBusy(false) }
+  }
+
+  // M2.17.5.2 requirement: never silently create a duplicate when a clear exact
+  // account-level match exists - this is the explicit, user-driven override.
+  function createAnyway() { setDiscoveryMatch(null); performCreate() }
+
+  if (!supplier && discoveryMatch) {
+    const alreadyAvailable = visibleSupplierIds?.has(discoveryMatch.id)
+    return <DialogFrame icon={Building2} kicker="Supplier master" title="Existing supplier found" description="An active account supplier already matches this name." titleId="inventory-supplier-title" busy={busy} onClose={onClose}>
+      <div className="machine-form-body">
+        <p><strong>{discoveryMatch.name}</strong> ({discoveryMatch.supplier_code}) already exists for this account{alreadyAvailable ? `, and is already available to ${branchName}.` : `, but is not yet available to ${branchName}.`}</p>
+        <FormError error={error} />
+      </div>
+      <footer className="dialog-actions form-action-footer">
+        <button className="secondary-button" type="button" onClick={createAnyway} disabled={busy}>Create new supplier anyway</button>
+        <button className="primary-button" type="button" onClick={useExisting} disabled={busy}>{busy && <LoaderCircle className="spin" size={16} />}{alreadyAvailable ? 'Use existing supplier' : `Use existing supplier · add to ${branchName}`}</button>
+      </footer>
+    </DialogFrame>
+  }
+
+  if (!supplier && showAttachExisting) {
+    return <DialogFrame icon={Building2} kicker="Supplier master" title="Attach an existing supplier" description="Browse account suppliers not yet available to this branch, instead of creating a new one." titleId="inventory-supplier-title" busy={busy} onClose={onClose}>
+      <div className="machine-form-body">
+        <AttachExistingSupplier branchName={branchName} branchId={branchId} visibleSupplierIds={visibleSupplierIds ?? new Set()} allSuppliers={allSuppliers} onLoadAllSuppliers={onLoadAllSuppliers} onAssignBranch={onAssignBranch} startOpen onAttached={onClose} />
+      </div>
+      <footer className="dialog-actions form-action-footer"><button className="secondary-button" type="button" onClick={() => setShowAttachExisting(false)}>Back to create new supplier</button></footer>
+    </DialogFrame>
+  }
+
   return <DialogFrame icon={Building2} kicker="Supplier master" title={`${supplier ? 'Edit' : 'Add'} supplier`} description="Account-owned supplier identity used by immutable purchase and receipt evidence." titleId="inventory-supplier-title" busy={busy} onClose={onClose}>
     <form className="machine-form" onSubmit={submit} noValidate><div className="machine-form-body"><div className="form-grid">
       <label className="form-field"><span>Supplier code <b className="required-mark">*</b></span><input value={draft.value.supplierCode} onChange={(event) => change('supplierCode', event.target.value)} data-dialog-initial-focus /></label>
@@ -47,7 +111,9 @@ export function InventorySupplierDialog({ account, supplier, onClose, onSave }) 
       <label className="form-field form-field-wide"><span>Address <small>Optional</small></span><textarea rows="2" value={draft.value.address} onChange={(event) => change('address', event.target.value)} /></label>
       <label className="form-field form-field-wide"><span>Notes <small>Optional</small></span><textarea rows="2" value={draft.value.notes} onChange={(event) => change('notes', event.target.value)} /></label>
       {supplier && <label className="master-active-toggle"><input type="checkbox" checked={draft.value.isActive} onChange={(event) => change('isActive', event.target.checked)} /><span><strong>Active</strong><small>Archive referenced suppliers to preserve purchase history.</small></span></label>}
-    </div><FormError error={error} /></div><footer className="dialog-actions form-action-footer"><button className="draft-reset-button" type="button" onClick={() => draft.resetDraft(initial)} disabled={!draft.hasDraft || busy} aria-label="Reset draft" title="Reset draft"><RotateCcw size={15} />Reset draft</button><button className="secondary-button" type="button" onClick={onClose} disabled={busy}>Cancel</button><button className="primary-button" type="submit" disabled={busy}>{busy && <LoaderCircle className="spin" size={17} />}{busy ? 'Saving…' : 'Save supplier'}</button></footer></form>
+    </div>
+    {!supplier && branchId && <p className="attach-existing-hint"><button className="link-button" type="button" onClick={() => setShowAttachExisting(true)}>Already have this supplier in another branch? Attach existing supplier instead…</button></p>}
+    <FormError error={error} /></div><footer className="dialog-actions form-action-footer"><button className="draft-reset-button" type="button" onClick={() => draft.resetDraft(initial)} disabled={!draft.hasDraft || busy} aria-label="Reset draft" title="Reset draft"><RotateCcw size={15} />Reset draft</button><button className="secondary-button" type="button" onClick={onClose} disabled={busy}>Cancel</button><button className="primary-button" type="submit" disabled={busy || checkingExisting}>{(busy || checkingExisting) && <LoaderCircle className="spin" size={17} />}{checkingExisting ? 'Checking…' : busy ? 'Saving…' : 'Save supplier'}</button></footer></form>
   </DialogFrame>
 }
 

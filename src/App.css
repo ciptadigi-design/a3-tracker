@@ -1285,6 +1285,10 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .inventory-toolbar-actions { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 8px; }
 .attach-existing-supplier { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 8px; border: 1px solid var(--border-subtle); border-radius: 12px; background: var(--surface-muted); font-size: 10px; color: var(--text-muted); }
 .attach-existing-supplier select { min-height: 38px; padding: 0 10px; border-radius: 10px; border: 1px solid var(--border-subtle); background: var(--surface-solid); color: var(--text); }
+.attach-existing-hint { margin: 0; }
+.link-button { display: inline; padding: 0; border: 0; background: none; color: var(--blue); font-size: 10px; font-weight: 600; text-decoration: underline; cursor: pointer; }
+.link-button:hover { color: var(--blue-deep); }
+.link-button:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
 .inventory-empty { min-height: 230px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 24px; color: var(--text-muted); border: 1px dashed var(--border-subtle); border-radius: 17px; text-align: center; }
 .inventory-empty strong { color: var(--text); font-size: 12px; }.inventory-empty span { max-width: 440px; font-size: 10px; line-height: 1.5; }
 .inventory-stock-head, .inventory-stock-row > summary { min-width: 0; display: grid; grid-template-columns: minmax(210px,1.55fr) minmax(120px,.9fr) 90px 90px 98px minmax(150px,auto); gap: 12px; align-items: center; }
