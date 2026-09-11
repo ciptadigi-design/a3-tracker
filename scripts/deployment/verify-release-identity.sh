@@ -9,6 +9,16 @@
 # from the release's own backend directory - a stale or wrong cache is exactly
 # the failure mode this exists to catch before Production acceptance.
 #
+# IMPORTANT - this proves the CACHE FILE ON DISK is correct, via the CLI PHP
+# binary. It does NOT prove the live web endpoint (LiteSpeed/LSPHP, a separate
+# PHP install/opcache instance from CLI on Hostinger) is serving it yet -
+# opcache.revalidate_path defaults Off here, so already-warmed web workers keep
+# resolving the `current` symlink to whatever release they first saw, even
+# after this script (and the symlink swap) succeed. Passing this check is
+# necessary but not sufficient: after the atomic swap, also run
+# reset-opcache.php once over HTTP (see that file) and THEN confirm
+# GET /api/v1/version over the real domain, not just this script's own result.
+#
 # Usage:
 #   verify-release-identity.sh <release-backend-dir> <expected-40-hex-sha>
 #
