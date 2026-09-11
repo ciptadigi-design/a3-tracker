@@ -38,8 +38,9 @@ class SessionPersistenceRegressionTest extends TestCase
 
         $response = $this->postJson('/api/v1/auth/login', ['identifier' => 'session_regression', 'password' => 'password123'])->assertOk();
 
-        $cookie = collect($response->headers->getCookies())->first(fn ($c) => $c->getName() === 'laravel_session');
-        $this->assertNotNull($cookie, 'Login response did not set a laravel_session cookie.');
+        $cookieName = config('session.cookie');
+        $cookie = collect($response->headers->getCookies())->first(fn ($c) => $c->getName() === $cookieName);
+        $this->assertNotNull($cookie, "Login response did not set the {$cookieName} session cookie.");
 
         $sessionId = explode('|', Crypt::decrypt($cookie->getValue(), false), 2)[1];
         $row = DB::table('sessions')->where('id', $sessionId)->first();
