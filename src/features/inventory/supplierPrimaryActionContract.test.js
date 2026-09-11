@@ -87,3 +87,29 @@ test('discovery searches only the current account\'s supplier list, not a cross-
   assert.match(purchasingDialogs, /if \(!all\) all = await onLoadAllSuppliers\(\)/)
   assert.doesNotMatch(purchasingDialogs, /fetch\(`https?:/)
 })
+
+// M2.17.5.4 Part A3: a real Production observation found the "Attach existing
+// supplier instead" link opening a dialog that could only ever say "every
+// supplier is already available" - a pointless dead end. It must now only be
+// offered when a real candidate exists.
+test('the attach-existing link is gated on a real candidate count, not shown unconditionally', () => {
+  assert.match(purchasingDialogs, /attachCandidateCount > 0 && !showAttachExisting/)
+  assert.match(purchasingDialogs, /attachCandidateCount = multiBranch \? \(allSuppliers \?\? \[\]\)\.filter\(\(candidate\) => candidate\.is_active && !visibleSupplierIds\?\.has\(candidate\.id\)\)\.length : 0/)
+})
+
+// M2.17.5.4 Part A4: the browse-and-attach picker used to open as a separate
+// DialogFrame screen with a visually detached "Back to create new supplier"
+// footer button, sitting alongside the dialog's own close control. It must now
+// render inline in the same screen, with no redundant second way out.
+test('the attach-existing picker renders inline, with no separate Back to create new supplier footer button', () => {
+  assert.doesNotMatch(purchasingDialogs, /Back to create new supplier/)
+  assert.match(purchasingDialogs, /attach-existing-inline/)
+})
+
+// The account-wide supplier list is loaded proactively (multi-branch accounts,
+// create mode only) so the candidate count above is known before the user ever
+// touches the attach-existing link - never loaded for edit mode or single-branch accounts.
+test('the account-wide supplier list loads eagerly only for multi-branch, create-mode dialogs', () => {
+  assert.match(purchasingDialogs, /const multiBranch = !supplier && branches\.length > 1/)
+  assert.match(purchasingDialogs, /useEffect\(\(\) => \{ if \(multiBranch && !allSuppliers\) onLoadAllSuppliers\(\)\.catch/)
+})

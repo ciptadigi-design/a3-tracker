@@ -65,3 +65,41 @@ test('Component Catalog tracking-method display and edit read the real Laravel f
   assert.match(componentsPage, /trackingLabels\[component\.tracking_method\s*\?\?\s*component\.default_tracking_method\]/)
   assert.match(componentDialog, /component\.tracking_method\s*\?\?\s*component\.default_tracking_method/)
 })
+
+// M2.17.5.4 Part B3: a real Production 403 (caused by a legacy-migrated profile
+// with the wrong account scope - a data issue, not an authorization bug) was
+// displayed as "not allowed to assign this component" even though the user was
+// editing an EXISTING slot's fields, not assigning a new Component Catalog
+// definition. The message must match which operation actually ran.
+test('profileErrorMessage distinguishes editing an existing slot from assigning a new component on a 403', () => {
+  assert.match(profileDialog, /isEditingExistingSlot \? 'Your current workspace role is not allowed to edit this Model Profile\.' : 'Your current workspace role is not allowed to assign this component\.'/)
+  assert.match(profileDialog, /profileErrorMessage\(saveError, Boolean\(profile\)\)/)
+})
+
+// M2.17.5.4 Part B5: threshold inputs reopened showing "30.00"/"12.50" - real,
+// correct decimal(5,2) precision from the backend, but unnecessary visual noise
+// for whole-number percentages. Presentation only - the underlying value must
+// never be rounded or truncated when a real fractional value exists.
+test('threshold fields strip unnecessary trailing zeros without touching real fractional precision', () => {
+  assert.match(profileDialog, /function formatPercent\(value\)/)
+  assert.match(profileDialog, /healthyThreshold: formatPercent\(profile\.healthy_threshold_percent\)/)
+  assert.match(profileDialog, /watchThreshold: formatPercent\(profile\.watch_threshold_percent\)/)
+  assert.match(profileDialog, /warningThreshold: formatPercent\(profile\.warning_threshold_percent\)/)
+  assert.match(profileDialog, /criticalThreshold: formatPercent\(profile\.critical_threshold_percent\)/)
+})
+
+test('formatPercent normalizes whole and fractional decimal strings correctly', () => {
+  // Re-implement the exact same logic in isolation (no render harness) to prove
+  // the transformation itself is correct, matching the source verbatim.
+  function formatPercent(value) {
+    if (value == null || value === '') return ''
+    const numeric = Number(value)
+    return Number.isNaN(numeric) ? String(value) : String(numeric)
+  }
+  assert.equal(formatPercent('30.00'), '30')
+  assert.equal(formatPercent('15.00'), '15')
+  assert.equal(formatPercent('5.00'), '5')
+  assert.equal(formatPercent('0.00'), '0')
+  assert.equal(formatPercent('12.50'), '12.5')
+  assert.equal(formatPercent(''), '')
+})

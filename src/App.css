@@ -1286,6 +1286,8 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .attach-existing-supplier { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 8px; border: 1px solid var(--border-subtle); border-radius: 12px; background: var(--surface-muted); font-size: 10px; color: var(--text-muted); }
 .attach-existing-supplier select { min-height: 38px; padding: 0 10px; border-radius: 10px; border: 1px solid var(--border-subtle); background: var(--surface-solid); color: var(--text); }
 .attach-existing-hint { margin: 0; }
+.attach-existing-inline { display: flex; flex-direction: column; gap: 6px; }
+.attach-existing-inline-head { display: flex; align-items: center; justify-content: space-between; font-size: 10px; font-weight: 700; color: var(--text-muted); }
 .link-button { display: inline; padding: 0; border: 0; background: none; color: var(--blue); font-size: 10px; font-weight: 600; text-decoration: underline; cursor: pointer; }
 .link-button:hover { color: var(--blue-deep); }
 .link-button:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }

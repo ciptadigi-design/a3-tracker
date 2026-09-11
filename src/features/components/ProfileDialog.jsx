@@ -5,6 +5,19 @@ import { useAuth } from '../auth/useAuth.js'
 import { createDraftKey } from '../drafts/draftKeys.js'
 import { usePersistentDraft } from '../drafts/usePersistentDraft.js'
 
+// M2.17.5.4 Part B5: the backend's decimal(5,2) threshold columns serialize as
+// strings like "30.00" - real, correct precision, not a display choice. Reopening
+// the form showed that raw string verbatim ("30.00", "12.50") as visual noise.
+// This normalizes PRESENTATION only: Number->String naturally drops trailing
+// zeros (30.00 -> "30", 12.50 -> "12.5") without rounding or truncating a real
+// fractional value - the database value itself is never touched, and the save
+// path already converts back through Number() regardless of this string's shape.
+function formatPercent(value) {
+  if (value == null || value === '') return ''
+  const numeric = Number(value)
+  return Number.isNaN(numeric) ? String(value) : String(numeric)
+}
+
 function initialValues({ profile, model, initialComponent }) {
   if (profile) {
     return {
@@ -15,10 +28,10 @@ function initialValues({ profile, model, initialComponent }) {
       trackingMethod: profile.tracking_method,
       baselineExpectedClicks: String(profile.baseline_expected_clicks ?? ''),
       adaptiveEnabled: profile.adaptive_enabled,
-      healthyThreshold: String(profile.healthy_threshold_percent),
-      watchThreshold: String(profile.watch_threshold_percent),
-      warningThreshold: String(profile.warning_threshold_percent),
-      criticalThreshold: String(profile.critical_threshold_percent),
+      healthyThreshold: formatPercent(profile.healthy_threshold_percent),
+      watchThreshold: formatPercent(profile.watch_threshold_percent),
+      warningThreshold: formatPercent(profile.warning_threshold_percent),
+      criticalThreshold: formatPercent(profile.critical_threshold_percent),
       notes: profile.notes ?? '', clientRequestId: crypto.randomUUID(),
     }
   }
@@ -46,10 +59,21 @@ function validDraft(value) {
   return value && typeof value.slotCode === 'string' && typeof value.componentId === 'string'
 }
 
-function profileErrorMessage(error) {
+// M2.17.5.4 Part B3: editing an existing slot's baseline/thresholds/notes is not
+// the same operation as assigning a new Component Catalog definition to a model -
+// a 403 on the former was still reporting "not allowed to assign this component",
+// which misdescribes what actually failed (a real Production case: the backend
+// correctly rejected editing a legacy-migrated profile with the wrong account
+// scope, but the message read as if editing a slot were somehow a component
+// re-assignment). The backend's authorization check itself is intentionally the
+// same for both operations (same account/catalog scope should gate both) - only
+// the presented message needed to match which operation actually ran.
+function profileErrorMessage(error, isEditingExistingSlot) {
   if (error?.code === '23505' || error?.status === 409) return 'That active slot is already assigned for this machine model. Choose a unique slot code.'
   if (error?.code === '23514') return 'The expected clicks or lifecycle thresholds are outside the allowed range.'
-  if (error?.code === '42501' || error?.status === 403) return 'Your current workspace role is not allowed to assign this component.'
+  if (error?.code === '42501' || error?.status === 403) {
+    return isEditingExistingSlot ? 'Your current workspace role is not allowed to edit this Model Profile.' : 'Your current workspace role is not allowed to assign this component.'
+  }
   return error?.message ?? 'The profile could not be saved.'
 }
 
@@ -95,7 +119,7 @@ export function ProfileDialog({ account, model, models, profile, components, ini
       clearDraft()
       onClose()
     } catch (saveError) {
-      setError(profileErrorMessage(saveError))
+      setError(profileErrorMessage(saveError, Boolean(profile)))
     } finally {
       setSaving(false)
     }

@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { AlertCircle, Building2, CalendarCheck, LoaderCircle, PackageCheck, Plus, RotateCcw, Trash2, XCircle } from 'lucide-react'
 import { useAuth } from '../auth/useAuth.js'
 import { createDraftKey } from '../drafts/draftKeys.js'
@@ -29,8 +29,17 @@ const normalizedSupplierName = (value) => (value || '').trim().toLowerCase()
 // supplier…" button down to one primary action ("+ Add supplier"). The underlying
 // M2.17.4.1 anti-duplicate/cross-branch discovery capability is preserved here
 // instead: an exact account-wide name match is checked on submit (create mode only)
-// before a new identity is ever created, and the original browse-and-attach picker
-// remains one click away as a secondary link for cases the exact match misses.
+// before a new identity is ever created.
+//
+// M2.17.5.4 Part A: the manual browse-and-attach picker is still useful when the
+// exact-name check misses (a slightly different name, or the operator not knowing
+// the existing name at all) - but it must never be offered as a dead end. This
+// dialog now eagerly loads the account-wide supplier list (multi-branch accounts,
+// create mode only) so the "attach existing" affordance is shown ONLY when a real
+// candidate - an active account supplier not yet available to this branch -
+// actually exists, and renders inline (no separate modal-within-modal screen, no
+// redundant "Back" footer button) so the dialog's own close control is the only
+// way out.
 export function InventorySupplierDialog({ account, supplier, branches = [], branchId, allSuppliers, onLoadAllSuppliers, onAssignBranch, visibleSupplierIds, onClose, onSave }) {
   const { user } = useAuth()
   const initial = { supplierCode: supplier?.supplier_code ?? '', name: supplier?.name ?? '', contactPerson: supplier?.contact_person ?? '', phone: supplier?.phone ?? '', email: supplier?.email ?? '', address: supplier?.address ?? '', notes: supplier?.notes ?? '', isActive: supplier?.is_active ?? true }
@@ -42,6 +51,11 @@ export function InventorySupplierDialog({ account, supplier, branches = [], bran
   const [showAttachExisting, setShowAttachExisting] = useState(false)
   const branchName = branches.find((branch) => branch.id === branchId)?.name ?? 'this branch'
   const change = (field, value) => { draft.updateDraft((current) => ({ ...current, [field]: value })); setError(null); setDiscoveryMatch(null) }
+
+  const multiBranch = !supplier && branches.length > 1
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { if (multiBranch && !allSuppliers) onLoadAllSuppliers().catch(() => {}) }, [multiBranch])
+  const attachCandidateCount = multiBranch ? (allSuppliers ?? []).filter((candidate) => candidate.is_active && !visibleSupplierIds?.has(candidate.id)).length : 0
 
   async function performCreate() {
     setBusy(true)
@@ -92,15 +106,6 @@ export function InventorySupplierDialog({ account, supplier, branches = [], bran
     </DialogFrame>
   }
 
-  if (!supplier && showAttachExisting) {
-    return <DialogFrame icon={Building2} kicker="Supplier master" title="Attach an existing supplier" description="Browse account suppliers not yet available to this branch, instead of creating a new one." titleId="inventory-supplier-title" busy={busy} onClose={onClose}>
-      <div className="machine-form-body">
-        <AttachExistingSupplier branchName={branchName} branchId={branchId} visibleSupplierIds={visibleSupplierIds ?? new Set()} allSuppliers={allSuppliers} onLoadAllSuppliers={onLoadAllSuppliers} onAssignBranch={onAssignBranch} startOpen onAttached={onClose} />
-      </div>
-      <footer className="dialog-actions form-action-footer"><button className="secondary-button" type="button" onClick={() => setShowAttachExisting(false)}>Back to create new supplier</button></footer>
-    </DialogFrame>
-  }
-
   return <DialogFrame icon={Building2} kicker="Supplier master" title={`${supplier ? 'Edit' : 'Add'} supplier`} description="Account-owned supplier identity used by immutable purchase and receipt evidence." titleId="inventory-supplier-title" busy={busy} onClose={onClose}>
     <form className="machine-form" onSubmit={submit} noValidate><div className="machine-form-body"><div className="form-grid">
       <label className="form-field"><span>Supplier code <b className="required-mark">*</b></span><input value={draft.value.supplierCode} onChange={(event) => change('supplierCode', event.target.value)} data-dialog-initial-focus /></label>
@@ -112,7 +117,16 @@ export function InventorySupplierDialog({ account, supplier, branches = [], bran
       <label className="form-field form-field-wide"><span>Notes <small>Optional</small></span><textarea rows="2" value={draft.value.notes} onChange={(event) => change('notes', event.target.value)} /></label>
       {supplier && <label className="master-active-toggle"><input type="checkbox" checked={draft.value.isActive} onChange={(event) => change('isActive', event.target.checked)} /><span><strong>Active</strong><small>Archive referenced suppliers to preserve purchase history.</small></span></label>}
     </div>
-    {!supplier && branchId && <p className="attach-existing-hint"><button className="link-button" type="button" onClick={() => setShowAttachExisting(true)}>Already have this supplier in another branch? Attach existing supplier instead…</button></p>}
+    {/* M2.17.5.4 Part A3/A4: shown only when a real candidate exists (an active
+    account supplier not yet available to this branch) - never a dead-end link
+    that just says "every supplier is already available". Renders inline, in
+    the same dialog screen, so the only way out is the dialog's own close
+    control - no separate "Back" footer button. */}
+    {!supplier && attachCandidateCount > 0 && !showAttachExisting && <p className="attach-existing-hint"><button className="link-button" type="button" onClick={() => setShowAttachExisting(true)}>Already have this supplier in another branch? Attach existing supplier instead…</button></p>}
+    {!supplier && showAttachExisting && <div className="attach-existing-inline">
+      <div className="attach-existing-inline-head"><span>Attach an existing supplier</span><button className="link-button" type="button" onClick={() => setShowAttachExisting(false)}>Hide</button></div>
+      <AttachExistingSupplier branchName={branchName} branchId={branchId} visibleSupplierIds={visibleSupplierIds ?? new Set()} allSuppliers={allSuppliers} onLoadAllSuppliers={onLoadAllSuppliers} onAssignBranch={onAssignBranch} startOpen onAttached={onClose} />
+    </div>}
     <FormError error={error} /></div><footer className="dialog-actions form-action-footer"><button className="draft-reset-button" type="button" onClick={() => draft.resetDraft(initial)} disabled={!draft.hasDraft || busy} aria-label="Reset draft" title="Reset draft"><RotateCcw size={15} />Reset draft</button><button className="secondary-button" type="button" onClick={onClose} disabled={busy}>Cancel</button><button className="primary-button" type="submit" disabled={busy || checkingExisting}>{(busy || checkingExisting) && <LoaderCircle className="spin" size={17} />}{checkingExisting ? 'Checking…' : busy ? 'Saving…' : 'Save supplier'}</button></footer></form>
   </DialogFrame>
 }
