@@ -4,6 +4,7 @@
  * unless a caller explicitly opts into the Laravel backend.
  */
 import { dataBackend } from '../../services/dataBackend.js'
+export { describeApiError, isReferenceConflict } from './apiErrors.js'
 
 const backend = dataBackend
 const baseUrl = (import.meta.env.VITE_API_BASE_URL || '/api/v1').replace(/\/$/, '')
@@ -21,27 +22,27 @@ export async function apiRequest(path, options = {}) {
   if (csrf) headers['X-XSRF-TOKEN'] = decodeURIComponent(csrf)
   const response = await fetch(`${baseUrl}${path}`, { credentials: 'include', ...options, headers })
   const payload = await response.json().catch(() => ({}))
-  if (!response.ok) { const error = new Error(payload.message || 'API request failed.'); error.status = response.status; error.errors = payload.errors || {}; throw error }
+  if (!response.ok) {
+    // A 419 means the session's security token no longer matches what the browser sent -
+    // most commonly because the session expired, or a deployment rotated session storage
+    // while this tab was already open. The mutation was NOT applied. Re-bootstrap CSRF/session
+    // state here (safe, idempotent) so the user's next explicit retry has a fresh token, but
+    // never auto-retry the mutation itself - it may not be safe to resend automatically.
+    if (response.status === 419) {
+      try { await csrfCookie() } catch { /* best-effort refresh; surfaced error below still applies */ }
+      const error = new Error('Your session security token expired. Refresh or sign in again, then retry.')
+      error.status = 419
+      error.isCsrfMismatch = true
+      error.errors = {}
+      throw error
+    }
+    const error = new Error(payload.message || 'API request failed.'); error.status = response.status; error.errors = payload.errors || {}; throw error
+  }
   return payload
 }
 
 export function unwrapData(payload) { return payload?.data ?? payload }
 export function unwrapCollection(payload) { const data = unwrapData(payload); return Array.isArray(data) ? data : data?.data ?? [] }
-
-// Laravel's default ValidationException message truncates to "first error (and N more errors)".
-// The `errors` map on a 422 response always carries every field's messages, so prefer that
-// when present instead of showing the user an incomplete summary.
-export function describeApiError(error) {
-  const fieldMessages = error?.errors && typeof error.errors === 'object' ? Object.values(error.errors).flat() : []
-  return fieldMessages.length ? fieldMessages.join(' ') : error?.message ?? 'The request could not be completed.'
-}
-
-// Backend-agnostic "this record is referenced elsewhere" detection: Postgres/PostgREST
-// surfaces foreign-key violations as error.code (23503), while the Laravel API normalizes
-// the same condition to an HTTP 409 with no .code at all.
-export function isReferenceConflict(error) {
-  return error?.status === 409 || error?.code === '23503' || error?.code === '23505'
-}
 
 export async function csrfCookie() {
   assertLaravel()

@@ -102,8 +102,25 @@ class InventoryController extends Controller
         return response()->noContent();
     }
 
+    // Historical Supabase/AI-assisted migration rows used "-" as a placeholder for
+    // "no email on file" in a field that is otherwise a real, optional email address.
+    // Laravel's `email` rule rejects that placeholder outright, so Edit fails on
+    // legacy suppliers even though the user changed nothing about the email. Only
+    // this field gets placeholder normalization - Notes/Address legitimately contain
+    // free text like "-" and must not be silently nulled.
+    private const EMAIL_PLACEHOLDER_VALUES = ['-', '--', 'n/a', 'na', 'none', 'null'];
+
+    private function normalizeSupplierEmailPlaceholder(Request $r): void
+    {
+        $email = $r->input('email');
+        if (is_string($email) && in_array(strtolower(trim($email)), self::EMAIL_PLACEHOLDER_VALUES, true)) {
+            $r->merge(['email' => null]);
+        }
+    }
+
     public function saveSupplier(Request $r, ?string $id = null)
     {
+        $this->normalizeSupplierEmailPlaceholder($r);
         $d = $r->validate(['account_id' => 'required|uuid', 'code' => 'required|string|max:80', 'name' => 'required|string|max:160', 'contact_name' => 'nullable|string', 'phone' => 'nullable|string', 'email' => 'nullable|email', 'address' => 'nullable|string', 'notes' => 'nullable|string', 'is_active' => 'boolean']);
         $a = Account::findOrFail($d['account_id']);
         abort_unless(app(AccountAccessResolver::class)->canManageOperational($r->user(), $a), 403);

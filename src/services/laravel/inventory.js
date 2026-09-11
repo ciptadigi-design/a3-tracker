@@ -1,18 +1,18 @@
 import { apiClient, unwrapCollection, unwrapData } from '../../lib/api/apiClient.js'
+import { optional, optionalEmail } from './supplierFields.js'
 
 export async function loadInventory({ accountId, branchId }) {
   if (!accountId || !branchId) return { branchId, items: [], locations: [], suppliers: [], purchases: [], movements: [], balances: [], totals: [], components: [], people: [], purchaseLines: [], receipts: [], lastPrices: [], costHistory: [], costPositions: [] }
   return unwrapData(await apiClient.get(`/accounts/${accountId}/branches/${branchId}/inventory`))
 }
 
-function optional(value) { return typeof value === 'string' ? value.trim() || null : value ?? null }
 // Account-wide supplier master list (every branch's suppliers, each with its branch
 // assignments) - distinct from loadInventory()'s `suppliers`, which is branch-scoped for
 // the purchase picker. Admin management (create/edit/archive/assign) always needs the
 // full account list regardless of which branch happens to be selected.
 export async function loadInventorySuppliers() { return unwrapCollection(await apiClient.get('/inventory/suppliers')) }
 export async function saveInventorySupplier({ accountId, supplierId, values }) {
-  const payload = { account_id: accountId, code: values.supplierCode?.trim(), name: values.name?.trim(), contact_name: optional(values.contactPerson), phone: optional(values.phone), email: optional(values.email), address: optional(values.address), notes: optional(values.notes), is_active: values.isActive }
+  const payload = { account_id: accountId, code: values.supplierCode?.trim(), name: values.name?.trim(), contact_name: optional(values.contactPerson), phone: optional(values.phone), email: optionalEmail(values.email), address: optional(values.address), notes: optional(values.notes), is_active: values.isActive }
   return unwrapData(await (supplierId ? apiClient.put(`/inventory/suppliers/${supplierId}`, payload) : apiClient.post('/inventory/suppliers', payload)))
 }
 export async function deleteInventorySupplier({ supplierId }) { return unwrapData(await apiClient.delete(`/inventory/suppliers/${supplierId}`)) }
