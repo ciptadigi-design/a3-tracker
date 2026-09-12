@@ -48,15 +48,17 @@ file_count="$(tar -tzf "$path" 2>/dev/null | grep -vc '/$' || true)"
 
 listing="$(tar -tzf "$path" 2>/dev/null)"
 
-echo "$listing" | grep -qE '(^|/)index\.html$' || fail "archive has no index.html"
-echo "$listing" | grep -qE '(^|/)assets/' || fail "archive has no assets/ directory"
-echo "$listing" | grep -qE '\.js$' || fail "archive contains no .js asset"
+# A here-string has no pipe producer for grep -q to terminate with SIGPIPE.
+# Keep pipefail enabled and preserve the existing presence checks.
+grep -qE '(^|/)index\.html$' <<< "$listing" || fail "archive has no index.html"
+grep -qE '(^|/)assets/' <<< "$listing" || fail "archive has no assets/ directory"
+grep -qE '\.js$' <<< "$listing" || fail "archive contains no .js asset"
 
 has_htaccess="NO"
-echo "$listing" | grep -qE '(^|/)\.htaccess$' && has_htaccess="YES"
+grep -qE '(^|/)\.htaccess$' <<< "$listing" && has_htaccess="YES"
 
 has_css="NO"
-echo "$listing" | grep -qE '\.css$' && has_css="YES"
+grep -qE '\.css$' <<< "$listing" && has_css="YES"
 
 tmp_dir="$(mktemp -d)"
 trap 'rm -rf "$tmp_dir"' EXIT
