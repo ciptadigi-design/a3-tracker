@@ -26,6 +26,18 @@ class ComponentsController extends Controller
         abort_unless(app(AccountAccessResolver::class)->canManageCatalogScope($r->user(), $accountId), 403);
     }
 
+    // M2.18.1 (closes M2.18 audit BLOCKER B1): machine-component configuration
+    // (which components exist on a machine, and how) is master-data scoped to
+    // the machine's account - the same authorization tier storeMachine()/
+    // updateMachine()/setMachineStatus() already use for machine-level
+    // configuration, not merely "can this user read/access the machine"
+    // (MachineAccessResolver::canAccess() only proves branch-scoped
+    // visibility, not a role's permission to reconfigure master data).
+    private function authorizeComponentConfiguration(Request $r, Machine $machine): void
+    {
+        abort_unless(app(AccountAccessResolver::class)->canManageOperational($r->user(), $machine->account), 403);
+    }
+
     // M2.17.5.2 Part B2: canonical threshold semantics are healthy > watch > warning >
     // critical >= 0. Only enforced when all four are present in this request - a
     // partial edit (e.g. notes-only) must not be forced to resend every threshold.
@@ -160,7 +172,8 @@ class ComponentsController extends Controller
 
     public function exclude(Request $r, string $component)
     {
-        $mc = MachineComponent::findOrFail($component);
+        $mc = MachineComponent::with('machine')->findOrFail($component);
+        $this->authorizeComponentConfiguration($r, $mc->machine);
         $d = $r->validate(['reason' => 'required|string', 'client_request_id' => 'nullable|uuid']);
         app(ComponentConfigurationService::class)->exclude($mc, $d['reason'], $d['client_request_id'] ?? null);
 
@@ -169,7 +182,11 @@ class ComponentsController extends Controller
 
     public function clearExclusion(Request $r, string $exclusion)
     {
-        $e = MachineComponentExclusion::findOrFail($exclusion);
+        // Authorization is resolved from the exclusion record's own machine_id,
+        // never a client-supplied value, so a forged/unrelated id cannot be
+        // used to launder access into a different account.
+        $e = MachineComponentExclusion::with('machine')->findOrFail($exclusion);
+        $this->authorizeComponentConfiguration($r, $e->machine);
         app(ComponentConfigurationService::class)->clearExclusion($e, $r->user()->id);
 
         return response()->noContent();
@@ -221,6 +238,7 @@ class ComponentsController extends Controller
     public function sync(Request $r, string $machine)
     {
         $m = Machine::findOrFail($machine);
+        $this->authorizeComponentConfiguration($r, $m);
         $n = app(ComponentConfigurationService::class)->sync($m);
 
         return response()->json(['data' => ['created_or_restored' => $n]]);
@@ -229,6 +247,7 @@ class ComponentsController extends Controller
     public function add(Request $r, string $machine)
     {
         $m = Machine::findOrFail($machine);
+        $this->authorizeComponentConfiguration($r, $m);
         $d = $r->validate(['component_id' => 'required|uuid', 'slot_code' => 'required|string|max:80', 'display_order' => 'nullable|integer|min:0', 'tracking_method' => 'required|in:counter_based', 'baseline_expected_clicks' => 'required|integer|min:1', 'notes' => 'nullable|string']);
 
         return response()->json(['data' => app(ComponentConfigurationService::class)->addManual($m, $d)], 201);
@@ -236,7 +255,13 @@ class ComponentsController extends Controller
 
     public function initialize(Request $r, string $component)
     {
-        $mc = MachineComponent::findOrFail($component);
+        // Operational tier, not configuration tier: recording that a component
+        // was physically installed is the same class of action as
+        // InventoryController::replace() (which creates the same kind of
+        // ComponentLifecycle row) and CreateCounterReading - any branch-scoped
+        // role may do it, not only owner/admin.
+        $mc = MachineComponent::with('machine')->findOrFail($component);
+        abort_unless(app(MachineAccessResolver::class)->canAccess($r->user(), $mc->machine, true), 403);
         $d = $r->validate(['started_at' => 'nullable|date', 'evidence_level' => 'nullable|string|size:1', 'source' => 'nullable|string|max:40', 'notes' => 'nullable|string', 'client_request_id' => 'nullable|uuid']);
 
         return response()->json(['data' => app(ComponentConfigurationService::class)->initialize($mc, $d)], 201);
@@ -244,7 +269,8 @@ class ComponentsController extends Controller
 
     public function reconcile(Request $r, string $component)
     {
-        $mc = MachineComponent::findOrFail($component);
+        $mc = MachineComponent::with('machine')->findOrFail($component);
+        $this->authorizeComponentConfiguration($r, $mc->machine);
         $d = $r->validate(['profile_slot_id' => 'required|uuid']);
         $slot = ModelProfileSlot::findOrFail($d['profile_slot_id']);
 
@@ -253,14 +279,19 @@ class ComponentsController extends Controller
 
     public function reconciliationCandidate(Request $r, string $component)
     {
+        // Read-only (ComponentConfigurationService::reconciliationCandidate()
+        // performs no writes) - visibility tier matches machineComponents()
+        // above: any branch-scoped role may view it.
         $mc = MachineComponent::with(['machine', 'component'])->findOrFail($component);
+        abort_unless(app(MachineAccessResolver::class)->canAccess($r->user(), $mc->machine), 403);
 
         return response()->json(['data' => app(ComponentConfigurationService::class)->reconciliationCandidate($mc)]);
     }
 
     public function remove(Request $r, string $component)
     {
-        $mc = MachineComponent::findOrFail($component);
+        $mc = MachineComponent::with('machine')->findOrFail($component);
+        $this->authorizeComponentConfiguration($r, $mc->machine);
         $d = $r->validate(['reason' => 'nullable|string']);
         $mc->update(['status' => 'retired', 'retired_at' => now()]);
 

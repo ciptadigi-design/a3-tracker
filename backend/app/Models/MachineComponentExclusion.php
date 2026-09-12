@@ -19,4 +19,9 @@ class MachineComponentExclusion extends Model
     {
         static::creating(fn ($m) => $m->id ??= Str::uuid());
     }
+
+    public function machine()
+    {
+        return $this->belongsTo(Machine::class);
+    }
 }
