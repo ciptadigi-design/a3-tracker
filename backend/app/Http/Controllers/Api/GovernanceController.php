@@ -18,6 +18,8 @@ use App\Models\PlatformUserPrivilege;
 use App\Models\User;
 use App\Services\AccountAccessResolver;
 use App\Services\GovernanceAudit;
+use App\Services\IdentityInput;
+use App\Services\MemberLifecycle;
 use App\Services\ProvisionMember;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -124,27 +126,13 @@ class GovernanceController extends Controller
     {
         $a = Account::findOrFail($accountId);
         abort_unless(app(AccountAccessResolver::class)->canGovern($r->user(), $a), 403);
-        $m = $a->memberships()->findOrFail($id);
-        $d = $r->validate(['role' => 'sometimes|in:owner,admin,technician,operator', 'status' => 'sometimes|in:invited,active,suspended,revoked', 'username' => 'sometimes|string|max:80', 'display_name' => 'sometimes|string|max:120', 'branch_ids' => 'sometimes|array', 'branch_ids.*' => 'uuid']);
-        $nextRole = $d['role'] ?? $m->role;
-        $nextStatus = $d['status'] ?? $m->status;
-        if ($nextRole === 'owner' && $m->role !== 'owner' && ! Gate::allows('platform.manage')) {
-            abort(403);
-        }if ($m->role === 'owner' && $m->status === 'active' && ($nextRole !== 'owner' || $nextStatus !== 'active') && $a->memberships()->where('role', 'owner')->where('status', 'active')->count() <= 1) {
-            return response()->json(['message' => 'The last active owner cannot be suspended or demoted.'], 409);
-        }$m->update(array_intersect_key($d, array_flip(['role', 'status'])));
-        if ($m->user && (array_key_exists('username', $d) || array_key_exists('display_name', $d))) {
-            $m->user->forceFill(array_filter(['username' => $d['username'] ?? null, 'name' => $d['display_name'] ?? null], fn ($v) => $v !== null))->save();
+        if ($r->has('username')) {
+            $r->merge(['username' => IdentityInput::normalize($r->input('username'))]);
         }
-        if (array_key_exists('branch_ids', $d)) {
-            $m->branchAssignments()->update(['is_active' => false]);
-            foreach ($d['branch_ids'] as $branchId) {
-                $m->branchAssignments()->updateOrCreate(['branch_id' => $branchId], ['account_id' => $accountId, 'is_active' => true]);
-            }
-        }
-        app(GovernanceAudit::class)->record($r->user(), 'membership.updated', 'account_membership', $m->id, $a->id, $d);
+        $d = $r->validate(['role' => 'sometimes|in:owner,admin,technician,operator', 'status' => 'sometimes|in:invited,active,suspended,revoked', 'username' => ['sometimes', 'string', 'regex:/^[a-z0-9._-]{3,32}$/'], 'display_name' => 'sometimes|string|max:120', 'branch_ids' => 'sometimes|array', 'branch_ids.*' => 'uuid|distinct']);
+        $m = app(MemberLifecycle::class)->update($r->user(), $a, $id, $d);
 
-        return response()->json(['data' => $m->load('user')]);
+        return response()->json(['data' => $m]);
     }
 
     public function updateMemberEmail(Request $r, string $accountId, string $id)
@@ -152,7 +140,10 @@ class GovernanceController extends Controller
         $a = Account::findOrFail($accountId);
         abort_unless(app(AccountAccessResolver::class)->canGovern($r->user(), $a), 403);
         $m = $a->memberships()->with('user')->findOrFail($id);
-        $d = $r->validate(['email' => 'required|email|max:254|unique:users,email,'.$m->user_id]);
+        app(MemberLifecycle::class)->authorizeTarget($r->user(), $m->user, true);
+        $r->merge(['email' => IdentityInput::normalize($r->input('email'))]);
+        $d = $r->validate(['email' => 'required|email|max:254']);
+        IdentityInput::ensureAvailable('email', $d['email'], $m->user_id);
         $m->user->forceFill(['email' => strtolower(trim($d['email']))])->save();
 
         return response()->json(['data' => $m->fresh('user')]);
@@ -163,7 +154,8 @@ class GovernanceController extends Controller
         $a = Account::findOrFail($accountId);
         abort_unless(app(AccountAccessResolver::class)->canGovern($r->user(), $a), 403);
         $m = $a->memberships()->with('user')->findOrFail($id);
-        $d = $r->validate(['password' => 'required|string|min:10|confirmed']);
+        app(MemberLifecycle::class)->authorizeTarget($r->user(), $m->user, true);
+        $d = $r->validate(['password' => 'required|string|min:10|max:128|confirmed']);
         $m->user->forceFill(['password' => $d['password']])->save();
 
         return response()->json(['data' => ['membership_id' => $m->id]]);
@@ -182,6 +174,16 @@ class GovernanceController extends Controller
         $a = Account::findOrFail($id);
         abort_unless(app(AccountAccessResolver::class)->canGovern($r->user(), $a), 403);
         $m = app(ProvisionMember::class)->execute($r->user(), $a, ['name' => $r->name, 'email' => $r->email, 'username' => $r->username, 'password' => $r->password, 'role' => $r->role, 'branch_ids' => $r->branch_ids ?? []]);
+
+        return response()->json(['data' => $m], 201);
+    }
+
+    public function attachMember(Request $r, string $id)
+    {
+        Gate::authorize('platform.manage');
+        $a = Account::findOrFail($id);
+        $d = $r->validate(['user_id' => 'required|uuid', 'role' => 'required|in:owner,admin,technician,operator', 'branch_ids' => 'required|array', 'branch_ids.*' => 'uuid|distinct']);
+        $m = app(MemberLifecycle::class)->attach($r->user(), $a, $d);
 
         return response()->json(['data' => $m], 201);
     }

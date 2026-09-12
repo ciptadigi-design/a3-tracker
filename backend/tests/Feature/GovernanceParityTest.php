@@ -136,27 +136,23 @@ class GovernanceParityTest extends TestCase
         $this->actingAs($g['u'])->getJson('/api/v1/accounts/'.$g['b']->id.'/branches')->assertForbidden();
     }
 
-    public function test_self_password_change_does_not_invalidate_the_laravel_session(): void
+    public function test_self_password_change_invalidates_the_previous_laravel_session(): void
     {
-        // Laravel's session guard authenticates by cookie/session identity, not by
-        // re-checking the stored password hash on every request. Unlike the Supabase
-        // Admin API path (which revokes the caller's own token when the password
-        // changes), changing your own password through this endpoint must not by
-        // itself invalidate the current Laravel session — a follow-up request in the
-        // same session still succeeds.
+        // M2.20A: a password change invalidates every previously authenticated session.
         $g = $this->graph();
         $this->actingAs($g['u']);
         $this->patchJson('/api/v1/me/account', [
             'action' => 'password', 'currentPassword' => 'password',
             'password' => 'new-secret-password', 'password_confirmation' => 'new-secret-password',
         ])->assertOk();
-        $this->getJson('/api/v1/me')->assertOk()->assertJsonPath('data.user.id', $g['u']->id);
+        $this->getJson('/api/v1/me')->assertUnauthorized();
     }
 
-    public function test_admin_resetting_another_members_password_preserves_the_admins_own_session(): void
+    public function test_platform_resetting_another_members_password_preserves_the_admins_own_session(): void
     {
         $g = $this->graph();
         $owner = User::factory()->create(['status' => 'active']);
+        PlatformUserPrivilege::create(['user_id' => $owner->id, 'role' => 'superuser', 'is_active' => true]);
         AccountMembership::create(['account_id' => $g['a']->id, 'user_id' => $owner->id, 'role' => 'owner', 'status' => 'active', 'accepted_at' => now()]);
         $this->actingAs($owner);
         $this->postJson('/api/v1/accounts/'.$g['a']->id.'/members/'.$g['m']->id.'/password', [

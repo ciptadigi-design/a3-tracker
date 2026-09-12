@@ -9,13 +9,16 @@ class EnsureActiveUser
 {
     public function handle(Request $r, Closure $next)
     {
-        if (! $r->user()?->isActive()) {
+        $user = $r->user()?->fresh();
+        // Legacy sessions have version zero. They remain usable until the first
+        // security change, and cannot acquire a new version without logging in.
+        if (! $user?->isActive() || (int) $r->session()->get('identity_session_version', 0) !== (int) $user->session_version) {
             auth()->logout();
             $r->session()->invalidate();
 
             return response()->json(['message' => 'Unauthenticated.', 'errors' => (object) []], 401);
         }
 
-return $next($r);
+        return $next($r);
     }
 }

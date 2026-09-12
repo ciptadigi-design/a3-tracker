@@ -7,6 +7,7 @@ use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Laravel\Sanctum\HasApiTokens;
 
@@ -24,6 +25,24 @@ class User extends Authenticatable
         static::creating(function (self $user) {
             $user->id ??= (string) Str::uuid();
         });
+    }
+
+    /**
+     * Password reset and disable/re-enable atomically revoke every earlier session.
+     * Use a SQL increment so concurrent resets cannot lose a version increment.
+     */
+    public function save(array $options = [])
+    {
+        $revoke = $this->exists && ($this->isDirty('password') || $this->isDirty('status'));
+        if ($revoke) {
+            $this->session_version = DB::raw('session_version + 1');
+        }
+        $saved = parent::save($options);
+        if ($saved && $revoke) {
+            $this->refresh();
+        }
+
+        return $saved;
     }
 
     /**
@@ -47,6 +66,7 @@ class User extends Authenticatable
     protected $hidden = [
         'password',
         'remember_token',
+        'session_version',
     ];
 
     /**

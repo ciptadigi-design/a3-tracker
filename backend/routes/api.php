@@ -35,6 +35,7 @@ Route::prefix('v1')->middleware('request.id')->group(function () {
             Route::patch('accounts/{accountId}/members/{id}', [GovernanceController::class, 'updateMember']);
             Route::patch('accounts/{accountId}/members/{id}/email', [GovernanceController::class, 'updateMemberEmail']);
             Route::post('accounts/{accountId}/members/{id}/password', [GovernanceController::class, 'resetMemberPassword']);
+            Route::post('platform/accounts/{id}/members', [GovernanceController::class, 'attachMember']);
             Route::post('platform/bootstrap-superuser', [GovernanceController::class, 'bootstrap']);
             Route::get('manufacturers', [OperationsController::class, 'manufacturers']);
             Route::post('manufacturers', [OperationsController::class, 'storeManufacturer']);
