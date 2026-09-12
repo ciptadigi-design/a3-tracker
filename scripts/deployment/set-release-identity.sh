@@ -17,6 +17,16 @@
 # exists yet. Run this against the release's .env (or the shared .env it is
 # symlinked to) before caching config for that release.
 #
+# M2.18.2: `sed -i` edits in place by writing a new file and renaming it over
+# the original path - when that path is a symlink (exactly the shared .env
+# case this script's own docstring above describes), the rename REPLACES the
+# symlink with a brand-new regular file, silently breaking the release's
+# link to the shared .env from that point on. This was true of every deploy
+# since M2.17.5.3 and went undetected until M2.18.2's verify-release.sh
+# preflight gate caught it. Fixed by resolving the symlink to its real
+# target first and editing that file directly, so the symlink itself is
+# never touched.
+#
 # Exit codes:
 #   0  success (RELEASE_IDENTITY_SET=<sha> printed)
 #   1  invalid SHA format
@@ -37,11 +47,13 @@ if ! [[ "$sha" =~ ^[0-9a-f]{40}$ ]]; then
   exit 1
 fi
 
-if grep -q '^APP_GIT_SHA=' "$env_file"; then
-  sed -i.bak "s/^APP_GIT_SHA=.*/APP_GIT_SHA=\"${sha}\"/" "$env_file"
-  rm -f "${env_file}.bak"
+real_file="$(readlink -f "$env_file" 2>/dev/null || echo "$env_file")"
+
+if grep -q '^APP_GIT_SHA=' "$real_file"; then
+  sed -i.bak "s/^APP_GIT_SHA=.*/APP_GIT_SHA=\"${sha}\"/" "$real_file"
+  rm -f "${real_file}.bak"
 else
-  printf '\nAPP_GIT_SHA="%s"\n' "$sha" >> "$env_file"
+  printf '\nAPP_GIT_SHA="%s"\n' "$sha" >> "$real_file"
 fi
 
 echo "RELEASE_IDENTITY_SET=$sha"
