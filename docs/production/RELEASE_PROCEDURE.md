@@ -117,11 +117,41 @@ here should ever be "remembered" instead of run.
     defaulted columns, no drops/renames of anything already in use) or
     explicitly planned as a breaking change with its own rollout plan.
 
-14. **Sync into public_html, preserving inode/.htaccess.**
-    `scripts/deployment/sync-public-html.sh <release_dist_dir>
-    <public_html_dir>` - copies the verified `dist/` output in place without
-    touching `.htaccess`, `.a3-active`, or `index.php`, and without
-    replacing the `public_html` directory's inode.
+14. **Sync into public_html, preserving inode/infrastructure.** Canonical
+    source: `<release>/dist`, produced by `build-frontend.sh`.
+
+    ```bash
+    # NEVER (M2.19.1 blank-page incident):
+    sync-public-html.sh "$RELEASE" "$PUBLIC"
+    # CORRECT:
+    scripts/deployment/sync-public-html.sh "$RELEASE/dist" "$PUBLIC"
+    ```
+
+    The script validates the artifact structure, not its directory name. Before
+    touching public_html it requires regular `index.html` and
+    `build-manifest.json`, an `assets/` directory, a hashed `/assets/` JavaScript
+    module entry, and existing local JS/CSS references confined to the artifact.
+    It rejects source/dev URLs (`/src/`, `/@vite/client`, localhost, 127.0.0.1),
+    traversal/encoded/remote asset URLs, base overrides, inline scripts,
+    repository material, nested `dist/`, symlinks/special files, and source
+    infrastructure collisions. Both manifest validation and the canonical
+    `verify-frontend-backend.sh` gate require Laravel + `/api/v1`.
+
+    Empty/root/equal/nested paths and symlink source/destination directories
+    fail closed. Spaces and trailing slashes are supported. The destination
+    must already contain regular `.htaccess`, `index.php`, and `.a3-active`;
+    their bytes/metadata and the public_html inode/permissions are preserved.
+    No directory replacement occurs. Post-sync repeats artifact/backend and
+    infrastructure checks; a failure returns non-zero with
+    `PARTIAL_SYNC_FAILURE`, never `SYNC_OK`. There is no automatic rollback.
+
+    **INVALID SOURCE → NON-ZERO EXIT → PUBLIC_HTML UNCHANGED.** The permanent
+    M2.19.1 fixture regression is in `sync-public-html.test.mjs`; run
+    `node --test scripts/deployment/*.test.mjs`. Never test an invalid source
+    against live public_html. Keep artifacts immutable during sync and serialize
+    deployment operations. Hostinger's private `deploy-tools` installation must
+    include `sync-public-html.sh`, `lib/frontend-sync-contract.php`, and
+    `verify-frontend-backend.sh` from the same reviewed commit (PHP with DOM).
 
 15. **Atomic `current` symlink swap** to the new release directory.
 

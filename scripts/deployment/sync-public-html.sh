@@ -1,45 +1,42 @@
 #!/usr/bin/env bash
-# M2.17.4.2: the atomic release process built `releases/<sha>/dist` and swapped the
-# `current` symlink, but never actually copied the built SPA into `public_html` - the
-# directory Apache/.htaccess really serves. Production kept silently serving whatever
-# frontend bundle the LAST successful sync left behind (M2.17.4's, not M2.17.4.1's),
-# even though the backend API had already cut over to the new release. This script is
-# the missing step: it copies the new release's dist/ output into public_html WITHOUT
-# touching .htaccess, .a3-active, or index.php (the Laravel front-controller) - none of
-# which live in dist/ - and without replacing the public_html directory itself, so its
-# inode is preserved.
-#
-# Usage:
-#   sync-public-html.sh <release_dist_dir> <public_html_dir>
-# Example:
-#   sync-public-html.sh \
-#     /home/USER/a3-production-app/releases/<sha>/dist \
-#     /home/USER/domains/example.com/public_html
-#
-# Exit codes:
-#   0  success
-#   1  usage error or missing source
-set -euo pipefail
+# Sync a canonical build-frontend.sh artifact in place. NEVER pass a release root.
+# Usage: sync-public-html.sh <release>/dist <public_html>
+# Requires PHP with DOM and the adjacent lib/ and verify-frontend-backend.sh.
+set -Eeuo pipefail
 
-dist_dir="${1:?usage: sync-public-html.sh <release_dist_dir> <public_html_dir>}"
-public_html_dir="${2:?usage: sync-public-html.sh <release_dist_dir> <public_html_dir>}"
+fail() { printf 'SYNC_FAIL: %s\n' "$1" >&2; exit 1; }
+[ "$#" -eq 2 ] && [ -n "$1" ] && [ -n "$2" ] || fail 'usage: sync-public-html.sh <release>/dist <public_html>'
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
+contract="$SCRIPT_DIR/lib/frontend-sync-contract.php"
 
-if [ ! -d "$dist_dir" ]; then
-  echo "SYNC_FAIL: dist directory not found: $dist_dir" >&2
-  exit 1
-fi
-if [ ! -f "$public_html_dir/.htaccess" ]; then
-  echo "SYNC_FAIL: refusing to sync into a directory with no .htaccess (wrong target?): $public_html_dir" >&2
-  exit 1
-fi
+# All gates below are read-only. No destination mutation, including metadata,
+# occurs before the complete artifact AND canonical backend gates have passed.
+paths="$(php "$contract" paths "$1" "$2")"
+dist_dir="${paths%%$'\n'*}"
+public_html_dir="${paths#*$'\n'}"
+php "$contract" artifact "$dist_dir"
+bash "$SCRIPT_DIR/verify-frontend-backend.sh" "$dist_dir"
+before="$(php "$contract" invariants "$public_html_dir")"
 
-# Remove only previously-synced SPA assets, never the protected infra files.
+# Mutation boundary. Every subsequent error is a partial sync, never SYNC_OK.
+trap 'status=$?; printf "PARTIAL_SYNC_FAILURE: public_html may be incomplete; inspect before retrying (exit %s)\n" "$status" >&2; exit "$status"' ERR
+# find does not follow links; rm removes a symlink entry, never its target.
 find "$public_html_dir" -mindepth 1 -maxdepth 1 \
   ! -name '.htaccess' ! -name '.a3-active' ! -name 'index.php' \
-  -exec rm -rf {} +
+  -exec rm -rf -- {} +
 
-cp -a "$dist_dir"/. "$public_html_dir"/
+# Copy entries, not the source directory itself: preserve public_html's inode
+# and permissions. Source infrastructure collisions and links were rejected.
+shopt -s dotglob nullglob
+for entry in "$dist_dir"/*; do
+  cp -a -- "$entry" "$public_html_dir/"
+done
 
-echo "SYNC_OK"
-echo "index.html asset reference:"
-grep -o 'assets/index-[^"]*\.js' "$public_html_dir/index.html" || true
+php "$contract" public "$public_html_dir"
+bash "$SCRIPT_DIR/verify-frontend-backend.sh" "$public_html_dir"
+after="$(php "$contract" invariants "$public_html_dir")"
+if [ "$before" != "$after" ]; then
+  printf 'PARTIAL_SYNC_FAILURE: destination inode or infrastructure changed\n' >&2
+  exit 1
+fi
+printf 'SYNC_OK\n'
