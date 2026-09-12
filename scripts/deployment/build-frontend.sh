@@ -21,7 +21,7 @@ dist_dir="${1:-dist}"
 export VITE_DATA_BACKEND=laravel
 export VITE_API_BASE_URL=/api/v1
 
-npm run build
+npm run build -- --outDir "$dist_dir"
 
 git_sha="$(git rev-parse HEAD 2>/dev/null || echo unknown)"
 built_at="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
@@ -29,7 +29,7 @@ built_at="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 node -e '
 const fs = require("fs");
 const path = require("path");
-const [, , distDir, backend, apiBaseUrl, gitSha, builtAt] = process.argv;
+const [, distDir, backend, apiBaseUrl, gitSha, builtAt] = process.argv;
 const manifest = { dataBackend: backend, apiBaseUrl, gitSha, builtAt };
 fs.writeFileSync(path.join(distDir, "build-manifest.json"), JSON.stringify(manifest, null, 2) + "\n");
 ' "$dist_dir" "$VITE_DATA_BACKEND" "$VITE_API_BASE_URL" "$git_sha" "$built_at"
