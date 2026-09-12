@@ -32,13 +32,17 @@ human has to remember while running an ad-hoc command.
 ## Release sequence
 
 Run in this order. A gate that fails stops the release - do not skip ahead.
+This is the canonical current procedure, not a partial checklist - every step
+below is either an executable script or an explicit manual command; nothing
+here should ever be "remembered" instead of run.
 
-1. **Backup gate.** On the Production host, from the *current* release
-   directory: `scripts/deployment/production-backup.sh <milestone-slug>
-   backend <public_html-dir> <backups-root>`. Refuse to proceed on anything
-   but `BACKUP_GATE=PASS`. See BACKUP_INTEGRITY_RUNBOOK.md.
+1. **Exact source SHA.** Decide the exact 40-hex commit SHA being released.
+   Everything below is keyed off this one value - never a branch name, never
+   "latest".
 
-2. **Frontend build (enforced).** From the approved commit:
+2. **Local canonical frontend build.** From that exact commit, on the
+   operator's machine (Hostinger has no node/npm at all - confirmed live on
+   the host during M2.17.5.6 - only PHP/Composer):
    `scripts/deployment/build-frontend.sh [dist-dir]`. This exports
    `VITE_DATA_BACKEND=laravel` and `VITE_API_BASE_URL=/api/v1` itself - it
    does not rely on the operator's shell already having them - runs
@@ -47,45 +51,123 @@ Run in this order. A gate that fails stops the release - do not skip ahead.
 
 3. **Frontend backend verification gate.**
    `scripts/deployment/verify-frontend-backend.sh <dist-dir>` must print
-   `BACKEND_VERIFIED=laravel` before the artifact is packaged. It reads
-   `build-manifest.json`, not the operator's shell environment and not a
-   grep for the string "supabase" in the bundle (the Supabase adapter
-   legitimately remains present as a split/dead chunk for the DEV/staging
-   behavioral oracle - its presence proves nothing). A missing manifest
-   fails closed: it means the artifact was not built via step 2.
+   `BACKEND_VERIFIED=laravel` before the artifact goes anywhere near
+   Production. It reads `build-manifest.json`, not the operator's shell
+   environment and not a grep for the string "supabase" in the bundle (the
+   Supabase adapter legitimately remains present as a split/dead chunk for
+   the DEV/staging behavioral oracle - its presence proves nothing). A
+   missing manifest fails closed: it means the artifact was not built via
+   step 2.
 
-4. **Backend build.** `composer install --no-dev --classmap-authoritative`
-   in `backend/` if remote Composer is unavailable.
+4. **CI exact-SHA green.** Both `Database CI` and `Laravel MySQL Target CI`
+   must report `success` for this exact commit SHA before it is eligible for
+   Production - never a nearby commit, never "CI was green yesterday".
 
-5. **Release identity.** Before `php artisan config:cache` on the release:
-   `scripts/deployment/set-release-identity.sh <env-file> <exact-40-hex-sha>`,
-   then `scripts/deployment/verify-release-identity.sh <release-backend-dir>
+5. **Production backup gate.** On the Production host, from the *current*
+   release directory: `scripts/deployment/production-backup.sh
+   <milestone-slug> backend <public_html-dir> <backups-root>`. Refuse to
+   proceed on anything but `BACKUP_GATE=PASS`. See
+   [BACKUP_INTEGRITY_RUNBOOK.md](BACKUP_INTEGRITY_RUNBOOK.md).
+
+6. **Fresh release creation.** `git clone` the repository into a new
+   `releases/<sha>/` directory and `git checkout <sha>` inside it. Never
+   `cp -al` or hard-link a release from another one - each release is an
+   independent, fully-checked-out tree. Copy the already-verified `dist/`
+   from step 3 into `releases/<sha>/dist/` (frontend is never built on the
+   Hostinger host itself).
+
+7. **Composer install.** `composer install --no-dev
+   --classmap-authoritative --no-interaction --no-progress` inside
+   `releases/<sha>/backend`.
+
+8. **Release identity.** `scripts/deployment/set-release-identity.sh
+   <shared-env-file> <exact-40-hex-sha>`, then `php artisan config:clear &&
+   php artisan config:cache` in the release's `backend/`, then
+   `scripts/deployment/verify-release-identity.sh <release-backend-dir>
    <expected-sha>` against the CLI-resolved config.
 
-6. **Shared session storage.**
-   `scripts/deployment/link-shared-storage.sh <release_dir> <shared_dir>` so
-   file-based sessions survive the symlink swap instead of every open tab
-   getting a dropped login/419 the instant `current` repoints.
+9. **Shared `.env` linkage (M2.18.2 / closes H9).**
+   `scripts/deployment/link-shared-env.sh <release_dir> <shared_dir>` -
+   symlinks `releases/<sha>/backend/.env` to the canonical `shared/.env`.
+   Before this script existed, this step was manual and undocumented (the
+   H9 finding from the M2.18 audit) and had to be done by hand with
+   `ln -sfn` during both the M2.17.5.6 and M2.18.1 deploys. Never prints or
+   copies the `.env` contents - only paths.
 
-7. **Sync into public_html.**
-   `scripts/deployment/sync-public-html.sh <release_dist_dir>
-   <public_html_dir>` - copies the verified `dist/` output in place without
-   touching `.htaccess`, `.a3-active`, or `index.php`, and without replacing
-   the `public_html` directory's inode.
+10. **Shared session storage linkage.**
+    `scripts/deployment/link-shared-storage.sh <release_dir> <shared_dir>`
+    so file-based sessions survive the symlink swap instead of every open
+    tab getting a dropped login/419 the instant `current` repoints.
 
-8. **Atomic `current` symlink swap** to the new release directory.
+11. **Release preflight (M2.18.2, closes H2's remaining gap).**
+    `scripts/deployment/verify-release.sh <release_dir> <shared_dir>
+    <expected_sha>` must print `RELEASE_PREFLIGHT=PASS` before the release
+    is allowed anywhere near the `current` symlink. This is the single
+    consolidated gate: backend structure, both shared links (steps 9-10),
+    the frontend artifact (step 3's result), and release identity (step 8)
+    all proven together, not trusted individually. A release missing shared
+    environment linkage or built against the wrong frontend backend is
+    rejected here, before it can ever become live.
 
-9. **OPcache reset (one-shot, over HTTP).** Upload
-   `scripts/deployment/reset-opcache.php` to `public_html` under a random
-   filename, `curl` it once, confirm `OPCACHE_RESET_OK`, then delete it
-   immediately - LiteSpeed's web PHP is a separate OPcache instance from the
-   CLI binary used for the steps above, and `opcache.revalidate_path` is Off
-   and not overridable on this host, so a bare symlink repoint alone leaves
-   already-warmed web workers serving the previous release.
+12. **Migration status / preflight.** `php artisan migrate:status` against
+    the intended Production database, read-only, before any write.
 
-10. **Post-swap verification.** `GET /api/v1/version` matches the exact
-    deployed SHA; a real browser login (Incognito) resolves through Laravel,
-    not Supabase, before declaring the release accepted.
+13. **Migrations, only if required.** `php artisan migrate --force` -
+    migrations are forward-only and must be additive/compatible (nullable or
+    defaulted columns, no drops/renames of anything already in use) or
+    explicitly planned as a breaking change with its own rollout plan.
+
+14. **Sync into public_html, preserving inode/.htaccess.**
+    `scripts/deployment/sync-public-html.sh <release_dist_dir>
+    <public_html_dir>` - copies the verified `dist/` output in place without
+    touching `.htaccess`, `.a3-active`, or `index.php`, and without
+    replacing the `public_html` directory's inode.
+
+15. **Atomic `current` symlink swap** to the new release directory.
+
+16. **OPcache reset (one-shot, over HTTP).** Upload
+    `scripts/deployment/reset-opcache.php` to `public_html` under a random
+    filename, `curl` it once, confirm `OPCACHE_RESET_OK`, then delete it
+    immediately - LiteSpeed's web PHP is a separate OPcache instance from
+    the CLI binary used for the steps above, and `opcache.revalidate_path`
+    is Off and not overridable on this host, so a bare symlink repoint
+    alone leaves already-warmed web workers serving the previous release.
+
+17. **Smoke tests.** `GET /` = 200, `GET /login` reachable, `GET
+    /api/v1/health` healthy, `GET /sanctum/csrf-cookie` = 204, `GET
+    /api/v1/me` unauthenticated = 401.
+
+18. **Exact version verification.** `GET /api/v1/version` matches the exact
+    deployed SHA.
+
+19. **Post-deploy acceptance.** A real browser login (Incognito) resolves
+    through Laravel, not Supabase, and the authenticated workspace loads,
+    before declaring the release accepted.
+
+## NEVER
+
+- `cp -al` or hard-link a release directory from another one (step 6 - every
+  release is an independent, fully-checked-out tree).
+- Replace the `public_html` directory itself (only its contents, via
+  `sync-public-html.sh` - its inode must never change).
+- Casually replace `.htaccess` - it is excluded from every sync on purpose.
+- Ad-hoc `mysqldump` - always `production-backup.sh`, which validates the
+  dump before ever reporting `BACKUP_GATE=PASS` (see
+  [BACKUP_INTEGRITY_RUNBOOK.md](BACKUP_INTEGRITY_RUNBOOK.md) for the incident
+  that made this mandatory).
+- A Production `npm`/`node` build on Hostinger - the host has no node/npm at
+  all, only PHP/Composer (confirmed live during M2.17.5.6). The frontend is
+  always built locally or in CI and uploaded as a finished artifact.
+- Deploying a frontend artifact without `verify-frontend-backend.sh` (or the
+  consolidated `verify-release.sh`) passing first.
+- Exposing secrets - no script here ever reads or prints `.env` contents,
+  only paths and existence checks.
+- Running a rollback's DB restore casually - see
+  [ROLLBACK_RUNBOOK.md](ROLLBACK_RUNBOOK.md). `rollback-release.sh` never
+  restores the database or runs a migration; it only repoints `current` and
+  re-syncs the frontend, and only after an explicit compatibility
+  confirmation when it cannot prove the target release's migrations are a
+  strict subset of what's already applied.
 
 ## Why frontend backend verification is its own gate, not folded into build
 
