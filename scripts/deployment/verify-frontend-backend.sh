@@ -33,8 +33,8 @@ manifest="$dist_dir/build-manifest.json"
 [ -f "$dist_dir/index.html" ] || { echo "FRONTEND_BACKEND_VERIFICATION_FAILED: no index.html in $dist_dir - not a real build output" >&2; exit 1; }
 [ -f "$manifest" ] || { echo "FRONTEND_BACKEND_VERIFICATION_FAILED: no build-manifest.json in $dist_dir (was this built with scripts/deployment/build-frontend.sh?)" >&2; exit 1; }
 
-backend="$(node -e 'try { console.log(JSON.parse(require("fs").readFileSync(process.argv[1],"utf8")).dataBackend || "") } catch { console.log("") }' "$manifest")"
-api_base_url="$(node -e 'try { console.log(JSON.parse(require("fs").readFileSync(process.argv[1],"utf8")).apiBaseUrl || "") } catch { console.log("") }' "$manifest")"
+backend="$(php -r '$d = @json_decode(file_get_contents($argv[1]), true); echo is_array($d) ? ($d["dataBackend"] ?? "") : "";' "$manifest")"
+api_base_url="$(php -r '$d = @json_decode(file_get_contents($argv[1]), true); echo is_array($d) ? ($d["apiBaseUrl"] ?? "") : "";' "$manifest")"
 
 if [ "$backend" != "laravel" ]; then
   echo "FRONTEND_BACKEND_VERIFICATION_FAILED: build-manifest.json records dataBackend='${backend:-(missing/unparseable)}', expected 'laravel'" >&2
