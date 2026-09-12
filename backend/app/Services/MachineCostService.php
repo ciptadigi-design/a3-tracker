@@ -32,9 +32,12 @@ class MachineCostService
         $clicks = null;
         $rows = collect();
         if ($type) {
-            $rows = $this->sequence->forMachine($machine->id, $type->id)
-                ->filter(fn ($r) => $r->observed_at->gte($start) && $r->observed_at->lt($end))
-                ->values();
+            // M2.19.1: $start/$end above are already an exact per-machine UTC
+            // boundary (MachineTimezoneResolver::range()), so the bounded
+            // query is exact here, not a conservative superset - no PHP-side
+            // re-filtering needed beyond what forMachineWithinRange() already
+            // applies at the SQL level.
+            $rows = $this->sequence->forMachineWithinRange($machine->id, $type->id, $start, $end)->values();
             $clicks = $rows->sum(fn ($r) => max(0, (float) ($r->usage ?? 0)));
         }
         // Canonical "has usable counter data for this period" decision. This mirrors the

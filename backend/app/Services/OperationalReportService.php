@@ -83,9 +83,32 @@ class OperationalReportService
         return $values->isEmpty() ? null : $this->money($values->sum(fn ($v) => (float) $v));
     }
 
+    // M2.19.1: a per-machine/branch/incident exact local-date boundary can't be
+    // pushed into one SQL predicate up front, because each row's effective
+    // date depends on ITS OWN resolved timezone (machine, then branch, then
+    // account default) - a report can span machines in different zones.
+    // Rather than partition the query per timezone, fetch a SAFE UTC SUPERSET
+    // wide enough to contain every row whose LOCAL date could possibly fall
+    // in [$from, $to] under ANY real-world IANA offset (-12:00 to +14:00,
+    // both within 24h of UTC), then keep the exact existing local-date
+    // ->filter() as the sole authoritative filter, completely unchanged. This
+    // narrows the SQL fetch without changing which rows are ultimately
+    // returned or how any date is interpreted - verified in
+    // M2_19_1_ReportQueryScalabilityTest across two different timezones and
+    // day/month/year boundaries.
+    private function bufferedUtcRange(string $from, string $to): array
+    {
+        return [
+            Carbon::parse($from)->subDay()->startOfDay(),
+            Carbon::parse($to)->addDays(2)->startOfDay(),
+        ];
+    }
+
     private function incidents(string $accountId, ?string $branchId, ?string $machineId, string $from, string $to, ?string $category, ?string $status): Collection
     {
-        return OperationalIncident::with(['branch', 'machine'])->where('account_id', $accountId)->when($branchId, fn ($q) => $q->where('branch_id', $branchId))->when($machineId, fn ($q) => $q->where('machine_id', $machineId))->when($category, fn ($q) => $q->where('category', $category))->when($status, fn ($q) => $q->where('status', $status))->get()->filter(function ($i) use ($from, $to) {
+        [$lower, $upper] = $this->bufferedUtcRange($from, $to);
+
+        return OperationalIncident::with(['branch', 'machine'])->where('account_id', $accountId)->when($branchId, fn ($q) => $q->where('branch_id', $branchId))->when($machineId, fn ($q) => $q->where('machine_id', $machineId))->when($category, fn ($q) => $q->where('category', $category))->when($status, fn ($q) => $q->where('status', $status))->where('occurred_at', '>=', $lower)->where('occurred_at', '<', $upper)->get()->filter(function ($i) use ($from, $to) {
             $tz = $i->machine?->timezone ?: ($i->branch?->timezone ?: ($i->branch?->account?->default_timezone ?: 'UTC'));
             $date = Carbon::parse($i->occurred_at)->setTimezone($tz)->toDateString();
 
@@ -95,7 +118,16 @@ class OperationalReportService
 
     private function counterRows(string $accountId, Collection $machineIds, string $from, string $to): Collection
     {
-        return CounterReading::with(['machine.branch.account', 'previous'])->where('account_id', $accountId)->whereIn('machine_id', $machineIds)->where('status', 'effective')->whereHas('counterType', fn ($q) => $q->whereRaw('lower(code)=?', ['total_impressions']))->get()->filter(function ($r) use ($from, $to) {
+        [$lower, $upper] = $this->bufferedUtcRange($from, $to);
+
+        // The eager-loaded 'previous' belongsTo relation resolves by its own
+        // stored previous_reading_id, via a separate WHERE id IN (...) query -
+        // it is NOT constrained by this method's own date bound, so a
+        // predecessor reading immediately before $from is still correctly
+        // resolved even though the main query below excludes it. Verified in
+        // M2_19_1_ReportQueryScalabilityTest's "reading exactly before period
+        // start" case.
+        return CounterReading::with(['machine.branch.account', 'previous'])->where('account_id', $accountId)->whereIn('machine_id', $machineIds)->where('status', 'effective')->whereHas('counterType', fn ($q) => $q->whereRaw('lower(code)=?', ['total_impressions']))->where('observed_at', '>=', $lower)->where('observed_at', '<', $upper)->get()->filter(function ($r) use ($from, $to) {
             $date = Carbon::parse($r->observed_at)->setTimezone($this->tz->resolve($r->machine))->toDateString();
 
             return $date >= $from && $date <= $to;
@@ -106,7 +138,9 @@ class OperationalReportService
 
     private function replacements(string $accountId, Collection $machineIds, string $from, string $to): Collection
     {
-        return ComponentReplacement::with(['newLifecycle.machineComponent.machine.branch', 'newLifecycle.machineComponent.component'])->where('account_id', $accountId)->whereHas('newLifecycle.machineComponent', fn ($q) => $q->whereIn('machine_id', $machineIds))->get()->filter(function ($r) use ($from, $to) {
+        [$lower, $upper] = $this->bufferedUtcRange($from, $to);
+
+        return ComponentReplacement::with(['newLifecycle.machineComponent.machine.branch', 'newLifecycle.machineComponent.component'])->where('account_id', $accountId)->whereHas('newLifecycle.machineComponent', fn ($q) => $q->whereIn('machine_id', $machineIds))->where('replaced_at', '>=', $lower)->where('replaced_at', '<', $upper)->get()->filter(function ($r) use ($from, $to) {
             $m = $r->newLifecycle?->machineComponent?->machine;
             $date = Carbon::parse($r->replaced_at)->setTimezone($this->tz->resolve($m))->toDateString();
 

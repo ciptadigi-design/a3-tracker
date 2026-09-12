@@ -22,7 +22,7 @@ class EffectiveCounterSequence
 {
     /**
      * @return Collection<int, CounterReading> effective readings in chronological
-     *         order, each with ->usage (float, or null for the first reading)
+     *                                         order, each with ->usage (float, or null for the first reading)
      */
     public function forMachine(string $machineId, string $counterTypeId): Collection
     {
@@ -33,6 +33,53 @@ class EffectiveCounterSequence
             ->get();
 
         $previousValue = null;
+        foreach ($rows as $row) {
+            $row->usage = $previousValue === null ? null : (float) $row->reading_value - $previousValue;
+            $previousValue = (float) $row->reading_value;
+        }
+
+        return $rows;
+    }
+
+    /**
+     * M2.19.1: identical semantics to forMachine() - dynamic chronological
+     * usage among status=effective readings, exact same tie-break order - but
+     * scoped to [$start, $end) instead of loading the machine's entire
+     * history. Added as a new method rather than changing forMachine()
+     * itself, so every existing caller (OperationsController::counters(),
+     * CorrectCounterReading::simulateReplacement()) is completely unaffected.
+     *
+     * Provably equivalent to forMachine()->filter(fn ($r) =>
+     * $r->observed_at->gte($start) && $r->observed_at->lt($end)): a row's
+     * usage only ever depends on its immediately-preceding effective
+     * reading, never anything further back, so fetching exactly that one
+     * boundary predecessor (when it falls before $start) is sufficient -
+     * nothing before it can change any in-range row's usage.
+     *
+     * @return Collection<int, CounterReading> effective readings within
+     *                                         [$start, $end) in chronological order, each with ->usage
+     */
+    public function forMachineWithinRange(string $machineId, string $counterTypeId, $start, $end): Collection
+    {
+        $rows = CounterReading::where('machine_id', $machineId)
+            ->where('counter_type_id', $counterTypeId)
+            ->where('status', 'effective')
+            ->where('observed_at', '>=', $start)
+            ->where('observed_at', '<', $end)
+            ->orderBy('observed_at')->orderBy('created_at')->orderBy('id')
+            ->get();
+
+        $previousValue = null;
+        if ($rows->isNotEmpty()) {
+            $boundary = CounterReading::where('machine_id', $machineId)
+                ->where('counter_type_id', $counterTypeId)
+                ->where('status', 'effective')
+                ->where('observed_at', '<', $start)
+                ->orderByDesc('observed_at')->orderByDesc('created_at')->orderByDesc('id')
+                ->first();
+            $previousValue = $boundary ? (float) $boundary->reading_value : null;
+        }
+
         foreach ($rows as $row) {
             $row->usage = $previousValue === null ? null : (float) $row->reading_value - $previousValue;
             $previousValue = (float) $row->reading_value;
@@ -58,8 +105,8 @@ class EffectiveCounterSequence
      * otherwise-locally-valid correction — see M2.12L.2's acceptance finding.
      *
      * @return array{sequence: Collection, minUsage: ?float} minUsage is the lower
-     *         of the two affected local deltas (null if the replacement has no
-     *         effective neighbour on that side, e.g. it is the first/last reading)
+     *                                                       of the two affected local deltas (null if the replacement has no
+     *                                                       effective neighbour on that side, e.g. it is the first/last reading)
      */
     public function simulateReplacement(string $machineId, string $counterTypeId, string $targetId, float $value, string $observedAt, string $simulatedId, string $simulatedCreatedAt): array
     {
