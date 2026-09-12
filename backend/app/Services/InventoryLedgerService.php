@@ -18,9 +18,21 @@ class InventoryLedgerService
         return (float) InventoryMovement::where('inventory_item_id', $item)->where('location_id', $location)->sum('quantity');
     }
 
-    public function inbound(InventoryItem $item, InventoryLocation $location, float $quantity, ?float $cost, string $type, string $requestId, ?string $reason = null, $occurredAt = null, ?string $personId = null, ?string $personName = null, ?string $enteredBy = null): InventoryMovement
+    // M2.19: $referenceId/$referenceType are appended (not inserted earlier in
+    // the signature) so every existing positional caller is unaffected. When
+    // omitted, reference_type keeps its exact prior default (the movement
+    // type string) and reference_id stays null, exactly as before. Passing
+    // them lets a caller record exact provenance - e.g. PurchaseReceiptService
+    // links a receipt's inbound movement to its receipt_line, so a FIFO layer
+    // can be traced deterministically: fifo_layers.inbound_movement_id ->
+    // inventory_movements.reference_id (where reference_type='receipt_line')
+    // -> receipt_lines.purchase_line_id -> purchase_lines.purchase_id ->
+    // purchases.supplier_id. reference_id/reference_type already existed on
+    // this table and are the same polymorphic-reference mechanism outbound()
+    // already exposes - no schema change, no new column.
+    public function inbound(InventoryItem $item, InventoryLocation $location, float $quantity, ?float $cost, string $type, string $requestId, ?string $reason = null, $occurredAt = null, ?string $personId = null, ?string $personName = null, ?string $enteredBy = null, ?string $referenceId = null, ?string $referenceType = null): InventoryMovement
     {
-        return DB::transaction(function () use ($item, $location, $quantity, $cost, $type, $requestId, $reason, $occurredAt, $personId, $personName, $enteredBy) {
+        return DB::transaction(function () use ($item, $location, $quantity, $cost, $type, $requestId, $reason, $occurredAt, $personId, $personName, $enteredBy, $referenceId, $referenceType) {
             $this->validateScope($item, $location);
             $item->newQuery()->whereKey($item->id)->lockForUpdate()->first();
             if ($quantity <= 0) {
@@ -28,7 +40,7 @@ class InventoryLedgerService
             }$old = InventoryMovement::where('account_id', $item->account_id)->where('client_request_id', $requestId)->where('movement_type', $type)->first();
             if ($old) {
                 return $old;
-            }$m = InventoryMovement::create(['account_id' => $item->account_id, 'inventory_item_id' => $item->id, 'location_id' => $location->id, 'movement_type' => $type, 'quantity' => $quantity, 'occurred_at' => $occurredAt ?? now(), 'reference_type' => $type, 'reason' => $reason, 'entered_by' => $enteredBy, 'operational_person_id' => $personId, 'operational_person_name_snapshot' => $personName, 'client_request_id' => $requestId]);
+            }$m = InventoryMovement::create(['account_id' => $item->account_id, 'inventory_item_id' => $item->id, 'location_id' => $location->id, 'movement_type' => $type, 'quantity' => $quantity, 'occurred_at' => $occurredAt ?? now(), 'reference_type' => $referenceType ?? $type, 'reference_id' => $referenceId, 'reason' => $reason, 'entered_by' => $enteredBy, 'operational_person_id' => $personId, 'operational_person_name_snapshot' => $personName, 'client_request_id' => $requestId]);
             $sequence = ((int) FifoLayer::where('inventory_item_id', $item->id)->where('location_id', $location->id)->max('fifo_sequence')) + 1;
             FifoLayer::create(['account_id' => $item->account_id, 'inventory_item_id' => $item->id, 'location_id' => $location->id, 'inbound_movement_id' => $m->id, 'source_type' => $type, 'original_quantity' => $quantity, 'remaining_quantity' => $quantity, 'unit_cost' => $cost, 'effective_at' => $m->occurred_at, 'fifo_sequence' => $sequence]);
 
@@ -41,6 +53,25 @@ class InventoryLedgerService
         return DB::transaction(function () use ($item, $location, $quantity, $type, $requestId, $referenceId, $reason, $transferId, $personId, $personName, $enteredBy) {
             $this->validateScope($item, $location);
             $item->newQuery()->whereKey($item->id)->lockForUpdate()->first();
+            // M2.19: mirrors inbound()'s own idempotency check, and matches the
+            // scope of the movement_request_leg_uq unique index that has existed
+            // on this table since its original migration (account_id +
+            // client_request_id + movement_type + location_id - location_id is
+            // part of the key so transfer_out/transfer_in can share one
+            // client_request_id at their two different locations). The database
+            // was already preventing a true duplicate row; without this check,
+            // a retry either crashed on that unique-constraint violation or, if
+            // intervening activity had since dropped the balance below the
+            // retried quantity, incorrectly failed with "insufficient stock" on
+            // an operation that had already completed. This check must run
+            // BEFORE the balance check below for exactly that second reason: a
+            // legitimate retry reports the fact that already happened, it does
+            // not re-validate against whatever the current balance happens to
+            // be now.
+            $old = InventoryMovement::where('account_id', $item->account_id)->where('client_request_id', $requestId)->where('movement_type', $type)->where('location_id', $location->id)->first();
+            if ($old) {
+                return $old;
+            }
             if ($quantity <= 0 || $this->balance($item->id, $location->id) < $quantity) {
                 throw new ConflictHttpException('insufficient stock');
             }$m = InventoryMovement::create(['account_id' => $item->account_id, 'inventory_item_id' => $item->id, 'location_id' => $location->id, 'movement_type' => $type, 'quantity' => -$quantity, 'occurred_at' => now(), 'reference_type' => $type === 'replacement_consumption' ? 'component_replacement' : $type, 'reference_id' => $referenceId, 'reason' => $reason, 'entered_by' => $enteredBy, 'operational_person_id' => $personId, 'operational_person_name_snapshot' => $personName, 'client_request_id' => $requestId, 'transfer_id' => $transferId]);

@@ -46,8 +46,14 @@ class PurchaseReceiptService
                 $received = (float) DB::table('receipt_lines')->where('purchase_line_id', $pl->id)->sum('quantity');
                 if ($received + $line['quantity'] > (float) $pl->ordered_quantity) {
                     throw new ConflictHttpException('receipt exceeds ordered quantity');
-                }DB::table('receipt_lines')->insert(['id' => (string) Str::uuid(), 'account_id' => $location->account_id, 'receipt_id' => $rid, 'purchase_line_id' => $pl->id, 'inventory_item_id' => $pl->inventory_item_id, 'quantity' => $line['quantity'], 'unit_cost' => $pl->unit_cost, 'created_at' => now(), 'updated_at' => now()]);
-                app(InventoryLedgerService::class)->inbound(InventoryItem::findOrFail($pl->inventory_item_id), $location, $line['quantity'], $pl->unit_cost === null ? null : (float) $pl->unit_cost, 'receipt', (string) Uuid::uuid5(Uuid::NAMESPACE_URL, $requestId.$pl->id), null, null, $personId, $personName, $enteredBy);
+                }$receiptLineId = (string) Str::uuid();
+                DB::table('receipt_lines')->insert(['id' => $receiptLineId, 'account_id' => $location->account_id, 'receipt_id' => $rid, 'purchase_line_id' => $pl->id, 'inventory_item_id' => $pl->inventory_item_id, 'quantity' => $line['quantity'], 'unit_cost' => $pl->unit_cost, 'created_at' => now(), 'updated_at' => now()]);
+                // M2.19: link this receipt's inbound movement to the exact
+                // receipt_line it came from, so a FIFO layer can be traced
+                // deterministically back through receipt_line -> purchase_line
+                // -> purchase -> supplier, not just aggregated at the
+                // purchase/receipt level.
+                app(InventoryLedgerService::class)->inbound(InventoryItem::findOrFail($pl->inventory_item_id), $location, $line['quantity'], $pl->unit_cost === null ? null : (float) $pl->unit_cost, 'receipt', (string) Uuid::uuid5(Uuid::NAMESPACE_URL, $requestId.$pl->id), null, null, $personId, $personName, $enteredBy, $receiptLineId, 'receipt_line');
             }$remaining = DB::table('purchase_lines as p')->where('p.purchase_id', $purchaseId)->get()->contains(fn ($p) => (float) DB::table('receipt_lines')->where('purchase_line_id', $p->id)->sum('quantity') < (float) $p->ordered_quantity);
             DB::table('purchases')->where('id', $purchaseId)->update(['status' => $remaining ? 'partially_received' : 'received', 'updated_at' => now()]);
 
