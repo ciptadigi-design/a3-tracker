@@ -10,9 +10,9 @@ use App\Models\MachineOperationalCalendarException;
 use App\Services\AccountAccessResolver;
 use App\Services\MachineAccessResolver;
 use App\Services\MachineClickTargetProjectionService;
+use App\Services\ReplayFields;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 
 class ClickTargetController extends Controller
@@ -132,6 +132,8 @@ class ClickTargetController extends Controller
         return DB::transaction(function () use ($r, $machine, $d) {
             $existingRequest = MachineOperationalCalendarException::where('account_id', $machine->account_id)->where('client_request_id', $d['client_request_id'])->lockForUpdate()->first();
             if ($existingRequest) {
+                ReplayFields::match($existingRequest, ['machine_id' => $machine->id, 'calendar_date' => $d['calendar_date'], 'exception_type' => $d['exception_type'], 'notes' => $d['notes'] ?? null], [], ['calendar_date']);
+
                 return response()->json(['data' => $existingRequest]);
             }
 

@@ -6,12 +6,14 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\OperationalPersonResource;
 use App\Models\Account;
 use App\Models\Branch;
+use App\Models\Machine;
 use App\Models\OperationalIncident;
 use App\Services\BranchAccessResolver;
 use App\Services\OperationalIncidentService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class IncidentsController extends Controller
 {
@@ -52,6 +54,11 @@ class IncidentsController extends Controller
         abort_if($incident->status !== 'open', 409, 'Only open incidents can be edited.');
         $d = $r->validate(['occurred_at' => 'required|date', 'category' => 'required|string|max:40', 'incident_type' => 'required|string|max:40', 'description' => 'required|string', 'machine_id' => 'nullable|uuid', 'operator_person_id' => 'nullable|uuid', 'responsible_person_id' => 'nullable|uuid', 'invoice_number' => 'nullable|string', 'customer_name_snapshot' => 'nullable|string', 'product_name_snapshot' => 'nullable|string', 'qty_affected' => 'nullable|integer|min:1', 'material_loss' => 'nullable|numeric|min:0', 'service_loss' => 'nullable|numeric|min:0', 'cause' => 'nullable|string', 'prevention' => 'nullable|string', 'customer_resolution' => 'nullable|string', 'change_reason' => 'required|string|max:500']);
         $branch = Branch::where('id', $incident->branch_id)->where('account_id', $incident->account_id)->firstOrFail();
+        if (! empty($d['machine_id'])) {
+            if (! Machine::where('account_id', $incident->account_id)->where('branch_id', $branch->id)->where('status', 'active')->whereKey($d['machine_id'])->exists()) {
+                throw ValidationException::withMessages(['machine_id' => 'Machine is not in this branch.']);
+            }
+        }
         $d = $this->service->resolvePersonSnapshots($branch, $d);
         $old = $incident->only(array_keys($d));
         $incident->fill(array_diff_key($d, ['change_reason' => true]));

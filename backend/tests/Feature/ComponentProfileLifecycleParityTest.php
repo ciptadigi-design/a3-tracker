@@ -95,8 +95,9 @@ class ComponentProfileLifecycleParityTest extends TestCase
         $s->sync($f['aMachine']);
         $mc = MachineComponent::where('machine_id', $f['aMachine']->id)->first();
         $id = (string) Str::uuid();
-        $life = $s->initialize($mc, ['started_at' => now()->subDay(), 'client_request_id' => $id]);
-        $this->assertSame((string) $life->id, (string) $s->initialize($mc, ['started_at' => now()->subDay(), 'client_request_id' => $id])->id);
+        $startedAt = now()->subDay()->startOfSecond();
+        $life = $s->initialize($mc, ['started_at' => $startedAt, 'client_request_id' => $id]);
+        $this->assertSame((string) $life->id, (string) $s->initialize($mc, ['started_at' => $startedAt, 'client_request_id' => $id])->id);
         $this->expectException(ConflictHttpException::class);
         $s->exclude($mc, 'historic');
     }
@@ -140,7 +141,7 @@ class ComponentProfileLifecycleParityTest extends TestCase
         $life = $service->initialize($manual, ['started_at' => now(), 'client_request_id' => (string) Str::uuid()]);
 
         $this->assertNull($manual->profile_slot_id);
-        $this->assertSame($manual->id, $life->machine_component_id);
+        $this->assertSame((string) $manual->id, (string) $life->machine_component_id);
         $this->assertSame(0, DB::table('inventory_movements')->count());
     }
 

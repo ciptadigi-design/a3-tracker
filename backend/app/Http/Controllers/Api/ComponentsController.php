@@ -10,11 +10,13 @@ use App\Models\Machine;
 use App\Models\MachineComponent;
 use App\Models\MachineComponentExclusion;
 use App\Models\MachineModel;
+use App\Models\Manufacturer;
 use App\Models\ModelProfile;
 use App\Models\ModelProfileSlot;
 use App\Services\AccountAccessResolver;
 use App\Services\ComponentConfigurationService;
 use App\Services\MachineAccessResolver;
+use App\Services\ScopedReference;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
@@ -62,14 +64,9 @@ class ComponentsController extends Controller
 
     public function storeCatalog(Request $r)
     {
-        // M2.17.5.2: manufacturer_id is optional metadata on the Component Catalog
-        // identity - it does NOT imply machine-model compatibility (that stays
-        // exclusively configured through Model Profiles/slots), so it deliberately
-        // gets no additional scope check beyond "is this a real manufacturer row",
-        // matching the resolveOperator()-style read-through-validate pattern used
-        // elsewhere for optional foreign selections.
         $d = $r->validate(['account_id' => 'nullable|uuid', 'manufacturer_id' => 'nullable|uuid|exists:manufacturers,id', 'code' => 'required|string|max:64', 'name' => 'required|string|max:160', 'description' => 'nullable|string', 'category' => 'nullable|string|max:80']);
         $this->authorizeCatalogScope($r, $d['account_id'] ?? null);
+        ScopedReference::activeGlobalOrOwned(Manufacturer::class, $d['manufacturer_id'] ?? null, $d['account_id'] ?? null, 'manufacturer_id');
 
         $code = strtoupper(trim($d['code']));
         if (ComponentCatalog::whereRaw('UPPER(TRIM(code)) = ?', [$code])->where(fn ($q) => $q->whereNull('account_id')->orWhere('account_id', $d['account_id'] ?? null))->exists()) {
@@ -85,6 +82,7 @@ class ComponentsController extends Controller
         $c = ComponentCatalog::findOrFail($id);
         $this->authorizeCatalogScope($r, $c->account_id);
         $d = $r->validate(['manufacturer_id' => 'nullable|uuid|exists:manufacturers,id', 'code' => 'required|string|max:64', 'name' => 'required|string|max:160', 'description' => 'nullable|string', 'category' => 'nullable|string|max:80']);
+        ScopedReference::activeGlobalOrOwned(Manufacturer::class, $d['manufacturer_id'] ?? null, $c->account_id, 'manufacturer_id');
         $c->update($d);
 
         return response()->json(['data' => $c]);
@@ -119,6 +117,7 @@ class ComponentsController extends Controller
         // assignment against it is Superuser-only, matching every other catalog mutation.
         $this->authorizeCatalogScope($r, $m->account_id);
 
+        ScopedReference::activeGlobalOrOwned(ComponentCatalog::class, $d['component_id'], $m->account_id, 'component_id');
         $profile = ModelProfile::firstOrCreate(['machine_model_id' => $m->id, 'account_id' => $m->account_id, 'is_active' => true], ['name' => trim($m->name).' profile']);
         $slot = ModelProfileSlot::create(['profile_id' => $profile->id, 'component_id' => $d['component_id'], 'slot_code' => $d['slot_code'], 'slot_name' => $d['slot_name'] ?? null, 'display_order' => $d['display_order'] ?? 0, 'tracking_method' => $d['tracking_method'] ?? 'counter_based', 'baseline_expected_clicks' => $d['baseline_expected_clicks'] ?? null] + array_intersect_key($d, array_flip(['healthy_threshold_percent', 'watch_threshold_percent', 'warning_threshold_percent', 'critical_threshold_percent', 'adaptive_enabled', 'notes'])));
 
@@ -131,6 +130,8 @@ class ComponentsController extends Controller
         $this->authorizeCatalogScope($r, $p->account_id);
         $d = $r->validate(['component_id' => 'required|uuid', 'slot_code' => 'required|string|max:80', 'slot_name' => 'nullable|string|max:160', 'display_order' => 'nullable|integer|min:0', 'tracking_method' => 'nullable|in:counter_based', 'baseline_expected_clicks' => 'nullable|integer|min:1', 'healthy_threshold_percent' => 'nullable|numeric|min:0|max:100', 'watch_threshold_percent' => 'nullable|numeric|min:0|max:100', 'warning_threshold_percent' => 'nullable|numeric|min:0|max:100', 'critical_threshold_percent' => 'nullable|numeric|min:0|max:100', 'adaptive_enabled' => 'nullable|boolean', 'notes' => 'nullable|string']);
         $this->validateThresholdOrdering($d);
+
+        ScopedReference::activeGlobalOrOwned(ComponentCatalog::class, $d['component_id'], $p->account_id, 'component_id');
 
         return response()->json(['data' => ModelProfileSlot::create($d + ['profile_id' => $profile])->load('component')], 201);
     }

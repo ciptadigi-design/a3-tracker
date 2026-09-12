@@ -19,9 +19,10 @@ class OperationalReportService
 {
     public function __construct(private MachineCostService $costs, private MachineTimezoneResolver $tz) {}
 
-    public function build(string $accountId, ?string $branchId, ?string $machineId, string $from, string $to, ?string $category = null, ?string $status = null): array
+    public function build(string $accountId, ?string $branchId, ?string $machineId, string $from, string $to, ?string $category = null, ?string $status = null, ?array $authorizedBranches = null): array
     {
         $machines = Machine::with(['branch.account'])->where('account_id', $accountId)->where('status', '!=', 'retired')
+            ->when($authorizedBranches !== null, fn ($q) => $q->whereIn('branch_id', $authorizedBranches))
             ->when($branchId, fn ($q) => $q->where('branch_id', $branchId))
             ->when($machineId, fn ($q) => $q->whereKey($machineId))->orderBy('machine_code')->get();
         $machineIds = $machines->pluck('id');
@@ -32,13 +33,13 @@ class OperationalReportService
             'total_clicks' => (float) $costRows->sum(fn ($r) => (float) ($r['period_clicks'] ?? 0)),
             'component_consumption_cost' => $this->nullableMoney($costRows->pluck('known_consumption_cost')),
             'machine_attributed_error_waste' => $this->money($costRows->sum(fn ($r) => (float) $r['error_waste_cost'])),
-            'branch_only_error_waste' => $this->money($this->incidents($accountId, $branchId, null, $from, $to, $category, $status)->whereNull('machine_id')->sum(fn ($i) => (float) app(OperationalIncidentService::class)->effectiveLoss($i))),
+            'branch_only_error_waste' => $this->money($this->incidents($accountId, $branchId, null, $from, $to, $category, $status, $authorizedBranches)->whereNull('machine_id')->sum(fn ($i) => (float) app(OperationalIncidentService::class)->effectiveLoss($i))),
             'replacement_count' => 0,
             'incident_count' => 0,
         ];
         $overview['standard_machine_cost'] = $this->money($costRows->sum(fn ($r) => (float) $r['standard_machine_cost']));
         $overview['standard_cost_per_click'] = $overview['total_clicks'] > 0 ? $this->money((float) $overview['standard_machine_cost'] / $overview['total_clicks']) : null;
-        $incidents = $this->incidents($accountId, $branchId, $machineId, $from, $to, $category, $status);
+        $incidents = $this->incidents($accountId, $branchId, $machineId, $from, $to, $category, $status, $authorizedBranches);
         $replacements = $this->replacements($accountId, $machineIds, $from, $to);
         $overview['replacement_count'] = $replacements->count();
         $overview['incident_count'] = $incidents->where('status', '!=', 'voided')->count();
@@ -69,7 +70,7 @@ class OperationalReportService
             'replacements' => $replacements->map(fn ($r) => $this->replacementDto($r))->values(),
             'components' => $replacements->map(fn ($r) => $this->replacementDto($r))->values(),
             'componentRanking' => $replacements->groupBy('machine_component_id')->values()->map(fn ($rows) => ['component_id' => $rows->first()->machine_component_id, 'component_code' => $rows->first()->newLifecycle?->machineComponent?->component?->code, 'component_name' => $rows->first()->newLifecycle?->machineComponent?->component?->name, 'replacement_count' => $rows->count(), 'known_consumed_cost' => $this->money($rows->sum(fn ($r) => (float) $r->consumed_cost)), 'unknown_cost_events' => $rows->whereNull('consumed_cost')->count()])->values(),
-            'inventory_consumption' => $this->inventoryConsumption($accountId, $branchId, $machineIds, $from, $to),
+            'inventory_consumption' => $this->inventoryConsumption($accountId, $branchId, $machineIds, $from, $to, $authorizedBranches, $machineId !== null),
         ];
     }
 
@@ -104,11 +105,11 @@ class OperationalReportService
         ];
     }
 
-    private function incidents(string $accountId, ?string $branchId, ?string $machineId, string $from, string $to, ?string $category, ?string $status): Collection
+    private function incidents(string $accountId, ?string $branchId, ?string $machineId, string $from, string $to, ?string $category, ?string $status, ?array $authorizedBranches): Collection
     {
         [$lower, $upper] = $this->bufferedUtcRange($from, $to);
 
-        return OperationalIncident::with(['branch', 'machine'])->where('account_id', $accountId)->when($branchId, fn ($q) => $q->where('branch_id', $branchId))->when($machineId, fn ($q) => $q->where('machine_id', $machineId))->when($category, fn ($q) => $q->where('category', $category))->when($status, fn ($q) => $q->where('status', $status))->where('occurred_at', '>=', $lower)->where('occurred_at', '<', $upper)->get()->filter(function ($i) use ($from, $to) {
+        return OperationalIncident::with(['branch', 'machine'])->where('account_id', $accountId)->where(fn ($q) => $q->whereNull('machine_id')->orWhereHas('machine', fn ($m) => $m->where('account_id', $accountId)->whereColumn('machines.branch_id', 'operational_incidents.branch_id')))->when($authorizedBranches !== null, fn ($q) => $q->whereIn('branch_id', $authorizedBranches))->when($branchId, fn ($q) => $q->where('branch_id', $branchId))->when($machineId, fn ($q) => $q->where('machine_id', $machineId))->when($category, fn ($q) => $q->where('category', $category))->when($status, fn ($q) => $q->where('status', $status))->where('occurred_at', '>=', $lower)->where('occurred_at', '<', $upper)->get()->filter(function ($i) use ($from, $to) {
             $tz = $i->machine?->timezone ?: ($i->branch?->timezone ?: ($i->branch?->account?->default_timezone ?: 'UTC'));
             $date = Carbon::parse($i->occurred_at)->setTimezone($tz)->toDateString();
 
@@ -170,8 +171,11 @@ class OperationalReportService
         return ['incident_id' => $i->id, 'occurred_at' => $i->occurred_at?->toISOString(), 'machine_id' => $i->machine_id, 'machine_code' => $i->machine?->machine_code, 'operator' => $i->operator_name_snapshot, 'pic' => $i->responsible_name_snapshot, 'category' => $i->category, 'incident_type' => $i->incident_type, 'assessed_loss' => $this->money(app(OperationalIncidentService::class)->effectiveLoss($i)), 'status' => $i->status, 'attribution_scope' => $i->machine_id ? 'MACHINE' : 'BRANCH_ONLY'];
     }
 
-    private function inventoryConsumption(string $accountId, ?string $branchId, Collection $machineIds, string $from, string $to): Collection
+    private function inventoryConsumption(string $accountId, ?string $branchId, Collection $machineIds, string $from, string $to, ?array $authorizedBranches, bool $machineFilter): Collection
     {
-        return DB::table('inventory_movements as m')->join('inventory_items as i', 'i.id', '=', 'm.inventory_item_id')->leftJoin('inventory_locations as l', 'l.id', '=', 'm.location_id')->leftJoin('component_replacements as r', 'r.inventory_movement_id', '=', 'm.id')->leftJoin('machine_components as mc', 'mc.id', '=', 'r.machine_component_id')->where('m.account_id', $accountId)->where('m.movement_type', 'issue')->where('m.reference_type', 'replacement_consumption')->when($branchId, fn ($q) => $q->where('l.branch_id', $branchId))->whereBetween('m.occurred_at', [Carbon::parse($from)->startOfDay()->utc(), Carbon::parse($to)->addDay()->startOfDay()->utc()])->select(['m.id as movement_id', 'm.occurred_at', 'm.quantity', 'i.name', 'r.id as replacement_id', 'r.consumed_cost', 'mc.machine_id', 'mc.component_id'])->orderByDesc('m.occurred_at')->orderByDesc('m.id')->get()->map(fn ($r) => ['effective_date' => $r->occurred_at, 'machine_id' => $r->machine_id, 'item' => $r->name, 'component' => $r->component_id, 'quantity_consumed' => (float) $r->quantity, 'consumed_cost' => $r->consumed_cost === null ? null : $this->money($r->consumed_cost), 'replacement_id' => $r->replacement_id]);
+        return DB::table('inventory_movements as m')->join('inventory_items as i', 'i.id', '=', 'm.inventory_item_id')->leftJoin('inventory_locations as l', 'l.id', '=', 'm.location_id')->leftJoin('component_replacements as r', 'r.inventory_movement_id', '=', 'm.id')->leftJoin('machine_components as mc', 'mc.id', '=', 'r.machine_component_id')->where('m.account_id', $accountId)->where(fn ($q) => $q->where(fn ($q) => $q->where('m.movement_type', 'issue')->where('m.reference_type', 'replacement_consumption'))->orWhere(fn ($q) => $q->where('m.movement_type', 'replacement_consumption')->where('m.reference_type', 'component_replacement')))->where('l.account_id', $accountId)->where('i.account_id', $accountId)
+            ->when($authorizedBranches !== null, fn ($q) => $q->where(fn ($q) => $q->whereNull('l.branch_id')->orWhereIn('l.branch_id', $authorizedBranches)))
+            ->when($authorizedBranches !== null || $branchId !== null || $machineFilter, fn ($q) => $q->where(fn ($q) => $q->whereNull('mc.machine_id')->orWhereIn('mc.machine_id', $machineIds)))
+            ->when($machineFilter, fn ($q) => $q->whereIn('mc.machine_id', $machineIds))->when($branchId, fn ($q) => $q->where('l.branch_id', $branchId))->whereBetween('m.occurred_at', [Carbon::parse($from)->startOfDay()->utc(), Carbon::parse($to)->addDay()->startOfDay()->utc()])->select(['m.id as movement_id', 'm.occurred_at', 'm.quantity', 'i.name', 'r.id as replacement_id', 'r.consumed_cost', 'mc.machine_id', 'mc.component_id'])->orderByDesc('m.occurred_at')->orderByDesc('m.id')->get()->map(fn ($r) => ['effective_date' => $r->occurred_at, 'machine_id' => $r->machine_id, 'item' => $r->name, 'component' => $r->component_id, 'quantity_consumed' => (float) $r->quantity, 'consumed_cost' => $r->consumed_cost === null ? null : $this->money($r->consumed_cost), 'replacement_id' => $r->replacement_id]);
     }
 }

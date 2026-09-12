@@ -29,6 +29,7 @@ class ComponentConfigurationService
             $slots = ModelProfileSlot::whereHas('profile', fn ($q) => $q->where('machine_model_id', $machine->machine_model_id)->where('is_active', true)->where(fn ($x) => $x->whereNull('account_id')->orWhere('account_id', $machine->account_id)))->where('is_active', true)->with('profile')->orderBy('display_order')->orderBy('slot_code')->get();
             $n = 0;
             foreach ($slots as $s) {
+                ScopedReference::activeGlobalOrOwned(ComponentCatalog::class, $s->component_id, $s->profile->account_id, 'component_id');
                 if (MachineComponentExclusion::where('machine_id', $machine->id)->where('profile_slot_id', $s->id)->whereNull('cleared_at')->exists()) {
                     continue;
                 } $existing = MachineComponent::where('machine_id', $machine->id)->where('profile_slot_id', $s->id)->first();
@@ -142,13 +143,19 @@ class ComponentConfigurationService
     public function initialize(MachineComponent $mc, array $d): ComponentLifecycle
     {
         return DB::transaction(function () use ($mc, $d) {
-            $mc->lockForUpdate()->first();
+            $mc = MachineComponent::whereKey($mc->id)->lockForUpdate()->firstOrFail();
             if ($mc->source_type === 'manual' && ($mc->tracking_method !== 'counter_based' || ! $mc->baseline_expected_clicks)) {
                 throw new ConflictHttpException('machine-specific component needs a counter-based expected baseline before initialization');
             }
             if ($d['client_request_id'] ?? null) {
-                $old = ComponentLifecycle::where('client_request_id', $d['client_request_id'])->first();
+                // Lifecycle keys are globally unique. A collision outside this component is never loaded.
+                if (ComponentLifecycle::where('client_request_id', $d['client_request_id'])->where('machine_component_id', '!=', $mc->id)->exists()) {
+                    throw new ConflictHttpException('Request key belongs to another resource.');
+                }
+                $old = $mc->lifecycles()->where('client_request_id', $d['client_request_id'])->first();
                 if ($old) {
+                    ReplayFields::match($old, ['machine_component_id' => $mc->id, 'started_at' => $d['started_at'] ?? null, 'installed_counter' => $d['installed_counter'] ?? null, 'ended_at' => $d['ended_at'] ?? null, 'removed_counter' => $d['removed_counter'] ?? null, 'source' => $d['source'] ?? 'manual', 'evidence_level' => $d['evidence_level'] ?? null, 'notes' => $d['notes'] ?? null], ['installed_counter', 'removed_counter'], ['started_at', 'ended_at']);
+
                     return $old;
                 }
             } if ($mc->lifecycles()->whereIn('status', ['active', 'unknown'])->exists()) {

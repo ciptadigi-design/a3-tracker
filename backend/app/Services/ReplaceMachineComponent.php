@@ -47,6 +47,8 @@ class ReplaceMachineComponent
             }
             $old = ComponentReplacement::where('account_id', $mc->account_id)->where('client_request_id', $d['client_request_id'])->first();
             if ($old) {
+                ReplayFields::match($old, ['machine_component_id' => $mc->id, 'inventory_source' => $d['inventory_source'] ?? 'external_untracked', 'inventory_item_id' => $d['inventory_item_id'] ?? null, 'inventory_location_id' => $d['inventory_location_id'] ?? null, 'quantity' => ($d['inventory_source'] ?? 'external_untracked') === 'inventory' ? ($d['quantity'] ?? 1) : null, 'external_reason' => $d['external_reason'] ?? null, 'notes' => $d['notes'] ?? null, 'performed_by_person_id' => $d['performed_by_person_id'] ?? null] + (empty($d['performed_by_person_id']) ? ['performed_by_name_snapshot' => $d['performed_by_name'] ?? null] : []) + (isset($d['replaced_at']) ? ['replaced_at' => $d['replaced_at']] : []), ['quantity'], ['replaced_at']);
+
                 return $old;
             }$when = $d['replaced_at'] ?? now();
             $source = $d['inventory_source'] ?? 'external_untracked';

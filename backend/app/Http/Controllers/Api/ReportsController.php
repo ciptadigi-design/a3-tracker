@@ -11,24 +11,13 @@ use App\Services\BranchAccessResolver;
 use App\Services\OperationalReportService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Validation\ValidationException;
 
 class ReportsController extends Controller
 {
     public function __construct(private OperationalReportService $reports, private AccountAccessResolver $accounts, private BranchAccessResolver $branches) {}
 
-    // M2.19: the widest single report period allowed. Comfortably covers a
-    // full calendar year (including a leap year) for day/week/month/
-    // period-comparison workflows and year-over-year review, while still
-    // rejecting an effectively-unbounded custom range (e.g. "since the
-    // account was created"). Chosen from the actual query shape, not
-    // arbitrarily: incidents(), counterRows(), and replacements() in
-    // OperationalReportService currently load the ENTIRE account/machine
-    // history unconditionally and filter by date in PHP afterward (only
-    // inventoryConsumption() pushes the date range into SQL) - so period
-    // WIDTH does not by itself bound the query cost today. This validation
-    // is a predictable, user-facing guardrail against an extreme request,
-    // not a fix for that deeper always-loads-full-history shape, which is a
-    // larger change out of this milestone's scope.
+    // Preserve the established report range bound; branch scope is resolved server-side.
     private const MAX_PERIOD_DAYS = 366;
 
     public function __invoke(Request $request)
@@ -60,10 +49,17 @@ class ReportsController extends Controller
         }
         if (! empty($v['machine_id'])) {
             $machine = Machine::with('branch')->where('id', $v['machine_id'])->where('account_id', $account->id)->firstOrFail();
-            abort_unless(! $branch || $machine->branch_id === $branch->id, 422);
             abort_unless($machine->branch && $this->branches->canAccess($request->user(), $machine->branch), 403);
+            if ($branch && $machine->branch_id !== $branch->id) {
+                throw ValidationException::withMessages(['machine_id' => 'Machine is not in the selected branch.']);
+            }
         }
 
-        return response()->json($this->reports->build($account->id, $branch?->id, $v['machine_id'] ?? null, $v['period_start'], $v['period_end'], $v['category'] ?? null, $v['status'] ?? null));
+        $allowed = $this->accounts->authorizedBranchIds($request->user(), $account);
+        if ($allowed !== null) {
+            $allowed = $account->branches()->where('is_active', true)->whereIn('id', $allowed)->pluck('id')->all();
+        }
+
+        return response()->json($this->reports->build($account->id, $branch?->id, $v['machine_id'] ?? null, $v['period_start'], $v['period_end'], $v['category'] ?? null, $v['status'] ?? null, $allowed));
     }
 }

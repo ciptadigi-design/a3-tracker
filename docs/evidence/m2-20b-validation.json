@@ -1,0 +1,1008 @@
+{
+  "final-sqlite": {
+    "tests": 496,
+    "assertions": 2152,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 9,
+    "suites": {
+      "Tests\\Unit\\ExampleTest": {
+        "tests": "1",
+        "assertions": "1",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Unit\\LegacyImportManifestValidatorTest": {
+        "tests": "4",
+        "assertions": "4",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Unit\\PurchaseSummaryBuilderTest": {
+        "tests": "6",
+        "assertions": "353",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\BranchAuthorizationScopeTest": {
+        "tests": "9",
+        "assertions": "35",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\CanonicalConfigSyncTest": {
+        "tests": "4",
+        "assertions": "44",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\ComponentProfileLifecycleParityTest": {
+        "tests": "11",
+        "assertions": "40",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\ComponentProjectionParityTest": {
+        "tests": "4",
+        "assertions": "26",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\CounterCorrectionIntegrityTest": {
+        "tests": "21",
+        "assertions": "70",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\ExampleTest": {
+        "tests": "1",
+        "assertions": "1",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\FoundationApiTest": {
+        "tests": "5",
+        "assertions": "27",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\GovernanceParityTest": {
+        "tests": "14",
+        "assertions": "43",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\IncidentMachineCostParityTest": {
+        "tests": "5",
+        "assertions": "17",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\InventoryFifoReplacementParityTest": {
+        "tests": "10",
+        "assertions": "51",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\InventoryMysqlConcurrencyTest": {
+        "tests": "1",
+        "assertions": "0",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "1"
+      },
+      "Tests\\Feature\\InventoryWorkspaceParityTest": {
+        "tests": "3",
+        "assertions": "37",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\M2_15_InventoryComponentPicLinkageTest": {
+        "tests": "14",
+        "assertions": "55",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\M2_17_3_ModelCatalogAuthorizationTest": {
+        "tests": "12",
+        "assertions": "26",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\M2_17_3_SupplierGovernanceTest": {
+        "tests": "8",
+        "assertions": "32",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\M2_17_4_1_SupplierBranchVisibilityTest": {
+        "tests": "8",
+        "assertions": "29",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\M2_17_4_2_SupplierGlobalVisibilityTest": {
+        "tests": "3",
+        "assertions": "17",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\M2_17_4_SessionCsrfTest": {
+        "tests": "3",
+        "assertions": "17",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\M2_17_4_SupplierEmailPlaceholderTest": {
+        "tests": "18",
+        "assertions": "41",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\M2_17_4_SupplierEmailPlaceholderTest::test_legacy_email_placeholder_is_normalized_to_null_on_create": {
+        "tests": "7",
+        "assertions": "14",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\M2_17_4_SupplierEmailPlaceholderTest::test_legacy_email_placeholder_is_normalized_to_null_on_edit": {
+        "tests": "7",
+        "assertions": "14",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\M2_17_5_1_ReceivingPicAndPurchaseSemanticsTest": {
+        "tests": "6",
+        "assertions": "29",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\M2_17_5_2_ComponentCatalogAndModelProfileIntegrityTest": {
+        "tests": "19",
+        "assertions": "54",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\M2_17_5_3_VersionReleaseIdentityTest": {
+        "tests": "10",
+        "assertions": "32",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\M2_17_5_4_FifoSupplierProvenanceTest": {
+        "tests": "6",
+        "assertions": "19",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\M2_17_5_4_ModelProfileAdminAuthorizationTest": {
+        "tests": "7",
+        "assertions": "22",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\M2_17_5_5_LifecycleBaselineSnapshotTest": {
+        "tests": "6",
+        "assertions": "15",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\M2_17_5_InventoryReceivingAndReplacementIntegrityTest": {
+        "tests": "10",
+        "assertions": "43",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\M2_17_IncidentPersonPopulationTest": {
+        "tests": "15",
+        "assertions": "46",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\M2_18_1_MachineComponentAuthorizationTest": {
+        "tests": "15",
+        "assertions": "28",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\M2_19_1_InventoryDecreaseIdempotencyTest": {
+        "tests": "4",
+        "assertions": "10",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "1"
+      },
+      "Tests\\Feature\\M2_19_1_ReportQueryScalabilityTest": {
+        "tests": "12",
+        "assertions": "28",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\M2_19_2_FifoExactReceiptProvenanceTest": {
+        "tests": "4",
+        "assertions": "9",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\M2_19_3_ReportRangeSafetyTest": {
+        "tests": "7",
+        "assertions": "14",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\M2_20AIdentityBoundaryTest": {
+        "tests": "24",
+        "assertions": "126",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\M2_20AIdentityBoundaryTest::test_foreign_collisions_fail_neutrally": {
+        "tests": "6",
+        "assertions": "30",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\M2_20AMysqlIdentityTest": {
+        "tests": "4",
+        "assertions": "0",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "4"
+      },
+      "Tests\\Feature\\M2_20AMysqlIdentityTest::test_account_lock_serializes_competing_last_owner_transitions": {
+        "tests": "3",
+        "assertions": "0",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "3"
+      },
+      "Tests\\Feature\\M2_20BIsolationTest": {
+        "tests": "40",
+        "assertions": "197",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "1"
+      },
+      "Tests\\Feature\\M2_20BIsolationTest::test_lifecycle_replay_is_bound_to_component": {
+        "tests": "2",
+        "assertions": "6",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\M2_20BIsolationTest::test_foreign_private_reference_is_rejected_without_mutation": {
+        "tests": "7",
+        "assertions": "21",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\M2_20BIsolationTest::test_incident_mutation_requires_own_branch": {
+        "tests": "3",
+        "assertions": "6",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\M2_20BIsolationTest::test_retries_reject_wrong_resource": {
+        "tests": "5",
+        "assertions": "16",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\M2_20BIsolationTest::test_exact_retry_and_changed_payload_by_domain": {
+        "tests": "7",
+        "assertions": "44",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\M2_20BIsolationTest::test_global_and_own_catalog_references_remain_supported": {
+        "tests": "2",
+        "assertions": "18",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\MachineClickTargetAllocationTest": {
+        "tests": "7",
+        "assertions": "10",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\MachineClickTargetAuthorizationTest": {
+        "tests": "13",
+        "assertions": "35",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\MachineClickTargetPeriodComparisonTest": {
+        "tests": "20",
+        "assertions": "73",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\MachineClickTargetProjectionTest": {
+        "tests": "14",
+        "assertions": "39",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\MachineCostBusinessProjectionTest": {
+        "tests": "17",
+        "assertions": "59",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\MachineCostCounterStatusParityTest": {
+        "tests": "7",
+        "assertions": "30",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\MachineCostDailyTrendTest": {
+        "tests": "10",
+        "assertions": "30",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\MachineMasterCrudTest": {
+        "tests": "9",
+        "assertions": "26",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\MachineSellingPriceTest": {
+        "tests": "13",
+        "assertions": "37",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\MyAccountParityTest": {
+        "tests": "3",
+        "assertions": "22",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\OperationalParityTest": {
+        "tests": "4",
+        "assertions": "18",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\OperationalPersonDeactivationTest": {
+        "tests": "7",
+        "assertions": "30",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\OperationalPersonSelectionParityTest": {
+        "tests": "7",
+        "assertions": "52",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\OperationalReportParityTest": {
+        "tests": "1",
+        "assertions": "12",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\PeriodTransportContractTest": {
+        "tests": "7",
+        "assertions": "40",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\PeriodTransportContractTest::test_malformed_period_values_are_rejected_with_y_m_d_contract": {
+        "tests": "4",
+        "assertions": "24",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\SessionPersistenceRegressionTest": {
+        "tests": "1",
+        "assertions": "0",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "1"
+      },
+      "Tests\\Feature\\TransactionFoundationTest": {
+        "tests": "2",
+        "assertions": "1",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "1"
+      }
+    }
+  },
+  "final-mysql": {
+    "tests": 496,
+    "assertions": 2186,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "suites": {
+      "Tests\\Unit\\ExampleTest": {
+        "tests": "1",
+        "assertions": "1",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Unit\\LegacyImportManifestValidatorTest": {
+        "tests": "4",
+        "assertions": "4",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Unit\\PurchaseSummaryBuilderTest": {
+        "tests": "6",
+        "assertions": "353",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\BranchAuthorizationScopeTest": {
+        "tests": "9",
+        "assertions": "35",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\CanonicalConfigSyncTest": {
+        "tests": "4",
+        "assertions": "44",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\ComponentProfileLifecycleParityTest": {
+        "tests": "11",
+        "assertions": "40",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\ComponentProjectionParityTest": {
+        "tests": "4",
+        "assertions": "26",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\CounterCorrectionIntegrityTest": {
+        "tests": "21",
+        "assertions": "70",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\ExampleTest": {
+        "tests": "1",
+        "assertions": "1",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\FoundationApiTest": {
+        "tests": "5",
+        "assertions": "27",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\GovernanceParityTest": {
+        "tests": "14",
+        "assertions": "43",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\IncidentMachineCostParityTest": {
+        "tests": "5",
+        "assertions": "17",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\InventoryFifoReplacementParityTest": {
+        "tests": "10",
+        "assertions": "51",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\InventoryMysqlConcurrencyTest": {
+        "tests": "1",
+        "assertions": "4",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\InventoryWorkspaceParityTest": {
+        "tests": "3",
+        "assertions": "37",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\M2_15_InventoryComponentPicLinkageTest": {
+        "tests": "14",
+        "assertions": "55",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\M2_17_3_ModelCatalogAuthorizationTest": {
+        "tests": "12",
+        "assertions": "26",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\M2_17_3_SupplierGovernanceTest": {
+        "tests": "8",
+        "assertions": "32",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\M2_17_4_1_SupplierBranchVisibilityTest": {
+        "tests": "8",
+        "assertions": "29",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\M2_17_4_2_SupplierGlobalVisibilityTest": {
+        "tests": "3",
+        "assertions": "17",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\M2_17_4_SessionCsrfTest": {
+        "tests": "3",
+        "assertions": "17",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\M2_17_4_SupplierEmailPlaceholderTest": {
+        "tests": "18",
+        "assertions": "41",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\M2_17_4_SupplierEmailPlaceholderTest::test_legacy_email_placeholder_is_normalized_to_null_on_create": {
+        "tests": "7",
+        "assertions": "14",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\M2_17_4_SupplierEmailPlaceholderTest::test_legacy_email_placeholder_is_normalized_to_null_on_edit": {
+        "tests": "7",
+        "assertions": "14",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\M2_17_5_1_ReceivingPicAndPurchaseSemanticsTest": {
+        "tests": "6",
+        "assertions": "29",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\M2_17_5_2_ComponentCatalogAndModelProfileIntegrityTest": {
+        "tests": "19",
+        "assertions": "54",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\M2_17_5_3_VersionReleaseIdentityTest": {
+        "tests": "10",
+        "assertions": "32",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\M2_17_5_4_FifoSupplierProvenanceTest": {
+        "tests": "6",
+        "assertions": "19",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\M2_17_5_4_ModelProfileAdminAuthorizationTest": {
+        "tests": "7",
+        "assertions": "22",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\M2_17_5_5_LifecycleBaselineSnapshotTest": {
+        "tests": "6",
+        "assertions": "15",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\M2_17_5_InventoryReceivingAndReplacementIntegrityTest": {
+        "tests": "10",
+        "assertions": "43",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\M2_17_IncidentPersonPopulationTest": {
+        "tests": "15",
+        "assertions": "46",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\M2_18_1_MachineComponentAuthorizationTest": {
+        "tests": "15",
+        "assertions": "28",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\M2_19_1_InventoryDecreaseIdempotencyTest": {
+        "tests": "4",
+        "assertions": "15",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\M2_19_1_ReportQueryScalabilityTest": {
+        "tests": "12",
+        "assertions": "28",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\M2_19_2_FifoExactReceiptProvenanceTest": {
+        "tests": "4",
+        "assertions": "9",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\M2_19_3_ReportRangeSafetyTest": {
+        "tests": "7",
+        "assertions": "14",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\M2_20AIdentityBoundaryTest": {
+        "tests": "24",
+        "assertions": "126",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\M2_20AIdentityBoundaryTest::test_foreign_collisions_fail_neutrally": {
+        "tests": "6",
+        "assertions": "30",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\M2_20AMysqlIdentityTest": {
+        "tests": "4",
+        "assertions": "17",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\M2_20AMysqlIdentityTest::test_account_lock_serializes_competing_last_owner_transitions": {
+        "tests": "3",
+        "assertions": "15",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\M2_20BIsolationTest": {
+        "tests": "40",
+        "assertions": "199",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\M2_20BIsolationTest::test_lifecycle_replay_is_bound_to_component": {
+        "tests": "2",
+        "assertions": "6",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\M2_20BIsolationTest::test_foreign_private_reference_is_rejected_without_mutation": {
+        "tests": "7",
+        "assertions": "21",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\M2_20BIsolationTest::test_incident_mutation_requires_own_branch": {
+        "tests": "3",
+        "assertions": "6",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\M2_20BIsolationTest::test_retries_reject_wrong_resource": {
+        "tests": "5",
+        "assertions": "16",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\M2_20BIsolationTest::test_exact_retry_and_changed_payload_by_domain": {
+        "tests": "7",
+        "assertions": "44",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\M2_20BIsolationTest::test_global_and_own_catalog_references_remain_supported": {
+        "tests": "2",
+        "assertions": "18",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\MachineClickTargetAllocationTest": {
+        "tests": "7",
+        "assertions": "10",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\MachineClickTargetAuthorizationTest": {
+        "tests": "13",
+        "assertions": "35",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\MachineClickTargetPeriodComparisonTest": {
+        "tests": "20",
+        "assertions": "73",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\MachineClickTargetProjectionTest": {
+        "tests": "14",
+        "assertions": "39",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\MachineCostBusinessProjectionTest": {
+        "tests": "17",
+        "assertions": "59",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\MachineCostCounterStatusParityTest": {
+        "tests": "7",
+        "assertions": "30",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\MachineCostDailyTrendTest": {
+        "tests": "10",
+        "assertions": "30",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\MachineMasterCrudTest": {
+        "tests": "9",
+        "assertions": "26",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\MachineSellingPriceTest": {
+        "tests": "13",
+        "assertions": "37",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\MyAccountParityTest": {
+        "tests": "3",
+        "assertions": "22",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\OperationalParityTest": {
+        "tests": "4",
+        "assertions": "18",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\OperationalPersonDeactivationTest": {
+        "tests": "7",
+        "assertions": "30",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\OperationalPersonSelectionParityTest": {
+        "tests": "7",
+        "assertions": "52",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\OperationalReportParityTest": {
+        "tests": "1",
+        "assertions": "12",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\PeriodTransportContractTest": {
+        "tests": "7",
+        "assertions": "40",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\PeriodTransportContractTest::test_malformed_period_values_are_rejected_with_y_m_d_contract": {
+        "tests": "4",
+        "assertions": "24",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\SessionPersistenceRegressionTest": {
+        "tests": "1",
+        "assertions": "5",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\TransactionFoundationTest": {
+        "tests": "2",
+        "assertions": "2",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      }
+    }
+  },
+  "target-final": {
+    "tests": 40,
+    "assertions": 197,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 1,
+    "suites": {
+      "Tests\\Feature\\M2_20BIsolationTest": {
+        "tests": "40",
+        "assertions": "197",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "1"
+      },
+      "Tests\\Feature\\M2_20BIsolationTest::test_lifecycle_replay_is_bound_to_component": {
+        "tests": "2",
+        "assertions": "6",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\M2_20BIsolationTest::test_foreign_private_reference_is_rejected_without_mutation": {
+        "tests": "7",
+        "assertions": "21",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\M2_20BIsolationTest::test_incident_mutation_requires_own_branch": {
+        "tests": "3",
+        "assertions": "6",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\M2_20BIsolationTest::test_retries_reject_wrong_resource": {
+        "tests": "5",
+        "assertions": "16",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\M2_20BIsolationTest::test_exact_retry_and_changed_payload_by_domain": {
+        "tests": "7",
+        "assertions": "44",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      "Tests\\Feature\\M2_20BIsolationTest::test_global_and_own_catalog_references_remain_supported": {
+        "tests": "2",
+        "assertions": "18",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      }
+    }
+  },
+  "local_mysql_version": "9.7.1; GitHub target workflow verifies MySQL 8.0",
+  "format": "Pint --test PASS (26 PHP files)",
+  "lint": "php -l PASS (26 PHP files)",
+  "diff_check": "PASS",
+  "frontend": "No source changes; existing Database CI runs tests/build",
+  "preexisting_hash_mismatches": 0
+}

@@ -29,6 +29,7 @@ use App\Services\CreateCounterReading;
 use App\Services\EffectiveCounterSequence;
 use App\Services\MachineAccessResolver;
 use App\Services\MachineTimezoneResolver;
+use App\Services\ScopedReference;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
@@ -75,6 +76,7 @@ class OperationsController extends Controller
     {
         $d = $r->validated();
         abort_unless(app(AccountAccessResolver::class)->canManageCatalogScope($r->user(), $d['account_id'] ?? null), 403);
+        ScopedReference::activeGlobalOrOwned(Manufacturer::class, $d['manufacturer_id'], $d['account_id'] ?? null, 'manufacturer_id');
         $duplicate = MachineModel::where('manufacturer_id', $d['manufacturer_id'])->whereRaw('lower(trim(model_code)) = ?', [strtolower(trim($d['model_code']))])->when($d['account_id'] ?? null, fn ($q, $id) => $q->where('account_id', $id), fn ($q) => $q->whereNull('account_id'))->exists();
         abort_if($duplicate, 409, 'Machine model code already exists in this scope.');
 
@@ -99,6 +101,7 @@ class OperationsController extends Controller
         // between accounts, or between account-owned and platform-global, is not a routine
         // edit and must not be reachable by spoofing this field in the request body.
         $d = $r->validate(['manufacturer_id' => 'required|uuid', 'model_code' => 'required|string|max:64', 'name' => 'required|string|max:160', 'machine_category' => 'nullable|string|max:40', 'color_capability' => 'nullable|string|max:20', 'description' => 'nullable|string', 'notes' => 'nullable|string']);
+        ScopedReference::activeGlobalOrOwned(Manufacturer::class, $d['manufacturer_id'], $m->account_id, 'manufacturer_id');
         $duplicate = MachineModel::where('id', '!=', $id)->where('manufacturer_id', $d['manufacturer_id'])->whereRaw('lower(trim(model_code)) = ?', [strtolower(trim($d['model_code']))])->when($m->account_id, fn ($q, $accountId) => $q->where('account_id', $accountId), fn ($q) => $q->whereNull('account_id'))->exists();
         abort_if($duplicate, 409, 'Machine model code already exists in this scope.');
         $m->update($d);
@@ -113,6 +116,7 @@ class OperationsController extends Controller
         $d = $r->validated();
         $model = MachineModel::with('manufacturer')->findOrFail($d['machine_model_id']);
         abort_unless($model->is_active && ($model->account_id === null || $model->account_id === $b->account_id) && $model->manufacturer?->is_active, 422, 'Machine model is not available for this account.');
+        ScopedReference::activeGlobalOrOwned(Manufacturer::class, $model->manufacturer_id, $model->account_id, 'machine_model_id');
         $m = $b->machines()->create($d + ['account_id' => $b->account_id, 'status' => $d['status'] ?? 'active']);
 
         return response()->json(['data' => $m], 201);
@@ -133,6 +137,9 @@ class OperationsController extends Controller
         $m = Machine::with('account')->findOrFail($id);
         abort_unless(app(AccountAccessResolver::class)->canManageOperational($r->user(), $m->account), 403);
         $d = $r->validate(['machine_model_id' => 'required|uuid', 'machine_code' => 'required|string|max:80', 'display_name' => 'required|string|max:180', 'serial_number' => 'nullable|string|max:120', 'timezone' => 'nullable|string|max:64', 'status' => 'nullable|in:active,down,maintenance,retired']);
+        ScopedReference::activeGlobalOrOwned(MachineModel::class, $d['machine_model_id'], $m->account_id, 'machine_model_id');
+        $model = MachineModel::findOrFail($d['machine_model_id']);
+        ScopedReference::activeGlobalOrOwned(Manufacturer::class, $model->manufacturer_id, $model->account_id, 'machine_model_id');
         $m->update($d);
 
         return response()->json(['data' => $m->load('model.manufacturer')]);

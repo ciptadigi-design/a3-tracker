@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Relations\GlobalOrOwnedBelongsTo;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 
@@ -33,7 +34,7 @@ class MachineModel extends Model
 
     public function manufacturer()
     {
-        return $this->belongsTo(Manufacturer::class);
+        return new GlobalOrOwnedBelongsTo($this->newRelatedInstance(Manufacturer::class)->newQuery(), $this, 'manufacturer_id', 'manufacturer');
     }
 
     public function machines()

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Relations\GlobalOrOwnedBelongsTo;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 
@@ -27,6 +28,6 @@ class ModelProfile extends Model
 
     public function machineModel()
     {
-        return $this->belongsTo(MachineModel::class, 'machine_model_id');
+        return new GlobalOrOwnedBelongsTo($this->newRelatedInstance(MachineModel::class)->newQuery(), $this, 'machine_model_id', 'machineModel');
     }
 }

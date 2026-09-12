@@ -17,7 +17,7 @@ class CorrectCounterReading
     public function execute(User $actor, CounterReading $reading, array $data): CounterReading
     {
         $reading->loadMissing('machine.account');
-        if (! $this->accounts->canManageOperational($actor, $reading->machine->account)) {
+        if (! $this->accounts->canManageOperational($actor, $reading->machine->account) || ! app(MachineAccessResolver::class)->canAccess($actor, $reading->machine)) {
             abort(403);
         }
 
@@ -25,12 +25,9 @@ class CorrectCounterReading
             $target = CounterReading::whereKey($reading->id)->lockForUpdate()->firstOrFail();
             $existing = ! empty($data['client_request_id']) ? CounterReading::where('account_id', $target->account_id)->where('client_request_id', $data['client_request_id'])->first() : null;
             if ($existing) {
-                $sameValue = (float) $existing->reading_value === (float) ($data['replacement_value'] ?? $existing->reading_value);
-                $sameTime = empty($data['replacement_observed_at']) || CarbonImmutable::parse($existing->observed_at)->eq(CarbonImmutable::parse($data['replacement_observed_at']));
-                if ((string) $existing->corrects_reading_id === (string) $target->id && $sameValue && $sameTime) {
-                    return $existing;
-                }
-                throw new ConflictHttpException('client request id was already used for a different correction');
+                ReplayFields::match($existing, ['corrects_reading_id' => $target->id, 'machine_id' => $target->machine_id, 'reading_value' => $data['replacement_value'] ?? $target->reading_value, 'observed_at' => CarbonImmutable::parse($data['replacement_observed_at'] ?? $target->observed_at)->utc(), 'notes' => $data['replacement_notes'] ?? $target->notes, 'correction_reason' => trim((string) ($data['correction_reason'] ?? ''))], ['reading_value'], ['observed_at']);
+
+                return $existing;
             }
             $reason = trim((string) ($data['correction_reason'] ?? ''));
             if ($reason === '') {

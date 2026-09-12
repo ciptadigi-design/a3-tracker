@@ -24,10 +24,7 @@ class CreateCounterReading
             $machine = Machine::whereKey($machine->id)->lockForUpdate()->firstOrFail();
             $existing = CounterReading::where('account_id', $machine->account_id)->where('client_request_id', $data['client_request_id'])->first();
             if ($existing) {
-                $same = (float) $existing->reading_value === (float) $data['reading_value'] && (string) $existing->machine_id === (string) $machine->id && (string) $existing->operator_person_id === (string) $data['operator_person_id'];
-                if (! $same) {
-                    throw new ConflictHttpException('client request id already processed with different values');
-                }
+                ReplayFields::match($existing, ['machine_id' => $machine->id, 'reading_value' => $data['reading_value'], 'operator_person_id' => $data['operator_person_id'], 'observed_at' => CarbonImmutable::parse($data['observed_at'])->utc(), 'shift_code' => $data['shift_code'] ?? null, 'notes' => $data['notes'] ?? null], ['reading_value'], ['observed_at']);
 
                 return $existing;
             } $person = $this->people->eligible($machine, $data['operator_person_id']);

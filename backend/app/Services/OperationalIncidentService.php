@@ -85,6 +85,8 @@ class OperationalIncidentService
         $v = $this->resolvePersonSnapshots($branch, $v);
         $existing = OperationalIncident::where('account_id', $account->id)->where('client_request_id', $v['client_request_id'])->first();
         if ($existing) {
+            ReplayFields::match($existing, ['branch_id' => $branch->id, 'machine_id' => $v['machine_id'] ?? null] + array_replace(array_fill_keys(['occurred_at', 'category', 'incident_type', 'description', 'operator_person_id', 'responsible_person_id', 'invoice_number', 'customer_name_snapshot', 'product_name_snapshot', 'qty_affected', 'cause', 'prevention', 'customer_resolution'], null), ['material_loss' => 0, 'service_loss' => 0, 'penalty_multiplier' => 1], array_intersect_key($v, array_flip(['occurred_at', 'category', 'incident_type', 'description', 'operator_person_id', 'responsible_person_id', 'invoice_number', 'customer_name_snapshot', 'product_name_snapshot', 'qty_affected', 'material_loss', 'service_loss', 'penalty_multiplier', 'cause', 'prevention', 'customer_resolution']))), ['qty_affected', 'material_loss', 'service_loss', 'penalty_multiplier'], ['occurred_at']);
+
             return $existing;
         }
         $material = (string) ($v['material_loss'] ?? 0);
@@ -109,6 +111,6 @@ class OperationalIncidentService
     {
         $account = Account::find($incident->account_id);
 
-        return $account && app(AccountAccessResolver::class)->canManageOperational($user, $account);
+        return $account && app(AccountAccessResolver::class)->canManageOperational($user, $account) && $incident->branch && $this->branches->canAccess($user, $incident->branch);
     }
 }

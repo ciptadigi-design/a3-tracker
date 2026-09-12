@@ -6,10 +6,13 @@ use App\Http\Controllers\Controller;
 use App\Models\Machine;
 use App\Services\MachineAccessResolver;
 use App\Services\MachineCostService;
+use App\Services\OperationalPersonEligibilityService;
+use App\Services\ReplayFields;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 
 class MachineCostController extends Controller
@@ -36,6 +39,7 @@ class MachineCostController extends Controller
         return DB::transaction(function () use ($r, $machine, $d) {
             $existing = DB::table('machine_selling_prices')->where('account_id', $machine->account_id)->where('client_request_id', $d['client_request_id'])->lockForUpdate()->first();
             if ($existing) {
+                ReplayFields::match($existing, ['notes' => $d['notes'] ?? null]);
                 $same = (string) $existing->machine_id === (string) $machine->id
                     && (float) $existing->price_per_click === (float) $d['price_per_click']
                     && Carbon::parse($existing->effective_from)->eq(Carbon::parse($d['effective_from']));
@@ -82,9 +86,14 @@ class MachineCostController extends Controller
     {
         abort_unless($this->access->canAccess($r->user(), $machine, true), 403);
         $d = $r->validate(['category' => 'required|string', 'amount' => 'required|numeric|gt:0', 'allocation_method' => 'required|string', 'description' => 'required|string', 'effective_at' => 'nullable|date', 'period_start' => 'nullable|date', 'period_end' => 'nullable|date', 'operational_person_id' => 'nullable|uuid', 'external_reference' => 'nullable|string', 'notes' => 'nullable|string', 'client_request_id' => 'required|uuid']);
-        $d['effective_at'] = $d['effective_at'] ? Carbon::parse($d['effective_at'])->utc() : null;
-        $d['period_start'] = $d['period_start'] ? Carbon::parse($d['period_start'])->toDateString() : null;
-        $d['period_end'] = $d['period_end'] ? Carbon::parse($d['period_end'])->toDateString() : null;
+        if (! empty($d['operational_person_id'])) {
+            if (! app(OperationalPersonEligibilityService::class)->eligibleForBranch($machine->branch, $d['operational_person_id'])) {
+                throw ValidationException::withMessages(['operational_person_id' => 'Person is not available in this branch.']);
+            }
+        }
+        $d['effective_at'] = ! empty($d['effective_at']) ? Carbon::parse($d['effective_at'])->utc() : null;
+        $d['period_start'] = ! empty($d['period_start']) ? Carbon::parse($d['period_start'])->toDateString() : null;
+        $d['period_end'] = ! empty($d['period_end']) ? Carbon::parse($d['period_end'])->toDateString() : null;
         $id = (string) Str::uuid();
         DB::table('machine_operating_costs')->insert(['id' => $id, 'account_id' => $machine->account_id, 'machine_id' => $machine->id, 'source_type' => 'manual', 'status' => 'posted'] + $d + ['created_at' => now(), 'updated_at' => now()]);
 

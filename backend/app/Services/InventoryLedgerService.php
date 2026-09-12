@@ -34,11 +34,16 @@ class InventoryLedgerService
     {
         return DB::transaction(function () use ($item, $location, $quantity, $cost, $type, $requestId, $reason, $occurredAt, $personId, $personName, $enteredBy, $referenceId, $referenceType) {
             $this->validateScope($item, $location);
+            $this->lockRequestScope((string) $item->account_id, $requestId, $type);
             $item->newQuery()->whereKey($item->id)->lockForUpdate()->first();
             if ($quantity <= 0) {
                 throw new ConflictHttpException('quantity must be positive');
             }$old = InventoryMovement::where('account_id', $item->account_id)->where('client_request_id', $requestId)->where('movement_type', $type)->first();
             if ($old) {
+                ReplayFields::match($old, ['inventory_item_id' => $item->id, 'location_id' => $location->id, 'quantity' => $quantity, 'reason' => $reason, 'operational_person_id' => $personId, 'reference_id' => $referenceId, 'reference_type' => $referenceType ?? $type] + ($occurredAt !== null ? ['occurred_at' => $occurredAt] : []), ['quantity'], ['occurred_at']);
+                $layer = FifoLayer::where('inbound_movement_id', $old->id)->firstOrFail();
+                ReplayFields::match($layer, ['unit_cost' => $cost], ['unit_cost']);
+
                 return $old;
             }$m = InventoryMovement::create(['account_id' => $item->account_id, 'inventory_item_id' => $item->id, 'location_id' => $location->id, 'movement_type' => $type, 'quantity' => $quantity, 'occurred_at' => $occurredAt ?? now(), 'reference_type' => $referenceType ?? $type, 'reference_id' => $referenceId, 'reason' => $reason, 'entered_by' => $enteredBy, 'operational_person_id' => $personId, 'operational_person_name_snapshot' => $personName, 'client_request_id' => $requestId]);
             $sequence = ((int) FifoLayer::where('inventory_item_id', $item->id)->where('location_id', $location->id)->max('fifo_sequence')) + 1;
@@ -52,6 +57,7 @@ class InventoryLedgerService
     {
         return DB::transaction(function () use ($item, $location, $quantity, $type, $requestId, $referenceId, $reason, $transferId, $personId, $personName, $enteredBy) {
             $this->validateScope($item, $location);
+            $this->lockRequestScope((string) $item->account_id, $requestId, $type);
             $item->newQuery()->whereKey($item->id)->lockForUpdate()->first();
             // M2.19: mirrors inbound()'s own idempotency check, and matches the
             // scope of the movement_request_leg_uq unique index that has existed
@@ -68,8 +74,10 @@ class InventoryLedgerService
             // legitimate retry reports the fact that already happened, it does
             // not re-validate against whatever the current balance happens to
             // be now.
-            $old = InventoryMovement::where('account_id', $item->account_id)->where('client_request_id', $requestId)->where('movement_type', $type)->where('location_id', $location->id)->first();
+            $old = InventoryMovement::where('account_id', $item->account_id)->where('client_request_id', $requestId)->where('movement_type', $type)->first();
             if ($old) {
+                ReplayFields::match($old, ['inventory_item_id' => $item->id, 'location_id' => $location->id, 'quantity' => -$quantity, 'reason' => $reason, 'reference_id' => $referenceId, 'operational_person_id' => $personId], ['quantity']);
+
                 return $old;
             }
             if ($quantity <= 0 || $this->balance($item->id, $location->id) < $quantity) {
@@ -101,11 +109,20 @@ class InventoryLedgerService
         }
 
         return DB::transaction(function () use ($item, $from, $to, $quantity, $requestId, $personId, $personName, $enteredBy) {
+            $this->lockRequestScope((string) $item->account_id, $requestId, 'transfer_out');
+            $this->validateScope($item, $from);
+            $this->validateScope($item, $to);
             $item->newQuery()->whereKey($item->id)->lockForUpdate()->first();
             $existingOut = InventoryMovement::where('account_id', $item->account_id)->where('client_request_id', $requestId)->where('movement_type', 'transfer_out')->lockForUpdate()->first();
             $existingIn = InventoryMovement::where('account_id', $item->account_id)->where('client_request_id', $requestId)->where('movement_type', 'transfer_in')->lockForUpdate()->first();
             if ($existingOut && $existingIn) {
+                ReplayFields::match($existingOut, ['inventory_item_id' => $item->id, 'location_id' => $from->id, 'quantity' => -$quantity, 'operational_person_id' => $personId], ['quantity']);
+                ReplayFields::match($existingIn, ['inventory_item_id' => $item->id, 'location_id' => $to->id, 'quantity' => $quantity, 'operational_person_id' => $personId], ['quantity']);
+
                 return [$existingOut, $existingIn];
+            }
+            if ($existingOut || $existingIn) {
+                throw new ConflictHttpException('Incomplete transfer retry.');
             }
             $transfer = (string) Str::uuid();
             $out = $this->outbound($item, $from, $quantity, 'transfer_out', $requestId, null, 'stock transfer', $transfer, $personId, $personName, $enteredBy);
@@ -117,6 +134,17 @@ class InventoryLedgerService
 
             return [$out, $in];
         }, 3);
+    }
+
+    private function lockRequestScope(string $accountId, string $requestId, string $type): void
+    {
+        // The existing unique key includes location. Serialize account request lookups
+        // so simultaneous requests for different items/locations cannot both claim a key.
+        DB::table('accounts')->where('id', $accountId)->lockForUpdate()->first();
+        $types = in_array($type, ['transfer_in', 'transfer_out'], true) ? ['transfer_in', 'transfer_out'] : [$type];
+        if (InventoryMovement::where('account_id', $accountId)->where('client_request_id', $requestId)->whereNotIn('movement_type', $types)->exists()) {
+            throw new ConflictHttpException('Request key belongs to another movement kind.');
+        }
     }
 
     private function validateScope(InventoryItem $item, InventoryLocation $location): void

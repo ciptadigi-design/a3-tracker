@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Relations\GlobalOrOwnedBelongsTo;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 
@@ -20,6 +21,6 @@ class InventoryItem extends Model
 
     public function component()
     {
-        return $this->belongsTo(ComponentCatalog::class, 'component_id');
+        return new GlobalOrOwnedBelongsTo($this->newRelatedInstance(ComponentCatalog::class)->newQuery(), $this, 'component_id', 'component');
     }
 }

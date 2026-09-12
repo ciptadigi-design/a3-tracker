@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\OperationalPersonResource;
 use App\Models\Account;
 use App\Models\Branch;
+use App\Models\ComponentCatalog;
 use App\Models\InventoryItem;
 use App\Models\InventoryLocation;
 use App\Models\InventorySupplier;
@@ -21,6 +22,7 @@ use App\Services\PurchaseReceiptService;
 use App\Services\PurchaseSummaryBuilder;
 use App\Services\ReceiptSummaryBuilder;
 use App\Services\ReplaceMachineComponent;
+use App\Services\ScopedReference;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -186,6 +188,7 @@ class InventoryController extends Controller
         $a = Account::findOrFail($d['account_id']);
         abort_unless(app(AccountAccessResolver::class)->canManageOperational($r->user(), $a), 403);
         $i = $id ? InventoryItem::where('account_id', $a->id)->findOrFail($id) : new InventoryItem(['account_id' => $a->id]);
+        ScopedReference::activeGlobalOrOwned(ComponentCatalog::class, $d['component_id'] ?? null, $a->id, 'component_id');
         $i->fill($d);
         $i->save();
 
@@ -208,6 +211,9 @@ class InventoryController extends Controller
         $a = Account::findOrFail($d['account_id']);
         abort_unless(app(AccountAccessResolver::class)->canManageOperational($r->user(), $a), 403);
         $l = $id ? InventoryLocation::where('account_id', $a->id)->findOrFail($id) : new InventoryLocation(['account_id' => $a->id]);
+        if (! empty($d['branch_id']) && ! Branch::where('account_id', $a->id)->whereKey($d['branch_id'])->exists()) {
+            throw ValidationException::withMessages(['branch_id' => 'Branch is not in this account.']);
+        }
         $l->fill($d);
         $l->save();
 
@@ -243,6 +249,11 @@ class InventoryController extends Controller
         $d = $r->validate(['account_id' => 'required|uuid', 'branch_id' => 'nullable|uuid', 'supplier_id' => 'nullable|uuid', 'external_reference' => 'nullable|string', 'purchase_number' => 'required|string', 'purchase_date' => 'required|date', 'currency_code' => 'nullable|string|size:3', 'notes' => 'nullable|string', 'client_request_id' => 'required|uuid', 'lines' => 'required|array|min:1', 'lines.*.inventory_item_id' => 'required|uuid', 'lines.*.quantity' => 'required|numeric|gt:0', 'lines.*.unit_cost' => 'nullable|numeric|min:0']);
         abort_unless(app(AccountAccessResolver::class)->canManageOperational($r->user(), Account::findOrFail($d['account_id'])), 403);
 
+        if (! empty($d['branch_id'])) {
+            $branch = Branch::where('account_id', $d['account_id'])->findOrFail($d['branch_id']);
+            abort_unless(app(BranchAccessResolver::class)->canAccess($r->user(), $branch), 403);
+        }
+
         return response()->json(['data' => app(PurchaseReceiptService::class)->purchase($d['account_id'], $d)], 201);
     }
 
@@ -252,9 +263,14 @@ class InventoryController extends Controller
         // resolved person_id at all - the frontend already sent it, but it was silently
         // dropped by validate()'s whitelist, so every Goods Receipt movement persisted
         // with a null PIC regardless of what the operator selected.
-        $d = $r->validate(['location_id' => 'required|uuid', 'person_id' => 'nullable|uuid', 'client_request_id' => 'required|uuid', 'lines' => 'required|array|min:1']);
+        $d = $r->validate(['location_id' => 'required|uuid', 'person_id' => 'nullable|uuid', 'client_request_id' => 'required|uuid', 'lines' => 'required|array|min:1', 'lines.*.purchase_line_id' => 'required|uuid|distinct', 'lines.*.quantity' => 'required|numeric|gt:0']);
         $loc = InventoryLocation::findOrFail($d['location_id']);
         abort_unless($this->canAccessLocation($r, $loc, true), 403);
+        $root = DB::table('purchases')->where('account_id', $loc->account_id)->where('id', $purchase)->first();
+        abort_unless($root, 404);
+        if ($root->branch_id) {
+            abort_unless(app(BranchAccessResolver::class)->canAccess($r->user(), Branch::findOrFail($root->branch_id)), 403);
+        }
         [$personId, $personName] = $this->resolveOperator($loc, $d['person_id'] ?? null);
 
         return response()->json(['data' => app(PurchaseReceiptService::class)->receive($purchase, $loc, $d['lines'], $d['client_request_id'], $personId, $personName, $r->user()->id)], 201);
