@@ -78,9 +78,16 @@ echo "=== Checking migration file compatibility (informational only - never touc
 db_compat="TARGET_RELEASE_HAS_ALL_LIVE_MIGRATIONS"
 live_backend="$current_link/backend"
 if [ -d "$live_backend/database/migrations" ] && [ -d "$target_release/backend/database/migrations" ]; then
-  missing_in_target="$(comm -13 \
-    <(ls "$target_release/backend/database/migrations" 2>/dev/null | sort) \
-    <(ls "$live_backend/database/migrations" 2>/dev/null | sort))"
+  # Process substitution (`<(...)`) depends on /dev/fd, which is not mounted
+  # in this Hostinger SSH environment (confirmed live during M2.18.2) - a
+  # plain `comm -13 <(...) <(...)` fails outright here. Use temp files
+  # instead, which work on every target.
+  target_list="$(mktemp)"
+  live_list="$(mktemp)"
+  ls "$target_release/backend/database/migrations" 2>/dev/null | sort > "$target_list"
+  ls "$live_backend/database/migrations" 2>/dev/null | sort > "$live_list"
+  missing_in_target="$(comm -13 "$target_list" "$live_list")"
+  rm -f "$target_list" "$live_list"
   if [ -n "$missing_in_target" ]; then
     db_compat="TARGET_RELEASE_PREDATES_MIGRATIONS_ALREADY_APPLIED"
     echo "WARNING: the target release's migration files do not include migrations present in the live release:" >&2
