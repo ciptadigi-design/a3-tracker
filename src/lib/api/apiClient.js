@@ -6,8 +6,12 @@
 import { dataBackend } from '../../services/dataBackend.js'
 export { describeApiError, isReferenceConflict } from './apiErrors.js'
 
+export function resolveApiBaseUrl(value) {
+  return (value || '/api/v1').replace(/\/$/, '')
+}
+
 const backend = dataBackend
-const baseUrl = (import.meta.env.VITE_API_BASE_URL || '/api/v1').replace(/\/$/, '')
+const baseUrl = resolveApiBaseUrl(import.meta.env?.VITE_API_BASE_URL)
 
 export const apiBackend = backend
 

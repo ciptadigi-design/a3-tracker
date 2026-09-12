@@ -21,7 +21,15 @@ All Production steps below are **DOCUMENTED / NOT YET EXECUTED IN M2.12**. This 
 
 ## Build and upload
 
-1. From the approved SHA run `npm ci && npm run build`.
+1. From the approved SHA run `npm ci`, then the enforced build contract
+   `scripts/deployment/build-frontend.sh` (sets `VITE_DATA_BACKEND=laravel`
+   and `VITE_API_BASE_URL=/api/v1` itself and stamps `dist/build-manifest.json`)
+   followed by `scripts/deployment/verify-frontend-backend.sh dist`, which
+   must print `BACKEND_VERIFIED=laravel` before packaging. Do not run a bare
+   `npm run build` for a Production release - see the M2.17.5.6 incident in
+   [RELEASE_PROCEDURE.md](production/RELEASE_PROCEDURE.md): a missing
+   `VITE_DATA_BACKEND` silently compiled to Supabase, and this checklist
+   bullet alone did not catch it for the lifetime of every prior release.
 2. Build Laravel dependencies with `composer install --no-dev --classmap-authoritative` locally/CI if remote Composer is unavailable.
 3. Package `dist/`, Laravel application code, `vendor/` (if needed), `public/`, and a secret-free release manifest. Exclude `node_modules`, `.git`, tests, local `.env`, dumps, logs, and development artifacts.
 4. Upload to a staged release directory. Keep the current release intact until verification.

@@ -9,7 +9,9 @@ All boxes are for a future authorized cutover. M2.12 performs no Production acti
 - [ ] Production Hostinger preflight complete (PHP/extensions/MySQL/SSH/Apache/SSL/permissions/backups). Staging is accepted; Production target backup and access remain conditional.
 - [ ] Laravel frontend/auth/tenant adapters complete; no Supabase Production dependency.
 - [ ] Approved SHA and release manifest recorded.
-- [ ] `npm ci && npm run build` and Composer production install pass.
+- [ ] `npm ci`, `scripts/deployment/build-frontend.sh`, and
+      `scripts/deployment/verify-frontend-backend.sh dist` (must print
+      `BACKEND_VERIFIED=laravel`) pass, plus Composer production install.
 - [ ] Fresh and existing MySQL migration rehearsals pass; `migrate --force` is the only Production migration command.
 - [ ] Data matrix, crosswalk, source snapshot, counts, fingerprints, and approvals complete.
 - [ ] Backup and disposable restore verified.
