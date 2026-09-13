@@ -1,7 +1,9 @@
+import { machineCostQuery } from '../../features/machineCost/machineCostQuery.js'
 import { apiClient, unwrapData } from '../../lib/api/apiClient.js'
 
-export async function loadClickTargetProjection({ machineId, year, month }) {
-  return unwrapData(await apiClient.get(`/machines/${machineId}/click-target?year=${year}&month=${month}`))
+export async function loadClickTargetProjection({ machineId, year, month, periodStart, periodEnd }) {
+  const query = periodStart != null || periodEnd != null ? machineCostQuery(periodStart, periodEnd) : `year=${year}&month=${month}`
+  return unwrapData(await apiClient.get(`/machines/${machineId}/click-target?${query}`))
 }
 
 export async function saveMachineClickTarget({ machineId, targetYear, targetMonth, monthlyClickTarget, reason, clientRequestId }) {

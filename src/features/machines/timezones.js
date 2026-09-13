@@ -10,8 +10,8 @@ export function supportedTimezones() {
   return [...new Set([...requiredOperationalZones, ...values])].sort((left, right) => left.localeCompare(right))
 }
 
-export function inheritedMachineTimezone({ branch, account }) {
+export function inheritedMachineTimezone({ branch, account }, fallback = 'Asia/Jakarta') {
   if (branch?.timezone) return { value: branch.timezone, source: 'branch' }
   if (account?.default_timezone) return { value: account.default_timezone, source: 'account' }
-  return { value: 'Asia/Jakarta', source: 'default' }
+  return { value: fallback, source: 'default' }
 }

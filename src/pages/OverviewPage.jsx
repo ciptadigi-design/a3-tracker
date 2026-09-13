@@ -1,10 +1,12 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Gauge, RefreshCcw, Settings as SettingsIcon, TrendingUp } from 'lucide-react'
+import { PeriodFields } from '../features/periods/PeriodFields.jsx'
+import { createOverviewRequestGate, overviewContextTimezone, overviewInitialPeriod, overviewPeriod, overviewRangeError } from '../features/overview/overviewPeriod.js'
+import { useEffect, useMemo, useState } from 'react'
+import { CalendarRange, Gauge, RefreshCcw, Settings as SettingsIcon, TrendingUp } from 'lucide-react'
 import { PageHeader } from '../components/ui/PageHeader.jsx'
 import { useAuth } from '../features/auth/useAuth.js'
 import { useTenant } from '../features/account/useTenant.js'
 import { useMachines } from '../features/machines/useMachines.js'
-import { CANONICAL_PERIOD_TIMEZONE, resolveMachineCostPeriod } from '../features/machineCost/machineCostPeriods.js'
+import { machineCostPeriodPresets, resolveMachineCostPeriod, validMachineCostFilters } from '../features/machineCost/machineCostPeriods.js'
 import { primaryCostPerClickPresentation } from '../features/machineCost/machineCostPresentation.js'
 import { formatIdrTotal } from '../features/machineCost/currencyFormat.js'
 import { loadMachineCostPeriod } from '../services/machineCost.js'
@@ -15,21 +17,7 @@ import { createUIStateKey } from '../features/uiState/uiStateKeys.js'
 import { usePersistentUIState } from '../features/uiState/usePersistentUIState.js'
 import { userErrorMessage } from '../lib/appErrors.js'
 
-const monthFormatter = new Intl.DateTimeFormat('en-US', { month: 'long', timeZone: 'UTC' })
-
-function currentYearMonth(timezone) {
-  const parts = new Intl.DateTimeFormat('en-CA', { timeZone: timezone, year: 'numeric', month: '2-digit' }).formatToParts(new Date())
-  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]))
-  return { year: Number(values.year), month: Number(values.month) }
-}
-
-function todayDateKey(timezone) {
-  const parts = new Intl.DateTimeFormat('en-CA', { timeZone: timezone, year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date())
-  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]))
-  return `${values.year}-${values.month}-${values.day}`
-}
-
-function CostPerClickCard({ summary, monthLabel }) {
+function CostPerClickCard({ summary, periodLabel }) {
   // M2.17.5: product decision changed - Cost / Click now renders whole-Rupiah like
   // every other user-facing IDR value, reusing the same canonical formatIdrTotal()
   // rather than a competing fractional formatter. Only the final display value is
@@ -39,7 +27,7 @@ function CostPerClickCard({ summary, monthLabel }) {
     <span className="card-kicker">Cost / Click</span>
     <strong>{presentation.value}</strong>
     <span className="overview-period-target">Standard machine cost</span>
-    <small>{monthLabel}</small>
+    <small>{periodLabel}</small>
   </article>
 }
 
@@ -69,6 +57,12 @@ function PeriodCard({ label, card, monthToDate }) {
 }
 
 export function OverviewPage({ navigate }) {
+  const { account, branch } = useTenant()
+  // Synchronous context remount prevents even a single render of old machine data.
+  return <OverviewWorkspace key={`${account.id}:${branch?.id ?? 'all'}`} navigate={navigate} />
+}
+
+function OverviewWorkspace({ navigate }) {
   const { user } = useAuth()
   const { account, branch, membership, isPlatformSuperuser } = useTenant()
   const { machines, isLoading: machinesLoading, error: machinesError } = useMachines(account?.id, branch?.id)
@@ -83,58 +77,62 @@ export function OverviewPage({ navigate }) {
     if (selectedMachine && selectedMachine.id !== selection.machineId) setSelection({ machineId: selectedMachine.id })
   }, [selectedMachine, selection.machineId, setSelection])
 
-  const timezone = selectedMachine?.timezone || branch?.timezone || account.default_timezone || CANONICAL_PERIOD_TIMEZONE
-  const { year, month } = useMemo(() => currentYearMonth(timezone), [timezone])
+  const periodKey = createUIStateKey({ userId: user.id, accountId: account.id, feature: 'overview-period', entityId: 'workspace' })
+  const { value: filters, setUIState: setFilters } = usePersistentUIState({ uiStateKey: periodKey, initialValue: overviewInitialPeriod, validate: validMachineCostFilters })
+  const timezone = overviewContextTimezone(account, branch)
+  const [refreshVersion, setRefreshVersion] = useState(0)
+  const period = overviewPeriod(filters, account, branch)
+  const rangeError = overviewRangeError(period)
+  const validPeriod = !rangeError
+  const periodLabel = machineCostPeriodPresets.find((preset) => preset.id === filters.preset)?.label
+  const rangeLabel = validPeriod ? `${period.start} → ${period.end}` : rangeError
+  const requestKey = `${account.id}:${branch?.id}:${selectedMachine?.id}:${timezone}:${period.start}:${period.end}:${refreshVersion}`
+  const [gate] = useState(createOverviewRequestGate)
+  const [result, setResult] = useState(null)
+  const currentResult = result?.key === requestKey ? result : null
+  const projection = currentResult?.data?.projection ?? null
+  const costSummary = currentResult?.data?.costSummary ?? null
+  const loading = Boolean(selectedMachine && validPeriod && !currentResult)
+  const error = currentResult?.error
+  const refresh = () => setRefreshVersion((value) => value + 1)
 
-  const [projection, setProjection] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
-
-  const refresh = useCallback(async () => {
-    if (!selectedMachine) { setProjection(null); setLoading(false); return }
-    setLoading(true); setError(null)
-    try { setProjection(await loadClickTargetProjection({ machineId: selectedMachine.id, year, month })) }
-    catch (loadError) { setError(loadError); setProjection(null) }
-    finally { setLoading(false) }
-  }, [selectedMachine, year, month])
-
-  useEffect(() => { refresh() }, [refresh])
-
-  const [costSummary, setCostSummary] = useState(null)
   useEffect(() => {
-    let active = true
-    if (!selectedMachine) { setCostSummary(null); return undefined }
-    const period = resolveMachineCostPeriod({ preset: 'this_month', timezone })
-    if (!period.start || !period.end) { setCostSummary(null); return undefined }
-    loadMachineCostPeriod({ accountId: account.id, machineId: selectedMachine.id, periodStart: period.start, periodEnd: period.end })
-      .then((summary) => { if (active) setCostSummary(summary) })
-      .catch(() => { if (active) setCostSummary(null) })
-    return () => { active = false }
-  }, [account.id, selectedMachine, timezone])
+    if (!selectedMachine || !validPeriod) return undefined
+    const args = { accountId: account.id, machineId: selectedMachine.id, periodStart: period.start, periodEnd: period.end }
+    gate.run(async () => {
+      const [projection, costSummary] = await Promise.all([
+        loadClickTargetProjection(args),
+        // Existing capability failures keep cost unavailable; never retain old cost.
+        loadMachineCostPeriod({ ...args, summaryOnly: true }).catch(() => null),
+      ])
+      return { projection, costSummary }
+    }, (next) => setResult({ ...next, key: requestKey }))
+    return () => gate.invalidate()
+  }, [account.id, gate, period.end, period.start, requestKey, selectedMachine, validPeriod])
 
-  const monthLabel = monthFormatter.format(new Date(Date.UTC(2000, month - 1, 1)))
   const dailyRows = useMemo(() => normalizeDailyPerformance(projection?.daily), [projection])
   const [statusLabel, statusTone] = targetStatusPresentation(projection?.target_status)
-  const requiredPace = requiredPacePresentation(projection)
+  const requiredPace = projection?.required_pace_status === 'NO_ACTIVE_DAYS_REMAINING' ? { value: '—', hint: 'No active days remain in this period' } : requiredPacePresentation(projection)
   const notConfigured = projection?.target_status === 'NOT_CONFIGURED'
-  const todayRow = useMemo(() => dailyRows.find((row) => row.date === todayDateKey(timezone)), [dailyRows, timezone])
-  const todayContext = todayContextPresentation(todayRow)
+  const todayRow = useMemo(() => dailyRows.find((row) => row.date === resolveMachineCostPeriod({ preset: 'today', timezone: projection?.period.timezone || timezone }).start), [dailyRows, projection, timezone])
+  const todayContext = todayRow ? todayContextPresentation(todayRow) : null
 
   return (
     <div className="page-stack overview-page">
-      <PageHeader eyebrow="Live workspace" title={`${account?.name} · ${branch?.name ?? 'All branches'}`} description="Operational click target and pace for the selected branch." />
+      <PageHeader eyebrow="Live workspace" title={`${account?.name} · ${branch?.name ?? 'All branches'}`} description="Operational click target and pace for the selected period." />
+
+      <section className="machine-cost-filters glass-surface" aria-label="Overview filters">
+        <label><span>Machine</span><select disabled={!activeMachines.length} value={selectedMachine?.id ?? ''} onChange={(event) => setSelection({ machineId: event.target.value })}>{activeMachines.map((machine) => <option key={machine.id} value={machine.id}>{machine.machine_code} · {machine.display_name}</option>)}</select></label>
+        <PeriodFields filters={filters} setFilters={setFilters} />
+        <div className="machine-cost-period-readout"><CalendarRange size={16} /><span>{rangeLabel}<small>{timezone} operational dates{selectedMachine?.timezone && selectedMachine.timezone !== timezone ? ` · Machine boundaries: ${selectedMachine.timezone}` : ''}</small></span></div>
+        <button className="secondary-button" type="button" onClick={refresh} disabled={loading || !validPeriod || !selectedMachine}><RefreshCcw size={15} />Refresh</button>
+      </section>
+      {!validPeriod && <div className="inline-error" role="alert">{rangeError}</div>}
 
       {machinesLoading ? null : machinesError ? <div className="inline-error" role="alert">{userErrorMessage(machinesError, 'Machine data is temporarily unavailable.')}</div> : activeMachines.length === 0 ? (
         <section className="starting-state glass-surface"><div><span className="card-kicker">Starting point</span><h3>Your operations workspace is ready</h3><p>No fabricated activity or KPI data is shown. Real operational insights will appear as your team begins using A3 Tracker.</p></div><div className="starting-state-line"><span /></div></section>
       ) : (
         <>
-          {activeMachines.length > 1 && (
-            <section className="overview-machine-select glass-surface">
-              <label><span>Machine</span><select value={selectedMachine?.id ?? ''} onChange={(event) => setSelection({ machineId: event.target.value })}>{activeMachines.map((machine) => <option key={machine.id} value={machine.id}>{machine.machine_code} · {machine.display_name}</option>)}</select></label>
-              <button className="secondary-button" type="button" onClick={refresh} disabled={loading}><RefreshCcw size={15} />Refresh</button>
-            </section>
-          )}
-
           {error && <div className="inline-error" role="alert">{userErrorMessage(error, 'Click target could not be loaded for this machine.')}</div>}
 
           {loading && !projection ? (
@@ -143,20 +141,20 @@ export function OverviewPage({ navigate }) {
             <section className="overview-target-empty glass-surface">
               <span className="section-icon"><Gauge size={21} /></span>
               <div>
-                <h3>No click target configured for {monthLabel}.</h3>
-                <p>{canManageTargets ? 'Set a monthly click target to track daily and weekly pace for this machine.' : 'Target not configured. Ask a workspace owner or admin to set one.'}</p>
+                <h3>Click target not fully configured for this period.</h3>
+                <p>{canManageTargets ? 'Set a monthly click target for each month in the selected range.' : 'Target not configured. Ask a workspace owner or admin to set one.'}</p>
               </div>
               {canManageTargets && <button className="primary-button" type="button" onClick={() => navigate?.('/settings/click-targets')}><SettingsIcon size={15} />Set monthly target</button>}
             </section>
           ) : projection && (
             <section className="overview-target-hero glass-surface">
               <header>
-                <div><span className="card-kicker">{monthLabel.toUpperCase()} CLICK TARGET</span><h2>{formatClicks(projection.actual_month_to_date)} / {formatClicks(projection.monthly_target)}</h2><p>{formatPercentage(projection.achievement_percentage)} achieved</p></div>
+                <div><span className="card-kicker">{periodLabel.toUpperCase()} CLICK TARGET</span><h2>{formatClicks(projection.actual_clicks)} / {formatClicks(projection.period_target)}</h2><p>{formatPercentage(projection.achievement_percentage)} achieved</p></div>
                 {canManageTargets && <button className="secondary-button compact-button" type="button" onClick={() => navigate?.('/settings/click-targets')}><SettingsIcon size={14} />Manage target</button>}
               </header>
               <div className={`overview-target-status tone-${statusTone}`}><TrendingUp size={16} /><span>{statusLabel}</span>{projection.variance != null && <strong>{formatSignedClicks(projection.variance)}</strong>}</div>
               <dl className="overview-target-metrics">
-                <div><dt>Expected by today</dt><dd>{formatClicks(projection.planned_month_to_date)}</dd></div>
+                <div><dt>Period target</dt><dd>{formatClicks(projection.period_target)}</dd></div>
                 <div><dt>Remaining</dt><dd>{formatClicks(projection.remaining_target)}</dd></div>
                 <div><dt>Active days remaining</dt><dd>{projection.active_days_remaining}</dd></div>
                 <div><dt>Required pace</dt><dd>{requiredPace.value}<small>{requiredPace.hint}</small></dd></div>
@@ -166,10 +164,10 @@ export function OverviewPage({ navigate }) {
 
           {projection && (
             <>
-              <section className="overview-period-grid" aria-label="Cost per click, week, and month progress">
-                <CostPerClickCard summary={costSummary} monthLabel={monthLabel} />
-                <PeriodCard label="This Week" card={projection.week} />
-                <PeriodCard label="This Month" card={projection.month} monthToDate={projection.month?.is_month_to_date === true} />
+              <section className="overview-period-grid" aria-label="Selected period cost and click progress">
+                <CostPerClickCard summary={costSummary} periodLabel={rangeLabel} />
+                <PeriodCard label={periodLabel} card={projection.selected} />
+                <article className="overview-period-card glass-surface"><span className="card-kicker">Target variance</span><strong>{formatSignedClicks(projection.variance)}</strong><span className="overview-period-target">Actual minus selected period target</span><small>{rangeLabel}</small></article>
               </section>
               <DailyClickPerformanceChart rows={dailyRows} todayContext={todayContext} />
             </>

@@ -12,6 +12,7 @@ use App\Services\EffectiveCapabilityResolver;
 use App\Services\GovernanceAudit;
 use App\Services\MachineAccessResolver;
 use App\Services\MachineClickTargetProjectionService;
+use App\Services\OperationalPeriodRange;
 use App\Services\ReplayFields;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -34,6 +35,11 @@ class ClickTargetController extends Controller
     public function show(Request $r, Machine $machine)
     {
         $this->assertRead($r, $machine);
+        if ($r->hasAny(['period_start', 'period_end'])) {
+            $v = $r->validate(OperationalPeriodRange::rules($r));
+
+            return response()->json(['data' => $this->projection->range($machine, $v['period_start'], $v['period_end'])]);
+        }
         $v = $r->validate(['year' => 'required|integer|min:2000|max:2100', 'month' => 'required|integer|min:1|max:12']);
 
         return response()->json(['data' => $this->projection->projection($machine, (int) $v['year'], (int) $v['month'])]);

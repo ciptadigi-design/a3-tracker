@@ -7,6 +7,7 @@ use App\Models\Machine;
 use App\Services\EffectiveCapabilityResolver;
 use App\Services\MachineAccessResolver;
 use App\Services\MachineCostService;
+use App\Services\OperationalPeriodRange;
 use App\Services\OperationalPersonEligibilityService;
 use App\Services\ReplayFields;
 use Illuminate\Http\Request;
@@ -22,11 +23,14 @@ class MachineCostController extends Controller
 
     public function show(Request $r, Machine $machine)
     {
-        $v = $r->validate(['period_start' => 'required|date_format:Y-m-d', 'period_end' => 'required|date_format:Y-m-d']);
+        $v = $r->validate($r->boolean('summary_only') ? OperationalPeriodRange::rules($r) : ['period_start' => 'required|date_format:Y-m-d', 'period_end' => 'required|date_format:Y-m-d']);
         abort_unless($this->access->canAccess($r->user(), $machine), 403);
 
         app(EffectiveCapabilityResolver::class)->authorize($r->user(), $machine->account, 'machine_cost.view');
-        $result = $this->service->period($machine, $v['period_start'], $v['period_end']);
+        $result = $this->service->period($machine, $v['period_start'], $v['period_end'], ! $r->boolean('summary_only'));
+        if ($r->boolean('summary_only')) {
+            return response()->json($result);
+        }
         $result['operating_costs'] = DB::table('machine_operating_costs')->where('machine_id', $machine->id)->orderByDesc('created_at')->get();
         $result['selling_prices'] = DB::table('machine_selling_prices')->where('machine_id', $machine->id)->orderByDesc('effective_from')->get();
 

@@ -7,15 +7,14 @@ const chart = fs.readFileSync(new URL('./DailyClickPerformanceChart.jsx', import
 const model = fs.readFileSync(new URL('./clickTargetModel.js', import.meta.url), 'utf8')
 const css = fs.readFileSync(new URL('../../App.css', import.meta.url), 'utf8')
 
-test('M2.14: This Week and This Month cards render the shared comparison row, no new KPI card', () => {
+test('M2.14: M2.20D.1 selected period card retains the shared comparison row', () => {
   assert.match(overview, /<PeriodComparisonRow comparison={presentation\.comparison} \/>/)
   assert.doesNotMatch(overview, /card-kicker">Last Month/)
-  assert.match(overview, /<PeriodCard label="This Week" card={projection\.week} \/>/)
-  assert.match(overview, /<PeriodCard label="This Month" card={projection\.month} monthToDate=/)
+  assert.match(overview, /<PeriodCard label={periodLabel} card={projection\.selected} \/>/)
 })
 
-test('M2.14: This Month comparison labels itself MTD only when the backend says it is month-to-date', () => {
-  assert.match(overview, /monthToDate={projection\.month\?\.is_month_to_date === true}/)
+test('M2.14: selected range does not falsely label arbitrary periods as MTD', () => {
+  assert.doesNotMatch(overview, /monthToDate={true}/)
 })
 
 test('M2.14: comparison presentation is computed once in clickTargetModel, not re-derived in the page or chart', () => {

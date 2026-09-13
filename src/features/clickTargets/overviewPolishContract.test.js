@@ -28,10 +28,10 @@ test('M2.13.2: canonical reconciliation - an unavailable Machine Cost never rend
   assert.notEqual(presentation.value, formatIdrTotal(0))
 })
 
-test('M2.13.2: the large Today KPI card is removed, This Week/This Month remain', () => {
+test('M2.13.2: the large Today KPI card stays removed; M2.20D.1 scopes progress to selection', () => {
   assert.doesNotMatch(overview, /<PeriodCard label="Today"/)
-  assert.match(overview, /<PeriodCard label="This Week"/)
-  assert.match(overview, /<PeriodCard label="This Month"/)
+  assert.match(overview, /<PeriodCard label={periodLabel} card={projection\.selected}/)
+  assert.doesNotMatch(overview, /card={projection\.(week|month)}/)
 })
 
 test('M2.13.2: Overview Cost/Click reuses the canonical Machine Cost presentation, no separate economics', () => {
@@ -44,7 +44,7 @@ test('M2.13.2: Overview Cost/Click reuses the canonical Machine Cost presentatio
 
 test('M2.13.2: Overview Cost/Click loads from the canonical Machine Cost period endpoint, not a bespoke Overview endpoint', () => {
   assert.match(overview, /import \{ loadMachineCostPeriod \} from '\.\.\/services\/machineCost\.js'/)
-  assert.match(overview, /resolveMachineCostPeriod\(\{ preset: 'this_month', timezone \}\)/)
+  assert.match(overview, /periodStart: period\.start, periodEnd: period\.end/)
 })
 
 test('M2.13.2: Today context is preserved near the Daily Click Performance chart, not as a large card', () => {

@@ -32,7 +32,7 @@ class DailyActualUsageService
             return [];
         }
         [$start, $end] = $this->tz->range($machine, $from, $to);
-        $rows = $this->sequence->forMachine($machine->id, $type->id)->filter(fn ($r) => $r->observed_at->gte($start) && $r->observed_at->lt($end));
+        $rows = $this->sequence->forMachineWithinRange($machine->id, $type->id, $start, $end);
 
         $byDate = [];
         foreach ($rows as $row) {

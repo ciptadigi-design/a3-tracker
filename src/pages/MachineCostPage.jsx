@@ -1,9 +1,10 @@
+import { PeriodFields } from '../features/periods/PeriodFields.jsx'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { AlertCircle, BarChart3, Boxes, CalendarRange, CircleDollarSign, Gauge, HandCoins, Printer, RefreshCcw, TrendingUp } from 'lucide-react'
 import { PageHeader } from '../components/ui/PageHeader.jsx'
 import { useAuth } from '../features/auth/useAuth.js'
 import { useTenant } from '../features/account/useTenant.js'
-import { CANONICAL_PERIOD_TIMEZONE, machineCostPeriodPresets, resolveMachineCostPeriod, validMachineCostFilters } from '../features/machineCost/machineCostPeriods.js'
+import { CANONICAL_PERIOD_TIMEZONE, resolveMachineCostPeriod, validMachineCostFilters } from '../features/machineCost/machineCostPeriods.js'
 import { counterEvidencePresentation, knownConsumptionPresentation, primaryCostPerClickPresentation, summaryStatusPresentation } from '../features/machineCost/machineCostPresentation.js'
 import { OperatingCostDialog } from '../features/machineCost/OperatingCostDialog.jsx'
 import { OperatingCostsPanel } from '../features/machineCost/OperatingCostsPanel.jsx'
@@ -164,8 +165,7 @@ export function MachineCostPage() {
     <PageHeader eyebrow="Operational economics" title="Machine Cost" description="Recorded clicks, tracked machine cost, utilization revenue, and contribution for the selected period." />
     <section className="machine-cost-filters glass-surface" aria-label="Machine cost filters">
       <label><span>Machine</span><select value={selectedMachine?.id ?? ''} onChange={(event) => setFilters((current) => ({ ...current, machineId: event.target.value }))} disabled={!machines.length}><option value="">{machines.length ? 'Select machine' : 'No active machines'}</option>{machines.map((machine) => <option key={machine.id} value={machine.id}>{machine.machine_code} · {machine.display_name}</option>)}</select></label>
-      <label><span>Period</span><select value={filters.preset} onChange={(event) => setFilters((current) => ({ ...current, preset: event.target.value }))}>{machineCostPeriodPresets.map((preset) => <option value={preset.id} key={preset.id}>{preset.label}</option>)}</select></label>
-      {filters.preset === 'custom' && <><label><span>Start date</span><input type="date" value={filters.customStart} onChange={(event) => setFilters((current) => ({ ...current, customStart: event.target.value }))} /></label><label><span>End date</span><input type="date" value={filters.customEnd} min={filters.customStart || undefined} onChange={(event) => setFilters((current) => ({ ...current, customEnd: event.target.value }))} /></label></>}
+      <PeriodFields filters={filters} setFilters={setFilters} />
       <div className="machine-cost-period-readout"><CalendarRange size={16} /><span>{validPeriod ? `${resolvedPeriod.start} → ${resolvedPeriod.end}` : 'Choose a valid date range'}<small>{timezone} operational dates</small></span></div>
       <button className="secondary-button" type="button" onClick={refresh} disabled={loading || !selectedMachine || !validPeriod} aria-label="Refresh machine cost"><RefreshCcw size={15} />Refresh</button>
     </section>

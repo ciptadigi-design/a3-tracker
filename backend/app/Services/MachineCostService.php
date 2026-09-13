@@ -13,7 +13,7 @@ class MachineCostService
 {
     public function __construct(private MachineTimezoneResolver $tz, private OperationalIncidentService $incidents, private EffectiveCounterSequence $sequence, private EffectiveSellingPriceResolver $prices) {}
 
-    public function period(Machine $machine, string $from, string $to): array
+    public function period(Machine $machine, string $from, string $to, bool $includeBusiness = true): array
     {
         [$start,$end] = $this->tz->range($machine, $from, $to);
         $tz = $this->tz->resolve($machine);
@@ -50,7 +50,7 @@ class MachineCostService
         $standardCostPerClick = $counterStatus === 'COMPLETE' && $clicks > 0 ? number_format($standard / $clicks, 4, '.', '') : null;
         $dailyTrend = $this->dailyTrend($rows, $repls, $incidents, $tz);
         $economicsStatus = $unknown + $unknownErrorWasteEvents > 0 ? 'PARTIAL' : 'COMPLETE';
-        $business = $this->businessProjection($machine, $rows, $end, $clicks, $counterStatus, $standard, $economicsStatus);
+        $business = $includeBusiness ? $this->businessProjection($machine, $rows, $end, $clicks, $counterStatus, $standard, $economicsStatus) : [];
 
         return [
             'machine_id' => $machine->id,

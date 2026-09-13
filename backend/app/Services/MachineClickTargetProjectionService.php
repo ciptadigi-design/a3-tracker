@@ -127,6 +127,91 @@ class MachineClickTargetProjectionService
         ];
     }
 
+    /**
+     * Overview range projection. Allocate each intersecting month's unchanged
+     * target over its complete calendar, then return only selected dates.
+     * Usage and comparison reads are SQL bounded by the canonical sequence.
+     */
+    public function range(Machine $machine, string $from, string $to): array
+    {
+        $tz = $this->tz->resolve($machine);
+        $start = CarbonImmutable::parse($from, $tz);
+        $end = CarbonImmutable::parse($to, $tz);
+        $today = CarbonImmutable::now($tz)->toDateString();
+        $calendarStart = $start->startOfMonth();
+        $calendarEnd = $end->endOfMonth();
+        $exceptions = MachineOperationalCalendarException::where('machine_id', $machine->id)
+            ->where('calendar_date', '>=', $calendarStart->toDateString())
+            ->where('calendar_date', '<', $calendarEnd->addDay()->toDateString())
+            ->get()->keyBy(fn ($row) => $row->calendar_date->toDateString());
+        $plan = [];
+        $missingMonths = [];
+        for ($month = $calendarStart; $month->lte($calendarEnd); $month = $month->addMonth()) {
+            $target = MachineClickTarget::where('machine_id', $machine->id)
+                ->where('target_year', $month->year)->where('target_month', $month->month)->first();
+            if ($target === null) {
+                $missingMonths[] = $month->format('Y-m');
+            }
+            $activeDates = [];
+            for ($date = $month; $date->lte($month->endOfMonth()); $date = $date->addDay()) {
+                $key = $date->toDateString();
+                if (! ($exceptions[$key]->excluded_from_target ?? false)) {
+                    $activeDates[] = $key;
+                }
+            }
+            if ($target !== null) {
+                $plan += $this->allocate($target->monthly_click_target, $activeDates);
+            }
+        }
+        $actualByDate = $this->actualClicksByDate($machine, $tz, $from, $to);
+        $daily = [];
+        $activeDays = 0;
+        $remainingDays = 0;
+        foreach (new \DatePeriod($start, new \DateInterval('P1D'), $end->addDay()) as $date) {
+            $key = $date->format('Y-m-d');
+            $excluded = $exceptions[$key]->excluded_from_target ?? false;
+            $planned = in_array($date->format('Y-m'), $missingMonths, true) ? null : ($plan[$key] ?? 0);
+            $actual = $actualByDate[$key] ?? null;
+            $activeDays += $excluded ? 0 : 1;
+            $remainingDays += ! $excluded && $key >= $today ? 1 : 0;
+            $daily[] = [
+                'date' => $key, 'calendar_status' => $excluded ? 'EXCLUDED' : 'ACTIVE',
+                'exclusion_reason' => $exceptions[$key]->exception_type ?? null,
+                'exclusion_notes' => $exceptions[$key]->notes ?? null,
+                'planned_clicks' => $planned, 'actual_clicks' => $actual,
+                'variance' => $planned !== null && $actual !== null ? $actual - $planned : null,
+                'achievement_percentage' => $planned > 0 && $actual !== null ? round($actual / $planned * 100, 1) : null,
+            ];
+        }
+        $comparisons = $this->comparison->dailyForRange($machine, $tz, $daily, $today);
+        foreach ($daily as &$row) {
+            $row['previous_month'] = $comparisons[$row['date']] ?? null;
+        }
+        unset($row);
+        $card = $this->periodCard($daily, $from, $to);
+        // A partially configured range must never pretend to have a complete target.
+        if ($missingMonths !== []) {
+            $card['planned'] = $card['achievement_percentage'] = $card['variance'] = null;
+        }
+        $card['comparison'] = $this->comparison->range($machine, $tz, $from, $to, (float) $card['actual'], $start->day === 1 && $start->format('Y-m') === $end->format('Y-m'));
+        $target = $card['planned'];
+        $actual = (float) $card['actual'];
+        [$pace, $paceStatus] = $this->requiredPace($target, $actual, $remainingDays);
+
+        return [
+            'machine_id' => $machine->id,
+            'period' => ['start' => $from, 'end' => $to, 'timezone' => $tz],
+            'target_status' => $this->targetStatus($target, $activeDays, $actual, $card['variance']),
+            'period_target' => $target, 'actual_clicks' => $actual,
+            'variance' => $card['variance'], 'achievement_percentage' => $card['achievement_percentage'],
+            'remaining_target' => $target === null ? null : max($target - $actual, 0),
+            'active_days_total' => $activeDays, 'active_days_remaining' => $remainingDays,
+            'required_daily_pace' => $pace, 'required_pace_status' => $paceStatus,
+            'missing_target_months' => $missingMonths,
+            'selected' => $card, 'daily' => $daily,
+        ];
+    }
+
     public function actualClicksByDate(Machine $machine, string $tz, string $from, string $to): array
     {
         return $this->usage->byDate($machine, $tz, $from, $to);

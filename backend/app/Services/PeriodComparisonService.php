@@ -46,6 +46,32 @@ class PeriodComparisonService
         return $this->build($date, $date, $currentActual, $shiftedDate, $shiftedDate, (float) $byDate[$shiftedDate]);
     }
 
+    /** Same daily comparison contract, with one bounded historical read for the chart. */
+    public function dailyForRange(Machine $machine, string $tz, array $daily, string $today): array
+    {
+        $shifted = [];
+        foreach ($daily as $row) {
+            if ($row['calendar_status'] !== 'EXCLUDED' && $row['date'] <= $today) {
+                $shifted[$row['date']] = $this->shiftDateExact($row['date'], -1);
+            }
+        }
+        $validDates = array_values(array_filter($shifted));
+        $previous = $validDates === [] ? [] : $this->usage->byDate($machine, $tz, min($validDates), max($validDates));
+        $comparisons = [];
+        foreach ($daily as $row) {
+            $date = $row['date'];
+            if (! array_key_exists($date, $shifted)) {
+                continue;
+            }
+            $prior = $shifted[$date];
+            $comparisons[$date] = $prior === null || ! array_key_exists($prior, $previous)
+                ? $this->unavailable($date, $date, $prior, $prior)
+                : $this->build($date, $date, (float) ($row['actual_clicks'] ?? 0), $prior, $prior, (float) $previous[$prior]);
+        }
+
+        return $comparisons;
+    }
+
     /**
      * Aggregate comparison for an arbitrary [$currentStart, $currentEnd] date
      * range (used for This Week and This Month/MTD), shifted one calendar
