@@ -65,6 +65,7 @@ class MemberLifecycle
             if (isset($data['username'])) {
                 IdentityInput::ensureAvailable('username', $data['username'], $m->user_id);
             }
+            $before = ['role' => $m->role, 'status' => $m->status, 'branch_ids' => $m->branchAssignments()->where('is_active', true)->orderBy('branch_id')->pluck('branch_id')->all()];
             $m->update(array_intersect_key($data, array_flip(['role', 'status'])));
             $profile = [];
             if (isset($data['username'])) {
@@ -74,12 +75,19 @@ class MemberLifecycle
                 $profile['name'] = trim($data['display_name']);
             }
             if ($profile) {
-                $m->user->forceFill($profile)->save();
+                $m->user->forceFill($profile);
+                if ($m->user->isDirty()) {
+                    $m->user->save();
+                    app(GovernanceAudit::class)->record($actor, 'identity.profile_updated', 'user', $m->user_id, $account->id);
+                }
             }
             if (array_key_exists('branch_ids', $data)) {
                 $this->assign($m, $data['branch_ids']);
             }
-            app(GovernanceAudit::class)->record($actor, 'membership.updated', 'account_membership', $m->id, $account->id, array_intersect_key($data, array_flip(['role', 'status', 'branch_ids'])));
+            $after = ['role' => $m->role, 'status' => $m->status, 'branch_ids' => $m->branchAssignments()->where('is_active', true)->orderBy('branch_id')->pluck('branch_id')->all()];
+            foreach (['role' => 'role_changed', 'status' => 'status_changed', 'branch_ids' => 'branch_assignments_changed'] as $field => $event) {
+                app(GovernanceAudit::class)->changed($actor, 'membership.'.$event, 'account_membership', $m->id, $account->id, [$field => $before[$field]], [$field => $after[$field]]);
+            }
 
             return $m->load('user', 'branchAssignments');
         });
@@ -100,7 +108,8 @@ class MemberLifecycle
             $this->validateBranches($account, $ids);
             $m = $account->memberships()->create(['user_id' => $user->id, 'role' => $data['role'], 'status' => 'active', 'accepted_at' => now()]);
             $this->assign($m, $ids);
-            app(GovernanceAudit::class)->record($actor, 'membership.attached', 'account_membership', $m->id, $account->id);
+            sort($ids);
+            app(GovernanceAudit::class)->changed($actor, 'membership.attached', 'account_membership', $m->id, $account->id, [], ['user_id' => $user->id, 'role' => $m->role, 'status' => $m->status, 'branch_ids' => $ids]);
 
             return $m->load('user', 'branchAssignments');
         });

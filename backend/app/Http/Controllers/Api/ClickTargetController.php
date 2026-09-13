@@ -9,6 +9,7 @@ use App\Models\MachineClickTargetRevision;
 use App\Models\MachineOperationalCalendarException;
 use App\Services\AccountAccessResolver;
 use App\Services\EffectiveCapabilityResolver;
+use App\Services\GovernanceAudit;
 use App\Services\MachineAccessResolver;
 use App\Services\MachineClickTargetProjectionService;
 use App\Services\ReplayFields;
@@ -122,54 +123,65 @@ class ClickTargetController extends Controller
 
     public function createCalendarException(Request $r, Machine $machine)
     {
-        $this->assertManage($r, $machine);
-        $d = $r->validate([
-            'calendar_date' => 'required|date_format:Y-m-d',
-            'exception_type' => 'required|string|in:family_gathering,store_closed,religious_holiday,planned_maintenance,special_event,other',
-            'notes' => 'nullable|string',
-            'client_request_id' => 'required|uuid',
-        ]);
-
-        return DB::transaction(function () use ($r, $machine, $d) {
-            $existingRequest = MachineOperationalCalendarException::where('account_id', $machine->account_id)->where('client_request_id', $d['client_request_id'])->lockForUpdate()->first();
-            if ($existingRequest) {
-                ReplayFields::match($existingRequest, ['machine_id' => $machine->id, 'calendar_date' => $d['calendar_date'], 'exception_type' => $d['exception_type'], 'notes' => $d['notes'] ?? null], [], ['calendar_date']);
-
-                return response()->json(['data' => $existingRequest]);
-            }
-
-            $existing = MachineOperationalCalendarException::where('machine_id', $machine->id)->where('calendar_date', $d['calendar_date'])->lockForUpdate()->first();
-            if ($existing) {
-                $existing->update(['exception_type' => $d['exception_type'], 'notes' => $d['notes'] ?? null, 'excluded_from_target' => true, 'updated_by' => $r->user()->id, 'client_request_id' => $d['client_request_id']]);
-
-                return response()->json(['data' => $existing]);
-            }
-
-            $row = MachineOperationalCalendarException::create([
-                'account_id' => $machine->account_id,
-                'branch_id' => $machine->branch_id,
-                'machine_id' => $machine->id,
-                'calendar_date' => $d['calendar_date'],
-                'exception_type' => $d['exception_type'],
-                'notes' => $d['notes'] ?? null,
-                'excluded_from_target' => true,
-                'client_request_id' => $d['client_request_id'],
-                'created_by' => $r->user()->id,
-                'updated_by' => $r->user()->id,
+        return DB::transaction(function () use ($r, $machine) {
+            $this->assertManage($r, $machine);
+            $d = $r->validate([
+                'calendar_date' => 'required|date_format:Y-m-d',
+                'exception_type' => 'required|string|in:family_gathering,store_closed,religious_holiday,planned_maintenance,special_event,other',
+                'notes' => 'nullable|string',
+                'client_request_id' => 'required|uuid',
             ]);
 
-            return response()->json(['data' => $row], 201);
+            return DB::transaction(function () use ($r, $machine, $d) {
+                $existingRequest = MachineOperationalCalendarException::where('account_id', $machine->account_id)->where('client_request_id', $d['client_request_id'])->lockForUpdate()->first();
+                if ($existingRequest) {
+                    ReplayFields::match($existingRequest, ['machine_id' => $machine->id, 'calendar_date' => $d['calendar_date'], 'exception_type' => $d['exception_type'], 'notes' => $d['notes'] ?? null], [], ['calendar_date']);
+
+                    return response()->json(['data' => $existingRequest]);
+                }
+
+                $existing = MachineOperationalCalendarException::where('machine_id', $machine->id)->whereDate('calendar_date', $d['calendar_date'])->lockForUpdate()->first();
+                if ($existing) {
+                    $before = app(GovernanceAudit::class)->snapshot($existing);
+                    $existing->update(['exception_type' => $d['exception_type'], 'notes' => $d['notes'] ?? null, 'excluded_from_target' => true, 'updated_by' => $r->user()->id, 'client_request_id' => $d['client_request_id']]);
+
+                    app(GovernanceAudit::class)->changed($r->user(), 'calendar_exception.updated', 'calendar_exception', $existing->id, $machine->account_id, $before, app(GovernanceAudit::class)->snapshot($existing), array_keys($existing->getChanges()));
+
+                    return response()->json(['data' => $existing]);
+                }
+
+                $row = MachineOperationalCalendarException::create([
+                    'account_id' => $machine->account_id,
+                    'branch_id' => $machine->branch_id,
+                    'machine_id' => $machine->id,
+                    'calendar_date' => $d['calendar_date'],
+                    'exception_type' => $d['exception_type'],
+                    'notes' => $d['notes'] ?? null,
+                    'excluded_from_target' => true,
+                    'client_request_id' => $d['client_request_id'],
+                    'created_by' => $r->user()->id,
+                    'updated_by' => $r->user()->id,
+                ]);
+
+                app(GovernanceAudit::class)->changed($r->user(), 'calendar_exception.created', 'calendar_exception', $row->id, $machine->account_id, [], app(GovernanceAudit::class)->snapshot($row));
+
+                return response()->json(['data' => $row], 201);
+            });
         });
     }
 
     public function removeCalendarException(Request $r, string $exception)
     {
-        $row = MachineOperationalCalendarException::find($exception);
-        abort_unless($row, 404);
-        $machine = Machine::find($row->machine_id);
-        $this->assertManage($r, $machine);
-        $row->delete();
+        return DB::transaction(function () use ($r, $exception) {
+            $row = MachineOperationalCalendarException::lockForUpdate()->find($exception);
+            abort_unless($row, 404);
+            $machine = Machine::find($row->machine_id);
+            $this->assertManage($r, $machine);
+            $before = app(GovernanceAudit::class)->snapshot($row);
+            $row->delete();
+            app(GovernanceAudit::class)->changed($r->user(), 'calendar_exception.deleted', 'calendar_exception', $row->id, $machine->account_id, $before, []);
 
-        return response()->json(['data' => ['id' => $exception, 'deleted' => true]]);
+            return response()->json(['data' => ['id' => $exception, 'deleted' => true]]);
+        });
     }
 }

@@ -15,6 +15,7 @@ use App\Models\SupplierBranchAssignment;
 use App\Services\AccountAccessResolver;
 use App\Services\BranchAccessResolver;
 use App\Services\EffectiveCapabilityResolver;
+use App\Services\GovernanceAudit;
 use App\Services\InventoryLedgerService;
 use App\Services\MachineAccessResolver;
 use App\Services\MovementSummaryBuilder;
@@ -124,24 +125,34 @@ class InventoryController extends Controller
 
     public function assignSupplierBranch(Request $r, string $id)
     {
-        $s = InventorySupplier::findOrFail($id);
-        $a = Account::findOrFail($s->account_id);
-        abort_unless(app(AccountAccessResolver::class)->canManageOperational($r->user(), $a), 403);
-        $d = $r->validate(['branch_id' => 'required|uuid']);
-        $b = Branch::where('id', $d['branch_id'])->where('account_id', $s->account_id)->firstOrFail();
-        $assignment = SupplierBranchAssignment::firstOrCreate(['supplier_id' => $s->id, 'branch_id' => $b->id], ['account_id' => $s->account_id]);
+        return DB::transaction(function () use ($r, $id) {
+            $s = InventorySupplier::lockForUpdate()->findOrFail($id);
+            $a = Account::lockForUpdate()->findOrFail($s->account_id);
+            abort_unless(app(AccountAccessResolver::class)->canManageOperational($r->user(), $a), 403);
+            $d = $r->validate(['branch_id' => 'required|uuid']);
+            $b = Branch::where('id', $d['branch_id'])->where('account_id', $s->account_id)->firstOrFail();
+            $before = $s->branchAssignments()->orderBy('branch_id')->pluck('branch_id')->all();
+            $assignment = SupplierBranchAssignment::firstOrCreate(['supplier_id' => $s->id, 'branch_id' => $b->id], ['account_id' => $s->account_id]);
 
-        return response()->json(['data' => $assignment], 201);
+            app(GovernanceAudit::class)->changed($r->user(), 'supplier.branch_assignments_changed', 'supplier', $s->id, $s->account_id, ['branch_ids' => $before], ['branch_ids' => $s->branchAssignments()->orderBy('branch_id')->pluck('branch_id')->all()]);
+
+            return response()->json(['data' => $assignment], 201);
+        });
     }
 
     public function unassignSupplierBranch(Request $r, string $id, string $branchId)
     {
-        $s = InventorySupplier::findOrFail($id);
-        $a = Account::findOrFail($s->account_id);
-        abort_unless(app(AccountAccessResolver::class)->canManageOperational($r->user(), $a), 403);
-        SupplierBranchAssignment::where('supplier_id', $s->id)->where('branch_id', $branchId)->delete();
+        return DB::transaction(function () use ($r, $id, $branchId) {
+            $s = InventorySupplier::lockForUpdate()->findOrFail($id);
+            $a = Account::lockForUpdate()->findOrFail($s->account_id);
+            abort_unless(app(AccountAccessResolver::class)->canManageOperational($r->user(), $a), 403);
+            $before = $s->branchAssignments()->orderBy('branch_id')->pluck('branch_id')->all();
+            SupplierBranchAssignment::where('supplier_id', $s->id)->where('branch_id', $branchId)->delete();
 
-        return response()->noContent();
+            app(GovernanceAudit::class)->changed($r->user(), 'supplier.branch_assignments_changed', 'supplier', $s->id, $s->account_id, ['branch_ids' => $before], ['branch_ids' => $s->branchAssignments()->orderBy('branch_id')->pluck('branch_id')->all()]);
+
+            return response()->noContent();
+        });
     }
 
     // Historical Supabase/AI-assisted migration rows used "-" as a placeholder for
@@ -162,25 +173,34 @@ class InventoryController extends Controller
 
     public function saveSupplier(Request $r, ?string $id = null)
     {
-        $this->normalizeSupplierEmailPlaceholder($r);
-        $d = $r->validate(['account_id' => 'required|uuid', 'code' => 'required|string|max:80', 'name' => 'required|string|max:160', 'contact_name' => 'nullable|string', 'phone' => 'nullable|string', 'email' => 'nullable|email', 'address' => 'nullable|string', 'notes' => 'nullable|string', 'is_active' => 'boolean']);
-        $a = Account::findOrFail($d['account_id']);
-        abort_unless(app(AccountAccessResolver::class)->canManageOperational($r->user(), $a), 403);
-        $s = $id ? InventorySupplier::where('account_id', $a->id)->findOrFail($id) : new InventorySupplier(['account_id' => $a->id]);
-        $s->fill($d);
-        $s->save();
+        return DB::transaction(function () use ($r, $id) {
+            $this->normalizeSupplierEmailPlaceholder($r);
+            $d = $r->validate(['account_id' => 'required|uuid', 'code' => 'required|string|max:80', 'name' => 'required|string|max:160', 'contact_name' => 'nullable|string', 'phone' => 'nullable|string', 'email' => 'nullable|email', 'address' => 'nullable|string', 'notes' => 'nullable|string', 'is_active' => 'boolean']);
+            $a = Account::lockForUpdate()->findOrFail($d['account_id']);
+            abort_unless(app(AccountAccessResolver::class)->canManageOperational($r->user(), $a), 403);
+            $s = $id ? InventorySupplier::where('account_id', $a->id)->lockForUpdate()->findOrFail($id) : new InventorySupplier(['account_id' => $a->id]);
+            $before = $s->exists ? app(GovernanceAudit::class)->snapshot($s) : [];
+            $s->fill($d);
+            $s->save();
 
-        return response()->json(['data' => $s]);
+            app(GovernanceAudit::class)->changed($r->user(), (! $id ? 'supplier.created' : (($before['is_active'] ?? true) !== $s->is_active ? ($s->is_active ? 'supplier.restored' : 'supplier.archived') : 'supplier.updated')), 'supplier', $s->id, $s->account_id, $before, app(GovernanceAudit::class)->snapshot($s), array_keys($s->getChanges()));
+
+            return response()->json(['data' => $s]);
+        });
     }
 
     public function deleteSupplier(Request $r, string $id)
     {
-        $s = InventorySupplier::findOrFail($id);
-        $a = Account::findOrFail($s->account_id);
-        abort_unless(app(AccountAccessResolver::class)->canManageOperational($r->user(), $a), 403);
-        $s->delete();
+        return DB::transaction(function () use ($r, $id) {
+            $s = InventorySupplier::lockForUpdate()->findOrFail($id);
+            $a = Account::lockForUpdate()->findOrFail($s->account_id);
+            abort_unless(app(AccountAccessResolver::class)->canManageOperational($r->user(), $a), 403);
+            $before = app(GovernanceAudit::class)->snapshot($s);
+            $s->delete();
+            app(GovernanceAudit::class)->changed($r->user(), 'supplier.deleted', 'supplier', $s->id, $s->account_id, $before, []);
 
-        return response()->noContent();
+            return response()->noContent();
+        });
     }
 
     public function saveItem(Request $r, ?string $id = null)

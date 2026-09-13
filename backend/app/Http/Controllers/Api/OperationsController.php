@@ -27,6 +27,7 @@ use App\Services\CorrectCounterReading;
 use App\Services\CounterPeriodService;
 use App\Services\CreateCounterReading;
 use App\Services\EffectiveCounterSequence;
+use App\Services\GovernanceAudit;
 use App\Services\MachineAccessResolver;
 use App\Services\MachineTimezoneResolver;
 use App\Services\ScopedReference;
@@ -74,158 +75,216 @@ class OperationsController extends Controller
 
     public function storeModel(MachineModelRequest $r)
     {
-        $d = $r->validated();
-        abort_unless(app(AccountAccessResolver::class)->canManageCatalogScope($r->user(), $d['account_id'] ?? null), 403);
-        ScopedReference::activeGlobalOrOwned(Manufacturer::class, $d['manufacturer_id'], $d['account_id'] ?? null, 'manufacturer_id');
-        $duplicate = MachineModel::where('manufacturer_id', $d['manufacturer_id'])->whereRaw('lower(trim(model_code)) = ?', [strtolower(trim($d['model_code']))])->when($d['account_id'] ?? null, fn ($q, $id) => $q->where('account_id', $id), fn ($q) => $q->whereNull('account_id'))->exists();
-        abort_if($duplicate, 409, 'Machine model code already exists in this scope.');
+        return DB::transaction(function () use ($r) {
+            $d = $r->validated();
+            abort_unless(app(AccountAccessResolver::class)->canManageCatalogScope($r->user(), $d['account_id'] ?? null), 403);
+            ScopedReference::activeGlobalOrOwned(Manufacturer::class, $d['manufacturer_id'], $d['account_id'] ?? null, 'manufacturer_id');
+            $duplicate = MachineModel::where('manufacturer_id', $d['manufacturer_id'])->whereRaw('lower(trim(model_code)) = ?', [strtolower(trim($d['model_code']))])->when($d['account_id'] ?? null, fn ($q, $id) => $q->where('account_id', $id), fn ($q) => $q->whereNull('account_id'))->exists();
+            abort_if($duplicate, 409, 'Machine model code already exists in this scope.');
 
-        return response()->json(['data' => MachineModel::create($d)->load('manufacturer')], 201);
+            $m = MachineModel::create($d);
+            app(GovernanceAudit::class)->changed($r->user(), 'machine_model.created', 'machine_model', $m->id, $m->account_id, [], app(GovernanceAudit::class)->snapshot($m));
+
+            return response()->json(['data' => $m->load('manufacturer')], 201);
+        });
     }
 
     public function setModelStatus(Request $r, string $id)
     {
-        $m = MachineModel::findOrFail($id);
-        abort_unless(app(AccountAccessResolver::class)->canManageCatalogScope($r->user(), $m->account_id), 403);
-        $active = $r->validate(['is_active' => 'required|boolean'])['is_active'];
-        $m->update(['is_active' => $active, 'archived_at' => $active ? null : now()]);
+        return DB::transaction(function () use ($r, $id) {
+            $m = MachineModel::lockForUpdate()->findOrFail($id);
+            abort_unless(app(AccountAccessResolver::class)->canManageCatalogScope($r->user(), $m->account_id), 403);
+            $active = $r->validate(['is_active' => 'required|boolean'])['is_active'];
+            $before = app(GovernanceAudit::class)->snapshot($m);
+            $m->update(['is_active' => $active, 'archived_at' => $active ? null : now()]);
 
-        return response()->json(['data' => $m]);
+            app(GovernanceAudit::class)->changed($r->user(), 'machine_model.updated', 'machine_model', $m->id, $m->account_id, $before, app(GovernanceAudit::class)->snapshot($m), array_keys($m->getChanges()));
+
+            return response()->json(['data' => $m]);
+        });
     }
 
     public function updateModel(Request $r, string $id)
     {
-        $m = MachineModel::findOrFail($id);
-        abort_unless(app(AccountAccessResolver::class)->canManageCatalogScope($r->user(), $m->account_id), 403);
-        // account_id (ownership scope) is intentionally not accepted here - moving a model
-        // between accounts, or between account-owned and platform-global, is not a routine
-        // edit and must not be reachable by spoofing this field in the request body.
-        $d = $r->validate(['manufacturer_id' => 'required|uuid', 'model_code' => 'required|string|max:64', 'name' => 'required|string|max:160', 'machine_category' => 'nullable|string|max:40', 'color_capability' => 'nullable|string|max:20', 'description' => 'nullable|string', 'notes' => 'nullable|string']);
-        ScopedReference::activeGlobalOrOwned(Manufacturer::class, $d['manufacturer_id'], $m->account_id, 'manufacturer_id');
-        $duplicate = MachineModel::where('id', '!=', $id)->where('manufacturer_id', $d['manufacturer_id'])->whereRaw('lower(trim(model_code)) = ?', [strtolower(trim($d['model_code']))])->when($m->account_id, fn ($q, $accountId) => $q->where('account_id', $accountId), fn ($q) => $q->whereNull('account_id'))->exists();
-        abort_if($duplicate, 409, 'Machine model code already exists in this scope.');
-        $m->update($d);
+        return DB::transaction(function () use ($r, $id) {
+            $m = MachineModel::lockForUpdate()->findOrFail($id);
+            abort_unless(app(AccountAccessResolver::class)->canManageCatalogScope($r->user(), $m->account_id), 403);
+            // account_id (ownership scope) is intentionally not accepted here - moving a model
+            // between accounts, or between account-owned and platform-global, is not a routine
+            // edit and must not be reachable by spoofing this field in the request body.
+            $d = $r->validate(['manufacturer_id' => 'required|uuid', 'model_code' => 'required|string|max:64', 'name' => 'required|string|max:160', 'machine_category' => 'nullable|string|max:40', 'color_capability' => 'nullable|string|max:20', 'description' => 'nullable|string', 'notes' => 'nullable|string']);
+            ScopedReference::activeGlobalOrOwned(Manufacturer::class, $d['manufacturer_id'], $m->account_id, 'manufacturer_id');
+            $duplicate = MachineModel::where('id', '!=', $id)->where('manufacturer_id', $d['manufacturer_id'])->whereRaw('lower(trim(model_code)) = ?', [strtolower(trim($d['model_code']))])->when($m->account_id, fn ($q, $accountId) => $q->where('account_id', $accountId), fn ($q) => $q->whereNull('account_id'))->exists();
+            abort_if($duplicate, 409, 'Machine model code already exists in this scope.');
+            $before = app(GovernanceAudit::class)->snapshot($m);
+            $m->update($d);
 
-        return response()->json(['data' => $m->load('manufacturer')]);
+            app(GovernanceAudit::class)->changed($r->user(), 'machine_model.updated', 'machine_model', $m->id, $m->account_id, $before, app(GovernanceAudit::class)->snapshot($m), array_keys($m->getChanges()));
+
+            return response()->json(['data' => $m->load('manufacturer')]);
+        });
     }
 
     public function storeMachine(MachineRequest $r, string $branch)
     {
-        $b = Branch::findOrFail($branch);
-        abort_unless(app(AccountAccessResolver::class)->canManageOperational($r->user(), $b->account), 403);
-        $d = $r->validated();
-        $model = MachineModel::with('manufacturer')->findOrFail($d['machine_model_id']);
-        abort_unless($model->is_active && ($model->account_id === null || $model->account_id === $b->account_id) && $model->manufacturer?->is_active, 422, 'Machine model is not available for this account.');
-        ScopedReference::activeGlobalOrOwned(Manufacturer::class, $model->manufacturer_id, $model->account_id, 'machine_model_id');
-        $m = $b->machines()->create($d + ['account_id' => $b->account_id, 'status' => $d['status'] ?? 'active']);
+        return DB::transaction(function () use ($r, $branch) {
+            $b = Branch::lockForUpdate()->findOrFail($branch);
+            abort_unless(app(AccountAccessResolver::class)->canManageOperational($r->user(), $b->account), 403);
+            $d = $r->validated();
+            $model = MachineModel::with('manufacturer')->lockForUpdate()->findOrFail($d['machine_model_id']);
+            abort_unless($model->is_active && ($model->account_id === null || $model->account_id === $b->account_id) && $model->manufacturer?->is_active, 422, 'Machine model is not available for this account.');
+            ScopedReference::activeGlobalOrOwned(Manufacturer::class, $model->manufacturer_id, $model->account_id, 'machine_model_id');
+            $m = $b->machines()->create($d + ['account_id' => $b->account_id, 'status' => $d['status'] ?? 'active']);
 
-        return response()->json(['data' => $m], 201);
+            app(GovernanceAudit::class)->changed($r->user(), 'machine.created', 'machine', $m->id, $b->account_id, [], app(GovernanceAudit::class)->snapshot($m));
+
+            return response()->json(['data' => $m], 201);
+        });
     }
 
     public function setMachineStatus(Request $r, string $id)
     {
-        $m = Machine::with('account')->findOrFail($id);
-        abort_unless(app(AccountAccessResolver::class)->canManageOperational($r->user(), $m->account), 403);
-        $status = $r->validate(['status' => 'required|in:active,down,maintenance,retired'])['status'];
-        $m->update(['status' => $status]);
+        return DB::transaction(function () use ($r, $id) {
+            $m = Machine::with('account')->lockForUpdate()->findOrFail($id);
+            abort_unless(app(AccountAccessResolver::class)->canManageOperational($r->user(), $m->account), 403);
+            $status = $r->validate(['status' => 'required|in:active,down,maintenance,retired'])['status'];
+            $before = app(GovernanceAudit::class)->snapshot($m);
+            $m->update(['status' => $status]);
 
-        return response()->json(['data' => $m]);
+            app(GovernanceAudit::class)->changed($r->user(), 'machine.status_changed', 'machine', $m->id, $m->account_id, $before, app(GovernanceAudit::class)->snapshot($m), array_keys($m->getChanges()));
+
+            return response()->json(['data' => $m]);
+        });
     }
 
     public function updateMachine(Request $r, string $id)
     {
-        $m = Machine::with('account')->findOrFail($id);
-        abort_unless(app(AccountAccessResolver::class)->canManageOperational($r->user(), $m->account), 403);
-        $d = $r->validate(['machine_model_id' => 'required|uuid', 'machine_code' => 'required|string|max:80', 'display_name' => 'required|string|max:180', 'serial_number' => 'nullable|string|max:120', 'timezone' => 'nullable|string|max:64', 'status' => 'nullable|in:active,down,maintenance,retired']);
-        ScopedReference::activeGlobalOrOwned(MachineModel::class, $d['machine_model_id'], $m->account_id, 'machine_model_id');
-        $model = MachineModel::findOrFail($d['machine_model_id']);
-        ScopedReference::activeGlobalOrOwned(Manufacturer::class, $model->manufacturer_id, $model->account_id, 'machine_model_id');
-        $m->update($d);
+        return DB::transaction(function () use ($r, $id) {
+            $m = Machine::with('account')->lockForUpdate()->findOrFail($id);
+            abort_unless(app(AccountAccessResolver::class)->canManageOperational($r->user(), $m->account), 403);
+            $d = $r->validate(['machine_model_id' => 'required|uuid', 'machine_code' => 'required|string|max:80', 'display_name' => 'required|string|max:180', 'serial_number' => 'nullable|string|max:120', 'timezone' => 'nullable|string|max:64', 'status' => 'nullable|in:active,down,maintenance,retired']);
+            ScopedReference::activeGlobalOrOwned(MachineModel::class, $d['machine_model_id'], $m->account_id, 'machine_model_id');
+            $model = MachineModel::lockForUpdate()->findOrFail($d['machine_model_id']);
+            ScopedReference::activeGlobalOrOwned(Manufacturer::class, $model->manufacturer_id, $model->account_id, 'machine_model_id');
+            $before = app(GovernanceAudit::class)->snapshot($m);
+            $m->update($d);
 
-        return response()->json(['data' => $m->load('model.manufacturer')]);
+            app(GovernanceAudit::class)->changed($r->user(), 'machine.updated', 'machine', $m->id, $m->account_id, $before, app(GovernanceAudit::class)->snapshot($m), array_keys($m->getChanges()));
+
+            return response()->json(['data' => $m->load('model.manufacturer')]);
+        });
     }
 
     public function storePerson(OperationalPersonRequest $r, string $account)
     {
-        Gate::authorize('platform.manage');
-        $d = $r->validated();
+        return DB::transaction(function () use ($r, $account) {
+            Gate::authorize('platform.manage');
+            $d = $r->validated();
 
-        return response()->json(['data' => OperationalPerson::create($d + ['account_id' => $account])], 201);
+            $p = OperationalPerson::create($d + ['account_id' => $account]);
+            app(GovernanceAudit::class)->changed($r->user(), 'operational_person.created', 'operational_person', $p->id, $p->account_id, [], app(GovernanceAudit::class)->snapshot($p));
+
+            return response()->json(['data' => $p], 201);
+        });
     }
 
     public function setPersonStatus(Request $r, string $id)
     {
-        Gate::authorize('platform.manage');
-        $p = OperationalPerson::findOrFail($id);
-        $active = $r->validate(['is_active' => 'required|boolean'])['is_active'];
-        $p->update(['is_active' => $active, 'archived_at' => $active ? null : now()]);
+        return DB::transaction(function () use ($r, $id) {
+            Gate::authorize('platform.manage');
+            $p = OperationalPerson::lockForUpdate()->findOrFail($id);
+            $active = $r->validate(['is_active' => 'required|boolean'])['is_active'];
+            $before = app(GovernanceAudit::class)->snapshot($p);
+            $p->update(['is_active' => $active, 'archived_at' => $active ? null : now()]);
 
-        return response()->json(['data' => $p]);
+            app(GovernanceAudit::class)->changed($r->user(), ($active ? 'operational_person.reactivated' : 'operational_person.deactivated'), 'operational_person', $p->id, $p->account_id, $before, app(GovernanceAudit::class)->snapshot($p), array_keys($p->getChanges()));
+
+            return response()->json(['data' => $p]);
+        });
     }
 
     public function updatePerson(Request $r, string $account, string $id)
     {
-        Gate::authorize('platform.manage');
-        $p = OperationalPerson::where('account_id', $account)->findOrFail($id);
-        $d = $r->validate(['name' => 'required|string|max:160', 'code' => 'nullable|string|max:64', 'linked_user_id' => 'nullable|uuid', 'is_active' => 'sometimes|boolean']);
-        $p->update($d);
+        return DB::transaction(function () use ($r, $account, $id) {
+            Gate::authorize('platform.manage');
+            $p = OperationalPerson::where('account_id', $account)->lockForUpdate()->findOrFail($id);
+            $d = $r->validate(['name' => 'required|string|max:160', 'code' => 'nullable|string|max:64', 'linked_user_id' => 'nullable|uuid', 'is_active' => 'sometimes|boolean']);
+            $before = app(GovernanceAudit::class)->snapshot($p);
+            $p->update($d);
 
-        return response()->json(['data' => $p]);
+            app(GovernanceAudit::class)->changed($r->user(), 'operational_person.updated', 'operational_person', $p->id, $p->account_id, $before, app(GovernanceAudit::class)->snapshot($p), array_keys($p->getChanges()));
+
+            return response()->json(['data' => $p]);
+        });
     }
 
     public function assignPerson(PersonBranchAssignmentRequest $r, string $person, string $branch)
     {
-        Gate::authorize('platform.manage');
-        $p = OperationalPerson::findOrFail($person);
-        $b = Branch::findOrFail($branch);
-        abort_unless($p->account_id === $b->account_id, 403);
-        $active = $r->validated()['is_active'] ?? true;
-        $a = OperationalPersonBranch::updateOrCreate(['person_id' => $p->id, 'branch_id' => $b->id], ['account_id' => $b->account_id, 'is_active' => $active, 'can_record_counter' => $active ? ($r->validated()['can_record_counter'] ?? false) : false]);
+        return DB::transaction(function () use ($r, $person, $branch) {
+            Gate::authorize('platform.manage');
+            $p = OperationalPerson::lockForUpdate()->findOrFail($person);
+            $b = Branch::lockForUpdate()->findOrFail($branch);
+            abort_unless($p->account_id === $b->account_id, 403);
+            $before = OperationalPersonBranch::where('person_id', $p->id)->where('branch_id', $b->id)->first();
+            $before = $before ? app(GovernanceAudit::class)->snapshot($before) : [];
+            $active = $r->validated()['is_active'] ?? true;
+            $a = OperationalPersonBranch::updateOrCreate(['person_id' => $p->id, 'branch_id' => $b->id], ['account_id' => $b->account_id, 'is_active' => $active, 'can_record_counter' => $active ? ($r->validated()['can_record_counter'] ?? false) : false]);
 
-        return response()->json(['data' => $a], 201);
+            app(GovernanceAudit::class)->changed($r->user(), 'operational_person.branch_assignment_changed', 'operational_person_branch', $a->id, $p->account_id, $before, app(GovernanceAudit::class)->snapshot($a), array_keys($a->getChanges()));
+
+            return response()->json(['data' => $a], 201);
+        });
     }
 
     public function replacePersonBranches(Request $r, string $person)
     {
-        Gate::authorize('platform.manage');
-        $validated = $r->validate([
-            'assignments' => 'present|array',
-            'assignments.*.branch_id' => 'required|uuid|distinct',
-            'assignments.*.can_record_counter' => 'required|boolean',
-        ]);
+        return DB::transaction(function () use ($r, $person) {
+            Gate::authorize('platform.manage');
+            $validated = $r->validate([
+                'assignments' => 'present|array',
+                'assignments.*.branch_id' => 'required|uuid|distinct',
+                'assignments.*.can_record_counter' => 'required|boolean',
+            ]);
 
-        $result = DB::transaction(function () use ($person, $validated) {
-            $operationalPerson = OperationalPerson::lockForUpdate()->findOrFail($person);
-            $requested = collect($validated['assignments'])->keyBy('branch_id');
-            $branches = Branch::where('account_id', $operationalPerson->account_id)
-                ->whereIn('id', $requested->keys())
-                ->lockForUpdate()
-                ->get()
-                ->keyBy(fn ($branch) => (string) $branch->id);
+            $result = DB::transaction(function () use ($r, $person, $validated) {
+                $operationalPerson = OperationalPerson::lockForUpdate()->findOrFail($person);
+                $audit = app(GovernanceAudit::class);
+                $before = OperationalPersonBranch::where('person_id', $operationalPerson->id)->get()->keyBy('id')->map(fn ($assignment) => $audit->snapshot($assignment));
+                $requested = collect($validated['assignments'])->keyBy('branch_id');
+                $branches = Branch::where('account_id', $operationalPerson->account_id)
+                    ->whereIn('id', $requested->keys())
+                    ->lockForUpdate()
+                    ->get()
+                    ->keyBy(fn ($branch) => (string) $branch->id);
 
-            if ($branches->count() !== $requested->count()) {
-                throw ValidationException::withMessages(['assignments' => 'Every requested Branch must belong to the operational person account.']);
-            }
-            if ($branches->contains(fn ($branch) => ! $branch->is_active)) {
-                throw ValidationException::withMessages(['assignments' => 'Inactive Branch assignments cannot be activated.']);
-            }
+                if ($branches->count() !== $requested->count()) {
+                    throw ValidationException::withMessages(['assignments' => 'Every requested Branch must belong to the operational person account.']);
+                }
+                if ($branches->contains(fn ($branch) => ! $branch->is_active)) {
+                    throw ValidationException::withMessages(['assignments' => 'Inactive Branch assignments cannot be activated.']);
+                }
 
-            OperationalPersonBranch::where('person_id', $operationalPerson->id)
-                ->where('is_active', true)
-                ->whereNotIn('branch_id', $requested->keys())
-                ->update(['is_active' => false, 'can_record_counter' => false, 'updated_at' => now()]);
+                OperationalPersonBranch::where('person_id', $operationalPerson->id)
+                    ->where('is_active', true)
+                    ->whereNotIn('branch_id', $requested->keys())
+                    ->update(['is_active' => false, 'can_record_counter' => false, 'updated_at' => now()]);
 
-            foreach ($requested as $branchId => $assignment) {
-                OperationalPersonBranch::updateOrCreate(
-                    ['person_id' => $operationalPerson->id, 'branch_id' => $branchId],
-                    ['account_id' => $operationalPerson->account_id, 'is_active' => true, 'can_record_counter' => $assignment['can_record_counter']],
-                );
-            }
+                foreach ($requested as $branchId => $assignment) {
+                    OperationalPersonBranch::updateOrCreate(
+                        ['person_id' => $operationalPerson->id, 'branch_id' => $branchId],
+                        ['account_id' => $operationalPerson->account_id, 'is_active' => true, 'can_record_counter' => $assignment['can_record_counter']],
+                    );
+                }
 
-            return $operationalPerson->load(['branchAssignments.branch']);
+                foreach (OperationalPersonBranch::where('person_id', $operationalPerson->id)->get() as $assignment) {
+                    $audit->changed($r->user(), 'operational_person.branch_assignment_changed', 'operational_person_branch', $assignment->id, $operationalPerson->account_id, $before[$assignment->id] ?? [], $audit->snapshot($assignment));
+                }
+
+                return $operationalPerson->load(['branchAssignments.branch']);
+            });
+
+            return response()->json(['data' => (new OperationalPersonResource($result))->resolve($r)]);
         });
-
-        return response()->json(['data' => (new OperationalPersonResource($result))->resolve($r)]);
     }
 
     public function manufacturers(Request $r)

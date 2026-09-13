@@ -1,0 +1,188 @@
+{
+  "branch": "develop",
+  "head": "f2e1bf82dacb36e011177cd1e53a12dcd560c584",
+  "origin_develop": "f2e1bf82dacb36e011177cd1e53a12dcd560c584",
+  "clean": false,
+  "files": [
+    {
+      "status": " M",
+      "path": "docs/M2_12E_PRODUCTION_CUTOVER_EXECUTION.md",
+      "sha256": "832ad51c8cf110195b45ebf8e20e7d7105a840599e3c11b304da1fcb86754275"
+    },
+    {
+      "status": " M",
+      "path": "docs/M2_12F_FULL_DOMAIN_RECONCILIATION.md",
+      "sha256": "9e9bf3e036b226f9002055a20c6fe919b418b2aac5efad8959548b5487a63ca5"
+    },
+    {
+      "status": " M",
+      "path": "docs/evidence/m2-12f-full-domain-reconciliation.json",
+      "sha256": "7d283e101669dd07bf73f2d4ebd617aff82633ba2a7f3250db0054b18bc206e2"
+    },
+    {
+      "status": "??",
+      "path": ".m2-12e-2b-canonical-config-apply.sh",
+      "sha256": "bac06b02312eba38d86a29d42fe96229083a713ef4ad2699cc5780a902de6410"
+    },
+    {
+      "status": "??",
+      "path": ".m2-12e-final-public-activation.sh",
+      "sha256": "b6738c47c6a0286bdebe76065325d2e7062bc2cc1a0197acbd68df1ca5f6f6fa"
+    },
+    {
+      "status": "??",
+      "path": ".m2-12e-hostinger-routing-readonly-audit.sh",
+      "sha256": "58dd3905c801ca2c02d69a28475b0b3d9a6a6acf0ce71cf83cfb6f90c6b4f4c1"
+    },
+    {
+      "status": "??",
+      "path": ".m2-12e-inplace-public-activation-fixture.sh",
+      "sha256": "58b948b9bc3d169bbeae57414fc49998555d2c684fc90dd23f1da08e5e395512"
+    },
+    {
+      "status": "??",
+      "path": ".m2-12e-install-stable-root-routing.sh",
+      "sha256": "d78adabcc48dfed757bffcf4f9f67502eeb40b495b045db3054234fc8c7bbd4b"
+    },
+    {
+      "status": "??",
+      "path": ".m2-12e-new-supabase-c1070-readonly.mjs",
+      "sha256": "b0ad0e435477bf9bb3c221d7f3e9aafd1856c3cb467ae722192dd1021a36b74c"
+    },
+    {
+      "status": "??",
+      "path": ".m2-12e-pre-public-mode-audit-repair.sh",
+      "sha256": "53dab081bb765f55c96ee58d88c0ce3735b2ebb9feda2bd2d091790693d6a7c2"
+    },
+    {
+      "status": "??",
+      "path": ".m2-12e-production-backend-hotfix-deploy.sh",
+      "sha256": "f8172756cb6fc33925699f711b4c3bd8ec78fd6b02ea178fa3e4850bff1e1d81"
+    },
+    {
+      "status": "??",
+      "path": ".m2-12e-production-c1070-components-readonly.sh",
+      "sha256": "184ec4e173d1694ab2acaed661e17fe6f596030f1170fb9fac0953d0c68afd84"
+    },
+    {
+      "status": "??",
+      "path": ".m2-12e-production-htaccess-processing-forensics.sh",
+      "sha256": "0de187fc118202442e4dfaefc0d2974d8dd7bfcab024f96425cc13624795db5a"
+    },
+    {
+      "status": "??",
+      "path": ".m2-12e-production-routing-recovery-fixture.sh",
+      "sha256": "877225b46a9384388020f4955d85a8dacec7ab844ac162f04e97a532a587ac23"
+    },
+    {
+      "status": "??",
+      "path": ".m2-12e-production-routing-recovery.sh",
+      "sha256": "95c4d8df6d6930c1eaa58758647d132cf438ff9baced564e76e32ea3c008201e"
+    },
+    {
+      "status": "??",
+      "path": ".m2-12e-routing-local-test.sh",
+      "sha256": "a5651dd1a2996368f1d7f803ac180367421c45c6b791a30c06fcc5c2fe11d7ed"
+    },
+    {
+      "status": "??",
+      "path": ".m2-12e-stable-root-routing-fixture.sh",
+      "sha256": "690561008e6aa31d1a0f0797720dc99444ed20a45143b7e5261ce58e57e4e556"
+    },
+    {
+      "status": "??",
+      "path": ".m2-12e-stable-root.htaccess",
+      "sha256": "f985de8b111ac16c529a4e14146799158ad256a22dd6bb61f23d86754d865053"
+    },
+    {
+      "status": "??",
+      "path": ".m2-12e-staging-ifmodule-forensics.sh",
+      "sha256": "f61f2e7ca12501a8caee5e00f73e4da85dab676e7240ac62f00376f3bd18c5dd"
+    },
+    {
+      "status": "??",
+      "path": ".m2-12f-component-config-production-apply.sh",
+      "sha256": "7c3cda467e1b9ce0c2bdeb8ac8016d8377bfa0be49aa9a344f653f7b371a13c0"
+    },
+    {
+      "status": "??",
+      "path": "docs/M2_12F_COMPONENT_CONFIG_PATCH_REVIEW.md",
+      "sha256": "078596808cccd569dddf9f1d4588989edb884569849799785fe0be57e32936d2"
+    },
+    {
+      "status": "??",
+      "path": "docs/M2_12F_COMPONENT_CONFIG_PRODUCTION_APPLY.md",
+      "sha256": "2fd5b3b6fbd9d49e2457c15cc923bfcd8e96a1754ac9c02e010d7fecfdbbb230"
+    },
+    {
+      "status": "??",
+      "path": "docs/M2_12F_WRITE_PLAN_REVIEW.md",
+      "sha256": "9edf01c25feb94e225cd43865d8aac4e1f4f239ad0f486ff4e47df5cf7179454"
+    },
+    {
+      "status": "??",
+      "path": "docs/evidence/m2-12f-component-config-patch.json",
+      "sha256": "1a3ceef418926710e74425b75e6cc61719365ee51d8571331bd004b5c3de40fa"
+    },
+    {
+      "status": "??",
+      "path": "docs/evidence/m2-12f-component-config-production-apply.json",
+      "sha256": "37586965a38766f388c131462015c497a5fbee5345c893b41c7f0b350bddb378"
+    },
+    {
+      "status": "??",
+      "path": "docs/evidence/m2-12f-component-config-rollback.json",
+      "sha256": "3a70ae9b0adfdb8458b8864804835334da417e372945231eb5b5c45b10368dbc"
+    },
+    {
+      "status": "??",
+      "path": "docs/evidence/m2-12f-new-supabase-capture.json",
+      "sha256": "6df1a2391dd3ff7d017370eaefed4b852b7707fc49aa76408e76ecb78427f5a0"
+    },
+    {
+      "status": "??",
+      "path": "docs/evidence/m2-12f-production-write-plan.json",
+      "sha256": "cfb4adc3c8d732e9a63b2d473a65fdcbd9929c7115cdb78900c0c042f6ba3c65"
+    },
+    {
+      "status": "??",
+      "path": "docs/evidence/m2-12f-write-plan-review.json",
+      "sha256": "9ad6347ca71fb15ec69c3081982b9f2dc4d196e9aebf9340a04d94cffe811d23"
+    },
+    {
+      "status": "??",
+      "path": "scripts/migration/fixtures/m2-12f-reconciliation-cases.json",
+      "sha256": "348cc4dacbe2c0710c2fe7bd1145572b6a21089afaa681e99f82f20646e71047"
+    },
+    {
+      "status": "??",
+      "path": "scripts/migration/m2-12f-component-config-patch.mjs",
+      "sha256": "e89e3d4a6be71bae7c98165c78a1012cf56f3b3b899cbdf2248e1f2a60e56d0c"
+    },
+    {
+      "status": "??",
+      "path": "scripts/migration/m2-12f-component-config-patch.test.mjs",
+      "sha256": "f14209fa9701f95b2dd2ce78eeca5c2fe1c7c6657efd547a7eb334f86620f90c"
+    },
+    {
+      "status": "??",
+      "path": "scripts/migration/m2-12f-component-config-production-apply.php",
+      "sha256": "ed52266349905ff68fb5f2a5cb31b77f32018283b9464674d19ae5158ae739a5"
+    },
+    {
+      "status": "??",
+      "path": "scripts/migration/m2-12f-reconcile-captures.mjs",
+      "sha256": "f93715b51cb52d7272cd9afd3e25f9427142542649e3f02b9f16e09b49687663"
+    },
+    {
+      "status": "??",
+      "path": "scripts/migration/m2-12f-reconcile-captures.test.mjs",
+      "sha256": "5d07b8baf6f1c6c068462d0bff3539dca3881bada982f1c6eca69969a1ed0d52"
+    },
+    {
+      "status": "??",
+      "path": "scripts/migration/m2-12f-write-plan-review.mjs",
+      "sha256": "e76b00beb887a20a6036e6980101c8a07cc0d6fa470791ac0ce45ced24f41be0"
+    }
+  ]
+}

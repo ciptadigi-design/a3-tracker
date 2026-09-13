@@ -41,12 +41,17 @@ class GovernanceController extends Controller
 
     public function updatePolicy(Request $r, string $id)
     {
-        $a = Account::findOrFail($id);
-        abort_unless(app(AccountAccessResolver::class)->canGovern($r->user(), $a), 403);
-        $d = $r->validate(['operator_can_initialize_component' => 'boolean', 'operator_can_replace_component' => 'boolean', 'operator_can_create_purchase' => 'boolean', 'operator_can_receive_goods' => 'boolean', 'operator_can_adjust_inventory' => 'boolean', 'operator_can_transfer_inventory' => 'boolean', 'operator_can_log_errors' => 'boolean']);
-        DB::table('account_operational_permissions')->updateOrInsert(['account_id' => $id], $d + ['updated_at' => now(), 'created_at' => now()]);
+        return DB::transaction(function () use ($r, $id) {
+            $a = Account::lockForUpdate()->findOrFail($id);
+            abort_unless(app(AccountAccessResolver::class)->canGovern($r->user(), $a), 403);
+            $d = $r->validate(['operator_can_initialize_component' => 'boolean', 'operator_can_replace_component' => 'boolean', 'operator_can_create_purchase' => 'boolean', 'operator_can_receive_goods' => 'boolean', 'operator_can_adjust_inventory' => 'boolean', 'operator_can_transfer_inventory' => 'boolean', 'operator_can_log_errors' => 'boolean']);
+            $before = app(EffectiveCapabilityResolver::class)->policy($a);
+            DB::table('account_operational_permissions')->updateOrInsert(['account_id' => $id], $d + ['updated_at' => now(), 'created_at' => now()]);
 
-        return response()->json(['data' => DB::table('account_operational_permissions')->where('account_id', $id)->first()]);
+            app(GovernanceAudit::class)->changed($r->user(), 'account.policy_updated', 'account', $a->id, $id, $before, app(EffectiveCapabilityResolver::class)->policy($a));
+
+            return response()->json(['data' => DB::table('account_operational_permissions')->where('account_id', $id)->first()]);
+        });
     }
 
     public function accounts(Request $r)
@@ -58,30 +63,37 @@ class GovernanceController extends Controller
 
     public function storeAccount(AccountRequest $r)
     {
-        Gate::authorize('platform.manage');
-        $a = DB::transaction(function () use ($r) {
-            return Account::create([...$r->validated(), 'code' => strtoupper(trim($r->code))]);
-        });
-        app(GovernanceAudit::class)->record($r->user(), 'account.created', 'account', $a->id, null);
+        return DB::transaction(function () use ($r) {
+            Gate::authorize('platform.manage');
+            $a = DB::transaction(function () use ($r) {
+                return Account::create([...$r->validated(), 'code' => strtoupper(trim($r->code))]);
+            });
 
-        return response()->json(['data' => $a], 201);
+            app(GovernanceAudit::class)->changed($r->user(), 'account.created', 'account', $a->id, $a->id, [], app(GovernanceAudit::class)->snapshot($a));
+
+            return response()->json(['data' => $a], 201);
+        });
     }
 
     public function updateAccount(AccountRequest $r, string $id)
     {
-        Gate::authorize('platform.manage');
-        $a = Account::findOrFail($id);
-        $values = $r->validated();
-        if (isset($values['code'])) {
-            $values['code'] = strtoupper(trim($values['code']));
-        }if (($values['status'] ?? $a->status) === 'archived') {
-            $values['archived_at'] = $a->archived_at ?? now();
-        } elseif (isset($values['status'])) {
-            $values['archived_at'] = null;
-        }$a->update($values);
-        app(GovernanceAudit::class)->record($r->user(), 'account.updated', 'account', $a->id, $a->id);
+        return DB::transaction(function () use ($r, $id) {
+            Gate::authorize('platform.manage');
+            $a = Account::lockForUpdate()->findOrFail($id);
+            $before = app(GovernanceAudit::class)->snapshot($a);
+            $values = $r->validated();
+            if (isset($values['code'])) {
+                $values['code'] = strtoupper(trim($values['code']));
+            }if (($values['status'] ?? $a->status) === 'archived') {
+                $values['archived_at'] = $a->archived_at ?? now();
+            } elseif (isset($values['status'])) {
+                $values['archived_at'] = null;
+            }$a->update($values);
 
-        return response()->json(['data' => $a]);
+            app(GovernanceAudit::class)->changed($r->user(), 'account.updated', 'account', $a->id, $a->id, $before, app(GovernanceAudit::class)->snapshot($a), array_keys($a->getChanges()));
+
+            return response()->json(['data' => $a]);
+        });
     }
 
     public function branches(Request $r, string $id)
@@ -100,28 +112,35 @@ class GovernanceController extends Controller
 
     public function storeBranch(BranchRequest $r, string $id)
     {
-        $a = Account::findOrFail($id);
-        abort_unless(app(AccountAccessResolver::class)->canGovern($r->user(), $a), 403);
-        $b = $a->branches()->create([...$r->validated(), 'code' => strtoupper(trim($r->code))]);
-        app(GovernanceAudit::class)->record($r->user(), 'branch.created', 'branch', $b->id, $a->id);
+        return DB::transaction(function () use ($r, $id) {
+            $a = Account::lockForUpdate()->findOrFail($id);
+            abort_unless(app(AccountAccessResolver::class)->canGovern($r->user(), $a), 403);
+            $b = $a->branches()->create([...$r->validated(), 'code' => strtoupper(trim($r->code))]);
 
-        return response()->json(['data' => $b], 201);
+            app(GovernanceAudit::class)->changed($r->user(), 'branch.created', 'branch', $b->id, $a->id, [], app(GovernanceAudit::class)->snapshot($b));
+
+            return response()->json(['data' => $b], 201);
+        });
     }
 
     public function updateBranch(BranchRequest $r, string $accountId, string $id)
     {
-        $a = Account::findOrFail($accountId);
-        abort_unless(app(AccountAccessResolver::class)->canGovern($r->user(), $a), 403);
-        $b = $a->branches()->findOrFail($id);
-        $d = $r->validated();
-        if (isset($d['code'])) {
-            $d['code'] = strtoupper(trim($d['code']));
-        }if (array_key_exists('is_active', $d)) {
-            $d['archived_at'] = $d['is_active'] ? null : now();
-        }$b->update($d);
-        app(GovernanceAudit::class)->record($r->user(), $b->is_active ? 'branch.restored' : 'branch.archived', 'branch', $b->id, $a->id);
+        return DB::transaction(function () use ($r, $accountId, $id) {
+            $a = Account::lockForUpdate()->findOrFail($accountId);
+            abort_unless(app(AccountAccessResolver::class)->canGovern($r->user(), $a), 403);
+            $b = $a->branches()->lockForUpdate()->findOrFail($id);
+            $before = app(GovernanceAudit::class)->snapshot($b);
+            $d = $r->validated();
+            if (isset($d['code'])) {
+                $d['code'] = strtoupper(trim($d['code']));
+            }if (array_key_exists('is_active', $d)) {
+                $d['archived_at'] = $d['is_active'] ? null : now();
+            }$b->update($d);
 
-        return response()->json(['data' => $b]);
+            app(GovernanceAudit::class)->changed($r->user(), ($before['is_active'] !== $b->is_active ? ($b->is_active ? 'branch.restored' : 'branch.archived') : 'branch.updated'), 'branch', $b->id, $a->id, $before, app(GovernanceAudit::class)->snapshot($b), array_keys($b->getChanges()));
+
+            return response()->json(['data' => $b]);
+        });
     }
 
     public function updateMember(Request $r, string $accountId, string $id)
@@ -139,28 +158,39 @@ class GovernanceController extends Controller
 
     public function updateMemberEmail(Request $r, string $accountId, string $id)
     {
-        $a = Account::findOrFail($accountId);
-        abort_unless(app(AccountAccessResolver::class)->canGovern($r->user(), $a), 403);
-        $m = $a->memberships()->with('user')->findOrFail($id);
-        app(MemberLifecycle::class)->authorizeTarget($r->user(), $m->user, true);
-        $r->merge(['email' => IdentityInput::normalize($r->input('email'))]);
-        $d = $r->validate(['email' => 'required|email|max:254']);
-        IdentityInput::ensureAvailable('email', $d['email'], $m->user_id);
-        $m->user->forceFill(['email' => strtolower(trim($d['email']))])->save();
+        return DB::transaction(function () use ($r, $accountId, $id) {
+            $a = Account::lockForUpdate()->findOrFail($accountId);
+            abort_unless(app(AccountAccessResolver::class)->canGovern($r->user(), $a), 403);
+            $m = $a->memberships()->with('user')->lockForUpdate()->findOrFail($id);
+            app(MemberLifecycle::class)->authorizeTarget($r->user(), $m->user, true);
+            $r->merge(['email' => IdentityInput::normalize($r->input('email'))]);
+            $d = $r->validate(['email' => 'required|email|max:254']);
+            IdentityInput::ensureAvailable('email', $d['email'], $m->user_id);
+            $changed = $m->user->email !== $d['email'];
+            $m->user->forceFill(['email' => strtolower(trim($d['email']))])->save();
 
-        return response()->json(['data' => $m->fresh('user')]);
+            if ($changed) {
+                app(GovernanceAudit::class)->record($r->user(), 'identity.email_changed', 'user', $m->user_id, $a->id);
+            }
+
+            return response()->json(['data' => $m->fresh('user')]);
+        });
     }
 
     public function resetMemberPassword(Request $r, string $accountId, string $id)
     {
-        $a = Account::findOrFail($accountId);
-        abort_unless(app(AccountAccessResolver::class)->canGovern($r->user(), $a), 403);
-        $m = $a->memberships()->with('user')->findOrFail($id);
-        app(MemberLifecycle::class)->authorizeTarget($r->user(), $m->user, true);
-        $d = $r->validate(['password' => 'required|string|min:10|max:128|confirmed']);
-        $m->user->forceFill(['password' => $d['password']])->save();
+        return DB::transaction(function () use ($r, $accountId, $id) {
+            $a = Account::lockForUpdate()->findOrFail($accountId);
+            abort_unless(app(AccountAccessResolver::class)->canGovern($r->user(), $a), 403);
+            $m = $a->memberships()->with('user')->lockForUpdate()->findOrFail($id);
+            app(MemberLifecycle::class)->authorizeTarget($r->user(), $m->user, true);
+            $d = $r->validate(['password' => 'required|string|min:10|max:128|confirmed']);
+            $m->user->forceFill(['password' => $d['password']])->save();
 
-        return response()->json(['data' => ['membership_id' => $m->id]]);
+            app(GovernanceAudit::class)->record($r->user(), 'identity.credentials_reset', 'user', $m->user_id, $a->id);
+
+            return response()->json(['data' => ['membership_id' => $m->id]]);
+        });
     }
 
     public function members(Request $r, string $id)
@@ -192,12 +222,17 @@ class GovernanceController extends Controller
 
     public function bootstrap(Request $r)
     {
-        Gate::authorize('platform.manage');
-        $d = $r->validate(['user_id' => 'required|uuid']);
-        $u = User::findOrFail($d['user_id']);
-        $p = PlatformUserPrivilege::updateOrCreate(['user_id' => $u->id], ['role' => 'superuser', 'is_active' => true]);
-        app(GovernanceAudit::class)->record($r->user(), 'platform.privilege.granted', 'platform_user_privilege', $u->id);
+        return DB::transaction(function () use ($r) {
+            Gate::authorize('platform.manage');
+            $d = $r->validate(['user_id' => 'required|uuid']);
+            $u = User::lockForUpdate()->findOrFail($d['user_id']);
+            $before = $u->platformPrivilege()->first();
+            $before = $before ? app(GovernanceAudit::class)->snapshot($before) : [];
+            $p = PlatformUserPrivilege::updateOrCreate(['user_id' => $u->id], ['role' => 'superuser', 'is_active' => true]);
 
-        return response()->json(['data' => $p]);
+            app(GovernanceAudit::class)->changed($r->user(), 'platform.privilege.granted', 'platform_user_privilege', $p->getKey(), null, $before, app(GovernanceAudit::class)->snapshot($p), array_keys($p->getChanges()));
+
+            return response()->json(['data' => $p]);
+        });
     }
 }

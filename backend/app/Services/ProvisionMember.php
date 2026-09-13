@@ -46,6 +46,7 @@ class ProvisionMember
                 }
                 if ($m->status === 'suspended') {
                     $m->update(['status' => 'active']);
+                    $this->audit->changed($actor, 'membership.status_changed', 'account_membership', $m->id, $account->id, ['status' => 'suspended'], ['status' => 'active']);
                 }
 
                 return $m->load('user', 'branchAssignments');
@@ -53,7 +54,8 @@ class ProvisionMember
             $user = User::create(['name' => trim($data['name']), 'email' => $email, 'username' => $username, 'password' => $data['password'], 'status' => 'active']);
             $m = $account->memberships()->create(['user_id' => $user->id, 'role' => $data['role'], 'status' => 'active', 'accepted_at' => now()]);
             $this->lifecycle->assign($m, $ids);
-            $this->audit->record($actor, 'member.provisioned', 'account_membership', $m->id, $account->id, ['role' => $m->role]);
+            sort($ids);
+            $this->audit->changed($actor, 'membership.created', 'account_membership', $m->id, $account->id, [], ['user_id' => $user->id, 'role' => $m->role, 'status' => $m->status, 'branch_ids' => $ids]);
 
             return $m->load('user', 'branchAssignments');
         });

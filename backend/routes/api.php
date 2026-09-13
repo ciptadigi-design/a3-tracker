@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ClickTargetController;
 use App\Http\Controllers\Api\ComponentsController;
+use App\Http\Controllers\Api\GovernanceAuditController;
 use App\Http\Controllers\Api\GovernanceController;
 use App\Http\Controllers\Api\HealthController;
 use App\Http\Controllers\Api\IncidentsController;
@@ -26,6 +27,8 @@ Route::prefix('v1')->middleware('request.id')->group(function () {
             Route::post('accounts', [GovernanceController::class, 'storeAccount']);
             Route::put('accounts/{id}', [GovernanceController::class, 'updateAccount']);
             Route::get('accounts/{id}/branches', [GovernanceController::class, 'branches']);
+            Route::get('accounts/{id}/audit', [GovernanceAuditController::class, 'index']);
+            Route::get('platform/accounts/{id}/audit', [GovernanceAuditController::class, 'platform']);
             Route::get('accounts/{id}/settings', [GovernanceController::class, 'settings']);
             Route::patch('accounts/{id}/settings/policy', [GovernanceController::class, 'updatePolicy']);
             Route::post('accounts/{id}/branches', [GovernanceController::class, 'storeBranch']);

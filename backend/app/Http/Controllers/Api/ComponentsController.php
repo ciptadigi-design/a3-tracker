@@ -16,9 +16,11 @@ use App\Models\ModelProfileSlot;
 use App\Services\AccountAccessResolver;
 use App\Services\ComponentConfigurationService;
 use App\Services\EffectiveCapabilityResolver;
+use App\Services\GovernanceAudit;
 use App\Services\MachineAccessResolver;
 use App\Services\ScopedReference;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 
@@ -110,88 +112,122 @@ class ComponentsController extends Controller
 
     public function storeProfile(Request $r, string $model)
     {
-        $m = MachineModel::findOrFail($model);
-        $d = $r->validate(['component_id' => 'required|uuid', 'slot_code' => 'required|string|max:80', 'slot_name' => 'nullable|string|max:160', 'display_order' => 'nullable|integer|min:0', 'tracking_method' => 'nullable|in:counter_based', 'baseline_expected_clicks' => 'nullable|integer|min:1', 'healthy_threshold_percent' => 'nullable|numeric|min:0|max:100', 'watch_threshold_percent' => 'nullable|numeric|min:0|max:100', 'warning_threshold_percent' => 'nullable|numeric|min:0|max:100', 'critical_threshold_percent' => 'nullable|numeric|min:0|max:100', 'adaptive_enabled' => 'nullable|boolean', 'notes' => 'nullable|string']);
-        $this->validateThresholdOrdering($d);
-        // An account-owned model is always scoped to its own account; a platform-global
-        // model (account_id null) has no account context to assign into, so component
-        // assignment against it is Superuser-only, matching every other catalog mutation.
-        $this->authorizeCatalogScope($r, $m->account_id);
+        return DB::transaction(function () use ($r, $model) {
+            $m = MachineModel::lockForUpdate()->findOrFail($model);
+            $d = $r->validate(['component_id' => 'required|uuid', 'slot_code' => 'required|string|max:80', 'slot_name' => 'nullable|string|max:160', 'display_order' => 'nullable|integer|min:0', 'tracking_method' => 'nullable|in:counter_based', 'baseline_expected_clicks' => 'nullable|integer|min:1', 'healthy_threshold_percent' => 'nullable|numeric|min:0|max:100', 'watch_threshold_percent' => 'nullable|numeric|min:0|max:100', 'warning_threshold_percent' => 'nullable|numeric|min:0|max:100', 'critical_threshold_percent' => 'nullable|numeric|min:0|max:100', 'adaptive_enabled' => 'nullable|boolean', 'notes' => 'nullable|string']);
+            $this->validateThresholdOrdering($d);
+            // An account-owned model is always scoped to its own account; a platform-global
+            // model (account_id null) has no account context to assign into, so component
+            // assignment against it is Superuser-only, matching every other catalog mutation.
+            $this->authorizeCatalogScope($r, $m->account_id);
 
-        ScopedReference::activeGlobalOrOwned(ComponentCatalog::class, $d['component_id'], $m->account_id, 'component_id');
-        $profile = ModelProfile::firstOrCreate(['machine_model_id' => $m->id, 'account_id' => $m->account_id, 'is_active' => true], ['name' => trim($m->name).' profile']);
-        $slot = ModelProfileSlot::create(['profile_id' => $profile->id, 'component_id' => $d['component_id'], 'slot_code' => $d['slot_code'], 'slot_name' => $d['slot_name'] ?? null, 'display_order' => $d['display_order'] ?? 0, 'tracking_method' => $d['tracking_method'] ?? 'counter_based', 'baseline_expected_clicks' => $d['baseline_expected_clicks'] ?? null] + array_intersect_key($d, array_flip(['healthy_threshold_percent', 'watch_threshold_percent', 'warning_threshold_percent', 'critical_threshold_percent', 'adaptive_enabled', 'notes'])));
+            ScopedReference::activeGlobalOrOwned(ComponentCatalog::class, $d['component_id'], $m->account_id, 'component_id');
+            $profile = ModelProfile::firstOrCreate(['machine_model_id' => $m->id, 'account_id' => $m->account_id, 'is_active' => true], ['name' => trim($m->name).' profile']);
+            $slot = ModelProfileSlot::create(['profile_id' => $profile->id, 'component_id' => $d['component_id'], 'slot_code' => $d['slot_code'], 'slot_name' => $d['slot_name'] ?? null, 'display_order' => $d['display_order'] ?? 0, 'tracking_method' => $d['tracking_method'] ?? 'counter_based', 'baseline_expected_clicks' => $d['baseline_expected_clicks'] ?? null] + array_intersect_key($d, array_flip(['healthy_threshold_percent', 'watch_threshold_percent', 'warning_threshold_percent', 'critical_threshold_percent', 'adaptive_enabled', 'notes'])));
 
-        return response()->json(['data' => $slot->load('component')], 201);
+            app(GovernanceAudit::class)->changed($r->user(), 'model_profile.configuration_changed', 'model_profile_slot', $slot->id, $m->account_id, [], app(GovernanceAudit::class)->snapshot($slot));
+
+            return response()->json(['data' => $slot->load('component')], 201);
+        });
     }
 
     public function storeSlot(Request $r, string $profile)
     {
-        $p = ModelProfile::findOrFail($profile);
-        $this->authorizeCatalogScope($r, $p->account_id);
-        $d = $r->validate(['component_id' => 'required|uuid', 'slot_code' => 'required|string|max:80', 'slot_name' => 'nullable|string|max:160', 'display_order' => 'nullable|integer|min:0', 'tracking_method' => 'nullable|in:counter_based', 'baseline_expected_clicks' => 'nullable|integer|min:1', 'healthy_threshold_percent' => 'nullable|numeric|min:0|max:100', 'watch_threshold_percent' => 'nullable|numeric|min:0|max:100', 'warning_threshold_percent' => 'nullable|numeric|min:0|max:100', 'critical_threshold_percent' => 'nullable|numeric|min:0|max:100', 'adaptive_enabled' => 'nullable|boolean', 'notes' => 'nullable|string']);
-        $this->validateThresholdOrdering($d);
+        return DB::transaction(function () use ($r, $profile) {
+            $p = ModelProfile::lockForUpdate()->findOrFail($profile);
+            $this->authorizeCatalogScope($r, $p->account_id);
+            $d = $r->validate(['component_id' => 'required|uuid', 'slot_code' => 'required|string|max:80', 'slot_name' => 'nullable|string|max:160', 'display_order' => 'nullable|integer|min:0', 'tracking_method' => 'nullable|in:counter_based', 'baseline_expected_clicks' => 'nullable|integer|min:1', 'healthy_threshold_percent' => 'nullable|numeric|min:0|max:100', 'watch_threshold_percent' => 'nullable|numeric|min:0|max:100', 'warning_threshold_percent' => 'nullable|numeric|min:0|max:100', 'critical_threshold_percent' => 'nullable|numeric|min:0|max:100', 'adaptive_enabled' => 'nullable|boolean', 'notes' => 'nullable|string']);
+            $this->validateThresholdOrdering($d);
 
-        ScopedReference::activeGlobalOrOwned(ComponentCatalog::class, $d['component_id'], $p->account_id, 'component_id');
+            ScopedReference::activeGlobalOrOwned(ComponentCatalog::class, $d['component_id'], $p->account_id, 'component_id');
 
-        return response()->json(['data' => ModelProfileSlot::create($d + ['profile_id' => $profile])->load('component')], 201);
+            $slot = ModelProfileSlot::create($d + ['profile_id' => $profile]);
+            app(GovernanceAudit::class)->changed($r->user(), 'model_profile.configuration_changed', 'model_profile_slot', $slot->id, $p->account_id, [], app(GovernanceAudit::class)->snapshot($slot));
+
+            return response()->json(['data' => $slot->load('component')], 201);
+        });
     }
 
     public function updateSlot(Request $r, string $slot)
     {
-        $s = ModelProfileSlot::with('profile')->findOrFail($slot);
-        $this->authorizeCatalogScope($r, $s->profile->account_id);
-        $d = $r->validate(['slot_name' => 'nullable|string|max:160', 'display_order' => 'nullable|integer|min:0', 'tracking_method' => 'nullable|in:counter_based', 'baseline_expected_clicks' => 'nullable|integer|min:1', 'healthy_threshold_percent' => 'nullable|numeric|min:0|max:100', 'watch_threshold_percent' => 'nullable|numeric|min:0|max:100', 'warning_threshold_percent' => 'nullable|numeric|min:0|max:100', 'critical_threshold_percent' => 'nullable|numeric|min:0|max:100', 'adaptive_enabled' => 'nullable|boolean', 'notes' => 'nullable|string']);
-        // M2.17.5.2 Part C4: a forged { tracking_method: "consumption_based" } (etc) on an
-        // existing slot must be rejected the same as on create - `in:counter_based` above
-        // already refuses anything else, this ordering check just also covers the case
-        // where thresholds are edited without tracking_method in the same payload.
-        $this->validateThresholdOrdering($d + ['healthy_threshold_percent' => $d['healthy_threshold_percent'] ?? $s->healthy_threshold_percent, 'watch_threshold_percent' => $d['watch_threshold_percent'] ?? $s->watch_threshold_percent, 'warning_threshold_percent' => $d['warning_threshold_percent'] ?? $s->warning_threshold_percent, 'critical_threshold_percent' => $d['critical_threshold_percent'] ?? $s->critical_threshold_percent]);
-        $s->update($d);
+        return DB::transaction(function () use ($r, $slot) {
+            $s = ModelProfileSlot::with('profile')->lockForUpdate()->findOrFail($slot);
+            $this->authorizeCatalogScope($r, $s->profile->account_id);
+            $d = $r->validate(['slot_name' => 'nullable|string|max:160', 'display_order' => 'nullable|integer|min:0', 'tracking_method' => 'nullable|in:counter_based', 'baseline_expected_clicks' => 'nullable|integer|min:1', 'healthy_threshold_percent' => 'nullable|numeric|min:0|max:100', 'watch_threshold_percent' => 'nullable|numeric|min:0|max:100', 'warning_threshold_percent' => 'nullable|numeric|min:0|max:100', 'critical_threshold_percent' => 'nullable|numeric|min:0|max:100', 'adaptive_enabled' => 'nullable|boolean', 'notes' => 'nullable|string']);
+            // M2.17.5.2 Part C4: a forged { tracking_method: "consumption_based" } (etc) on an
+            // existing slot must be rejected the same as on create - `in:counter_based` above
+            // already refuses anything else, this ordering check just also covers the case
+            // where thresholds are edited without tracking_method in the same payload.
+            $this->validateThresholdOrdering($d + ['healthy_threshold_percent' => $d['healthy_threshold_percent'] ?? $s->healthy_threshold_percent, 'watch_threshold_percent' => $d['watch_threshold_percent'] ?? $s->watch_threshold_percent, 'warning_threshold_percent' => $d['warning_threshold_percent'] ?? $s->warning_threshold_percent, 'critical_threshold_percent' => $d['critical_threshold_percent'] ?? $s->critical_threshold_percent]);
+            $before = app(GovernanceAudit::class)->snapshot($s);
+            $s->update($d);
 
-        return response()->json(['data' => $s->load('component')]);
+            app(GovernanceAudit::class)->changed($r->user(), 'model_profile.configuration_changed', 'model_profile_slot', $s->id, $s->profile->account_id, $before, app(GovernanceAudit::class)->snapshot($s), array_keys($s->getChanges()));
+
+            return response()->json(['data' => $s->load('component')]);
+        });
     }
 
     public function setSlotStatus(Request $r, string $slot)
     {
-        $s = ModelProfileSlot::with('profile')->findOrFail($slot);
-        $this->authorizeCatalogScope($r, $s->profile->account_id);
-        $active = $r->validate(['is_active' => 'required|boolean'])['is_active'];
-        $s->update(['is_active' => $active, 'archived_at' => $active ? null : now()]);
+        return DB::transaction(function () use ($r, $slot) {
+            $s = ModelProfileSlot::with('profile')->lockForUpdate()->findOrFail($slot);
+            $this->authorizeCatalogScope($r, $s->profile->account_id);
+            $active = $r->validate(['is_active' => 'required|boolean'])['is_active'];
+            $before = app(GovernanceAudit::class)->snapshot($s);
+            $s->update(['is_active' => $active, 'archived_at' => $active ? null : now()]);
 
-        return response()->json(['data' => $s->load('component')]);
+            app(GovernanceAudit::class)->changed($r->user(), 'model_profile.configuration_changed', 'model_profile_slot', $s->id, $s->profile->account_id, $before, app(GovernanceAudit::class)->snapshot($s), array_keys($s->getChanges()));
+
+            return response()->json(['data' => $s->load('component')]);
+        });
     }
 
     public function setProfileStatus(Request $r, string $id)
     {
-        $p = ModelProfile::findOrFail($id);
-        $this->authorizeCatalogScope($r, $p->account_id);
-        $active = $r->validate(['is_active' => 'required|boolean'])['is_active'];
-        $p->update(['is_active' => $active, 'archived_at' => $active ? null : now()]);
+        return DB::transaction(function () use ($r, $id) {
+            $p = ModelProfile::lockForUpdate()->findOrFail($id);
+            $this->authorizeCatalogScope($r, $p->account_id);
+            $active = $r->validate(['is_active' => 'required|boolean'])['is_active'];
+            $before = app(GovernanceAudit::class)->snapshot($p);
+            $p->update(['is_active' => $active, 'archived_at' => $active ? null : now()]);
 
-        return response()->json(['data' => $p]);
+            app(GovernanceAudit::class)->changed($r->user(), 'model_profile.configuration_changed', 'model_profile', $p->id, $p->account_id, $before, app(GovernanceAudit::class)->snapshot($p), array_keys($p->getChanges()));
+
+            return response()->json(['data' => $p]);
+        });
     }
 
     public function exclude(Request $r, string $component)
     {
-        $mc = MachineComponent::with('machine')->findOrFail($component);
-        $this->authorizeComponentConfiguration($r, $mc->machine);
-        $d = $r->validate(['reason' => 'required|string', 'client_request_id' => 'nullable|uuid']);
-        app(ComponentConfigurationService::class)->exclude($mc, $d['reason'], $d['client_request_id'] ?? null);
+        return DB::transaction(function () use ($r, $component) {
+            $mc = MachineComponent::with('machine')->lockForUpdate()->findOrFail($component);
+            $this->authorizeComponentConfiguration($r, $mc->machine);
+            $before = app(GovernanceAudit::class)->snapshot($mc);
+            $d = $r->validate(['reason' => 'required|string', 'client_request_id' => 'nullable|uuid']);
+            app(ComponentConfigurationService::class)->exclude($mc, $d['reason'], $d['client_request_id'] ?? null);
 
-        return response()->noContent();
+            app(GovernanceAudit::class)->changed($r->user(), 'machine_component.excluded', 'machine_component', $mc->id, $mc->account_id, $before, app(GovernanceAudit::class)->snapshot($mc->fresh()));
+
+            return response()->noContent();
+        });
     }
 
     public function clearExclusion(Request $r, string $exclusion)
     {
-        // Authorization is resolved from the exclusion record's own machine_id,
-        // never a client-supplied value, so a forged/unrelated id cannot be
-        // used to launder access into a different account.
-        $e = MachineComponentExclusion::with('machine')->findOrFail($exclusion);
-        $this->authorizeComponentConfiguration($r, $e->machine);
-        app(ComponentConfigurationService::class)->clearExclusion($e, $r->user()->id);
+        return DB::transaction(function () use ($r, $exclusion) {
+            // Authorization is resolved from the exclusion record's own machine_id,
+            // never a client-supplied value, so a forged/unrelated id cannot be
+            // used to launder access into a different account.
+            $e = MachineComponentExclusion::with('machine')->lockForUpdate()->findOrFail($exclusion);
+            $this->authorizeComponentConfiguration($r, $e->machine);
+            $before = app(GovernanceAudit::class)->snapshot($e);
+            app(ComponentConfigurationService::class)->clearExclusion($e, $r->user()->id);
 
-        return response()->noContent();
+            app(GovernanceAudit::class)->changed($r->user(), 'machine_component.exclusion_cleared', 'component_exclusion', $e->id, $e->account_id, $before, app(GovernanceAudit::class)->snapshot($e->fresh()));
+
+            return response()->noContent();
+        });
     }
 
     public function machineComponents(Request $r, string $machine)
@@ -239,20 +275,32 @@ class ComponentsController extends Controller
 
     public function sync(Request $r, string $machine)
     {
-        $m = Machine::findOrFail($machine);
-        $this->authorizeComponentConfiguration($r, $m);
-        $n = app(ComponentConfigurationService::class)->sync($m);
+        return DB::transaction(function () use ($r, $machine) {
+            $m = Machine::lockForUpdate()->findOrFail($machine);
+            $this->authorizeComponentConfiguration($r, $m);
+            $audit = app(GovernanceAudit::class);
+            $before = MachineComponent::where('machine_id', $m->id)->get()->keyBy('id')->map(fn ($mc) => $audit->snapshot($mc));
+            $n = app(ComponentConfigurationService::class)->sync($m);
+            foreach (MachineComponent::where('machine_id', $m->id)->get() as $mc) {
+                $audit->changed($r->user(), 'machine_component.profile_synced', 'machine_component', $mc->id, $m->account_id, $before[$mc->id] ?? [], $audit->snapshot($mc));
+            }
 
-        return response()->json(['data' => ['created_or_restored' => $n]]);
+            return response()->json(['data' => ['created_or_restored' => $n]]);
+        });
     }
 
     public function add(Request $r, string $machine)
     {
-        $m = Machine::findOrFail($machine);
-        $this->authorizeComponentConfiguration($r, $m);
-        $d = $r->validate(['component_id' => 'required|uuid', 'slot_code' => 'required|string|max:80', 'display_order' => 'nullable|integer|min:0', 'tracking_method' => 'required|in:counter_based', 'baseline_expected_clicks' => 'required|integer|min:1', 'notes' => 'nullable|string']);
+        return DB::transaction(function () use ($r, $machine) {
+            $m = Machine::lockForUpdate()->findOrFail($machine);
+            $this->authorizeComponentConfiguration($r, $m);
+            $d = $r->validate(['component_id' => 'required|uuid', 'slot_code' => 'required|string|max:80', 'display_order' => 'nullable|integer|min:0', 'tracking_method' => 'required|in:counter_based', 'baseline_expected_clicks' => 'required|integer|min:1', 'notes' => 'nullable|string']);
 
-        return response()->json(['data' => app(ComponentConfigurationService::class)->addManual($m, $d)], 201);
+            $mc = app(ComponentConfigurationService::class)->addManual($m, $d);
+            app(GovernanceAudit::class)->changed($r->user(), 'machine_component.created', 'machine_component', $mc->id, $m->account_id, [], app(GovernanceAudit::class)->snapshot($mc));
+
+            return response()->json(['data' => $mc], 201);
+        });
     }
 
     public function initialize(Request $r, string $component)
@@ -267,12 +315,18 @@ class ComponentsController extends Controller
 
     public function reconcile(Request $r, string $component)
     {
-        $mc = MachineComponent::with('machine')->findOrFail($component);
-        $this->authorizeComponentConfiguration($r, $mc->machine);
-        $d = $r->validate(['profile_slot_id' => 'required|uuid']);
-        $slot = ModelProfileSlot::findOrFail($d['profile_slot_id']);
+        return DB::transaction(function () use ($r, $component) {
+            $mc = MachineComponent::with('machine')->lockForUpdate()->findOrFail($component);
+            $this->authorizeComponentConfiguration($r, $mc->machine);
+            $before = app(GovernanceAudit::class)->snapshot($mc);
+            $d = $r->validate(['profile_slot_id' => 'required|uuid']);
+            $slot = ModelProfileSlot::lockForUpdate()->findOrFail($d['profile_slot_id']);
 
-        return response()->json(['data' => app(ComponentConfigurationService::class)->reconcileManual($mc, $slot)]);
+            $result = app(ComponentConfigurationService::class)->reconcileManual($mc, $slot);
+            app(GovernanceAudit::class)->changed($r->user(), 'machine_component.reconciled', 'machine_component', $mc->id, $mc->account_id, $before, app(GovernanceAudit::class)->snapshot($mc->fresh()));
+
+            return response()->json(['data' => $result]);
+        });
     }
 
     public function reconciliationCandidate(Request $r, string $component)
@@ -288,11 +342,16 @@ class ComponentsController extends Controller
 
     public function remove(Request $r, string $component)
     {
-        $mc = MachineComponent::with('machine')->findOrFail($component);
-        $this->authorizeComponentConfiguration($r, $mc->machine);
-        $d = $r->validate(['reason' => 'nullable|string']);
-        $mc->update(['status' => 'retired', 'retired_at' => now()]);
+        return DB::transaction(function () use ($r, $component) {
+            $mc = MachineComponent::with('machine')->lockForUpdate()->findOrFail($component);
+            $this->authorizeComponentConfiguration($r, $mc->machine);
+            $before = app(GovernanceAudit::class)->snapshot($mc);
+            $d = $r->validate(['reason' => 'nullable|string']);
+            $mc->update(['status' => 'retired', 'retired_at' => now()]);
 
-        return response()->json(['data' => $mc]);
+            app(GovernanceAudit::class)->changed($r->user(), 'machine_component.retired', 'machine_component', $mc->id, $mc->account_id, $before, app(GovernanceAudit::class)->snapshot($mc->fresh()));
+
+            return response()->json(['data' => $mc]);
+        });
     }
 }
