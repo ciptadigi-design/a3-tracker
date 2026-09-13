@@ -16,7 +16,7 @@ test('Settings route and six-section control-plane IA are active', () => {
   assert.doesNotMatch(app, /'\/settings': \['Settings'/)
   for (const label of ['Workspace', 'Branches', 'Members & Roles', 'Permissions', 'Operations', 'Machine Models']) assert.match(page, new RegExp(label.replace('&', '\\&')))
   assert.match(sidebar, /Settings, active: true/)
-  assert.match(sidebar, /isPlatformSuperuser && <NavLink/)
+  assert.match(sidebar, /isPlatformSuperuser && can\('settings.view'\) && <NavLink/)
   assert.doesNotMatch(sidebar, /membership\?\.role|\['owner'/)
   assert.match(app, /path === '\/settings'.*tenant\.isPlatformSuperuser/)
   assert.match(app, /Settings is temporarily available only to Platform Superusers/)

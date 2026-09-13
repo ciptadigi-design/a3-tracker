@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Machine;
+use App\Services\EffectiveCapabilityResolver;
 use App\Services\MachineAccessResolver;
 use App\Services\MachineCostService;
 use App\Services\OperationalPersonEligibilityService;
@@ -24,6 +25,7 @@ class MachineCostController extends Controller
         $v = $r->validate(['period_start' => 'required|date_format:Y-m-d', 'period_end' => 'required|date_format:Y-m-d']);
         abort_unless($this->access->canAccess($r->user(), $machine), 403);
 
+        app(EffectiveCapabilityResolver::class)->authorize($r->user(), $machine->account, 'machine_cost.view');
         $result = $this->service->period($machine, $v['period_start'], $v['period_end']);
         $result['operating_costs'] = DB::table('machine_operating_costs')->where('machine_id', $machine->id)->orderByDesc('created_at')->get();
         $result['selling_prices'] = DB::table('machine_selling_prices')->where('machine_id', $machine->id)->orderByDesc('effective_from')->get();
@@ -34,6 +36,7 @@ class MachineCostController extends Controller
     public function createSellingPrice(Request $r, Machine $machine)
     {
         abort_unless($this->access->canAccess($r->user(), $machine, true), 403);
+        app(EffectiveCapabilityResolver::class)->authorize($r->user(), $machine->account, 'machine_cost.selling_price.manage');
         $d = $r->validate(['price_per_click' => 'required|numeric|gt:0', 'effective_from' => 'required|date', 'notes' => 'nullable|string', 'client_request_id' => 'required|uuid']);
 
         return DB::transaction(function () use ($r, $machine, $d) {
@@ -74,6 +77,7 @@ class MachineCostController extends Controller
         $row = DB::table('machine_selling_prices')->find($price);
         abort_unless($row, 404);
         abort_unless($this->access->canAccess($r->user(), Machine::find($row->machine_id), true), 403);
+        app(EffectiveCapabilityResolver::class)->authorize($r->user(), Machine::findOrFail($row->machine_id)->account, 'machine_cost.selling_price.manage');
         if ($row->status === 'voided') {
             throw new ConflictHttpException('this selling price is already voided');
         }
@@ -85,6 +89,7 @@ class MachineCostController extends Controller
     public function createOperatingCost(Request $r, Machine $machine)
     {
         abort_unless($this->access->canAccess($r->user(), $machine, true), 403);
+        app(EffectiveCapabilityResolver::class)->authorize($r->user(), $machine->account, 'machine_cost.operating_cost.manage');
         $d = $r->validate(['category' => 'required|string', 'amount' => 'required|numeric|gt:0', 'allocation_method' => 'required|string', 'description' => 'required|string', 'effective_at' => 'nullable|date', 'period_start' => 'nullable|date', 'period_end' => 'nullable|date', 'operational_person_id' => 'nullable|uuid', 'external_reference' => 'nullable|string', 'notes' => 'nullable|string', 'client_request_id' => 'required|uuid']);
         if (! empty($d['operational_person_id'])) {
             if (! app(OperationalPersonEligibilityService::class)->eligibleForBranch($machine->branch, $d['operational_person_id'])) {
@@ -105,6 +110,7 @@ class MachineCostController extends Controller
         $d = $r->validate(['reason' => 'required|string', 'client_request_id' => 'required|uuid']);
         $row = DB::table('machine_operating_costs')->find($cost);
         abort_unless($row && $this->access->canAccess($r->user(), Machine::find($row->machine_id), true), 403);
+        app(EffectiveCapabilityResolver::class)->authorize($r->user(), Machine::findOrFail($row->machine_id)->account, 'machine_cost.operating_cost.manage');
         DB::table('machine_operating_costs')->where('id', $cost)->update(['status' => 'voided', 'voided_at' => now(), 'voided_by' => $r->user()->id, 'void_reason' => $d['reason'], 'updated_at' => now()]);
 
         return response()->json(['data' => DB::table('machine_operating_costs')->find($cost)]);

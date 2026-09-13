@@ -67,6 +67,7 @@ class OperationalIncidentService
 
     public function create($user, Account $account, Branch $branch, array $v): OperationalIncident
     {
+        app(EffectiveCapabilityResolver::class)->authorize($user, $account, 'incidents.create');
         $branch = $branch->fresh();
         $membership = AccountMembership::where('account_id', $account->id)->where('user_id', $user->id)->where('status', 'active')->first();
         $branchScope = $membership && ($membership->role === 'owner' || AccountMembershipBranch::where(['account_id' => $account->id, 'membership_id' => $membership->id, 'branch_id' => $branch->id, 'is_active' => true])->exists());
@@ -111,6 +112,6 @@ class OperationalIncidentService
     {
         $account = Account::find($incident->account_id);
 
-        return $account && app(AccountAccessResolver::class)->canManageOperational($user, $account) && $incident->branch && $this->branches->canAccess($user, $incident->branch);
+        return $account && app(EffectiveCapabilityResolver::class)->allows($user, $account, 'incidents.manage') && $incident->branch && $this->branches->canAccess($user, $incident->branch);
     }
 }

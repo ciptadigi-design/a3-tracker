@@ -15,6 +15,7 @@ use App\Models\ModelProfile;
 use App\Models\ModelProfileSlot;
 use App\Services\AccountAccessResolver;
 use App\Services\ComponentConfigurationService;
+use App\Services\EffectiveCapabilityResolver;
 use App\Services\MachineAccessResolver;
 use App\Services\ScopedReference;
 use Illuminate\Http\Request;
@@ -256,13 +257,9 @@ class ComponentsController extends Controller
 
     public function initialize(Request $r, string $component)
     {
-        // Operational tier, not configuration tier: recording that a component
-        // was physically installed is the same class of action as
-        // InventoryController::replace() (which creates the same kind of
-        // ComponentLifecycle row) and CreateCounterReading - any branch-scoped
-        // role may do it, not only owner/admin.
         $mc = MachineComponent::with('machine')->findOrFail($component);
         abort_unless(app(MachineAccessResolver::class)->canAccess($r->user(), $mc->machine, true), 403);
+        app(EffectiveCapabilityResolver::class)->authorize($r->user(), $mc->machine->account, 'components.lifecycle.initialize');
         $d = $r->validate(['started_at' => 'nullable|date', 'evidence_level' => 'nullable|string|size:1', 'source' => 'nullable|string|max:40', 'notes' => 'nullable|string', 'client_request_id' => 'nullable|uuid']);
 
         return response()->json(['data' => app(ComponentConfigurationService::class)->initialize($mc, $d)], 201);

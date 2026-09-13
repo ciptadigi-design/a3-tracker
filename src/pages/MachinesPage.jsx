@@ -24,9 +24,9 @@ function MachineCard({ machine, branchName, onOpen }) {
 
 export function MachinesPage({ navigate }) {
   const { user } = useAuth()
-  const { account, branch, branches, membership, isPlatformSuperuser, setSelectedBranchId } = useTenant()
+  const { account, branch, branches, membership, isPlatformSuperuser, setSelectedBranchId, can } = useTenant()
   const { machines, isLoading, error, refresh } = useMachines(account?.id, branch?.id)
-  const canManage = membership?.role === 'owner' || membership?.role === 'admin'
+  const canManage = can('machines.manage')
   const catalog = useMachineCatalog(account?.id, canManage)
   const [view, setView] = useState('active')
   const [success, setSuccess] = useState(null)

@@ -17,6 +17,7 @@ use App\Models\OperationalPerson;
 use App\Models\PlatformUserPrivilege;
 use App\Models\User;
 use App\Services\AccountAccessResolver;
+use App\Services\EffectiveCapabilityResolver;
 use App\Services\GovernanceAudit;
 use App\Services\IdentityInput;
 use App\Services\MemberLifecycle;
@@ -31,10 +32,11 @@ class GovernanceController extends Controller
     {
         $a = Account::findOrFail($id);
         abort_unless(app(AccountAccessResolver::class)->canGovern($r->user(), $a), 403);
-        $policy = DB::table('account_operational_permissions')->where('account_id', $id)->first();
-        $policy ??= (object) array_merge(['account_id' => $id], array_fill_keys(['operator_can_initialize_component', 'operator_can_replace_component', 'operator_can_create_purchase', 'operator_can_receive_goods', 'operator_can_adjust_inventory', 'operator_can_transfer_inventory', 'operator_can_log_errors'], false));
+        $resolver = app(EffectiveCapabilityResolver::class);
+        $policy = $resolver->policy($a);
+        $matrix = collect(['owner', 'admin', 'technician', 'operator'])->mapWithKeys(fn ($role) => [$role => $resolver->forRole($role, $policy)]);
 
-        return response()->json(['data' => ['branches' => $a->branches()->orderBy('name')->get(), 'members' => $a->memberships()->with(['user', 'branchAssignments'])->get()->map(fn ($m) => ['id' => $m->id, 'user_id' => $m->user_id, 'role' => $m->role, 'status' => $m->status, 'username' => $m->user?->username, 'display_name' => $m->user?->name, 'email' => $m->user?->email, 'branch_ids' => $m->branchAssignments->where('is_active', true)->pluck('branch_id')->values()]), 'policy' => $policy, 'models' => MachineModel::with('manufacturer')->where(fn ($q) => $q->whereNull('account_id')->orWhere('account_id', $id))->get(), 'components' => ComponentCatalog::where(fn ($q) => $q->whereNull('account_id')->orWhere('account_id', $id))->get(), 'profiles' => ModelProfileSlot::with(['component', 'profile'])->whereHas('profile', fn ($q) => $q->where(fn ($x) => $x->whereNull('account_id')->orWhere('account_id', $id)))->get(), 'locations' => InventoryLocation::where('account_id', $id)->get(), 'people' => OperationalPersonResource::collection(OperationalPerson::where('account_id', $id)->with('branchAssignments.branch')->get()), 'manufacturers' => Manufacturer::where(fn ($q) => $q->whereNull('account_id')->orWhere('account_id', $id))->get(), 'audit' => []]]);
+        return response()->json(['data' => ['branches' => $a->branches()->orderBy('name')->get(), 'members' => $a->memberships()->with(['user', 'branchAssignments'])->get()->map(fn ($m) => ['id' => $m->id, 'user_id' => $m->user_id, 'role' => $m->role, 'status' => $m->status, 'username' => $m->user?->username, 'display_name' => $m->user?->name, 'email' => $m->user?->email, 'branch_ids' => $m->branchAssignments->where('is_active', true)->pluck('branch_id')->values()]), 'policy' => $policy, 'capability_matrix' => $matrix, 'models' => MachineModel::with('manufacturer')->where(fn ($q) => $q->whereNull('account_id')->orWhere('account_id', $id))->get(), 'components' => ComponentCatalog::where(fn ($q) => $q->whereNull('account_id')->orWhere('account_id', $id))->get(), 'profiles' => ModelProfileSlot::with(['component', 'profile'])->whereHas('profile', fn ($q) => $q->where(fn ($x) => $x->whereNull('account_id')->orWhere('account_id', $id)))->get(), 'locations' => InventoryLocation::where('account_id', $id)->get(), 'people' => OperationalPersonResource::collection(OperationalPerson::where('account_id', $id)->with('branchAssignments.branch')->get()), 'manufacturers' => Manufacturer::where(fn ($q) => $q->whereNull('account_id')->orWhere('account_id', $id))->get(), 'audit' => []]]);
     }
 
     public function updatePolicy(Request $r, string $id)

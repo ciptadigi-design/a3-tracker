@@ -30,11 +30,11 @@ const futureModules = [
 
 export function MachineDetailPage({ machineId, navigate }) {
   const { user } = useAuth()
-  const { account, branch: activeBranch, branches, membership, setSelectedBranchId } = useTenant()
+  const { account, branch: activeBranch, branches, setSelectedBranchId, can } = useTenant()
   const { machine, isLoading, error, refresh, setMachine } = useMachine(account?.id, activeBranch?.id, machineId)
   const [showRetire, setShowRetire] = useState(false)
   const [success, setSuccess] = useState(null)
-  const canManage = membership?.role === 'owner' || membership?.role === 'admin'
+  const canManage = can('machines.manage')
   const machineWorkflow = useMachineWorkflowState({ userId: user.id, accountId: account.id, branchId: machine?.branch_id ?? activeBranch?.id })
 
   if (isLoading) return <LoadingScreen label="Loading machine details" />

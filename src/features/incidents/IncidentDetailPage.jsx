@@ -31,7 +31,7 @@ function Narrative({ number, title, value }) {
 
 export function IncidentDetailPage({ incidentId, navigate }) {
   const { user } = useAuth()
-  const { account, branch: activeBranch, branches, membership } = useTenant()
+  const { account, branch: activeBranch, branches, can } = useTenant()
   const state = useOperationalIncident(account.id, activeBranch.id, incidentId)
   const machinesState = useMachines(account.id, activeBranch.id)
   const [showVoid, setShowVoid] = useState(false)
@@ -58,9 +58,9 @@ export function IncidentDetailPage({ incidentId, navigate }) {
   const branch = branches.find((item) => item.id === incident.branch_id)
   const machine = machinesState.machines.find((item) => item.id === incident.machine_id)
   const timezone = branch?.timezone || account.default_timezone || 'Asia/Jakarta'
-  const canEdit = ['owner', 'admin'].includes(membership.role) && incident.status === 'open'
-  const canResolve = ['owner', 'admin', 'technician'].includes(membership.role) && incident.status === 'open'
-  const canVoid = ['owner', 'admin'].includes(membership.role) && incident.status !== 'voided'
+  const canEdit = can('incidents.manage') && incident.status === 'open'
+  const canResolve = can('incidents.manage') && incident.status === 'open'
+  const canVoid = can('incidents.manage') && incident.status !== 'voided'
 
   async function handleSolve(resolutionNote) {
     setIsUpdating(true)

@@ -78,7 +78,7 @@ function DailyTrendChart({ rows }) {
 
 export function MachineCostPage() {
   const { user } = useAuth()
-  const { account, branch, membership } = useTenant()
+  const { account, branch, can } = useTenant()
   const filterKey = createUIStateKey({ userId: user.id, accountId: account.id, branchId: branch?.id, feature: 'machine-cost-filters', entityId: 'workspace' })
   const { value: filters, setUIState: setFilters } = usePersistentUIState({ uiStateKey: filterKey, initialValue: { machineId: null, preset: 'this_month', customStart: '', customEnd: '', view: 'summary' }, validate: validMachineCostFilters })
   const [machines, setMachines] = useState([])
@@ -147,7 +147,8 @@ export function MachineCostPage() {
   // whole-Rupiah like every other user-facing IDR value (product decision change) -
   // all reuse the same canonical formatIdrTotal(), no competing fractional formatter.
   const primaryCostPerClickDisplay = summary ? primaryCostPerClickPresentation(summary, formatIdrTotal) : null
-  const canManageCosts = ['owner', 'admin'].includes(membership?.role)
+  const canManageOperatingCosts = can('machine_cost.operating_cost.manage')
+  const canManageCosts = can('machine_cost.selling_price.manage')
   const sellingPriceDisplay = summary ? sellingPriceCardPresentation(summary, formatIdrTotal) : null
   const revenueDisplay = summary ? revenuePresentation(summary, formatIdrTotal, formatNumber) : null
   const contributionDisplay = summary ? contributionPresentation(summary, formatIdrTotal) : null
@@ -172,7 +173,7 @@ export function MachineCostPage() {
     <div className="machine-cost-section-nav"><nav className="machine-cost-tabs" aria-label="Machine cost sections" role="tablist"><button type="button" role="tab" aria-selected={activeTab === 'summary'} className={activeTab === 'summary' ? 'active' : ''} onClick={() => setFilters((current) => ({ ...current, view: 'summary' }))}>Summary</button>{advancedEnabled && <button type="button" role="tab" aria-selected={activeTab === 'operating'} className={activeTab === 'operating' ? 'active' : ''} onClick={() => setFilters((current) => ({ ...current, view: 'operating' }))}>Operating Costs</button>}</nav>{summary && activeTab === 'summary' && <SummaryStatusBadge summary={summary} />}</div>
 
     {error && <div className="inline-error" role="alert">{userErrorMessage(error, 'Machine Cost could not be loaded for this scope.')}</div>}
-    {activeTab === 'operating' && selectedMachine ? <><OperatingCostsPanel costs={costWorkspace.costs} canManage={canManageCosts} enabled={advancedEnabled} onAdd={() => setCostDialog(true)} onVoid={setVoidTarget} />{costError && <div className="inline-error" role="alert">{costError.message}</div>}</> : loading ? <div className="machine-loading-state glass-surface"><RefreshCcw className="spin" size={24} /><strong>Loading machine cost evidence…</strong><span>Reading effective counter usage, component consumption, and assessed Error / Waste.</span></div> : !selectedMachine ? <div className="machine-empty-state glass-surface"><span className="empty-machine-icon"><Printer size={38} /></span><h3>No active machine in this branch</h3><p>Add or activate a machine before querying operational component cost.</p></div> : summary && activeTab === 'summary' ? <>
+    {activeTab === 'operating' && selectedMachine ? <><OperatingCostsPanel costs={costWorkspace.costs} canManage={canManageOperatingCosts} enabled={advancedEnabled} onAdd={() => setCostDialog(true)} onVoid={setVoidTarget} />{costError && <div className="inline-error" role="alert">{costError.message}</div>}</> : loading ? <div className="machine-loading-state glass-surface"><RefreshCcw className="spin" size={24} /><strong>Loading machine cost evidence…</strong><span>Reading effective counter usage, component consumption, and assessed Error / Waste.</span></div> : !selectedMachine ? <div className="machine-empty-state glass-surface"><span className="empty-machine-icon"><Printer size={38} /></span><h3>No active machine in this branch</h3><p>Add or activate a machine before querying operational component cost.</p></div> : summary && activeTab === 'summary' ? <>
       {summary.counter_status !== 'COMPLETE' && <section className="machine-cost-action-message" role="status"><AlertCircle size={17} /><div><strong>No Counter Data</strong><span>{counterDisplay.hint} Cost / Click is unavailable.</span></div></section>}
       {priceError && <div className="inline-error" role="alert">{priceError.message}</div>}
       <div className="machine-cost-summary-heading"><span className="card-kicker">Cost</span><small>Database-derived operational cost evidence</small></div>
@@ -192,9 +193,9 @@ export function MachineCostPage() {
       </section>
       {advancedEnabled && <section className="machine-cost-panel glass-surface advanced-economics-panel"><header><div><span className="card-kicker">Advanced</span><h2>Full Machine Economics</h2><p>Full economics is shown separately. Standard Machine Cost and Standard Contribution keep the same meaning.</p></div></header><div className="machine-economics-layers"><div><span>Advanced Operating Costs</span><strong>{formatIdrTotal(summary.known_advanced_operating_cost)}</strong><small>{summary.operating_cost_records ? `${summary.operating_cost_records} posted period record${summary.operating_cost_records === 1 ? '' : 's'}` : 'No advanced operating costs recorded for this period.'}</small></div><div><span>Standard Machine Cost</span><strong>{formatIdrTotal(summary.known_standard_machine_cost)}</strong></div><div className="total"><span>Full Machine Operating Cost</span><strong>{formatIdrTotal(summary.known_full_machine_operating_cost)}</strong></div><div className="total"><span>Full Operating Cost / Click</span><strong>{summary.known_full_operating_cost_per_click == null ? 'Unavailable' : formatIdrTotal(summary.known_full_operating_cost_per_click)}</strong></div><div className="total"><span>Full Contribution</span><strong>{summary.estimated_full_contribution == null ? 'Unavailable' : formatIdrTotal(summary.estimated_full_contribution)}</strong><small>{summary.full_contribution_margin_percent == null ? 'Complete price coverage is required.' : `Margin ${number.format(Number(summary.full_contribution_margin_percent))}%`}</small></div><div className="total"><span>Full Contribution / Click</span><strong>{summary.full_contribution_per_click == null ? 'Unavailable' : formatIdrTotal(summary.full_contribution_per_click)}</strong></div></div></section>}
     </> : null}
-    {costDialog && selectedMachine && advancedEnabled && <OperatingCostDialog account={account} branch={branch} machine={selectedMachine} people={costWorkspace.people} onClose={() => setCostDialog(false)} onSave={saveOperatingCost} />}
-    {voidTarget && <VoidOperatingCostDialog cost={voidTarget} onClose={() => setVoidTarget(null)} onVoid={voidOperatingCost} />}
-    {priceDialog && selectedMachine && <SellingPriceDialog account={account} branch={branch} machine={selectedMachine} timezone={timezone} hasPrice={Boolean(summary?.current_selling_price_per_click)} onClose={() => setPriceDialog(false)} onSave={saveSellingPrice} />}
+    {canManageOperatingCosts && costDialog && selectedMachine && advancedEnabled && <OperatingCostDialog account={account} branch={branch} machine={selectedMachine} people={costWorkspace.people} onClose={() => setCostDialog(false)} onSave={saveOperatingCost} />}
+    {canManageOperatingCosts && voidTarget && <VoidOperatingCostDialog cost={voidTarget} onClose={() => setVoidTarget(null)} onVoid={voidOperatingCost} />}
+    {canManageCosts && priceDialog && selectedMachine && <SellingPriceDialog account={account} branch={branch} machine={selectedMachine} timezone={timezone} hasPrice={Boolean(summary?.current_selling_price_per_click)} onClose={() => setPriceDialog(false)} onSave={saveSellingPrice} />}
     {priceHistoryDialog && selectedMachine && <SellingPriceHistoryDialog machine={selectedMachine} timezone={timezone} prices={sellingPrices} canManage={canManageCosts} onClose={() => setPriceHistoryDialog(false)} onVoid={voidSellingPrice} />}
   </div>
 }

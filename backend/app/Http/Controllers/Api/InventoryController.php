@@ -14,6 +14,7 @@ use App\Models\MachineComponent;
 use App\Models\SupplierBranchAssignment;
 use App\Services\AccountAccessResolver;
 use App\Services\BranchAccessResolver;
+use App\Services\EffectiveCapabilityResolver;
 use App\Services\InventoryLedgerService;
 use App\Services\MachineAccessResolver;
 use App\Services\MovementSummaryBuilder;
@@ -247,7 +248,9 @@ class InventoryController extends Controller
     public function createPurchase(Request $r)
     {
         $d = $r->validate(['account_id' => 'required|uuid', 'branch_id' => 'nullable|uuid', 'supplier_id' => 'nullable|uuid', 'external_reference' => 'nullable|string', 'purchase_number' => 'required|string', 'purchase_date' => 'required|date', 'currency_code' => 'nullable|string|size:3', 'notes' => 'nullable|string', 'client_request_id' => 'required|uuid', 'lines' => 'required|array|min:1', 'lines.*.inventory_item_id' => 'required|uuid', 'lines.*.quantity' => 'required|numeric|gt:0', 'lines.*.unit_cost' => 'nullable|numeric|min:0']);
-        abort_unless(app(AccountAccessResolver::class)->canManageOperational($r->user(), Account::findOrFail($d['account_id'])), 403);
+        app(EffectiveCapabilityResolver::class)->authorize($r->user(), Account::findOrFail($d['account_id']), 'inventory.purchase.create');
+        // Delegated purchases must name an authorized branch.
+        abort_unless(! empty($d['branch_id']) || app(AccountAccessResolver::class)->canManageOperational($r->user(), Account::findOrFail($d['account_id'])), 403);
 
         if (! empty($d['branch_id'])) {
             $branch = Branch::where('account_id', $d['account_id'])->findOrFail($d['branch_id']);
@@ -265,7 +268,7 @@ class InventoryController extends Controller
         // with a null PIC regardless of what the operator selected.
         $d = $r->validate(['location_id' => 'required|uuid', 'person_id' => 'nullable|uuid', 'client_request_id' => 'required|uuid', 'lines' => 'required|array|min:1', 'lines.*.purchase_line_id' => 'required|uuid|distinct', 'lines.*.quantity' => 'required|numeric|gt:0']);
         $loc = InventoryLocation::findOrFail($d['location_id']);
-        abort_unless($this->canAccessLocation($r, $loc, true), 403);
+        abort_unless($this->canAccessLocation($r, $loc, 'inventory.receive'), 403);
         $root = DB::table('purchases')->where('account_id', $loc->account_id)->where('id', $purchase)->first();
         abort_unless($root, 404);
         if ($root->branch_id) {
@@ -281,7 +284,7 @@ class InventoryController extends Controller
         $d = $r->validate(['item_id' => 'required|uuid', 'location_id' => 'required|uuid', 'quantity' => 'required|numeric|gt:0', 'unit_cost' => 'nullable|numeric|min:0', 'reason' => 'required|string', 'occurred_at' => 'nullable|date', 'person_id' => 'nullable|uuid', 'client_request_id' => 'required|uuid']);
         $item = InventoryItem::findOrFail($d['item_id']);
         $loc = InventoryLocation::findOrFail($d['location_id']);
-        abort_unless($this->canAccessLocation($r, $loc, true) && $item->account_id === $loc->account_id, 403);
+        abort_unless($this->canAccessLocation($r, $loc, 'inventory.opening') && $item->account_id === $loc->account_id, 403);
         [$personId, $personName] = $this->resolveOperator($loc, $d['person_id'] ?? null);
 
         return response()->json(['data' => app(InventoryLedgerService::class)->inbound($item, $loc, $d['quantity'], $d['unit_cost'] ?? null, 'opening_balance', $d['client_request_id'], $d['reason'], $d['occurred_at'] ?? null, $personId, $personName, $r->user()->id)], 201);
@@ -301,7 +304,7 @@ class InventoryController extends Controller
         $item = InventoryItem::findOrFail($d['item_id']);
         $loc = InventoryLocation::findOrFail($d['from_location_id']);
         $to = InventoryLocation::findOrFail($d['to_location_id']);
-        abort_unless($this->canAccessLocation($r, $loc, true) && $this->canAccessLocation($r, $to, true) && $item->account_id === $loc->account_id && $item->account_id === $to->account_id, 403);
+        abort_unless($this->canAccessLocation($r, $loc, 'inventory.transfer') && $this->canAccessLocation($r, $to, 'inventory.transfer') && $item->account_id === $loc->account_id && $item->account_id === $to->account_id, 403);
         [$personId, $personName] = $this->resolveOperator($loc, $d['person_id'] ?? null);
 
         return response()->json(['data' => app(InventoryLedgerService::class)->transfer($item, $loc, $to, $d['quantity'], $d['client_request_id'], $personId, $personName, $r->user()->id)], 201);
@@ -312,7 +315,7 @@ class InventoryController extends Controller
         $d = $r->validate(['item_id' => 'required|uuid', 'location_id' => 'required|uuid', 'quantity' => 'required|numeric|not_in:0', 'reason' => 'required|string', 'unit_cost' => 'nullable|numeric|min:0', 'person_id' => 'nullable|uuid', 'client_request_id' => 'required|uuid']);
         $item = InventoryItem::findOrFail($d['item_id']);
         $loc = InventoryLocation::findOrFail($d['location_id']);
-        abort_unless($this->canAccessLocation($r, $loc, true) && $item->account_id === $loc->account_id, 403);
+        abort_unless($this->canAccessLocation($r, $loc, 'inventory.adjust') && $item->account_id === $loc->account_id, 403);
         [$personId, $personName] = $this->resolveOperator($loc, $d['person_id'] ?? null);
         $ledger = app(InventoryLedgerService::class);
         $m = $d['quantity'] > 0 ? $ledger->inbound($item, $loc, $d['quantity'], $d['unit_cost'] ?? null, 'adjustment_in', $d['client_request_id'], $d['reason'], null, $personId, $personName, $r->user()->id) : $ledger->outbound($item, $loc, abs($d['quantity']), 'adjustment_out', $d['client_request_id'], null, $d['reason'], null, $personId, $personName, $r->user()->id);
@@ -325,8 +328,9 @@ class InventoryController extends Controller
         $d = $r->validate(['inventory_source' => 'required|in:inventory,external_untracked', 'inventory_item_id' => 'required_if:inventory_source,inventory|nullable|uuid', 'inventory_location_id' => 'required_if:inventory_source,inventory|nullable|uuid', 'quantity' => 'required_if:inventory_source,inventory|nullable|numeric|min:0.0001', 'replaced_at' => 'nullable|date', 'external_reason' => 'required_if:inventory_source,external_untracked|nullable|string', 'notes' => 'nullable|string', 'performed_by_person_id' => 'nullable|uuid', 'performed_by_name' => 'nullable|string|max:160', 'client_request_id' => 'required|uuid']);
         $mc = MachineComponent::findOrFail($component);
         abort_unless(app(MachineAccessResolver::class)->canAccess($r->user(), $mc->machine, true), 403);
+        app(EffectiveCapabilityResolver::class)->authorize($r->user(), $mc->machine->account, $d['inventory_source'] === 'inventory' ? 'components.replace.inventory' : 'components.replace.external');
         if ($d['inventory_source'] === 'inventory' && $d['inventory_location_id']) {
-            abort_unless($this->canAccessLocation($r, InventoryLocation::findOrFail($d['inventory_location_id']), true), 403);
+            abort_unless($this->canAccessLocation($r, InventoryLocation::findOrFail($d['inventory_location_id']), 'components.replace.inventory'), 403);
         }
         if (! empty($d['performed_by_person_id'])) {
             $person = app(OperationalPersonEligibilityService::class)->eligible($mc->machine, $d['performed_by_person_id']);
@@ -354,13 +358,13 @@ class InventoryController extends Controller
         return [$person->id, $person->name];
     }
 
-    private function canAccessLocation(Request $r, InventoryLocation $loc, bool $write = false): bool
+    private function canAccessLocation(Request $r, InventoryLocation $loc, ?string $capability = null): bool
     {
         $account = Account::find($loc->account_id);
         if (! $account || ! app(AccountAccessResolver::class)->canAccess($r->user(), $account)) {
             return false;
         }
-        if ($write && ! app(AccountAccessResolver::class)->canManageOperational($r->user(), $account)) {
+        if ($capability && (! $loc->is_active || ! app(EffectiveCapabilityResolver::class)->allows($r->user(), $account, $capability))) {
             return false;
         }
 

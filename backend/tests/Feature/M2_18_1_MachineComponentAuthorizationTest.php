@@ -17,6 +17,7 @@ use App\Models\ModelProfileSlot;
 use App\Models\PlatformUserPrivilege;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 /**
@@ -34,8 +35,8 @@ use Tests\TestCase;
  *    canManageOperational() - the same check storeMachine()/updateMachine()/
  *    setMachineStatus() already use for machine-level configuration.
  *  - OPERATIONAL tier (initialize - recording a physical install event,
- *    the same class of action as InventoryController::replace()): any
- *    branch-scoped role, via MachineAccessResolver::canAccess($user,
+ *    the same class of action as InventoryController::replace()): an effective lifecycle capability plus
+ *    branch scope via MachineAccessResolver::canAccess($user,
  *    $machine, true) - the same check replace() and createCounter() use.
  *  - READ tier (reconciliationCandidate - verified read-only, no writes
  *    anywhere in ComponentConfigurationService::reconciliationCandidate()):
@@ -193,21 +194,22 @@ class M2_18_1_MachineComponentAuthorizationTest extends TestCase
         $this->hit($f, 'remove', $superuser)->assertOk();
     }
 
-    // --- Operational tier: initialize() allows a branch-scoped technician/operator, not just owner/admin ---
+    // M2.20C: lifecycle initialization requires effective capability and branch access.
 
-    public function test_same_account_technician_can_initialize_a_lifecycle_operational_tier(): void
+    public function test_same_account_technician_cannot_initialize_without_product_authority(): void
     {
         $f = $this->fixture();
         $technician = $this->member($f['home'], 'technician', $f['branch']);
 
-        $this->actingAs($technician)->postJson("/api/v1/machine-components/{$f['mc']->id}/lifecycles", ['started_at' => now()->toDateString()])->assertCreated();
+        $this->actingAs($technician)->postJson("/api/v1/machine-components/{$f['mc']->id}/lifecycles", ['started_at' => now()->toDateString()])->assertForbidden();
     }
 
-    public function test_same_account_operator_can_initialize_a_lifecycle_operational_tier(): void
+    public function test_same_account_operator_can_initialize_when_policy_delegates(): void
     {
         $f = $this->fixture();
         $operator = $this->member($f['home'], 'operator', $f['branch']);
 
+        DB::table('account_operational_permissions')->insert(['account_id' => $f['home']->id, 'operator_can_initialize_component' => true]);
         $this->actingAs($operator)->postJson("/api/v1/machine-components/{$f['mc']->id}/lifecycles", ['started_at' => now()->toDateString()])->assertCreated();
     }
 

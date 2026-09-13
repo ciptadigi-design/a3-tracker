@@ -16,6 +16,7 @@ class CreateCounterReading
 
     public function execute(User $actor, Machine $machine, array $data): CounterReading
     {
+        app(EffectiveCapabilityResolver::class)->authorize($actor, $machine->account, 'counters.record');
         if (! $this->access->canAccess($actor, $machine, true)) {
             abort(403);
         }

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Models\User;
+use App\Services\EffectiveCapabilityResolver;
 use App\Services\IdentityInput;
 use App\Services\PlatformPrivilegeService;
 use Illuminate\Http\Request;
@@ -79,6 +80,6 @@ class AuthController
         $memberships = $u->memberships->map(fn ($m) => ['id' => $m->id, 'account_id' => $m->account_id, 'role' => $m->role, 'status' => $m->status, 'account' => $m->account?->only(['id', 'code', 'name', 'status']), 'branch_ids' => $m->branchAssignments->where('is_active', true)->pluck('branch_id')->values()]);
         $accounts = $u->memberships->filter(fn ($m) => $m->status === 'active' && $m->account?->status === 'active')->pluck('account')->filter()->values();
 
-        return response()->json(['data' => ['user' => $u->only(['id', 'name', 'email', 'username', 'status']), 'platform' => ['is_superuser' => $super], 'memberships' => $memberships, 'accounts' => $accounts]]);
+        return response()->json(['data' => ['user' => $u->only(['id', 'name', 'email', 'username', 'status']), 'platform' => ['is_superuser' => $super], 'memberships' => $memberships, 'accounts' => $accounts, 'capabilities' => $accounts->mapWithKeys(fn ($account) => [$account->id => app(EffectiveCapabilityResolver::class)->resolve($u, $account)])]]);
     }
 }

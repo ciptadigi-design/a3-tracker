@@ -17,7 +17,7 @@ class CorrectCounterReading
     public function execute(User $actor, CounterReading $reading, array $data): CounterReading
     {
         $reading->loadMissing('machine.account');
-        if (! $this->accounts->canManageOperational($actor, $reading->machine->account) || ! app(MachineAccessResolver::class)->canAccess($actor, $reading->machine)) {
+        if (! app(EffectiveCapabilityResolver::class)->allows($actor, $reading->machine->account, 'counters.correct') || ! app(MachineAccessResolver::class)->canAccess($actor, $reading->machine)) {
             abort(403);
         }
 

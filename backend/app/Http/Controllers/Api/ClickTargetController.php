@@ -8,6 +8,7 @@ use App\Models\MachineClickTarget;
 use App\Models\MachineClickTargetRevision;
 use App\Models\MachineOperationalCalendarException;
 use App\Services\AccountAccessResolver;
+use App\Services\EffectiveCapabilityResolver;
 use App\Services\MachineAccessResolver;
 use App\Services\MachineClickTargetProjectionService;
 use App\Services\ReplayFields;
@@ -26,7 +27,7 @@ class ClickTargetController extends Controller
 
     private function assertManage(Request $r, Machine $machine): void
     {
-        abort_unless($this->machineAccess->canAccess($r->user(), $machine, true) && $this->accountAccess->canManageOperational($r->user(), $machine->account), 403);
+        abort_unless($this->machineAccess->canAccess($r->user(), $machine, true) && app(EffectiveCapabilityResolver::class)->allows($r->user(), $machine->account, 'click_targets.manage'), 403);
     }
 
     public function show(Request $r, Machine $machine)

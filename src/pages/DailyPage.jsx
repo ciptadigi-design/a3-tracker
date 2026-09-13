@@ -22,7 +22,7 @@ function SummaryCard({ icon, label, value, detail, tone }) {
 
 export function DailyPage() {
   const { user } = useAuth()
-  const { account, branch, membership } = useTenant()
+  const { account, branch, can } = useTenant()
   const machinesState = useMachines(account?.id, branch?.id)
   const peopleState = useOperationalPeople(account?.id, branch?.id)
   const counterPeople = useMemo(() => counterOperatorsForBranch(peopleState.people, branch?.id), [peopleState.people, branch?.id])
@@ -41,7 +41,7 @@ export function DailyPage() {
   const counterState = useCounterHistory(account?.id, selectedMachine?.id)
   const timezone = selectedMachine?.timezone || branch?.timezone || account?.default_timezone || 'Asia/Jakarta'
   const summary = calculateDailySummary(counterState.history, timezone)
-  const canCorrect = membership?.role === 'owner' || membership?.role === 'admin'
+  const canCorrect = can('counters.correct')
   const [success, setSuccess] = useState(null)
 
   async function handleRecorded() {
@@ -80,7 +80,7 @@ export function DailyPage() {
             <SummaryCard icon={CalendarCheck2} label="Today's Usage" value={summary.todayUsage == null ? '—' : `+${formatCounter(summary.todayUsage)}`} detail={summary.todayEntryCount ? summary.todayUsage == null ? 'Baseline only; no prior delta' : 'Sum of today’s database-derived deltas' : 'No entries today'} tone="green" />
             <SummaryCard icon={Clock3} label="Last Input" value={summary.lastReading ? new Intl.DateTimeFormat('en-GB', { timeZone: timezone, hour: '2-digit', minute: '2-digit' }).format(new Date(summary.lastReading.observed_at)) : '—'} detail={summary.lastReading ? new Intl.DateTimeFormat('en-GB', { timeZone: timezone, dateStyle: 'medium' }).format(new Date(summary.lastReading.observed_at)) : 'No input recorded'} tone="purple" />
           </section>
-          <CounterEntryCard key={`${user.id}:${selectedMachine.id}`} accountId={account.id} branchId={branch.id} userId={user.id} machine={selectedMachine} people={counterPeople} peopleLoading={peopleState.isLoading} peopleError={peopleState.error} lastReading={summary.lastReading} onRecorded={handleRecorded} />
+          {can('counters.record') && <CounterEntryCard key={`${user.id}:${selectedMachine.id}`} accountId={account.id} branchId={branch.id} userId={user.id} machine={selectedMachine} people={counterPeople} peopleLoading={peopleState.isLoading} peopleError={peopleState.error} lastReading={summary.lastReading} onRecorded={handleRecorded} />}
           <CounterHistory history={counterState.history} profiles={counterState.profiles} currentUserId={user?.id} timezone={timezone} isLoading={counterState.isLoading} error={counterState.error} canCorrect={canCorrect} onRefresh={counterState.refresh} onCorrected={handleCorrected} resetKey={`${branch?.id}:${selectedMachine.id}`} />
         </>}
     </div>

@@ -21,8 +21,8 @@ function monthOptions() {
 
 export function ClickTargetSettingsPage() {
   const { user } = useAuth()
-  const { account, branch, membership, isPlatformSuperuser } = useTenant()
-  const canManage = isPlatformSuperuser || ['owner', 'admin'].includes(membership?.role)
+  const { account, branch, can } = useTenant()
+  const canManage = can('click_targets.manage')
   const { machines } = useMachines(account?.id, branch?.id)
   const activeMachines = useMemo(() => machines.filter((machine) => machine.status !== 'retired'), [machines])
 

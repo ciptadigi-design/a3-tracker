@@ -27,12 +27,12 @@ class AccountAccessResolver
 
     public function canGovern(User $user, Account $account): bool
     {
-        return $user->isActive() && ($this->platform->isSuperuser($user) || $this->membership($user, $account)?->role === 'owner');
+        return app(EffectiveCapabilityResolver::class)->allows($user, $account, 'members.manage');
     }
 
     public function canManageOperational(User $user, Account $account): bool
     {
-        return $account->status === 'active' && $user->isActive() && ($this->platform->isSuperuser($user) || in_array($this->membership($user, $account)?->role, ['owner', 'admin'], true));
+        return app(EffectiveCapabilityResolver::class)->allows($user, $account, 'machines.manage');
     }
 
     /**

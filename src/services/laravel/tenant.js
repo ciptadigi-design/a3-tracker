@@ -7,7 +7,7 @@ export async function loadTenantContext() {
   return {
     profile: me.user ? { user_id: me.user.id, display_name: me.user.name, username: me.user.username } : null,
     memberships: me.memberships ?? [], accounts, branches,
-    permissions: [], isPlatformSuperuser: Boolean(me.platform?.is_superuser),
+    capabilities: me.capabilities ?? {}, isPlatformSuperuser: Boolean(me.platform?.is_superuser),
   }
 }
 

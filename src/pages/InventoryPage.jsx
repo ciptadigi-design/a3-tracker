@@ -89,12 +89,12 @@ function LocationsPanel({ locations, showArchived, canManage, onEdit, onDelete }
 }
 
 export function InventoryPage() {
-  const { user } = useAuth(); const { account, branch, branches, membership, operationalPermissions } = useTenant()
-  const canManage = ['owner', 'admin'].includes(membership?.role)
-  const canAdjust = canManage || (membership?.role === 'operator' && operationalPermissions?.operator_can_adjust_inventory)
-  const canTransfer = canManage || (membership?.role === 'operator' && operationalPermissions?.operator_can_transfer_inventory)
-  const canCreatePurchase = canManage || (membership?.role === 'operator' && operationalPermissions?.operator_can_create_purchase)
-  const canReceiveGoods = canManage || (membership?.role === 'operator' && operationalPermissions?.operator_can_receive_goods)
+  const { user } = useAuth(); const { account, branch, branches, membership, can } = useTenant()
+  const canManage = can('inventory.items.manage')
+  const canAdjust = can('inventory.adjust')
+  const canTransfer = can('inventory.transfer')
+  const canCreatePurchase = can('inventory.purchase.create')
+  const canReceiveGoods = can('inventory.receive')
   const viewKey = createUIStateKey({ userId: user.id, accountId: account.id, feature: 'inventory-view', entityId: 'workspace' })
   const viewState = usePersistentUIState({ uiStateKey: viewKey, initialValue: { tab: 'stock', showArchived: false }, validate: validView })
   const { workflow, open: openWorkflow, close: closeWorkflow } = useInventoryWorkflowState({ userId: user.id, accountId: account.id, branchId: branch?.id })
@@ -186,7 +186,7 @@ export function InventoryPage() {
   const movementKind = workflow.type?.startsWith('stock:') ? workflow.type.slice('stock:'.length) : null
   return <div className="page-stack inventory-page">
     <PageHeader eyebrow={`${account.name} · Inventory`} title="Inventory" description="Auditable physical stock by item and location, derived from an immutable movement ledger." action={canManage ? <div className="page-header-actions"><button className="secondary-button" type="button" onClick={() => openWorkflow('location:create')}><MapPin size={16} />Add location</button><button className="primary-button" type="button" onClick={() => openWorkflow('item:create')}><Plus size={17} />Add item</button></div> : null} />
-    {!canManage && <div className="permission-banner"><ShieldCheck size={18} /><span>Your {membership?.role} role can read current stock and immutable history. M2.4A stock mutations are restricted to owner/admin.</span></div>}
+    {!canManage && <div className="permission-banner"><ShieldCheck size={18} /><span>Your {membership?.role} role can read current stock and immutable history. Available actions reflect your current workspace permissions.</span></div>}
     {notice && <div className="success-banner" role="status"><span>{notice}</span><button type="button" onClick={() => setNotice(null)}>Dismiss</button></div>}
     {error && <div className="embedded-error" role="alert"><strong>Inventory could not be loaded.</strong><span>{userErrorMessage(error, 'Inventory data is temporarily unavailable.')}</span><button className="secondary-button" type="button" onClick={reloadAll}>Try again</button></div>}
     <section className="inventory-shell glass-surface">

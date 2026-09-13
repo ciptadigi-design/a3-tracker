@@ -8,6 +8,7 @@ use App\Models\Branch;
 use App\Models\Machine;
 use App\Services\AccountAccessResolver;
 use App\Services\BranchAccessResolver;
+use App\Services\EffectiveCapabilityResolver;
 use App\Services\OperationalReportService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -42,6 +43,7 @@ class ReportsController extends Controller
             'category' => 'nullable|string', 'status' => 'nullable|string',
         ]);
         $account = Account::findOrFail($v['account_id']);
+        app(EffectiveCapabilityResolver::class)->authorize($request->user(), $account, 'reports.view');
         abort_unless($this->accounts->canAccess($request->user(), $account), 403);
         $branch = ! empty($v['branch_id']) ? Branch::where('id', $v['branch_id'])->where('account_id', $account->id)->firstOrFail() : null;
         if ($branch) {

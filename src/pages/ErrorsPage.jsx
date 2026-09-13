@@ -21,7 +21,7 @@ function SummaryCard({ icon, label, value, detail, tone }) {
 
 export function ErrorsPage({ navigate }) {
   const { user } = useAuth()
-  const { account, branch, membership, operationalPermissions } = useTenant()
+  const { account, branch, can } = useTenant()
   const machinesState = useMachines(account.id, branch.id)
   const incidentState = useOperationalIncidents(account.id, branch.id)
   const [success, setSuccess] = useState(null)
@@ -49,7 +49,7 @@ export function ErrorsPage({ navigate }) {
 
   const isReady = !incidentState.isLoading && !machinesState.isLoading
   const scopeDescription = selectedMachine ? `${selectedMachine.machine_code} · all history` : effectiveMachineFilter === 'branch' ? 'Branch / No specific machine · all history' : 'All assessed operational loss in this branch · all history'
-  const canLogErrors = ['owner', 'admin', 'technician'].includes(membership?.role) || (membership?.role === 'operator' && operationalPermissions?.operator_can_log_errors)
+  const canLogErrors = can('incidents.create')
   const addAction = canLogErrors ? <button className="primary-button" type="button" onClick={() => workflow.setUIState({ type: 'create' })} disabled={!isReady}><ClipboardPlus size={18} /> Log error baru</button> : null
 
   return (
