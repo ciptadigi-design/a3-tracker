@@ -86,7 +86,7 @@ function OverviewWorkspace({ navigate }) {
   const validPeriod = !rangeError
   const periodLabel = machineCostPeriodPresets.find((preset) => preset.id === filters.preset)?.label
   const rangeLabel = validPeriod ? `${period.start} → ${period.end}` : rangeError
-  const requestKey = `${account.id}:${branch?.id}:${selectedMachine?.id}:${timezone}:${period.start}:${period.end}:${refreshVersion}`
+  const requestKey = `${account.id}:${branch?.id}:${selectedMachine?.id}:${timezone}:${filters.preset}:${period.start}:${period.end}:${refreshVersion}`
   const [gate] = useState(createOverviewRequestGate)
   const [result, setResult] = useState(null)
   const currentResult = result?.key === requestKey ? result : null
@@ -98,7 +98,7 @@ function OverviewWorkspace({ navigate }) {
 
   useEffect(() => {
     if (!selectedMachine || !validPeriod) return undefined
-    const args = { accountId: account.id, machineId: selectedMachine.id, periodStart: period.start, periodEnd: period.end }
+    const args = { accountId: account.id, machineId: selectedMachine.id, periodStart: period.start, periodEnd: period.end, periodPreset: filters.preset }
     gate.run(async () => {
       const [projection, costSummary] = await Promise.all([
         loadClickTargetProjection(args),
@@ -108,11 +108,13 @@ function OverviewWorkspace({ navigate }) {
       return { projection, costSummary }
     }, (next) => setResult({ ...next, key: requestKey }))
     return () => gate.invalidate()
-  }, [account.id, gate, period.end, period.start, requestKey, selectedMachine, validPeriod])
+  }, [account.id, filters.preset, gate, period.end, period.start, requestKey, selectedMachine, validPeriod])
 
   const dailyRows = useMemo(() => normalizeDailyPerformance(projection?.daily), [projection])
   const [statusLabel, statusTone] = targetStatusPresentation(projection?.target_status)
   const requiredPace = projection?.required_pace_status === 'NO_ACTIVE_DAYS_REMAINING' ? { value: '—', hint: 'No active days remain in this period' } : requiredPacePresentation(projection)
+  const expectedTargetLabel = ['this_month', 'this_year'].includes(filters.preset) ? 'Expected by today' : 'Allocated target'
+  const selectedCardLabel = filters.preset === 'this_month' ? 'Expected by Today' : filters.preset === 'this_year' ? 'Expected to Date' : periodLabel
   const notConfigured = projection?.target_status === 'NOT_CONFIGURED'
   const todayRow = useMemo(() => dailyRows.find((row) => row.date === resolveMachineCostPeriod({ preset: 'today', timezone: projection?.period.timezone || timezone }).start), [dailyRows, projection, timezone])
   const todayContext = todayRow ? todayContextPresentation(todayRow) : null
@@ -149,13 +151,13 @@ function OverviewWorkspace({ navigate }) {
           ) : projection && (
             <section className="overview-target-hero glass-surface">
               <header>
-                <div><span className="card-kicker">{periodLabel.toUpperCase()} CLICK TARGET</span><h2>{formatClicks(projection.actual_clicks)} / {formatClicks(projection.period_target)}</h2><p>{formatPercentage(projection.achievement_percentage)} achieved</p></div>
+                <div><span className="card-kicker">{periodLabel.toUpperCase()} CLICK TARGET</span><h2>{formatClicks(projection.actual)} / {formatClicks(projection.period_target)}</h2><p>{formatPercentage(projection.achievement_percentage)} achieved</p></div>
                 {canManageTargets && <button className="secondary-button compact-button" type="button" onClick={() => navigate?.('/settings/click-targets')}><SettingsIcon size={14} />Manage target</button>}
               </header>
-              <div className={`overview-target-status tone-${statusTone}`}><TrendingUp size={16} /><span>{statusLabel}</span>{projection.variance != null && <strong>{formatSignedClicks(projection.variance)}</strong>}</div>
+              <div className={`overview-target-status tone-${statusTone}`}><TrendingUp size={16} /><span>{statusLabel}</span>{projection.pace_variance != null && <strong>{formatSignedClicks(projection.pace_variance)}</strong>}</div>
               <dl className="overview-target-metrics">
-                <div><dt>Period target</dt><dd>{formatClicks(projection.period_target)}</dd></div>
-                <div><dt>Remaining</dt><dd>{formatClicks(projection.remaining_target)}</dd></div>
+                <div><dt>{expectedTargetLabel}</dt><dd>{formatClicks(projection.expected_by_today)}</dd></div>
+                <div><dt>Remaining</dt><dd>{formatClicks(projection.remaining)}</dd></div>
                 <div><dt>Active days remaining</dt><dd>{projection.active_days_remaining}</dd></div>
                 <div><dt>Required pace</dt><dd>{requiredPace.value}<small>{requiredPace.hint}</small></dd></div>
               </dl>
@@ -166,8 +168,8 @@ function OverviewWorkspace({ navigate }) {
             <>
               <section className="overview-period-grid" aria-label="Selected period cost and click progress">
                 <CostPerClickCard summary={costSummary} periodLabel={rangeLabel} />
-                <PeriodCard label={periodLabel} card={projection.selected} />
-                <article className="overview-period-card glass-surface"><span className="card-kicker">Target variance</span><strong>{formatSignedClicks(projection.variance)}</strong><span className="overview-period-target">Actual minus selected period target</span><small>{rangeLabel}</small></article>
+                <PeriodCard label={selectedCardLabel} card={projection.selected} />
+                <article className="overview-period-card glass-surface"><span className="card-kicker">Pace variance</span><strong>{formatSignedClicks(projection.pace_variance)}</strong><span className="overview-period-target">Actual minus {expectedTargetLabel.toLowerCase()}</span><small>{rangeLabel}</small></article>
               </section>
               <DailyClickPerformanceChart rows={dailyRows} todayContext={todayContext} />
             </>

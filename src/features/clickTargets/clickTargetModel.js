@@ -71,7 +71,7 @@ const requiredPaceStatusPresentationMap = {
 
 export function requiredPacePresentation(projection) {
   const status = projection?.required_pace_status
-  if (status === 'OK') return { value: formatClicks(projection.required_daily_pace), hint: requiredPaceStatusPresentationMap.OK }
+  if (status === 'OK') return { value: formatClicks(projection.required_pace ?? projection.required_daily_pace), hint: requiredPaceStatusPresentationMap.OK }
   return { value: status === 'ACHIEVED' ? formatClicks(0) : '—', hint: requiredPaceStatusPresentationMap[status] ?? 'Unavailable' }
 }
 

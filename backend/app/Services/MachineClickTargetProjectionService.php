@@ -132,8 +132,12 @@ class MachineClickTargetProjectionService
      * target over its complete calendar, then return only selected dates.
      * Usage and comparison reads are SQL bounded by the canonical sequence.
      */
-    public function range(Machine $machine, string $from, string $to): array
+    public function range(Machine $machine, string $from, string $to, ?string $preset = null): array
     {
+        // Older callers without an explicit preset retain the historical
+        // range-allocation contract. Overview sends the preset so a resolved
+        // MTD range is not mistaken for a custom range with identical dates.
+        $preset ??= 'custom';
         $tz = $this->tz->resolve($machine);
         $start = CarbonImmutable::parse($from, $tz);
         $end = CarbonImmutable::parse($to, $tz);
@@ -146,11 +150,16 @@ class MachineClickTargetProjectionService
             ->get()->keyBy(fn ($row) => $row->calendar_date->toDateString());
         $plan = [];
         $missingMonths = [];
+        $monthlyTargets = [];
+        $activeDatesByMonth = [];
         for ($month = $calendarStart; $month->lte($calendarEnd); $month = $month->addMonth()) {
+            $monthKey = $month->format('Y-m');
             $target = MachineClickTarget::where('machine_id', $machine->id)
                 ->where('target_year', $month->year)->where('target_month', $month->month)->first();
             if ($target === null) {
-                $missingMonths[] = $month->format('Y-m');
+                $missingMonths[] = $monthKey;
+            } else {
+                $monthlyTargets[$monthKey] = (int) $target->monthly_click_target;
             }
             $activeDates = [];
             for ($date = $month; $date->lte($month->endOfMonth()); $date = $date->addDay()) {
@@ -159,6 +168,7 @@ class MachineClickTargetProjectionService
                     $activeDates[] = $key;
                 }
             }
+            $activeDatesByMonth[$monthKey] = $activeDates;
             if ($target !== null) {
                 $plan += $this->allocate($target->monthly_click_target, $activeDates);
             }
@@ -194,19 +204,49 @@ class MachineClickTargetProjectionService
             $card['planned'] = $card['achievement_percentage'] = $card['variance'] = null;
         }
         $card['comparison'] = $this->comparison->range($machine, $tz, $from, $to, (float) $card['actual'], $start->day === 1 && $start->format('Y-m') === $end->format('Y-m'));
-        $target = $card['planned'];
+        $expectedByToday = $card['planned'];
+        $target = $missingMonths !== []
+            ? null
+            : (in_array($preset, ['this_month', 'last_month', 'this_year'], true)
+                ? array_sum($monthlyTargets)
+                : $expectedByToday);
         $actual = (float) $card['actual'];
-        [$pace, $paceStatus] = $this->requiredPace($target, $actual, $remainingDays);
+        $paceVariance = $expectedByToday === null ? null : $actual - $expectedByToday;
+
+        // THIS_MONTH displays an MTD range, but required pace is explicitly
+        // a whole-month projection. Count active dates from the machine's
+        // operational today through month end, including today when active.
+        $paceRemainingDays = $remainingDays;
+        $paceActiveDays = $activeDays;
+        if ($preset === 'this_month' && count($activeDatesByMonth) === 1) {
+            $monthActiveDates = reset($activeDatesByMonth);
+            $paceRemainingDays = count(array_filter($monthActiveDates, fn ($date) => $date >= $today));
+            $paceActiveDays = count($monthActiveDates);
+        }
+        [$pace, $paceStatus] = $this->requiredPace($target, $actual, $paceRemainingDays);
+        $achievement = $target !== null && $target > 0 ? round($actual / $target * 100, 1) : null;
+        $remaining = $target === null ? null : max($target - $actual, 0);
 
         return [
             'machine_id' => $machine->id,
-            'period' => ['start' => $from, 'end' => $to, 'timezone' => $tz],
-            'target_status' => $this->targetStatus($target, $activeDays, $actual, $card['variance']),
-            'period_target' => $target, 'actual_clicks' => $actual,
-            'variance' => $card['variance'], 'achievement_percentage' => $card['achievement_percentage'],
-            'remaining_target' => $target === null ? null : max($target - $actual, 0),
-            'active_days_total' => $activeDays, 'active_days_remaining' => $remainingDays,
-            'required_daily_pace' => $pace, 'required_pace_status' => $paceStatus,
+            'period' => ['start' => $from, 'end' => $to, 'timezone' => $tz, 'preset' => $preset],
+            'target_status' => $this->targetStatus($target, $paceActiveDays, $actual, $paceVariance),
+            'period_target' => $target,
+            'expected_by_today' => $expectedByToday,
+            'actual' => $actual,
+            'remaining' => $remaining,
+            'pace_variance' => $paceVariance,
+            'active_days_total' => $paceActiveDays,
+            'active_days_remaining' => $paceRemainingDays,
+            'required_pace' => $pace,
+            'required_pace_status' => $paceStatus,
+            // Compatibility aliases for existing consumers. Each now maps to
+            // one unambiguous semantic field rather than recomputing a value.
+            'actual_clicks' => $actual,
+            'variance' => $paceVariance,
+            'achievement_percentage' => $achievement,
+            'remaining_target' => $remaining,
+            'required_daily_pace' => $pace,
             'missing_target_months' => $missingMonths,
             'selected' => $card, 'daily' => $daily,
         ];

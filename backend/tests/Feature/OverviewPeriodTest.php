@@ -88,6 +88,72 @@ class OverviewPeriodTest extends TestCase
         }
     }
 
+    public function test_this_month_separates_full_target_from_expected_to_date_and_pace(): void
+    {
+        $f = $this->fixture();
+        $this->setTarget($f, 2026, 9, 50000);
+        $base = $this->reading($f, 100000, '2026-08-31 05:00:00');
+        $this->reading($f, 132328, '2026-09-14 05:00:00', $base->id);
+        CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-09-14 12:00:00', 'Asia/Jakarta'));
+
+        try {
+            $response = $this->actingAs($f['user'])->getJson("/api/v1/machines/{$f['machine']->id}/click-target?period_start=2026-09-01&period_end=2026-09-14&period_preset=this_month")->assertOk();
+            $response
+                ->assertJsonPath('data.period.preset', 'this_month')
+                ->assertJsonPath('data.actual', 32328)
+                ->assertJsonPath('data.period_target', 50000)
+                ->assertJsonPath('data.expected_by_today', 23338)
+                ->assertJsonPath('data.achievement_percentage', 64.7)
+                ->assertJsonPath('data.pace_variance', 8990)
+                ->assertJsonPath('data.remaining', 17672)
+                ->assertJsonPath('data.active_days_remaining', 17)
+                ->assertJsonPath('data.required_pace', 1040)
+                ->assertJsonPath('data.target_status', 'AHEAD');
+
+            // Compatibility fields must alias the new unambiguous semantics.
+            $response
+                ->assertJsonPath('data.actual_clicks', 32328)
+                ->assertJsonPath('data.variance', 8990)
+                ->assertJsonPath('data.remaining_target', 17672)
+                ->assertJsonPath('data.required_daily_pace', 1040);
+        } finally {
+            CarbonImmutable::setTestNow();
+        }
+    }
+
+    public function test_other_presets_keep_their_allocated_or_full_month_semantics(): void
+    {
+        $f = $this->fixture();
+        foreach (range(1, 7) as $month) {
+            $this->setTarget($f, 2026, $month, 1000);
+        }
+        $this->setTarget($f, 2026, 8, 31000);
+        $this->setTarget($f, 2026, 9, 50000);
+        CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-09-14 12:00:00', 'Asia/Jakarta'));
+
+        try {
+            $service = app(MachineClickTargetProjectionService::class);
+
+            $lastMonth = $service->range($f['machine'], '2026-08-01', '2026-08-31', 'last_month');
+            $this->assertSame(31000, $lastMonth['period_target']);
+
+            $today = $service->range($f['machine'], '2026-09-14', '2026-09-14', 'today');
+            $this->assertSame(1667, $today['period_target']);
+
+            $thisWeek = $service->range($f['machine'], '2026-09-14', '2026-09-14', 'this_week');
+            $this->assertSame(1667, $thisWeek['period_target']);
+
+            $custom = $service->range($f['machine'], '2026-09-01', '2026-09-03', 'custom');
+            $this->assertSame(5001, $custom['period_target']);
+
+            $thisYear = $service->range($f['machine'], '2026-01-01', '2026-09-14', 'this_year');
+            $this->assertSame(88000, $thisYear['period_target']);
+            $this->assertSame(61338, $thisYear['expected_by_today']);
+        } finally {
+            CarbonImmutable::setTestNow();
+        }
+    }
+
     public function test_range_validation_reuses_report_safety_for_both_overview_reads(): void
     {
         $f = $this->fixture();

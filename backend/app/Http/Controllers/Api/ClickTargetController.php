@@ -36,9 +36,11 @@ class ClickTargetController extends Controller
     {
         $this->assertRead($r, $machine);
         if ($r->hasAny(['period_start', 'period_end'])) {
-            $v = $r->validate(OperationalPeriodRange::rules($r));
+            $v = $r->validate(OperationalPeriodRange::rules($r) + [
+                'period_preset' => 'sometimes|string|in:today,this_week,this_month,last_month,this_year,custom',
+            ]);
 
-            return response()->json(['data' => $this->projection->range($machine, $v['period_start'], $v['period_end'])]);
+            return response()->json(['data' => $this->projection->range($machine, $v['period_start'], $v['period_end'], $v['period_preset'] ?? null)]);
         }
         $v = $r->validate(['year' => 'required|integer|min:2000|max:2100', 'month' => 'required|integer|min:1|max:12']);
 

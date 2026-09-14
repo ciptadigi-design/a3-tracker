@@ -30,8 +30,16 @@ test('M2.13.2: canonical reconciliation - an unavailable Machine Cost never rend
 
 test('M2.13.2: the large Today KPI card stays removed; M2.20D.1 scopes progress to selection', () => {
   assert.doesNotMatch(overview, /<PeriodCard label="Today"/)
-  assert.match(overview, /<PeriodCard label={periodLabel} card={projection\.selected}/)
+  assert.match(overview, /<PeriodCard label={selectedCardLabel} card={projection\.selected}/)
   assert.doesNotMatch(overview, /card={projection\.(week|month)}/)
+})
+
+test('This Month keeps full-target achievement separate from expected-to-date pace', () => {
+  assert.match(overview, /periodPreset: filters\.preset/)
+  assert.match(overview, /formatClicks\(projection\.actual\).*formatClicks\(projection\.period_target\)/)
+  assert.match(overview, /formatClicks\(projection\.expected_by_today\)/)
+  assert.match(overview, /formatSignedClicks\(projection\.pace_variance\)/)
+  assert.doesNotMatch(overview, /formatClicks\(projection\.actual_clicks\)/)
 })
 
 test('M2.13.2: Overview Cost/Click reuses the canonical Machine Cost presentation, no separate economics', () => {

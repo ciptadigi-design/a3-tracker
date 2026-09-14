@@ -10,7 +10,7 @@ const css = fs.readFileSync(new URL('../../App.css', import.meta.url), 'utf8')
 test('M2.14: M2.20D.1 selected period card retains the shared comparison row', () => {
   assert.match(overview, /<PeriodComparisonRow comparison={presentation\.comparison} \/>/)
   assert.doesNotMatch(overview, /card-kicker">Last Month/)
-  assert.match(overview, /<PeriodCard label={periodLabel} card={projection\.selected} \/>/)
+  assert.match(overview, /<PeriodCard label={selectedCardLabel} card={projection\.selected} \/>/)
 })
 
 test('M2.14: selected range does not falsely label arbitrary periods as MTD', () => {
