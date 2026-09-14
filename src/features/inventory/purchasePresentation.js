@@ -20,6 +20,11 @@ export function formatPurchaseTotal(purchase) {
   return money.format(safeNumber(purchase?.purchase_total))
 }
 
+export function formatBusinessDate(value) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value ?? '')) return '—'
+  return new Intl.DateTimeFormat('id-ID', { dateStyle: 'medium', timeZone: 'UTC' }).format(new Date(`${value}T00:00:00Z`))
+}
+
 export function purchaseLineCount(purchase) {
   return safeNumber(purchase?.line_count)
 }

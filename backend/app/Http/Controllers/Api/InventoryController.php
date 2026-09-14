@@ -267,7 +267,7 @@ class InventoryController extends Controller
 
     public function createPurchase(Request $r)
     {
-        $d = $r->validate(['account_id' => 'required|uuid', 'branch_id' => 'nullable|uuid', 'supplier_id' => 'nullable|uuid', 'external_reference' => 'nullable|string', 'purchase_number' => 'required|string', 'purchase_date' => 'required|date', 'currency_code' => 'nullable|string|size:3', 'notes' => 'nullable|string', 'client_request_id' => 'required|uuid', 'lines' => 'required|array|min:1', 'lines.*.inventory_item_id' => 'required|uuid', 'lines.*.quantity' => 'required|numeric|gt:0', 'lines.*.unit_cost' => 'nullable|numeric|min:0']);
+        $d = $r->validate(['account_id' => 'required|uuid', 'branch_id' => 'nullable|uuid', 'supplier_id' => 'nullable|uuid', 'external_reference' => 'nullable|string', 'purchase_number' => 'required|string', 'purchase_date' => 'required|date_format:Y-m-d', 'currency_code' => 'nullable|in:IDR', 'notes' => 'nullable|string', 'client_request_id' => 'required|uuid', 'lines' => 'required|array|min:1', 'lines.*.inventory_item_id' => 'required|uuid', 'lines.*.quantity' => 'required|numeric|gt:0', 'lines.*.unit_cost' => 'nullable|numeric|min:0']);
         app(EffectiveCapabilityResolver::class)->authorize($r->user(), Account::findOrFail($d['account_id']), 'inventory.purchase.create');
         // Delegated purchases must name an authorized branch.
         abort_unless(! empty($d['branch_id']) || app(AccountAccessResolver::class)->canManageOperational($r->user(), Account::findOrFail($d['account_id'])), 403);
@@ -286,7 +286,7 @@ class InventoryController extends Controller
         // resolved person_id at all - the frontend already sent it, but it was silently
         // dropped by validate()'s whitelist, so every Goods Receipt movement persisted
         // with a null PIC regardless of what the operator selected.
-        $d = $r->validate(['location_id' => 'required|uuid', 'person_id' => 'nullable|uuid', 'client_request_id' => 'required|uuid', 'lines' => 'required|array|min:1', 'lines.*.purchase_line_id' => 'required|uuid|distinct', 'lines.*.quantity' => 'required|numeric|gt:0']);
+        $d = $r->validate(['location_id' => 'required|uuid', 'person_id' => 'nullable|uuid', 'received_at' => 'nullable|date', 'client_request_id' => 'required|uuid', 'lines' => 'required|array|min:1', 'lines.*.purchase_line_id' => 'required|uuid|distinct', 'lines.*.quantity' => 'required|numeric|gt:0']);
         $loc = InventoryLocation::findOrFail($d['location_id']);
         abort_unless($this->canAccessLocation($r, $loc, 'inventory.receive'), 403);
         $root = DB::table('purchases')->where('account_id', $loc->account_id)->where('id', $purchase)->first();
@@ -296,7 +296,7 @@ class InventoryController extends Controller
         }
         [$personId, $personName] = $this->resolveOperator($loc, $d['person_id'] ?? null);
 
-        return response()->json(['data' => app(PurchaseReceiptService::class)->receive($purchase, $loc, $d['lines'], $d['client_request_id'], $personId, $personName, $r->user()->id)], 201);
+        return response()->json(['data' => app(PurchaseReceiptService::class)->receive($purchase, $loc, $d['lines'], $d['client_request_id'], $personId, $personName, $r->user()->id, $d['received_at'] ?? null)], 201);
     }
 
     public function opening(Request $r)

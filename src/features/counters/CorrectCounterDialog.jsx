@@ -23,6 +23,7 @@ export function CorrectCounterDialog({ reading, isLatest, timezone, onClose, onC
     || (previous != null && replacement < previous)
   )
   const title = isLatest ? 'Correct latest reading' : 'Correct reading'
+  const observedAtLabel = new Intl.DateTimeFormat('en-GB', { timeZone: timezone, dateStyle: 'medium', timeStyle: 'short' }).format(new Date(reading.observed_at))
 
   async function handleSubmit(event) {
     event.preventDefault()
@@ -85,7 +86,7 @@ export function CorrectCounterDialog({ reading, isLatest, timezone, onClose, onC
         <form className="machine-form correction-form" onSubmit={handleSubmit}>
           <div className="machine-form-body correction-form-body">
             <div className="correction-action-tabs" role="group" aria-label="Correction action"><button type="button" className={action === 'replace' ? 'selected' : ''} aria-pressed={action === 'replace'} onClick={() => { setAction('replace'); setError(null) }}>Replace value</button><button type="button" className={action === 'void' ? 'selected danger-tab' : ''} aria-pressed={action === 'void'} onClick={() => { setAction('void'); setError(null) }}>Void reading</button></div>
-            <div className="correction-reading-context"><span>Current value</span><strong>{formatCounter(reading.reading_value)}</strong><small>{reading.shift_code || 'No shift'} · {new Date(reading.observed_at).toLocaleString()}</small></div>
+            <div className="correction-reading-context"><span>Current value</span><strong>{formatCounter(reading.reading_value)}</strong><small>{reading.shift_code || 'No shift'} · {observedAtLabel}</small></div>
             {action === 'replace' && <label className="form-field"><span>Corrected counter <b className="required-mark">*</b></span><input value={replacementValue} onChange={(event) => { if (/^\d*$/.test(event.target.value)) setReplacementValue(event.target.value); setError(null) }} inputMode="numeric" aria-invalid={invalidReplacement} /><small>{previous == null ? 'This remains the first baseline.' : `Previous effective baseline: ${formatCounter(previous)}`}</small></label>}
             {action === 'replace' && <label className="form-field"><span>Corrected date &amp; time <b className="required-mark">*</b></span><input type="datetime-local" value={replacementDateTime} onChange={(event) => { setReplacementDateTime(event.target.value); setError(null) }} aria-invalid={!validDateTimeFormat} /><small>{timezone} machine time</small></label>}
             {action === 'void' && <div className="correction-void-warning"><AlertCircle size={17} /><span>The reading remains in audit history and is excluded from the effective counter sequence.</span></div>}

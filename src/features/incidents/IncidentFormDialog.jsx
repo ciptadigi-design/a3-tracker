@@ -5,7 +5,8 @@ import { useAuth } from '../auth/useAuth.js'
 import { createDraftKey } from '../drafts/draftKeys.js'
 import { usePersistentDraft } from '../drafts/usePersistentDraft.js'
 import { incidentCategories, incidentTypes } from './incidentConstants.js'
-import { formatRupiah, mapIncidentError, parseLoss, toLocalDateTimeInput } from './incidentUtils.js'
+import { formatRupiah, mapIncidentError, parseLoss } from './incidentUtils.js'
+import { localDateTimeInZone, zonedLocalDateTimeToISOString } from '../machineCost/sellingPriceModel.js'
 import { revalidateIncidentPeople, selectIncidentOperator, selectIncidentResponsiblePerson } from './incidentPeopleSelection.js'
 
 const draftFields = [
@@ -17,9 +18,9 @@ const draftFields = [
 
 const editDraftFields = [...draftFields.filter((field) => field !== 'clientRequestId'), 'changeReason', 'baseUpdatedAt']
 
-function createInitialDraft() {
+function createInitialDraft(timezone) {
   return {
-    occurredAt: toLocalDateTimeInput(),
+    occurredAt: localDateTimeInZone(timezone),
     invoiceNumber: '',
     customerName: '',
     productName: '',
@@ -42,9 +43,9 @@ function createInitialDraft() {
   }
 }
 
-function createEditDraft(incident) {
+function createEditDraft(incident, timezone) {
   return {
-    occurredAt: toLocalDateTimeInput(new Date(incident.occurred_at)),
+    occurredAt: localDateTimeInZone(timezone, new Date(incident.occurred_at)),
     invoiceNumber: incident.invoice_number ?? '',
     customerName: incident.customer_name_snapshot ?? '',
     productName: incident.product_name_snapshot ?? '',
@@ -76,10 +77,11 @@ function isIncidentEditDraft(value) {
   return value && editDraftFields.every((field) => typeof value[field] === 'string') && typeof value.responsiblePersonTouched === 'boolean'
 }
 
-function validate(values) {
+function validate(values, timezone) {
   const errors = {}
-  if (!values.occurredAt || Number.isNaN(new Date(values.occurredAt).getTime())) errors.occurredAt = 'Tanggal kejadian wajib diisi.'
-  else if (new Date(values.occurredAt).getTime() > Date.now() + 5 * 60_000) errors.occurredAt = 'Tanggal kejadian tidak boleh berada di masa depan.'
+  try {
+    if (!values.occurredAt || new Date(zonedLocalDateTimeToISOString(values.occurredAt, timezone)).getTime() > Date.now() + 5 * 60_000) errors.occurredAt = values.occurredAt ? 'Tanggal kejadian tidak boleh berada di masa depan.' : 'Tanggal kejadian wajib diisi.'
+  } catch { errors.occurredAt = 'Tanggal kejadian wajib diisi.' }
   if (!incidentCategories.some((item) => item.value === values.category)) errors.category = 'Pilih kategori operasional.'
   if (!incidentTypes.some((item) => item.value === values.incidentType)) errors.incidentType = 'Pilih jenis kejadian.'
   if (values.qtyAffected && (!/^\d+$/.test(values.qtyAffected) || Number(values.qtyAffected) <= 0)) errors.qtyAffected = 'Qty rusak harus berupa bilangan bulat lebih dari nol.'
@@ -100,6 +102,9 @@ function FieldError({ message }) {
 export function IncidentFormDialog({ account, branch, machines, people, operatorPeople = people, incident = null, mode = 'create', onClose, onSave, onLoadLatest }) {
   const { user } = useAuth()
   const isEdit = mode === 'edit'
+  const defaultTimezone = branch.timezone || account.default_timezone || 'UTC'
+  const incidentMachine = incident?.machine_id ? machines.find((machine) => machine.id === incident.machine_id) : null
+  const initialTimezone = incidentMachine?.timezone || defaultTimezone
   const [draftContext] = useState(() => ({
     key: createDraftKey({
       userId: user.id,
@@ -108,7 +113,7 @@ export function IncidentFormDialog({ account, branch, machines, people, operator
       feature: 'operational-incident',
       entityId: isEdit ? incident.id : 'new',
     }),
-    initialValue: isEdit ? createEditDraft(incident) : createInitialDraft(),
+    initialValue: isEdit ? createEditDraft(incident, initialTimezone) : createInitialDraft(initialTimezone),
   }))
   const {
     value: values,
@@ -131,6 +136,8 @@ export function IncidentFormDialog({ account, branch, machines, people, operator
   const [formError, setFormError] = useState(null)
   const [isSaving, setIsSaving] = useState(false)
   const [runtimeConflict, setRuntimeConflict] = useState(null)
+  const selectedMachine = values.machineId ? machines.find((machine) => machine.id === values.machineId) : null
+  const operationalTimezone = selectedMachine?.timezone || defaultTimezone
   const assessedLoss = useMemo(
     () => parseLoss(values.materialLoss) + parseLoss(values.serviceLoss),
     [values.materialLoss, values.serviceLoss],
@@ -174,7 +181,8 @@ export function IncidentFormDialog({ account, branch, machines, people, operator
   }
 
   function handleUseLatestServerData(latest = incident) {
-    const nextValues = createEditDraft(latest)
+    const latestMachine = latest?.machine_id ? machines.find((machine) => machine.id === latest.machine_id) : null
+    const nextValues = createEditDraft(latest, latestMachine?.timezone || defaultTimezone)
     if (pendingDraft) discardPendingDraft()
     else clearDraft(nextValues)
     setRuntimeConflict(null)
@@ -192,7 +200,7 @@ export function IncidentFormDialog({ account, branch, machines, people, operator
   async function handleSubmit(event) {
     event.preventDefault()
     if (isSaving || pendingDraft || runtimeConflict) return
-    const nextErrors = validate(values)
+    const nextErrors = validate(values, operationalTimezone)
     setErrors(nextErrors)
     if (Object.keys(nextErrors).length) {
       setFormError('Periksa kembali bidang yang ditandai.')
@@ -202,7 +210,7 @@ export function IncidentFormDialog({ account, branch, machines, people, operator
     setIsSaving(true)
     setFormError(null)
     try {
-      await onSave(values)
+      await onSave(values, operationalTimezone)
       clearDraft()
       onClose()
     } catch (error) {
@@ -230,7 +238,7 @@ export function IncidentFormDialog({ account, branch, machines, people, operator
 
             <div className="form-section-heading"><strong>Konteks kejadian</strong><span>Identitas produksi dan klasifikasi operasional.</span></div>
             <div className="form-grid incident-form-grid">
-              <label className="form-field"><span>Tanggal Kejadian <RequiredMark /></span><input type="datetime-local" value={values.occurredAt} max={toLocalDateTimeInput(new Date(Date.now() + 5 * 60_000))} onChange={(event) => change('occurredAt', event.target.value)} aria-invalid={Boolean(errors.occurredAt)} /><FieldError message={errors.occurredAt} /></label>
+              <label className="form-field"><span>Tanggal Kejadian <RequiredMark /></span><input type="datetime-local" value={values.occurredAt} max={localDateTimeInZone(operationalTimezone, new Date(Date.now() + 5 * 60_000))} onChange={(event) => change('occurredAt', event.target.value)} aria-invalid={Boolean(errors.occurredAt)} /><small>{operationalTimezone} operational time</small><FieldError message={errors.occurredAt} /></label>
               <label className="form-field"><span>No. Invoice CRM <small>Opsional</small></span><input value={values.invoiceNumber} onChange={(event) => change('invoiceNumber', event.target.value)} placeholder="Nomor invoice" autoComplete="off" /></label>
               <label className="form-field"><span>Nama Konsumen <small>Opsional</small></span><input value={values.customerName} onChange={(event) => change('customerName', event.target.value)} placeholder="Nama konsumen saat kejadian" autoComplete="off" /></label>
               <label className="form-field"><span>Nama Produk <small>Opsional</small></span><input value={values.productName} onChange={(event) => change('productName', event.target.value)} placeholder="Produk / pekerjaan" autoComplete="off" /></label>

@@ -164,7 +164,7 @@ class OperationsController extends Controller
         return DB::transaction(function () use ($r, $id) {
             $m = Machine::with('account')->lockForUpdate()->findOrFail($id);
             abort_unless(app(AccountAccessResolver::class)->canManageOperational($r->user(), $m->account), 403);
-            $d = $r->validate(['machine_model_id' => 'required|uuid', 'machine_code' => 'required|string|max:80', 'display_name' => 'required|string|max:180', 'serial_number' => 'nullable|string|max:120', 'timezone' => 'nullable|string|max:64', 'status' => 'nullable|in:active,down,maintenance,retired']);
+            $d = $r->validate(['machine_model_id' => 'required|uuid', 'machine_code' => 'required|string|max:80', 'display_name' => 'required|string|max:180', 'serial_number' => 'nullable|string|max:120', 'timezone' => 'nullable|timezone:all', 'status' => 'nullable|in:active,down,maintenance,retired']);
             ScopedReference::activeGlobalOrOwned(MachineModel::class, $d['machine_model_id'], $m->account_id, 'machine_model_id');
             $model = MachineModel::lockForUpdate()->findOrFail($d['machine_model_id']);
             ScopedReference::activeGlobalOrOwned(Manufacturer::class, $model->manufacturer_id, $model->account_id, 'machine_model_id');

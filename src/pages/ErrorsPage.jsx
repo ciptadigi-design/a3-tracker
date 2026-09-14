@@ -41,8 +41,8 @@ export function ErrorsPage({ navigate }) {
     assessed: totals.assessed + Number(incident.assessed_loss),
   }), { count: 0, material: 0, service: 0, assessed: 0 }), [validIncidents])
 
-  async function handleCreate(values) {
-    await createOperationalIncident({ accountId: account.id, branchId: branch.id, values })
+  async function handleCreate(values, timezone) {
+    await createOperationalIncident({ accountId: account.id, branchId: branch.id, values, timezone })
     await incidentState.refresh()
     setSuccess('Log error operasional tersimpan dan langsung tersedia di riwayat.')
   }

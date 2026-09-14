@@ -1,13 +1,14 @@
 import { useMemo, useState } from 'react'
 import { AlertCircle, ArrowRight, CheckCircle2, Clock3, Gauge, LoaderCircle, RotateCcw } from 'lucide-react'
 import { recordCounterReading } from '../../services/counters.js'
-import { formatCounter, mapCounterError, toLocalDateTimeInput } from './counterUtils.js'
+import { formatCounter, mapCounterError } from './counterUtils.js'
+import { localDateTimeInZone, zonedLocalDateTimeToISOString } from '../machineCost/sellingPriceModel.js'
 import { createDraftKey } from '../drafts/draftKeys.js'
 import { readLegacyDailyDraft } from '../drafts/draftStorage.js'
 import { usePersistentDraft } from '../drafts/usePersistentDraft.js'
 
-function createInitialCounterDraft(shiftCode = '') {
-  return { readingValue: '', operatorPersonId: '', shiftCode, observedAt: toLocalDateTimeInput(), notes: '', clientRequestId: crypto.randomUUID() }
+function createInitialCounterDraft(timezone, shiftCode = '') {
+  return { readingValue: '', operatorPersonId: '', shiftCode, observedAt: localDateTimeInZone(timezone), notes: '', clientRequestId: crypto.randomUUID() }
 }
 
 function isCounterDraft(value) {
@@ -15,7 +16,7 @@ function isCounterDraft(value) {
     && (value.operatorPersonId === undefined || typeof value.operatorPersonId === 'string')
 }
 
-export function CounterEntryCard({ accountId, branchId, userId, machine, people, peopleLoading, peopleError, lastReading, onRecorded }) {
+export function CounterEntryCard({ accountId, branchId, userId, machine, timezone, people, peopleLoading, peopleError, lastReading, onRecorded }) {
   const draftKey = createDraftKey({ userId, accountId, branchId, feature: 'daily-counter', entityId: machine.id })
   const {
     value: draft,
@@ -26,7 +27,7 @@ export function CounterEntryCard({ accountId, branchId, userId, machine, people,
     resetDraft,
   } = usePersistentDraft({
     draftKey,
-    initialValue: createInitialCounterDraft(),
+    initialValue: createInitialCounterDraft(timezone),
     validate: isCounterDraft,
     legacyDraft: readLegacyDailyDraft(userId, machine.id),
   })
@@ -58,7 +59,7 @@ export function CounterEntryCard({ accountId, branchId, userId, machine, people,
   }
 
   function handleResetDraft() {
-    resetDraft(createInitialCounterDraft())
+    resetDraft(createInitialCounterDraft(timezone))
     setError(null)
     setSuccess(null)
   }
@@ -87,13 +88,13 @@ export function CounterEntryCard({ accountId, branchId, userId, machine, people,
         accountId,
         machineId: machine.id,
         readingValue: parsedValue,
-        observedAt: new Date(observedAt).toISOString(),
+        observedAt: zonedLocalDateTimeToISOString(observedAt, timezone),
         operatorPersonId,
         shiftCode,
         notes,
         clientRequestId,
       })
-      clearDraft(createInitialCounterDraft(shiftCode))
+      clearDraft(createInitialCounterDraft(timezone, shiftCode))
       setSuccess(`Counter ${formatCounter(parsedValue)} recorded successfully.`)
       await onRecorded()
     } catch (submitError) {
@@ -115,7 +116,7 @@ export function CounterEntryCard({ accountId, branchId, userId, machine, people,
         </div>
         <div className="counter-form-grid">
           <label className="form-field"><span>Shift <small>Optional</small></span><select value={shiftCode} onChange={(event) => markDraftChanged('shiftCode', event.target.value)}><option value="">No shift specified</option><option value="S1">S1</option><option value="S2">S2</option></select></label>
-          <label className="form-field"><span>Observed date/time <b className="required-mark">*</b></span><input type="datetime-local" value={observedAt} max={toLocalDateTimeInput(new Date(Date.now() + 5 * 60_000))} onChange={(event) => markDraftChanged('observedAt', event.target.value)} /></label>
+          <label className="form-field"><span>Observed date/time <b className="required-mark">*</b></span><input type="datetime-local" value={observedAt} max={localDateTimeInZone(timezone, new Date(Date.now() + 5 * 60_000))} onChange={(event) => markDraftChanged('observedAt', event.target.value)} /><small>{timezone} machine time</small></label>
           <label className="form-field form-field-wide"><span>Notes <small>Optional</small></span><textarea value={notes} onChange={(event) => markDraftChanged('notes', event.target.value)} rows="3" placeholder="Optional context for this reading" /></label>
         </div>
         <div className="counter-preview"><div><span>Previous</span><strong>{formatCounter(previousValue)}</strong></div><ArrowRight size={18} /><div><span>New</span><strong>{formatCounter(parsedValue)}</strong></div><div className={previewUsage != null && previewUsage < 0 ? 'preview-usage invalid' : 'preview-usage'}><span>Usage preview</span><strong>{previewUsage == null ? 'Baseline' : `+${formatCounter(previewUsage)}`}</strong><small>Database-derived after save</small></div></div>

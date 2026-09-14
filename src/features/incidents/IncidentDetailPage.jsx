@@ -79,8 +79,8 @@ export function IncidentDetailPage({ incidentId, navigate }) {
     }
   }
 
-  async function handleEdit(values) {
-    const updated = await updateOperationalIncident({ incidentId: incident.id, values })
+  async function handleEdit(values, operationalTimezone) {
+    const updated = await updateOperationalIncident({ incidentId: incident.id, values, timezone: operationalTimezone })
     state.setIncident(updated)
     await state.refresh({ silent: true })
     setSuccess('Perubahan tersimpan dan revision audit telah ditambahkan.')

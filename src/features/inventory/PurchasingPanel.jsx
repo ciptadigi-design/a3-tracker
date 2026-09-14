@@ -114,11 +114,13 @@ function ReceiptList({ receipts, timeZone, resetKey }) {
 }
 
 export function PurchasingPanel({ userId, account, branchId, branches = [], data, suppliers = data.suppliers, suppliersError, onRetrySuppliers, canManage, canCreatePurchase = canManage, onCreateSupplier, onEditSupplier, onDeleteSupplier, onAssignBranch, onUnassignBranch, onCreatePurchase, onOpenPurchase }) {
+  const branch = branches.find((candidate) => candidate.id === branchId)
+  const operationalTimezone = branch?.timezone || account.default_timezone || 'UTC'
   const key = createUIStateKey({ userId, accountId: account.id, branchId, feature: 'inventory-purchasing-view', entityId: 'workspace' })
   const state = usePersistentUIState({ uiStateKey: key, initialValue: { section: 'purchases', showArchivedSuppliers: false }, validate: validSection })
   return <div className="purchasing-workspace"><div className="purchasing-subtabs" role="tablist" aria-label="Purchasing sections">{sections.map((section) => <button key={section.id} type="button" role="tab" aria-selected={state.value.section === section.id} className={state.value.section === section.id ? 'selected' : ''} onClick={() => state.setUIState((current) => ({ ...current, section: section.id }))}><section.icon size={15} />{section.label}{section.id === 'receiving' && <span>{data.receipts.length}</span>}</button>)}</div>{state.value.section === 'suppliers' && canManage && <div className="inventory-record-toggle"><button className={!state.value.showArchivedSuppliers ? 'selected' : ''} onClick={() => state.setUIState((current) => ({ ...current, showArchivedSuppliers: false }))}>Active</button><button className={state.value.showArchivedSuppliers ? 'selected' : ''} onClick={() => state.setUIState((current) => ({ ...current, showArchivedSuppliers: true }))}>Archived</button></div>}<div className="purchasing-content">
     {state.value.section === 'purchases' && <PurchaseList purchases={data.purchases} canManage={canCreatePurchase} onCreate={onCreatePurchase} onOpen={onOpenPurchase} resetKey={branchId} />}
     {state.value.section === 'suppliers' && <SupplierList suppliers={suppliers} suppliersError={suppliersError} onRetrySuppliers={onRetrySuppliers} branches={branches} branchId={branchId} showArchived={state.value.showArchivedSuppliers} canManage={canManage} onCreate={onCreateSupplier} onEdit={onEditSupplier} onDelete={onDeleteSupplier} onAssignBranch={onAssignBranch} onUnassignBranch={onUnassignBranch} />}
-    {state.value.section === 'receiving' && <ReceiptList receipts={data.receipts} timeZone={account.default_timezone} resetKey={branchId} />}
+    {state.value.section === 'receiving' && <ReceiptList receipts={data.receipts} timeZone={operationalTimezone} resetKey={branchId} />}
   </div></div>
 }

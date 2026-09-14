@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { describePurchaseStatus, formatPurchaseTotal, isLegacyImportPurchase, purchaseFullyReceivedLineCount, purchaseLineCount, purchaseReceivingProgressPercent, purchaseSupplierName, safeNumber } from './purchasePresentation.js'
+import { describePurchaseStatus, formatBusinessDate, formatPurchaseTotal, isLegacyImportPurchase, purchaseFullyReceivedLineCount, purchaseLineCount, purchaseReceivingProgressPercent, purchaseSupplierName, safeNumber } from './purchasePresentation.js'
 
 const legacyPurchase = {
   purchase_id: 'p1',
@@ -27,6 +27,11 @@ test('a fully-populated purchase renders its real numeric total, never NaN', () 
   assert.equal(purchaseLineCount(legacyPurchase), 1)
   assert.equal(purchaseFullyReceivedLineCount(legacyPurchase), 0)
   assert.equal(purchaseReceivingProgressPercent(legacyPurchase), 0)
+})
+
+test('purchase date remains a date-only business value', () => {
+  assert.match(formatBusinessDate('2026-09-14'), /2026/)
+  assert.equal(formatBusinessDate('not-a-date'), '—')
 })
 
 test('purchase_total missing/null/undefined never formats as RpNaN', () => {

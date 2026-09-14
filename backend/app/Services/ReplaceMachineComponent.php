@@ -62,7 +62,7 @@ class ReplaceMachineComponent
                 }
                 if ($item->component_id !== null && $item->component_id !== $mc->component_id) {
                     throw new ConflictHttpException('inventory item component mismatch');
-                }$movement = app(InventoryLedgerService::class)->outbound($item, $loc, (float) ($d['quantity'] ?? 1), 'replacement_consumption', $d['client_request_id'], null, $d['notes'] ?? null, null, $d['performed_by_person_id'] ?? null, $d['performed_by_name'] ?? null, $d['entered_by'] ?? null);
+                }$movement = app(InventoryLedgerService::class)->outbound($item, $loc, (float) ($d['quantity'] ?? 1), 'replacement_consumption', $d['client_request_id'], null, $d['notes'] ?? null, null, $d['performed_by_person_id'] ?? null, $d['performed_by_name'] ?? null, $d['entered_by'] ?? null, $when);
                 $cost = FifoAllocationCost::forMovement($movement->id);
             } else {
                 if (empty($d['external_reason'])) {

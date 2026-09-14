@@ -94,7 +94,7 @@ export async function createInventoryPurchase({ accountId, branchId, values, cli
 export async function receiveInventoryPurchase({ accountId, purchaseId, values, clientRequestId }) {
   const { data, error } = await supabase.rpc('receive_inventory_purchase', {
     target_account_id: accountId, target_purchase_id: purchaseId, target_location_id: values.locationId,
-    target_received_at: new Date(values.receivedAt).toISOString(), target_operational_person_id: values.personId,
+    target_received_at: values.receivedAt, target_operational_person_id: values.personId,
     target_notes: optional(values.notes), target_lines: values.lines.filter((line) => Number(line.quantity) > 0).map((line) => ({
       purchase_line_id: line.purchaseLineId, quantity: line.quantity,
     })), target_client_request_id: clientRequestId,

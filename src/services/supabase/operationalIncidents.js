@@ -1,5 +1,6 @@
 import { supabase } from './client.js'
 import { operationalError } from '../../lib/appErrors.js'
+import { zonedLocalDateTimeToISOString } from '../../features/machineCost/sellingPriceModel.js'
 
 const incidentFields = `
   id,
@@ -92,10 +93,10 @@ export async function loadOperationalIncident({ accountId, branchId, incidentId 
   }
 }
 
-function incidentMutationPayload(values) {
+function incidentMutationPayload(values, timezone) {
   return {
     target_base_updated_at: values.baseUpdatedAt,
-    target_occurred_at: new Date(values.occurredAt).toISOString(),
+    target_occurred_at: zonedLocalDateTimeToISOString(values.occurredAt, timezone),
     target_category: values.category,
     target_incident_type: values.incidentType,
     target_description: values.description.trim(),
@@ -115,10 +116,10 @@ function incidentMutationPayload(values) {
   }
 }
 
-export async function updateOperationalIncident({ incidentId, values }) {
+export async function updateOperationalIncident({ incidentId, values, timezone }) {
   const { data, error } = await supabase.rpc('update_operational_incident_v2', {
     target_incident_id: incidentId,
-    ...incidentMutationPayload(values),
+    ...incidentMutationPayload(values, timezone),
   })
   if (error) throw operationalError(error, { operation: 'incident.update' }, 'The incident could not be updated.')
   return data
@@ -133,11 +134,11 @@ export async function solveOperationalIncident({ incidentId, resolutionNote }) {
   return data
 }
 
-export async function createOperationalIncident({ accountId, branchId, values }) {
+export async function createOperationalIncident({ accountId, branchId, values, timezone }) {
   const { data, error } = await supabase.rpc('create_operational_incident_v2', {
     target_account_id: accountId,
     target_branch_id: branchId,
-    target_occurred_at: new Date(values.occurredAt).toISOString(),
+    target_occurred_at: zonedLocalDateTimeToISOString(values.occurredAt, timezone),
     target_category: values.category,
     target_incident_type: values.incidentType,
     target_description: values.description.trim(),

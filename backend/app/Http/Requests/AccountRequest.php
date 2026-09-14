@@ -15,6 +15,6 @@ class AccountRequest extends FormRequest
     {
         $required = $this->isMethod('post') ? 'required' : 'sometimes';
 
-        return ['code' => [$required, 'string', 'max:64'], 'name' => [$required, 'string', 'max:120'], 'default_timezone' => [$required, 'string', 'max:64'], 'default_currency' => 'sometimes|string|size:3', 'status' => 'sometimes|in:active,suspended,archived', 'notes' => 'nullable|string'];
+        return ['code' => [$required, 'string', 'max:64'], 'name' => [$required, 'string', 'max:120'], 'default_timezone' => [$required, 'timezone:all'], 'default_currency' => 'sometimes|in:IDR', 'status' => 'sometimes|in:active,suspended,archived', 'notes' => 'nullable|string'];
     }
 }

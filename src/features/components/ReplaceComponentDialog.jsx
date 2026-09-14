@@ -9,11 +9,7 @@ import { resolveReplacementInventorySource } from './lifecycleActions.js'
 import { formatCounterInput, normalizeCounterInput, resolveReplacementPic } from './replacementForm.js'
 import { inventoryItemLabel } from '../inventory/inventoryItemPresentation.js'
 import { counterOperatorsForBranch } from '../operationalPeople/eligibility.js'
-
-function localDateTime() {
-  const now = new Date(Date.now() - new Date().getTimezoneOffset() * 60_000)
-  return now.toISOString().slice(0, 16)
-}
+import { localDateTimeInZone, zonedLocalDateTimeToISOString } from '../machineCost/sellingPriceModel.js'
 
 function number(value) {
   return value == null || !Number.isFinite(Number(value)) ? '—' : Number(value).toLocaleString('en-US', { maximumFractionDigits: 4 })
@@ -40,15 +36,16 @@ const validDraft = (value) => value
   && (value.inventoryQuantity == null || typeof value.inventoryQuantity === 'string')
   && (value.externalInventoryReason == null || typeof value.externalInventoryReason === 'string')
 
-export function ReplaceComponentDialog({ account, machine, lifecycle, operationalPeople, inventoryItems, inventoryLocations, inventoryBalances, onClose, onReplace }) {
+export function ReplaceComponentDialog({ account, branch, machine, lifecycle, operationalPeople, inventoryItems, inventoryLocations, inventoryBalances, onClose, onReplace }) {
   const { user } = useAuth()
+  const timezone = machine.timezone || branch?.timezone || account.default_timezone || 'UTC'
   const initialValue = useMemo(() => ({
     physicalCounter: String(Math.trunc(Number(lifecycle.latest_effective_counter))),
-    replacedAt: localDateTime(), performedBy: '', manualPic: '',
+    replacedAt: localDateTimeInZone(timezone), performedBy: '', manualPic: '',
     reason: lifecycle.tracking_method === 'consumption_based' ? 'depleted' : 'normal_eol',
     condition: 'worn', includeLearning: true, notes: '', clientRequestId: crypto.randomUUID(),
     inventorySource: 'inventory', inventoryItemId: '', inventoryLocationId: '', inventoryQuantity: '1', externalInventoryReason: '',
-  }), [lifecycle.latest_effective_counter, lifecycle.tracking_method])
+  }), [lifecycle.latest_effective_counter, lifecycle.tracking_method, timezone])
   const { value, updateDraft, clearDraft, resetDraft, hasDraft, wasRestored } = usePersistentDraft({
     draftKey: createDraftKey({ userId: user.id, accountId: account.id, branchId: machine.branch_id, feature: 'component-replacement', entityId: lifecycle.lifecycle_id }),
     initialValue,
@@ -96,7 +93,7 @@ export function ReplaceComponentDialog({ account, machine, lifecycle, operationa
     setSaving(true); setError(null)
     try {
       await onReplace({
-        replacementCounter, replacedAt: new Date(value.replacedAt).toISOString(), reason: value.reason, condition: value.condition,
+        replacementCounter, replacedAt: zonedLocalDateTimeToISOString(value.replacedAt, timezone), reason: value.reason, condition: value.condition,
         includeLearning: value.includeLearning, performedByPersonId: pic.mode === 'operational' ? pic.person.id : null,
         performedByName: performerName, notes: value.notes, clientRequestId: value.clientRequestId, inventorySource,
         inventoryItemId: selectedInventoryItem?.id ?? null, inventoryLocationId: selectedInventoryLocation?.id ?? null,
@@ -106,7 +103,7 @@ export function ReplaceComponentDialog({ account, machine, lifecycle, operationa
     } catch (saveError) { setError(saveError.message) } finally { setSaving(false) }
   }
 
-  const reset = () => resetDraft({ ...initialValue, clientRequestId: crypto.randomUUID(), replacedAt: localDateTime() })
+  const reset = () => resetDraft({ ...initialValue, clientRequestId: crypto.randomUUID(), replacedAt: localDateTimeInZone(timezone) })
 
   return <BlockingDialog className="machine-dialog component-dialog replacement-dialog glass-surface" backdropClassName="machine-dialog-backdrop" labelledBy="replacement-dialog-title" describedBy="replacement-dialog-description" onClose={onClose} busy={saving}>
     <header className="dialog-header"><div className="dialog-heading"><span className="dialog-icon"><RefreshCcw size={22} /></span><div><span className="card-kicker">Physical component change</span><h2 id="replacement-dialog-title">{lifecycle.tracking_method === 'consumption_based' ? 'Replace / Refill Toner' : 'Replace Component'}</h2><p id="replacement-dialog-description">{lifecycle.component_name} · {machine.machine_code}</p></div></div><button className="icon-button" type="button" onClick={onClose} disabled={saving} aria-label="Close replacement form"><X size={19} /></button></header>
@@ -126,7 +123,7 @@ export function ReplaceComponentDialog({ account, machine, lifecycle, operationa
         <section className="replacement-form-section" aria-labelledby="replacement-info-title">
           <header><span id="replacement-info-title">Replacement information</span><small>Who performed the physical replacement and why.</small></header>
           <div className="form-grid replacement-info-grid">
-            <label className="form-field"><span>Replacement date & time *</span><input type="datetime-local" value={value.replacedAt} onChange={(event) => change('replacedAt', event.target.value)} /></label>
+            <label className="form-field"><span>Replacement date & time *</span><input type="datetime-local" value={value.replacedAt} onChange={(event) => change('replacedAt', event.target.value)} /><small>{timezone} machine time</small></label>
             <label className="form-field"><span>PIC / Performed By *</span><select value={value.performedBy} onChange={(event) => change('performedBy', event.target.value)} aria-invalid={pic.stale}><option value="">Choose PIC / Performed By</option>{pic.stale && <option value={value.performedBy}>Previously selected PIC unavailable — reselect</option>}{activePeople.map((person) => <option key={person.id} value={person.id}>{person.name}</option>)}<option disabled>──────────</option><option value="manual">Manual PIC…</option></select><small>{pic.stale ? 'This saved selection is no longer active. Choose another PIC.' : 'The selected name is preserved as an immutable snapshot.'}</small></label>
             {pic.mode === 'manual' && <label className="form-field form-field-wide"><span>Manual PIC Name *</span><input value={value.manualPic} onChange={(event) => change('manualPic', event.target.value)} placeholder="Enter the person’s name" required /></label>}
             <label className="form-field"><span>Reason *</span><select value={value.reason} onChange={(event) => changeReason(event.target.value)}>{replacementReasons.map((reason) => <option key={reason.value} value={reason.value}>{reason.label}</option>)}</select></label>

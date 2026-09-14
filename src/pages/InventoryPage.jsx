@@ -17,6 +17,7 @@ import { sortPhysicalStockRows } from '../features/inventory/physicalStockModel.
 import { InventoryMovementDetailDialog } from '../features/inventory/InventoryMovementDetailDialog.jsx'
 import { adjustInventoryStock, assignSupplierBranch, cancelInventoryPurchase, createInventoryPurchase, deleteInventoryItem, deleteInventoryLocation, deleteInventorySupplier, initializeInventoryStock, loadInventory, loadInventorySuppliers, receiveInventoryPurchase, saveInventoryItem, saveInventoryLocation, saveInventorySupplier, transferInventoryStock, unassignSupplierBranch } from '../services/inventory.js'
 import { userErrorMessage } from '../lib/appErrors.js'
+import { zonedLocalDateTimeToISOString } from '../features/machineCost/sellingPriceModel.js'
 
 const tabs = [
   { id: 'stock', label: 'Stock', icon: Package },
@@ -68,12 +69,12 @@ function StockPanel({ data, showArchived, canManage, canAdjust, canTransfer, onE
   </>
 }
 
-function MovementPanel({ data, account, onView }) {
+function MovementPanel({ data, timezone, onView }) {
   const [filters, setFilters] = useState({ item: '', location: '', type: '' })
   const filtered = data.movements.filter((row) => (!filters.item || row.inventory_item_id === filters.item) && (!filters.location || row.location_id === filters.location) && (!filters.type || row.movement_type === filters.type))
   const pagination = usePagination(filtered.length, `${data.branchId}:${filters.item}:${filters.location}:${filters.type}`)
   const visibleRows = filtered.slice(pagination.start, pagination.end)
-  const formatter = useMemo(() => new Intl.DateTimeFormat('id-ID', { timeZone: account.default_timezone || 'Asia/Jakarta', dateStyle: 'medium', timeStyle: 'short' }), [account.default_timezone])
+  const formatter = useMemo(() => new Intl.DateTimeFormat('id-ID', { timeZone: timezone, dateStyle: 'medium', timeStyle: 'short' }), [timezone])
   return <>
     <div className="movement-filter-bar" aria-label="Movement filters"><label><span>Item</span><select value={filters.item} onChange={(event) => setFilters((current) => ({ ...current, item: event.target.value }))}><option value="">All items</option>{data.items.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label><label><span>Location</span><select value={filters.location} onChange={(event) => setFilters((current) => ({ ...current, location: event.target.value }))}><option value="">All locations</option>{data.locations.map((location) => <option key={location.id} value={location.id}>{location.name}</option>)}</select></label><label><span>Movement type</span><select value={filters.type} onChange={(event) => setFilters((current) => ({ ...current, type: event.target.value }))}><option value="">All types</option>{Object.entries(movementLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label></div>
     {filtered.length === 0 ? <div className="inventory-empty"><History size={25} /><strong>No movements match this view.</strong><span>Posted opening balances, adjustments, and transfers appear chronologically.</span></div> : <><div className="inventory-movement-list">{visibleRows.map((row) => {
@@ -146,10 +147,22 @@ export function InventoryPage({ navigate }) {
   async function assignBranch(supplierId, branchId) { await assignSupplierBranch({ supplierId, branchId }); await refreshSuppliers(); if (allAccountSuppliers) await loadAllAccountSuppliers() }
   async function unassignBranch(supplierId, branchId) { await unassignSupplierBranch({ supplierId, branchId }); await refreshSuppliers(); if (allAccountSuppliers) await loadAllAccountSuppliers() }
   async function createPurchase(values, clientRequestId) { await createInventoryPurchase({ accountId: account.id, branchId: branch.id, values, clientRequestId }); await completed('Purchase created. Stock remains unchanged until receiving.') }
-  async function receivePurchase(values, clientRequestId) { await receiveInventoryPurchase({ accountId: account.id, purchaseId: workflow.purchaseId, values, clientRequestId }); await completed('Goods received and inventory stock increased atomically.') }
+  async function receivePurchase(values, clientRequestId) {
+    const location = data.locations.find((candidate) => candidate.id === values.locationId)
+    const locationBranch = branches.find((candidate) => candidate.id === location?.branch_id)
+    const operationalTimezone = locationBranch?.timezone || account.default_timezone || 'UTC'
+    await receiveInventoryPurchase({ accountId: account.id, purchaseId: workflow.purchaseId, values: { ...values, receivedAt: zonedLocalDateTimeToISOString(values.receivedAt, operationalTimezone) }, clientRequestId })
+    await completed('Goods received and inventory stock increased atomically.')
+  }
   async function cancelPurchase(reason, clientRequestId) { await cancelInventoryPurchase({ accountId: account.id, purchaseId: workflow.purchaseId, reason, clientRequestId }); await completed('Purchase cancelled. Existing receipt history and stock were not changed.') }
   async function submitMovement(values, clientRequestId) {
-    const normalized = { ...values, occurredAt: new Date(values.occurredAt).toISOString() }
+    const locationId = values.locationId || values.sourceLocationId
+    const location = data.locations.find((candidate) => candidate.id === locationId)
+    const locationBranch = branches.find((candidate) => candidate.id === location?.branch_id)
+    const operationalTimezone = locationBranch?.timezone || account.default_timezone || 'UTC'
+    const normalized = workflow.type === 'stock:opening'
+      ? { ...values, occurredAt: zonedLocalDateTimeToISOString(values.occurredAt, operationalTimezone) }
+      : values
     if (workflow.type === 'stock:opening') await initializeInventoryStock({ accountId: account.id, values: normalized, clientRequestId })
     else if (workflow.type === 'stock:adjustment') await adjustInventoryStock({ accountId: account.id, values: normalized, clientRequestId })
     else await transferInventoryStock({ accountId: account.id, values: normalized, clientRequestId })
@@ -188,6 +201,7 @@ export function InventoryPage({ navigate }) {
   }, [canAdjust, canCreatePurchase, canManage, canReceiveGoods, canTransfer, closeWorkflow, error, loading, workflow.entityActiveAtOpen, workflow.type, workflowItem, workflowLocation, workflowMovement, workflowPurchase, workflowSupplier])
 
   const movementKind = workflow.type?.startsWith('stock:') ? workflow.type.slice('stock:'.length) : null
+  const branchTimezone = branch?.timezone || account.default_timezone || 'UTC'
   if (!branch) return <div className="page-stack inventory-page">
     <PageHeader eyebrow={`${account.name} · Inventory`} title="Inventory" description="Create the first branch before setting up inventory locations and stock." />
     <section className="starting-state glass-surface"><div><span className="card-kicker">Workspace setup</span><h3>No branches yet</h3><p>Inventory is ready after a workspace owner creates the first branch.</p></div>{can('settings.view') && <button className="primary-button" type="button" onClick={() => navigate?.('/settings')}>Open Settings</button>}</section>
@@ -202,7 +216,7 @@ export function InventoryPage({ navigate }) {
       {canManage && ['stock', 'locations'].includes(viewState.value.tab) && <div className="inventory-record-toggle"><button className={!viewState.value.showArchived ? 'selected' : ''} onClick={() => viewState.setUIState((current) => ({ ...current, showArchived: false }))}>Active</button><button className={viewState.value.showArchived ? 'selected' : ''} onClick={() => viewState.setUIState((current) => ({ ...current, showArchived: true }))}>Archived</button></div>}
       <div className="inventory-content">{loading ? <div className="inventory-empty"><RefreshCcw className="spin" size={25} /><strong>Loading inventory ledger…</strong></div> : !error && <>
         {viewState.value.tab === 'stock' && <StockPanel data={data} showArchived={viewState.value.showArchived} canManage={canManage} canAdjust={canAdjust} canTransfer={canTransfer} onEdit={(item) => openWorkflow('item:edit', { inventoryItemId: item.id, entityActiveAtOpen: item.is_active })} onDelete={(item) => openWorkflow('item:delete', { inventoryItemId: item.id, entityActiveAtOpen: item.is_active })} onOpening={(item) => openWorkflow('stock:opening', { inventoryItemId: item.id, entityActiveAtOpen: true })} onAdjust={(item) => openWorkflow('stock:adjustment', { inventoryItemId: item.id, entityActiveAtOpen: true })} onTransfer={(item) => openWorkflow('stock:transfer', { inventoryItemId: item.id, entityActiveAtOpen: true })} />}
-        {viewState.value.tab === 'movements' && <MovementPanel key={branch.id} data={data} account={account} onView={(movement) => openWorkflow('movement:detail', { movementId: movement.movement_id })} />}
+        {viewState.value.tab === 'movements' && <MovementPanel key={branch.id} data={data} timezone={branchTimezone} onView={(movement) => openWorkflow('movement:detail', { movementId: movement.movement_id })} />}
         {viewState.value.tab === 'purchasing' && <PurchasingPanel userId={user.id} account={account} branchId={branch.id} branches={branches} data={data} suppliers={accountSuppliers} suppliersError={supplierError} onRetrySuppliers={refreshSuppliers} canManage={canManage} canCreatePurchase={canCreatePurchase} onCreateSupplier={() => openWorkflow('supplier:create')} onEditSupplier={(supplier) => openWorkflow('supplier:edit', { supplierId: supplier.id, entityActiveAtOpen: supplier.is_active })} onDeleteSupplier={(supplier) => openWorkflow('supplier:delete', { supplierId: supplier.id, entityActiveAtOpen: supplier.is_active })} onAssignBranch={assignBranch} onUnassignBranch={unassignBranch} onCreatePurchase={() => openWorkflow('purchase:create')} onOpenPurchase={(purchase) => openWorkflow('purchase:detail', { purchaseId: purchase.purchase_id })} />}
         {viewState.value.tab === 'locations' && <LocationsPanel locations={data.locations} showArchived={viewState.value.showArchived} canManage={canManage} onEdit={(location) => openWorkflow('location:edit', { locationId: location.id, entityActiveAtOpen: location.is_active })} onDelete={(location) => openWorkflow('location:delete', { locationId: location.id, entityActiveAtOpen: location.is_active })} />}
       </>}</div>
@@ -211,16 +225,16 @@ export function InventoryPage({ navigate }) {
     {!loading && canManage && workflow.type === 'item:edit' && workflowItem && <InventoryItemDialog account={account} item={workflowItem} components={data.components} onClose={closeWorkflow} onSave={saveItem} />}
     {!loading && canManage && workflow.type === 'location:create' && <InventoryLocationDialog account={account} branch={branch} onClose={closeWorkflow} onSave={saveLocation} />}
     {!loading && canManage && workflow.type === 'location:edit' && workflowLocation && <InventoryLocationDialog account={account} branch={branch} location={workflowLocation} onClose={closeWorkflow} onSave={saveLocation} />}
-    {!loading && ((movementKind === 'opening' && canManage) || (movementKind === 'adjustment' && canAdjust) || (movementKind === 'transfer' && canTransfer)) && workflowItem?.is_active && <InventoryMovementDialog kind={movementKind} account={account} branchId={branch.id} item={workflowItem} items={activeItems} locations={activeLocations} people={data.people} balances={data.balances} onClose={closeWorkflow} onSubmit={submitMovement} />}
+    {!loading && ((movementKind === 'opening' && canManage) || (movementKind === 'adjustment' && canAdjust) || (movementKind === 'transfer' && canTransfer)) && workflowItem?.is_active && <InventoryMovementDialog kind={movementKind} account={account} branchId={branch.id} timezone={branchTimezone} item={workflowItem} items={activeItems} locations={activeLocations} people={data.people} balances={data.balances} onClose={closeWorkflow} onSubmit={submitMovement} />}
     {!loading && canManage && workflow.type === 'item:delete' && workflowItem && <DeleteInventoryMasterDialog kind="inventory item" label={workflowItem.name} onClose={closeWorkflow} onDelete={removeMaster} />}
     {!loading && canManage && workflow.type === 'location:delete' && workflowLocation && <DeleteInventoryMasterDialog kind="location" label={workflowLocation.name} onClose={closeWorkflow} onDelete={removeMaster} />}
     {!loading && canManage && workflow.type === 'supplier:create' && <InventorySupplierDialog account={account} branches={branches} branchId={branch.id} allSuppliers={allAccountSuppliers} onLoadAllSuppliers={loadAllAccountSuppliers} onAssignBranch={assignBranch} visibleSupplierIds={new Set(accountSuppliers.map((supplier) => supplier.id))} onClose={closeWorkflow} onSave={saveSupplier} />}
     {!loading && canManage && workflow.type === 'supplier:edit' && workflowSupplier && <InventorySupplierDialog account={account} supplier={workflowSupplier} onClose={closeWorkflow} onSave={saveSupplier} />}
     {!loading && canManage && workflow.type === 'supplier:delete' && workflowSupplier && <DeleteInventoryMasterDialog kind="supplier" label={workflowSupplier.name} onClose={closeWorkflow} onDelete={removeMaster} />}
-    {!loading && canCreatePurchase && workflow.type === 'purchase:create' && <InventoryPurchaseDialog account={account} branchId={branch.id} suppliers={data.suppliers.filter((supplier) => supplier.is_active)} items={activeItems} components={data.components} onClose={closeWorkflow} onCreate={createPurchase} onCreateItem={createItemFromPurchase} />}
+    {!loading && canCreatePurchase && workflow.type === 'purchase:create' && <InventoryPurchaseDialog account={account} branchId={branch.id} timezone={branchTimezone} suppliers={data.suppliers.filter((supplier) => supplier.is_active)} items={activeItems} components={data.components} onClose={closeWorkflow} onCreate={createPurchase} onCreateItem={createItemFromPurchase} />}
     {!loading && workflow.type === 'purchase:detail' && workflowPurchase && <InventoryPurchaseDetailDialog purchase={workflowPurchase} lines={workflowPurchaseLines} canManage={canManage} canReceive={canReceiveGoods} onClose={closeWorkflow} onReceive={() => openWorkflow('purchase:receive', { purchaseId: workflowPurchase.purchase_id })} onCancel={() => openWorkflow('purchase:cancel', { purchaseId: workflowPurchase.purchase_id })} />}
-    {!loading && canReceiveGoods && workflow.type === 'purchase:receive' && workflowPurchase && <InventoryReceiveDialog account={account} branchId={branch.id} purchase={workflowPurchase} lines={workflowPurchaseLines} locations={activeLocations} people={data.people} onClose={closeWorkflow} onReceive={receivePurchase} />}
+    {!loading && canReceiveGoods && workflow.type === 'purchase:receive' && workflowPurchase && <InventoryReceiveDialog account={account} branchId={branch.id} timezone={branchTimezone} purchase={workflowPurchase} lines={workflowPurchaseLines} locations={activeLocations} people={data.people} onClose={closeWorkflow} onReceive={receivePurchase} />}
     {!loading && canManage && workflow.type === 'purchase:cancel' && workflowPurchase && <CancelInventoryPurchaseDialog account={account} branchId={branch.id} purchase={workflowPurchase} onClose={closeWorkflow} onCancel={cancelPurchase} />}
-    {!loading && workflow.type === 'movement:detail' && workflowMovement && <InventoryMovementDetailDialog movement={workflowMovement} relatedMovement={relatedMovement} timezone={account.default_timezone} onClose={closeWorkflow} />}
+    {!loading && workflow.type === 'movement:detail' && workflowMovement && <InventoryMovementDetailDialog movement={workflowMovement} relatedMovement={relatedMovement} timezone={branchTimezone} onClose={closeWorkflow} />}
   </div>
 }

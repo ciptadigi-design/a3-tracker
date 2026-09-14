@@ -6,15 +6,11 @@ import { createDraftKey } from '../drafts/draftKeys.js'
 import { usePersistentDraft } from '../drafts/usePersistentDraft.js'
 import { isReferenceConflict } from '../../lib/api/apiClient.js'
 import { inventoryItemLabel } from './inventoryItemPresentation.js'
+import { localDateTimeInZone } from '../machineCost/sellingPriceModel.js'
 
 const units = [
   ['pcs', 'Pieces (pcs)'], ['bottle', 'Bottle'], ['set', 'Set'], ['roll', 'Roll'],
 ]
-
-function localDateTime() {
-  const date = new Date(Date.now() - new Date().getTimezoneOffset() * 60_000)
-  return date.toISOString().slice(0, 16)
-}
 
 function optionalNumberValid(value) {
   return value === '' || (Number.isFinite(Number(value)) && Number(value) >= 0 && /^\d+(\.\d{1,4})?$/.test(String(value)))
@@ -106,9 +102,9 @@ const workflowConfig = {
   transfer: { icon: ArrowRightLeft, kicker: 'Location transfer', title: 'Transfer stock', description: 'Posts paired source and destination movements in one database transaction.', submit: 'Transfer stock' },
 }
 
-export function InventoryMovementDialog({ kind, account, branchId, item, items, locations, people, balances, onClose, onSubmit }) {
+export function InventoryMovementDialog({ kind, account, branchId, timezone, item, items, locations, people, balances, onClose, onSubmit }) {
   const { user } = useAuth(); const config = workflowConfig[kind]
-  const initial = { itemId: item?.id ?? items[0]?.id ?? '', locationId: '', sourceLocationId: '', destinationLocationId: '', quantity: '', direction: 'out', occurredAt: localDateTime(), personId: people[0]?.id ?? '', reason: '', notes: '', costState: 'unknown', unitCost: '' }
+  const initial = { itemId: item?.id ?? items[0]?.id ?? '', locationId: '', sourceLocationId: '', destinationLocationId: '', quantity: '', direction: 'out', occurredAt: localDateTimeInZone(timezone), personId: people[0]?.id ?? '', reason: '', notes: '', costState: 'unknown', unitCost: '' }
   const draftKey = createDraftKey({ userId: user.id, accountId: account.id, branchId, feature: `inventory-${kind}`, entityId: item?.id ?? 'general' })
   const draft = usePersistentDraft({ draftKey, initialValue: initial, validate: (value) => value && typeof value.itemId === 'string' && typeof value.quantity === 'string' })
   const requestId = useRef(crypto.randomUUID()); const [error, setError] = useState(null); const [busy, setBusy] = useState(false)
@@ -122,7 +118,7 @@ export function InventoryMovementDialog({ kind, account, branchId, item, items, 
   const sourceBalance = Number(balances.find((row) => row.inventory_item_id === draft.value.itemId && row.location_id === draft.value.sourceLocationId)?.quantity ?? 0)
   async function submit(event) {
     event.preventDefault(); const value = draft.value
-    if (!activeItem || !selectedPersonAvailable || !value.personId || !quantityValid(value.quantity) || !value.occurredAt) return setError('Choose an available item, active PIC, positive quantity, and effective time.')
+    if (!activeItem || !selectedPersonAvailable || !value.personId || !quantityValid(value.quantity) || (kind === 'opening' && !value.occurredAt)) return setError(`Choose an available item, active PIC, positive quantity${kind === 'opening' ? ', and effective time' : ''}.`)
     if (!selectedLocationAvailable || !sourceLocationAvailable || !destinationLocationAvailable) return setError('One of the saved locations is no longer active. Choose an available location before posting.')
     if (kind === 'opening' && !value.locationId) return setError('Choose an inventory location.')
     if (kind === 'adjustment' && (!value.locationId || !value.reason.trim())) return setError('Location and adjustment reason are required.')
@@ -143,7 +139,7 @@ export function InventoryMovementDialog({ kind, account, branchId, item, items, 
         {kind === 'adjustment' && <label className="form-field"><span>Direction <b className="required-mark">*</b></span><select value={draft.value.direction} onChange={(event) => change('direction', event.target.value)}><option value="out">Decrease stock (−)</option><option value="in">Increase stock (+)</option></select></label>}
         {(kind === 'opening' || (kind === 'adjustment' && draft.value.direction === 'in')) && <><label className="form-field"><span>Cost basis <b className="required-mark">*</b></span><select value={draft.value.costState} onChange={(event) => change('costState', event.target.value)}><option value="unknown">Unknown cost</option><option value="known">Known unit cost</option></select><small className="field-hint">Unknown is preserved explicitly and never treated as zero.</small></label>{draft.value.costState === 'known' && <label className="form-field"><span>Unit cost (IDR) <b className="required-mark">*</b></span><input type="number" min="0" step="0.01" inputMode="decimal" value={draft.value.unitCost} onChange={(event) => change('unitCost', event.target.value)} /></label>}</>}
         <label className="form-field"><span>Quantity ({activeItem?.unit ?? 'unit'}) <b className="required-mark">*</b></span><input type="number" min="0.0001" step="0.0001" inputMode="decimal" value={draft.value.quantity} onChange={(event) => change('quantity', event.target.value)} /></label>
-        <label className="form-field"><span>Effective date & time <b className="required-mark">*</b></span><input type="datetime-local" value={draft.value.occurredAt} max={localDateTime()} onChange={(event) => change('occurredAt', event.target.value)} /></label>
+        {kind === 'opening' && <label className="form-field"><span>Effective date & time <b className="required-mark">*</b></span><input type="datetime-local" value={draft.value.occurredAt} max={localDateTimeInZone(timezone)} onChange={(event) => change('occurredAt', event.target.value)} /><small>{timezone} location time</small></label>}
         <label className="form-field"><span>PIC / Operator <b className="required-mark">*</b></span><select value={draft.value.personId} onChange={(event) => change('personId', event.target.value)}><option value="">Choose PIC</option>{people.map((person) => <option key={person.id} value={person.id}>{person.name}{person.code ? ` · ${person.code}` : ''}</option>)}</select></label>
         {kind === 'adjustment' && <label className="form-field form-field-wide"><span>Reason <b className="required-mark">*</b></span><input value={draft.value.reason} onChange={(event) => change('reason', event.target.value)} placeholder="e.g. Physical stock correction" /></label>}
         <label className="form-field form-field-wide"><span>Notes <small>Optional</small></span><textarea rows="3" value={draft.value.notes} onChange={(event) => change('notes', event.target.value)} /></label>

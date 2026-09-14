@@ -6,18 +6,15 @@ import { usePersistentDraft } from '../drafts/usePersistentDraft.js'
 import { describeApiError } from '../../lib/api/apiClient.js'
 import { DialogFrame, InventoryItemDialog } from './InventoryDialogs.jsx'
 import { discoverPurchaseItems, inventoryItemLabel } from './purchaseItemDiscovery.js'
-import { describePurchaseStatus, formatPurchaseTotal, purchaseReceivingProgressPercent, purchaseSupplierName, safeNumber } from './purchasePresentation.js'
+import { describePurchaseStatus, formatBusinessDate, formatPurchaseTotal, purchaseReceivingProgressPercent, purchaseSupplierName, safeNumber } from './purchasePresentation.js'
 import { AttachExistingSupplier } from './PurchasingPanel.jsx'
+import { localDateTimeInZone } from '../machineCost/sellingPriceModel.js'
 
 const money = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 2 })
 const quantity = (value) => safeNumber(value).toLocaleString('id-ID', { maximumFractionDigits: 4 })
 const positiveQuantity = (value) => Number(value) > 0 && /^\d+(\.\d{1,4})?$/.test(String(value))
 const moneyValue = (value) => Number(value) >= 0 && /^\d+(\.\d{1,2})?$/.test(String(value))
-const localDate = () => localDateTime().slice(0, 10)
-function localDateTime() {
-  const date = new Date(Date.now() - new Date().getTimezoneOffset() * 60_000)
-  return date.toISOString().slice(0, 16)
-}
+const localDate = (timezone) => localDateTimeInZone(timezone).slice(0, 10)
 
 function FormError({ error }) {
   return error ? <div className="form-error" role="alert"><AlertCircle size={16} />{error}</div> : null
@@ -131,9 +128,9 @@ export function InventorySupplierDialog({ account, supplier, branches = [], bran
   </DialogFrame>
 }
 
-export function InventoryPurchaseDialog({ account, branchId, suppliers, items, components, onClose, onCreate, onCreateItem }) {
+export function InventoryPurchaseDialog({ account, branchId, timezone, suppliers, items, components, onClose, onCreate, onCreateItem }) {
   const { user } = useAuth()
-  const initial = { supplierId: '', purchaseDate: localDate(), supplierReference: '', notes: '', lines: [{ rowId: crypto.randomUUID(), itemId: '', quantity: '1', unitPrice: '', notes: '' }] }
+  const initial = { supplierId: '', purchaseDate: localDate(timezone), supplierReference: '', notes: '', lines: [{ rowId: crypto.randomUUID(), itemId: '', quantity: '1', unitPrice: '', notes: '' }] }
   const draftKey = createDraftKey({ userId: user.id, accountId: account.id, branchId, feature: 'inventory-purchase', entityId: 'new' })
   const draft = usePersistentDraft({ draftKey, initialValue: initial, validate: (value) => value && typeof value.supplierId === 'string' && Array.isArray(value.lines) })
   const requestId = useRef(crypto.randomUUID()); const [busy, setBusy] = useState(false); const [error, setError] = useState(null)
@@ -169,7 +166,7 @@ export function InventoryPurchaseDialog({ account, branchId, suppliers, items, c
       <div className="form-grid">
         <label className="form-field"><span>Supplier <b className="required-mark">*</b></span><select value={draft.value.supplierId} onChange={(event) => change('supplierId', event.target.value)} data-dialog-initial-focus><option value="">Choose supplier</option>{suppliers.map((supplier) => <option key={supplier.id} value={supplier.id}>{supplier.supplier_code} · {supplier.name}</option>)}</select></label>
         <label className="form-field"><span>Internal purchase number</span><input value="Generated after saving" readOnly aria-readonly="true" /><small className="field-hint">Account-scoped format: PUR-YYYYMM-####</small></label>
-        <label className="form-field"><span>Purchase date <b className="required-mark">*</b></span><input type="date" max={localDate()} value={draft.value.purchaseDate} onChange={(event) => change('purchaseDate', event.target.value)} /></label>
+        <label className="form-field"><span>Purchase date <b className="required-mark">*</b></span><input type="date" max={localDate(timezone)} value={draft.value.purchaseDate} onChange={(event) => change('purchaseDate', event.target.value)} /></label>
         <label className="form-field"><span>External reference <small>Optional</small></span><input value={draft.value.supplierReference} onChange={(event) => change('supplierReference', event.target.value)} placeholder="Supplier invoice, PO, or integration ID" /></label>
       </div>
       <section className="purchase-lines-editor"><header><div><strong>Purchase lines</strong><span>All values are IDR acquisition evidence.</span></div><button className="secondary-button" type="button" onClick={() => change('lines', [...draft.value.lines, { rowId: crypto.randomUUID(), itemId: '', quantity: '1', unitPrice: '', notes: '' }])}><Plus size={15} />Add line</button></header>
@@ -199,10 +196,10 @@ export function InventoryPurchaseDialog({ account, branchId, suppliers, items, c
   </DialogFrame>
 }
 
-export function InventoryReceiveDialog({ account, branchId, purchase, lines, locations, people, onClose, onReceive }) {
+export function InventoryReceiveDialog({ account, branchId, timezone, purchase, lines, locations, people, onClose, onReceive }) {
   const { user } = useAuth()
   const receivableLines = lines.filter((line) => Number(line.remaining_quantity) > 0)
-  const initial = { locationId: '', receivedAt: localDateTime(), personId: people[0]?.id ?? '', notes: '', lines: receivableLines.map((line) => ({ purchaseLineId: line.purchase_line_id, quantity: '' })) }
+  const initial = { locationId: '', receivedAt: localDateTimeInZone(timezone), personId: people[0]?.id ?? '', notes: '', lines: receivableLines.map((line) => ({ purchaseLineId: line.purchase_line_id, quantity: '' })) }
   const draftKey = createDraftKey({ userId: user.id, accountId: account.id, branchId, feature: 'inventory-receipt', entityId: purchase.purchase_id })
   const draft = usePersistentDraft({ draftKey, initialValue: initial, validate: (value) => value && typeof value.locationId === 'string' && typeof value.personId === 'string' && Array.isArray(value.lines) })
   const requestId = useRef(crypto.randomUUID()); const [busy, setBusy] = useState(false); const [error, setError] = useState(null)
@@ -222,7 +219,7 @@ export function InventoryReceiveDialog({ account, branchId, purchase, lines, loc
   return <DialogFrame icon={CalendarCheck} kicker="Physical receiving" title={`Receive ${purchase.purchase_number}`} description="One atomic receipt posts immutable evidence and positive inventory ledger movements." titleId="inventory-receive-title" busy={busy} onClose={onClose}>
     <form className="machine-form" onSubmit={submit} noValidate><div className="machine-form-body">
       {selectionUnavailable && <div className="draft-conflict-banner" role="alert"><AlertCircle size={17} /><div><strong>A saved receiving selection is unavailable.</strong><span>The draft was preserved without substituting another location, PIC, or purchase line.</span></div></div>}
-      <div className="form-grid"><label className="form-field"><span>Receiving location <b className="required-mark">*</b></span><select value={draft.value.locationId} onChange={(event) => change('locationId', event.target.value)} data-dialog-initial-focus><option value="">Choose location</option>{locations.map((location) => <option key={location.id} value={location.id}>{location.code} · {location.name}</option>)}</select></label><label className="form-field"><span>Received date & time <b className="required-mark">*</b></span><input type="datetime-local" max={localDateTime()} value={draft.value.receivedAt} onChange={(event) => change('receivedAt', event.target.value)} /></label><label className="form-field"><span>Physical receiver / PIC <b className="required-mark">*</b></span><select value={draft.value.personId} onChange={(event) => change('personId', event.target.value)}><option value="">Choose PIC</option>{people.map((person) => <option key={person.id} value={person.id}>{person.name}{person.code ? ` · ${person.code}` : ''}</option>)}</select></label></div>
+      <div className="form-grid"><label className="form-field"><span>Receiving location <b className="required-mark">*</b></span><select value={draft.value.locationId} onChange={(event) => change('locationId', event.target.value)} data-dialog-initial-focus><option value="">Choose location</option>{locations.map((location) => <option key={location.id} value={location.id}>{location.code} · {location.name}</option>)}</select></label><label className="form-field"><span>Received date & time <b className="required-mark">*</b></span><input type="datetime-local" max={localDateTimeInZone(timezone)} value={draft.value.receivedAt} onChange={(event) => change('receivedAt', event.target.value)} /><small>{timezone} location time</small></label><label className="form-field"><span>Physical receiver / PIC <b className="required-mark">*</b></span><select value={draft.value.personId} onChange={(event) => change('personId', event.target.value)}><option value="">Choose PIC</option>{people.map((person) => <option key={person.id} value={person.id}>{person.name}{person.code ? ` · ${person.code}` : ''}</option>)}</select></label></div>
       <section className="receipt-lines"><header><strong>Receive purchase lines</strong><span>Enter only quantities physically received now.</span></header>{receivableLines.map((line) => { const draftLine = draft.value.lines.find((candidate) => candidate.purchaseLineId === line.purchase_line_id); const now = Number(draftLine?.quantity) || 0; return <article key={line.purchase_line_id}><div><strong>{line.item_name_snapshot}</strong><span>{line.item_sku_snapshot ? `${line.item_sku_snapshot} · ` : ''}{money.format(safeNumber(line.unit_price))} / {line.unit_snapshot}</span></div><dl><div><dt>Ordered</dt><dd>{quantity(line.ordered_quantity)}</dd></div><div><dt>Previously received</dt><dd>{quantity(line.received_quantity)}</dd></div><div><dt>Remaining to receive</dt><dd>{quantity(line.remaining_quantity)}</dd></div><label><span>Receiving now</span><input type="number" min="0" max={line.remaining_quantity} step="0.0001" inputMode="decimal" value={draftLine?.quantity ?? ''} onChange={(event) => changeQuantity(line.purchase_line_id, event.target.value)} /></label><div><dt>After receipt</dt><dd>{quantity(safeNumber(line.received_quantity) + now)} {line.unit_snapshot}</dd></div></dl><small>Acquisition value now: {money.format(now * safeNumber(line.unit_price))}</small></article> })}</section>
       <label className="form-field"><span>Receiving notes <small>Optional</small></span><textarea rows="2" value={draft.value.notes} onChange={(event) => change('notes', event.target.value)} /></label><FormError error={error} />
     </div><footer className="dialog-actions form-action-footer"><button className="draft-reset-button" type="button" onClick={() => draft.resetDraft(initial)} disabled={!draft.hasDraft || busy} aria-label="Reset draft" title="Reset draft"><RotateCcw size={15} />Reset draft</button><button className="secondary-button" type="button" onClick={onClose} disabled={busy}>Cancel</button><button className="primary-button" type="submit" disabled={busy}>{busy && <LoaderCircle className="spin" size={17} />}{busy ? 'Receiving…' : 'Receive goods'}</button></footer></form>
@@ -232,7 +229,7 @@ export function InventoryReceiveDialog({ account, branchId, purchase, lines, loc
 export function InventoryPurchaseDetailDialog({ purchase, lines, canManage, canReceive = canManage, onClose, onReceive, onCancel }) {
   const hasRemaining = lines.some((line) => Number(line.remaining_quantity) > 0)
   const status = describePurchaseStatus(purchase)
-  return <DialogFrame icon={PackageCheck} kicker="Purchase detail" title={purchase.purchase_number} description={`${purchaseSupplierName(purchase)} · ${new Date(`${purchase.purchase_date}T00:00:00`).toLocaleDateString('id-ID')}`} titleId="inventory-purchase-detail-title" onClose={onClose}>
+  return <DialogFrame icon={PackageCheck} kicker="Purchase detail" title={purchase.purchase_number} description={`${purchaseSupplierName(purchase)} · ${formatBusinessDate(purchase.purchase_date)}`} titleId="inventory-purchase-detail-title" onClose={onClose}>
     <div className="machine-form"><div className="machine-form-body"><div className="purchase-detail-summary"><div><span>Status</span><strong>{status.label}</strong></div><div><span>Total</span><strong>{formatPurchaseTotal(purchase)}</strong></div><div><span>Receiving progress</span><strong>{quantity(purchaseReceivingProgressPercent(purchase))}%</strong></div><div><span>Supplier reference</span><strong>{purchase.supplier_reference || '—'}</strong></div></div><section className="purchase-detail-lines">{lines.map((line) => <article key={line.purchase_line_id}><div><strong>{line.item_name_snapshot}</strong>{line.item_sku_snapshot && <span>{line.item_sku_snapshot}</span>}</div><dl><div><dt>Ordered</dt><dd>{quantity(line.ordered_quantity)} {line.unit_snapshot}</dd></div><div><dt>Received</dt><dd>{quantity(line.received_quantity)} {line.unit_snapshot}</dd></div>{/* M2.17.5.1: "Remaining" read as current warehouse stock to operators - this tracks supplier fulfillment only (Ordered - Received) and never changes from later Inventory consumption. */}<div><dt>Remaining to receive</dt><dd>{quantity(line.remaining_quantity)} {line.unit_snapshot}</dd></div><div><dt>Unit price</dt><dd>{money.format(safeNumber(line.unit_price))}</dd></div></dl></article>)}</section>{purchase.notes && <p className="purchase-detail-notes">{purchase.notes}</p>}</div><footer className="dialog-actions"><button className="secondary-button" type="button" onClick={onClose}>Close</button>{canManage && purchase.status !== 'cancelled' && purchase.status !== 'received' && <button className="danger-button" type="button" onClick={onCancel}><XCircle size={16} />Cancel purchase</button>}{canReceive && hasRemaining && purchase.status !== 'cancelled' && <button className="primary-button" type="button" onClick={onReceive}><CalendarCheck size={16} />Receive goods</button>}</footer></div>
   </DialogFrame>
 }

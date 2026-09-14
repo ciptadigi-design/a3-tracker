@@ -5,13 +5,13 @@ import { useAuth } from '../auth/useAuth.js'
 import { createDraftKey } from '../drafts/draftKeys.js'
 import { usePersistentDraft } from '../drafts/usePersistentDraft.js'
 import { operatingCostCategories, operatingCostValidation, validOperatingCostDraft } from './operatingCostModel.js'
+import { localDateTimeInZone, zonedLocalDateTimeToISOString } from './sellingPriceModel.js'
 
-function localDateTime() { const now = new Date(Date.now() - new Date().getTimezoneOffset() * 60_000); return now.toISOString().slice(0, 16) }
-function localDate() { return localDateTime().slice(0, 10) }
+function localDate(timezone) { return localDateTimeInZone(timezone).slice(0, 10) }
 
-export function OperatingCostDialog({ account, branch, machine, people, onClose, onSave }) {
+export function OperatingCostDialog({ account, branch, machine, timezone, people, onClose, onSave }) {
   const { user } = useAuth()
-  const initialValue = useMemo(() => ({ category: '', amount: '', allocationMethod: 'one_time', effectiveAt: localDateTime(), periodStart: localDate(), periodEnd: localDate(), operationalPersonId: '', externalReference: '', description: '', notes: '', clientRequestId: crypto.randomUUID() }), [])
+  const initialValue = useMemo(() => ({ category: '', amount: '', allocationMethod: 'one_time', effectiveAt: localDateTimeInZone(timezone), periodStart: localDate(timezone), periodEnd: localDate(timezone), operationalPersonId: '', externalReference: '', description: '', notes: '', clientRequestId: crypto.randomUUID() }), [timezone])
   const { value, updateDraft, clearDraft, resetDraft, hasDraft, wasRestored } = usePersistentDraft({
     draftKey: createDraftKey({ userId: user.id, accountId: account.id, branchId: branch.id, feature: 'machine-operating-cost', entityId: machine.id }),
     initialValue, validate: validOperatingCostDraft, metadata: { machineId: machine.id },
@@ -21,7 +21,7 @@ export function OperatingCostDialog({ account, branch, machine, people, onClose,
   async function submit(event) {
     event.preventDefault(); const validation = operatingCostValidation(value); if (validation) return setError(validation)
     setSaving(true); setError(null)
-    try { await onSave({ ...value, amount: value.amount, description: value.description.trim(), externalReference: value.externalReference.trim(), notes: value.notes.trim() }); clearDraft(); onClose() }
+    try { await onSave({ ...value, effectiveAt: value.allocationMethod === 'one_time' ? zonedLocalDateTimeToISOString(value.effectiveAt, timezone) : '', amount: value.amount, description: value.description.trim(), externalReference: value.externalReference.trim(), notes: value.notes.trim() }); clearDraft(); onClose() }
     catch (saveError) { setError(saveError.message) } finally { setSaving(false) }
   }
   const activePeople = people.filter((person) => person.is_active)
@@ -34,7 +34,7 @@ export function OperatingCostDialog({ account, branch, machine, people, onClose,
         <label className="form-field"><span>Category *</span><select data-dialog-initial-focus value={value.category} onChange={(event) => change('category', event.target.value)}><option value="">Choose category</option>{operatingCostCategories.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}</select></label>
         <label className="form-field"><span>Amount (IDR) *</span><input inputMode="decimal" value={value.amount} onChange={(event) => /^\d*(\.\d{0,2})?$/.test(event.target.value) && change('amount', event.target.value)} placeholder="500000" /></label>
         <label className="form-field"><span>Cost Type *</span><select value={value.allocationMethod} onChange={(event) => change('allocationMethod', event.target.value)}><option value="one_time">One-time</option><option value="daily_proration_v1">Period · daily proration</option></select></label>
-        {value.allocationMethod === 'one_time' ? <label className="form-field"><span>Effective Date & Time *</span><input type="datetime-local" value={value.effectiveAt} onChange={(event) => change('effectiveAt', event.target.value)} /></label> : <><label className="form-field"><span>Period Start *</span><input type="date" value={value.periodStart} onChange={(event) => change('periodStart', event.target.value)} /></label><label className="form-field"><span>Period End *</span><input type="date" min={value.periodStart} value={value.periodEnd} onChange={(event) => change('periodEnd', event.target.value)} /></label></>}
+        {value.allocationMethod === 'one_time' ? <label className="form-field"><span>Effective Date & Time *</span><input type="datetime-local" value={value.effectiveAt} onChange={(event) => change('effectiveAt', event.target.value)} /><small>{timezone} machine time</small></label> : <><label className="form-field"><span>Period Start *</span><input type="date" value={value.periodStart} onChange={(event) => change('periodStart', event.target.value)} /></label><label className="form-field"><span>Period End *</span><input type="date" min={value.periodStart} value={value.periodEnd} onChange={(event) => change('periodEnd', event.target.value)} /></label></>}
         <label className="form-field"><span>PIC <small>Optional</small></span><select value={value.operationalPersonId} onChange={(event) => change('operationalPersonId', event.target.value)}><option value="">No PIC attribution</option>{activePeople.map((person) => <option key={person.id} value={person.id}>{person.name}</option>)}</select></label>
         <label className="form-field"><span>External Reference <small>Optional</small></span><input value={value.externalReference} onChange={(event) => change('externalReference', event.target.value)} placeholder="Invoice / contract reference" /></label>
         <label className="form-field form-field-wide"><span>Description *</span><input value={value.description} onChange={(event) => change('description', event.target.value)} placeholder="What non-inventory operating cost occurred?" /></label>

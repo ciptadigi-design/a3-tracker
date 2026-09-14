@@ -13,6 +13,6 @@ class MachineRequest extends FormRequest
 
     public function rules(): array
     {
-        return ['machine_model_id' => 'required|uuid', 'machine_code' => 'required|string|max:80', 'display_name' => 'required|string|max:180', 'serial_number' => 'nullable|string|max:120', 'timezone' => 'nullable|string|max:64', 'status' => 'nullable|in:active,down,maintenance,retired'];
+        return ['machine_model_id' => 'required|uuid', 'machine_code' => 'required|string|max:80', 'display_name' => 'required|string|max:180', 'serial_number' => 'nullable|string|max:120', 'timezone' => 'nullable|timezone:all', 'status' => 'nullable|in:active,down,maintenance,retired'];
     }
 }

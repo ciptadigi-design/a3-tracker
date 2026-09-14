@@ -15,6 +15,6 @@ class BranchRequest extends FormRequest
     {
         $required = $this->isMethod('post') ? 'required' : 'sometimes';
 
-        return ['code' => [$required, 'string', 'max:32'], 'name' => [$required, 'string', 'max:120'], 'timezone' => 'nullable|string|max:64', 'address' => 'nullable|string', 'notes' => 'nullable|string', 'is_active' => 'sometimes|boolean'];
+        return ['code' => [$required, 'string', 'max:32'], 'name' => [$required, 'string', 'max:120'], 'timezone' => 'nullable|timezone:all', 'address' => 'nullable|string', 'notes' => 'nullable|string', 'is_active' => 'sometimes|boolean'];
     }
 }

@@ -53,9 +53,9 @@ class InventoryLedgerService
         }, 3);
     }
 
-    public function outbound(InventoryItem $item, InventoryLocation $location, float $quantity, string $type, string $requestId, ?string $referenceId = null, ?string $reason = null, ?string $transferId = null, ?string $personId = null, ?string $personName = null, ?string $enteredBy = null): InventoryMovement
+    public function outbound(InventoryItem $item, InventoryLocation $location, float $quantity, string $type, string $requestId, ?string $referenceId = null, ?string $reason = null, ?string $transferId = null, ?string $personId = null, ?string $personName = null, ?string $enteredBy = null, $occurredAt = null): InventoryMovement
     {
-        return DB::transaction(function () use ($item, $location, $quantity, $type, $requestId, $referenceId, $reason, $transferId, $personId, $personName, $enteredBy) {
+        return DB::transaction(function () use ($item, $location, $quantity, $type, $requestId, $referenceId, $reason, $transferId, $personId, $personName, $enteredBy, $occurredAt) {
             $this->validateScope($item, $location);
             $this->lockRequestScope((string) $item->account_id, $requestId, $type);
             $item->newQuery()->whereKey($item->id)->lockForUpdate()->first();
@@ -76,13 +76,13 @@ class InventoryLedgerService
             // be now.
             $old = InventoryMovement::where('account_id', $item->account_id)->where('client_request_id', $requestId)->where('movement_type', $type)->first();
             if ($old) {
-                ReplayFields::match($old, ['inventory_item_id' => $item->id, 'location_id' => $location->id, 'quantity' => -$quantity, 'reason' => $reason, 'reference_id' => $referenceId, 'operational_person_id' => $personId], ['quantity']);
+                ReplayFields::match($old, ['inventory_item_id' => $item->id, 'location_id' => $location->id, 'quantity' => -$quantity, 'reason' => $reason, 'reference_id' => $referenceId, 'operational_person_id' => $personId] + ($occurredAt !== null ? ['occurred_at' => $occurredAt] : []), ['quantity'], ['occurred_at']);
 
                 return $old;
             }
             if ($quantity <= 0 || $this->balance($item->id, $location->id) < $quantity) {
                 throw new ConflictHttpException('insufficient stock');
-            }$m = InventoryMovement::create(['account_id' => $item->account_id, 'inventory_item_id' => $item->id, 'location_id' => $location->id, 'movement_type' => $type, 'quantity' => -$quantity, 'occurred_at' => now(), 'reference_type' => $type === 'replacement_consumption' ? 'component_replacement' : $type, 'reference_id' => $referenceId, 'reason' => $reason, 'entered_by' => $enteredBy, 'operational_person_id' => $personId, 'operational_person_name_snapshot' => $personName, 'client_request_id' => $requestId, 'transfer_id' => $transferId]);
+            }$m = InventoryMovement::create(['account_id' => $item->account_id, 'inventory_item_id' => $item->id, 'location_id' => $location->id, 'movement_type' => $type, 'quantity' => -$quantity, 'occurred_at' => $occurredAt ?? now(), 'reference_type' => $type === 'replacement_consumption' ? 'component_replacement' : $type, 'reference_id' => $referenceId, 'reason' => $reason, 'entered_by' => $enteredBy, 'operational_person_id' => $personId, 'operational_person_name_snapshot' => $personName, 'client_request_id' => $requestId, 'transfer_id' => $transferId]);
             $need = $quantity;
             $order = 1;
             $layers = FifoLayer::where('inventory_item_id', $item->id)->where('location_id', $location->id)->where('remaining_quantity', '>', 0)->orderBy('fifo_sequence')->orderBy('effective_at')->orderBy('id')->lockForUpdate()->get();

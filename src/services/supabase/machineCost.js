@@ -67,7 +67,7 @@ export async function createMachineOperatingCost({ accountId, machineId, values 
     target_allocation_method: values.allocationMethod,
     target_description: values.description,
     target_client_request_id: values.clientRequestId,
-    target_effective_at: values.allocationMethod === 'one_time' ? new Date(values.effectiveAt).toISOString() : null,
+    target_effective_at: values.allocationMethod === 'one_time' ? values.effectiveAt : null,
     target_period_start: values.allocationMethod === 'daily_proration_v1' ? values.periodStart : null,
     target_period_end: values.allocationMethod === 'daily_proration_v1' ? values.periodEnd : null,
     target_operational_person_id: values.operationalPersonId || null,

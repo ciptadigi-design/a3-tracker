@@ -48,13 +48,13 @@ class PurchaseReceiptService
         });
     }
 
-    public function receive(string $purchaseId, InventoryLocation $location, array $lines, string $requestId, ?string $personId = null, ?string $personName = null, ?string $enteredBy = null): object
+    public function receive(string $purchaseId, InventoryLocation $location, array $lines, string $requestId, ?string $personId = null, ?string $personName = null, ?string $enteredBy = null, $receivedAt = null): object
     {
-        return DB::transaction(function () use ($purchaseId, $location, $lines, $requestId, $personId, $personName, $enteredBy) {
+        return DB::transaction(function () use ($purchaseId, $location, $lines, $requestId, $personId, $personName, $enteredBy, $receivedAt) {
             DB::table('accounts')->where('id', $location->account_id)->lockForUpdate()->first();
             $old = DB::table('receipts')->where('account_id', $location->account_id)->where('client_request_id', $requestId)->first();
             if ($old) {
-                ReplayFields::match($old, ['purchase_id' => $purchaseId, 'location_id' => $location->id]);
+                ReplayFields::match($old, ['purchase_id' => $purchaseId, 'location_id' => $location->id] + ($receivedAt !== null ? ['received_at' => $receivedAt] : []), [], ['received_at']);
                 $storedLines = DB::table('receipt_lines')->where('receipt_id', $old->id)->get();
                 $this->assertLines($storedLines->all(), $lines, ['purchase_line_id' => 'purchase_line_id', 'quantity' => 'quantity']);
                 foreach ($storedLines as $storedLine) {
@@ -70,7 +70,8 @@ class PurchaseReceiptService
             if (! $purchase) {
                 throw new ConflictHttpException('purchase not found in location account');
             }$rid = (string) Str::uuid();
-            DB::table('receipts')->insert(['id' => $rid, 'account_id' => $location->account_id, 'purchase_id' => $purchaseId, 'location_id' => $location->id, 'received_at' => now(), 'client_request_id' => $requestId, 'created_at' => now(), 'updated_at' => now()]);
+            $receivedAt ??= now();
+            DB::table('receipts')->insert(['id' => $rid, 'account_id' => $location->account_id, 'purchase_id' => $purchaseId, 'location_id' => $location->id, 'received_at' => $receivedAt, 'client_request_id' => $requestId, 'created_at' => now(), 'updated_at' => now()]);
             foreach ($lines as $line) {
                 $pl = DB::table('purchase_lines')->where('id', $line['purchase_line_id'])->where('purchase_id', $purchaseId)->first();
                 if (! $pl) {
@@ -86,7 +87,7 @@ class PurchaseReceiptService
                 // deterministically back through receipt_line -> purchase_line
                 // -> purchase -> supplier, not just aggregated at the
                 // purchase/receipt level.
-                app(InventoryLedgerService::class)->inbound(InventoryItem::findOrFail($pl->inventory_item_id), $location, $line['quantity'], $pl->unit_cost === null ? null : (float) $pl->unit_cost, 'receipt', (string) Uuid::uuid5(Uuid::NAMESPACE_URL, $requestId.$pl->id), null, null, $personId, $personName, $enteredBy, $receiptLineId, 'receipt_line');
+                app(InventoryLedgerService::class)->inbound(InventoryItem::findOrFail($pl->inventory_item_id), $location, $line['quantity'], $pl->unit_cost === null ? null : (float) $pl->unit_cost, 'receipt', (string) Uuid::uuid5(Uuid::NAMESPACE_URL, $requestId.$pl->id), null, $receivedAt, $personId, $personName, $enteredBy, $receiptLineId, 'receipt_line');
             }$remaining = DB::table('purchase_lines as p')->where('p.purchase_id', $purchaseId)->get()->contains(fn ($p) => (float) DB::table('receipt_lines')->where('purchase_line_id', $p->id)->sum('quantity') < (float) $p->ordered_quantity);
             DB::table('purchases')->where('id', $purchaseId)->update(['status' => $remaining ? 'partially_received' : 'received', 'updated_at' => now()]);
 
