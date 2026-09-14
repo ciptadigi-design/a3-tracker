@@ -18,8 +18,17 @@ test('unknown-only consumption never appears as zero monetary cost', () => {
   assert.match(result.hint, /unknown acquisition cost/)
 })
 
+test('missing consumption summary is unavailable rather than fabricated zero', () => {
+  assert.deepEqual(knownConsumptionPresentation(null, money), { value: 'Unavailable', hint: 'Component consumption is unavailable.' })
+})
+
+test('zero and singular replacement counts retain canonical Machine Cost wording', () => {
+  assert.deepEqual(knownConsumptionPresentation({ known_consumption_cost: 0, total_consumption_events: 0, known_consumption_events: 0, unknown_consumption_events: 0 }, money), { value: 'Rp0', hint: 'No component consumption occurred.' })
+  assert.deepEqual(knownConsumptionPresentation({ known_consumption_cost: 4875000, total_consumption_events: 1, known_consumption_events: 1, unknown_consumption_events: 0 }, money), { value: 'Rp4875000', hint: '1 replacement' })
+})
+
 test('mixed known and unknown consumption keeps evidence separate from currency', () => {
-  assert.deepEqual(knownConsumptionPresentation({ known_consumption_cost: 5700000, known_consumption_events: 2, unknown_consumption_events: 1 }, money), { value: 'Rp5700000', hint: '2 component costs available · 1 cost unknown' })
+  assert.deepEqual(knownConsumptionPresentation({ known_consumption_cost: 5700000, known_consumption_events: 2, unknown_consumption_events: 1 }, money), { value: 'Rp5700000', hint: '3 replacements · 2 component costs available · 1 cost unknown' })
 })
 
 test('legacy incomplete statuses remain intelligible while NO_DATA follows event semantics', () => {

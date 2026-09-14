@@ -34,15 +34,17 @@ export function economicsStatusPresentation(summary) {
 }
 
 export function knownConsumptionPresentation(summary, formatCurrency) {
+  if (!summary) return { value: 'Unavailable', hint: 'Component consumption is unavailable.' }
   const knownCost = Number(summary?.known_consumption_cost ?? 0)
   const knownEvents = Number(summary?.known_consumption_events ?? 0)
   const unknownEvents = Number(summary?.unknown_consumption_events ?? 0)
+  const totalEvents = Number(summary?.total_consumption_events ?? knownEvents + unknownEvents)
   if (unknownEvents > 0 && knownCost === 0) return {
     value: '—',
-    hint: `${plural(unknownEvents, 'consumption event')} ${unknownEvents === 1 ? 'has' : 'have'} unknown acquisition cost.`,
+    hint: `${plural(totalEvents, 'replacement')} · ${plural(unknownEvents, 'consumption event')} ${unknownEvents === 1 ? 'has' : 'have'} unknown acquisition cost.`,
   }
-  if (unknownEvents > 0) return { value: formatCurrency(knownCost), hint: `${plural(knownEvents, 'component cost')} available · ${plural(unknownEvents, 'cost')} unknown` }
-  return { value: formatCurrency(knownCost), hint: summary?.total_consumption_events ? `${plural(summary.total_consumption_events, 'replacement')}` : 'No component consumption occurred.' }
+  if (unknownEvents > 0) return { value: formatCurrency(knownCost), hint: `${plural(totalEvents, 'replacement')} · ${plural(knownEvents, 'component cost')} available · ${plural(unknownEvents, 'cost')} unknown` }
+  return { value: formatCurrency(knownCost), hint: totalEvents ? plural(totalEvents, 'replacement') : 'No component consumption occurred.' }
 }
 
 export function costPerClickPresentation(summary, formatCurrency) {

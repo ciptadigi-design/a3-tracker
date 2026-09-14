@@ -42,8 +42,28 @@ test('This Month keeps full-target achievement separate from expected-to-date pa
   assert.doesNotMatch(overview, /formatClicks\(projection\.actual_clicks\)/)
 })
 
+test('lower Overview row replaces redundant pace variance with canonical Component Consumption', () => {
+  assert.match(overview, /function ComponentConsumptionCard\(\{ summary, periodLabel \}\)/)
+  assert.match(overview, /knownConsumptionPresentation\(summary, formatIdrTotal\)/)
+  assert.match(overview, /<ComponentConsumptionCard summary={costSummary} periodLabel={rangeLabel} \/>/)
+  assert.doesNotMatch(overview, /card-kicker">Pace variance/)
+  assert.doesNotMatch(overview, /card-kicker">Target variance/)
+})
+
+test('Overview component consumption shares Machine Cost machine, period, refresh, and stale-result gate', () => {
+  assert.match(overview, /machineId: selectedMachine\.id, periodStart: period\.start, periodEnd: period\.end/)
+  assert.match(overview, /loadMachineCostPeriod\(\{ \.\.\.args, summaryOnly: true \}\)/)
+  assert.match(overview, /selectedMachine\?\.id.*filters\.preset.*period\.start.*period\.end.*refreshVersion/)
+  assert.match(overview, /result\?\.key === requestKey/)
+})
+
+test('Overview and Machine Cost use one component-consumption presentation contract', () => {
+  assert.match(overview, /import \{ knownConsumptionPresentation, primaryCostPerClickPresentation \} from '\.\.\/features\/machineCost\/machineCostPresentation\.js'/)
+  assert.match(machineCostPage, /knownConsumptionPresentation\(summary, formatIdrTotal\)/)
+})
+
 test('M2.13.2: Overview Cost/Click reuses the canonical Machine Cost presentation, no separate economics', () => {
-  assert.match(overview, /import \{ primaryCostPerClickPresentation \} from '\.\.\/features\/machineCost\/machineCostPresentation\.js'/)
+  assert.match(overview, /import \{[^}]*primaryCostPerClickPresentation[^}]*\} from '\.\.\/features\/machineCost\/machineCostPresentation\.js'/)
   assert.match(overview, /primaryCostPerClickPresentation\(summary, formatIdrTotal\)/)
   // The exact same function MachineCostPage already renders its Cost/Click card with.
   assert.match(machineCostPage, /primaryCostPerClickPresentation/)

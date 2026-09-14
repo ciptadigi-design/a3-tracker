@@ -7,7 +7,7 @@ import { useAuth } from '../features/auth/useAuth.js'
 import { useTenant } from '../features/account/useTenant.js'
 import { useMachines } from '../features/machines/useMachines.js'
 import { machineCostPeriodPresets, resolveMachineCostPeriod, validMachineCostFilters } from '../features/machineCost/machineCostPeriods.js'
-import { primaryCostPerClickPresentation } from '../features/machineCost/machineCostPresentation.js'
+import { knownConsumptionPresentation, primaryCostPerClickPresentation } from '../features/machineCost/machineCostPresentation.js'
 import { formatIdrTotal } from '../features/machineCost/currencyFormat.js'
 import { loadMachineCostPeriod } from '../services/machineCost.js'
 import { formatClicks, formatPercentage, formatSignedClicks, normalizeDailyPerformance, periodCardPresentation, requiredPacePresentation, targetStatusPresentation, todayContextPresentation } from '../features/clickTargets/clickTargetModel.js'
@@ -27,6 +27,19 @@ function CostPerClickCard({ summary, periodLabel }) {
     <span className="card-kicker">Cost / Click</span>
     <strong>{presentation.value}</strong>
     <span className="overview-period-target">Standard machine cost</span>
+    <small>{periodLabel}</small>
+  </article>
+}
+
+function ComponentConsumptionCard({ summary, periodLabel }) {
+  // Reuse Machine Cost's canonical known/partial/unknown replacement-cost
+  // presentation. The backend summary is already scoped to this Overview's
+  // selected machine and operational period; no replacement math belongs here.
+  const presentation = knownConsumptionPresentation(summary, formatIdrTotal)
+  return <article className="overview-period-card glass-surface">
+    <span className="card-kicker">Component Consumption</span>
+    <strong>{presentation.value}</strong>
+    <span className="overview-period-target">{presentation.hint}</span>
     <small>{periodLabel}</small>
   </article>
 }
@@ -169,7 +182,7 @@ function OverviewWorkspace({ navigate }) {
               <section className="overview-period-grid" aria-label="Selected period cost and click progress">
                 <CostPerClickCard summary={costSummary} periodLabel={rangeLabel} />
                 <PeriodCard label={selectedCardLabel} card={projection.selected} />
-                <article className="overview-period-card glass-surface"><span className="card-kicker">Pace variance</span><strong>{formatSignedClicks(projection.pace_variance)}</strong><span className="overview-period-target">Actual minus {expectedTargetLabel.toLowerCase()}</span><small>{rangeLabel}</small></article>
+                <ComponentConsumptionCard summary={costSummary} periodLabel={rangeLabel} />
               </section>
               <DailyClickPerformanceChart rows={dailyRows} todayContext={todayContext} />
             </>
