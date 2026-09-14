@@ -8,7 +8,10 @@ This document is the deployment-readiness gate for Cipta Grafika plus one contro
 
 The rehearsal covers bidirectional account isolation, same-account branch isolation, effective capabilities, zero-branch initial Owner attachment, owner-led setup, real Owner/Operator credential login, operational timestamps, FIFO purchase/receipt/replacement lineage, all seven reports, tenant export secrecy, account-local revocation, and last-Owner protection.
 
-One bounded G-P0 was found and fixed: Laravel's `required|array` rejected the intentional empty `branch_ids: []` when Platform attached the initial Owner before the first branch existed. The endpoint now requires the field to be present but permits an empty Owner assignment; `MemberLifecycle` continues enforcing branch requirements for non-Owners.
+Two bounded G-P0 defects were found and fixed:
+
+- Laravel's `required|array` rejected the intentional empty `branch_ids: []` when Platform attached the initial Owner before the first branch existed. The endpoint now requires the field to be present but permits an empty Owner assignment; `MemberLifecycle` continues enforcing branch requirements for non-Owners.
+- Receipt validation accepted the canonical UTC ISO timestamp contract, but the service passed the ISO text directly to a MySQL `DATETIME` column. Receipt instants are now parsed once and normalized to UTC before receipt and FIFO-movement persistence; retry comparison remains instant-aware.
 
 ## Tenant export rehearsal
 
@@ -50,7 +53,7 @@ The combined A-F release changes 132 files across identity/session invalidation,
 
 The migration adds unsigned `users.session_version` with deterministic default `0`. It rewrites no business values and is compatible with existing users and MySQL/MariaDB. Application rollback may leave the additive column in place. Dropping it is unnecessary and would remove the revocation field; the documented `down()` is reserved for a separately authorized database rollback.
 
-## Combined A-F deployment plan — do not execute without authorization
+## Combined A-G deployment plan — do not execute without authorization
 
 1. Pin and verify the reviewed G SHA on `develop`; require Database CI and Laravel MySQL Target CI green for that exact SHA.
 2. Reconfirm Production `current`, `/api/v1/version`, host identity, database identity, and absence of an in-progress deployment.

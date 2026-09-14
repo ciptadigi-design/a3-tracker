@@ -6,6 +6,7 @@ use App\Models\Branch;
 use App\Models\InventoryItem;
 use App\Models\InventoryLocation;
 use App\Models\InventorySupplier;
+use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -50,6 +51,8 @@ class PurchaseReceiptService
 
     public function receive(string $purchaseId, InventoryLocation $location, array $lines, string $requestId, ?string $personId = null, ?string $personName = null, ?string $enteredBy = null, $receivedAt = null): object
     {
+        $receivedAt = $receivedAt === null ? null : CarbonImmutable::parse($receivedAt)->utc();
+
         return DB::transaction(function () use ($purchaseId, $location, $lines, $requestId, $personId, $personName, $enteredBy, $receivedAt) {
             DB::table('accounts')->where('id', $location->account_id)->lockForUpdate()->first();
             $old = DB::table('receipts')->where('account_id', $location->account_id)->where('client_request_id', $requestId)->first();
