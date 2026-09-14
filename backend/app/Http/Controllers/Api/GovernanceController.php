@@ -251,7 +251,10 @@ class GovernanceController extends Controller
     {
         Gate::authorize('platform.manage');
         $a = Account::findOrFail($id);
-        $d = $r->validate(['user_id' => 'required|uuid', 'role' => 'required|in:owner,admin,technician,operator', 'branch_ids' => 'required|array', 'branch_ids.*' => 'uuid|distinct']);
+        // A platform-provisioned initial Owner must be attachable before the new
+        // account has its first branch. Non-owner branch requirements remain
+        // enforced by MemberLifecycle; `present` permits the intentional [] only.
+        $d = $r->validate(['user_id' => 'required|uuid', 'role' => 'required|in:owner,admin,technician,operator', 'branch_ids' => 'present|array', 'branch_ids.*' => 'uuid|distinct']);
         $m = app(MemberLifecycle::class)->attach($r->user(), $a, $d);
 
         return response()->json(['data' => $m], 201);

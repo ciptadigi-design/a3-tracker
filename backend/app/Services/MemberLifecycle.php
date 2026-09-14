@@ -97,6 +97,9 @@ class MemberLifecycle
     {
         abort_unless(app(PlatformPrivilegeService::class)->isSuperuser($actor), 403);
         $ids = $this->validateBranches($account, $data['branch_ids']);
+        if ($data['role'] !== 'owner' && $ids === []) {
+            throw ValidationException::withMessages(['branch_ids' => 'Select at least one active branch for a non-owner member.']);
+        }
 
         return DB::transaction(function () use ($actor, $account, $data, $ids) {
             Account::whereKey($account->id)->lockForUpdate()->firstOrFail();
