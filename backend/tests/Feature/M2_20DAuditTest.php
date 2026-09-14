@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Account;
 use App\Models\ComponentCatalog;
+use App\Models\InventorySupplier;
 use App\Models\Machine;
 use App\Models\MachineModel;
 use App\Models\Manufacturer;
@@ -168,6 +169,26 @@ class M2_20DAuditTest extends TestCase
         }
         $this->actingAs($this->g['platform'])->getJson('/api/v1/platform/accounts/'.$this->g['a']->id.'/audit')->assertOk();
         $this->getJson($this->base().'/audit')->assertForbidden();
+    }
+
+    public function test_history_presents_only_account_scoped_target_labels(): void
+    {
+        $supplier = InventorySupplier::create(['account_id' => $this->g['a']->id, 'code' => 'LABEL_A', 'name' => 'Cipta Toner']);
+        $foreignSupplier = InventorySupplier::create(['account_id' => $this->g['b']->id, 'code' => 'LABEL_B', 'name' => 'Other Tenant Supplier']);
+        $audit = app(GovernanceAudit::class);
+        $audit->record($this->g['platform'], 'test.supplier_label', 'supplier', $supplier->id, $this->g['a']->id);
+        $audit->record($this->g['platform'], 'test.branch_label', 'branch', $this->g['abranch']->id, $this->g['a']->id);
+        $audit->record($this->g['platform'], 'test.machine_label', 'machine', $this->g['machine']->id, $this->g['a']->id);
+        $audit->record($this->g['platform'], 'test.membership_label', 'account_membership', $this->g['aadminm']->id, $this->g['a']->id);
+        $audit->record($this->g['platform'], 'test.cross_tenant_label', 'supplier', $foreignSupplier->id, $this->g['a']->id);
+
+        $events = collect($this->getJson($this->base().'/audit')->assertOk()->json('data.data'))->keyBy('action');
+        $this->assertSame('Cipta Toner', $events['test.supplier_label']['target']['label']);
+        $this->assertSame('Main', $events['test.branch_label']['target']['label']);
+        $this->assertSame('M · Machine', $events['test.machine_label']['target']['label']);
+        $this->assertSame($this->g['aadmin']->name, $events['test.membership_label']['target']['label']);
+        $this->assertNull($events['test.cross_tenant_label']['target']['label']);
+        $this->assertStringNotContainsString('Other Tenant Supplier', $this->getJson($this->base().'/audit')->getContent());
     }
 
     public function test_stable_bounded_pagination_legacy_metadata_and_no_mutation_routes(): void
