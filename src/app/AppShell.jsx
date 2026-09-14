@@ -47,12 +47,12 @@ export function AppShell() {
   else if (path === '/daily') page = <DailyPage />
   else if (path === '/errors') page = <ErrorsPage navigate={handleNavigate} />
   else if (path === '/components') page = <ComponentsPage />
-  else if (path === '/inventory') page = <InventoryPage />
+  else if (path === '/inventory') page = <InventoryPage navigate={handleNavigate} />
   else if (path === '/machine-cost') page = <MachineCostPage />
   else if (path === '/reports') page = <ReportsPage />
   else if (path === '/my-account') page = <MyAccountPage />
-  else if ((path === '/settings' || path === '/settings/machine-models') && tenant.isPlatformSuperuser) page = <SettingsPage navigate={handleNavigate} initialSection={path === '/settings/machine-models' ? 'models' : null} />
-  else if (path === '/settings' || path === '/settings/machine-models') page = <ComingSoonPage title="Access denied" description="Settings is temporarily available only to Platform Superusers." />
+  else if ((path === '/settings' || path === '/settings/machine-models') && tenant.can('settings.view')) page = <SettingsPage key={tenant.account.id} navigate={handleNavigate} initialSection={path === '/settings/machine-models' ? 'models' : null} />
+  else if (path === '/settings' || path === '/settings/machine-models') page = <ComingSoonPage title="Access denied" description="Your current workspace capabilities do not include Settings." />
   else if (path === '/settings/click-targets') page = <ClickTargetSettingsPage />
   else if (getIncidentIdFromPath(path)) page = <IncidentDetailPage incidentId={getIncidentIdFromPath(path)} navigate={handleNavigate} />
   else {
@@ -64,7 +64,7 @@ export function AppShell() {
     <div className="app-frame">
       <div className="app-ambient app-ambient-one" /><div className="app-ambient app-ambient-two" />
       <div className={`mobile-nav-backdrop ${mobileNavOpen ? 'mobile-nav-backdrop-open' : ''}`} onClick={() => setMobileNavOpen(false)} />
-      <div className={`sidebar-wrap ${mobileNavOpen ? 'sidebar-wrap-open' : ''}`}><Sidebar path={path} navigate={handleNavigate} account={tenant.account} branch={tenant.branch} profile={tenant.profile} roleLabel={tenant.membership?.role === 'owner' ? 'Workspace owner' : 'Workspace member'} isPlatformSuperuser={tenant.isPlatformSuperuser} can={tenant.can} onLogout={async () => { setMobileNavOpen(false); await handleLogout() }} /></div>
+      <div className={`sidebar-wrap ${mobileNavOpen ? 'sidebar-wrap-open' : ''}`}><Sidebar path={path} navigate={handleNavigate} account={tenant.account} branch={tenant.branch} profile={tenant.profile} roleLabel={tenant.membership?.role === 'owner' ? 'Workspace owner' : 'Workspace member'} can={tenant.can} onLogout={async () => { setMobileNavOpen(false); await handleLogout() }} /></div>
       <div className="app-main">
         <TopBar profile={tenant.profile} account={tenant.account} accounts={tenant.accounts} onAccountChange={tenant.setSelectedAccountId} branch={tenant.branch} branches={tenant.branches} onBranchChange={tenant.setSelectedBranchId} membership={tenant.membership} theme={theme} toggleTheme={toggleTheme} onLogout={handleLogout} onMyAccount={() => handleNavigate('/my-account')} onMenu={() => setMobileNavOpen(true)} />
         {logoutError && <div className="inline-error" role="alert">{logoutError}</div>}

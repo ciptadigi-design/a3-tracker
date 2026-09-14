@@ -63,8 +63,8 @@ test('Component Model Profiles is a subordinate compact card with truthful model
 })
 
 test('machine-master writes remain explicitly Platform Superuser governed', () => {
-  assert.match(page, /const canManage = isPlatformSuperuser/)
-  assert.match(app, /tenant\.isPlatformSuperuser/)
+  assert.match(page, /'models'.*'catalog\.global\.manage'/)
+  assert.match(page, /availableSections.*can\(capability\)/)
   assert.match(service, /MANUFACTURER_ALREADY_EXISTS/)
   assert.match(service, /MACHINE_MODEL_ALREADY_EXISTS/)
   assert.match(service, /PLATFORM_SUPERUSER_REQUIRED/)

@@ -17,10 +17,12 @@ test('global Branch changes remount operational route state without a page reloa
   assert.doesNotMatch(shell, /location\.reload\(\).*branch|branch.*location\.reload\(\)/is)
 })
 
-test('account transitions never render operational routes with an invalid Branch', () => {
+test('account transitions select authorized branches while zero-branch tenants can reach setup', () => {
   const tenant = read('../account/TenantProvider.jsx')
-  assert.match(tenant, /No active Branch access/)
-  assert.match(tenant, /if \(!branch\) return <LoadingScreen label="Selecting your active Branch"/)
+  assert.match(tenant, /if \(availableBranches\.length && !branch\) return <LoadingScreen label="Selecting your active Branch"/)
+  assert.match(read('../../pages/OverviewPage.jsx'), /Create your first branch/)
+  assert.match(read('../../pages/MachinesPage.jsx'), /No branches yet/)
+  assert.match(read('../../pages/InventoryPage.jsx'), /if \(!branch\) return/)
 })
 
 test('operational detail reads require the selected Branch', () => {

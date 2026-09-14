@@ -1,7 +1,7 @@
 import { apiClient, unwrapData } from '../../lib/api/apiClient.js'
 import { unsupportedBackendOperation } from '../dataBackend.js'
 export async function loadSettings({ accountId }) { return unwrapData(await apiClient.get(`/accounts/${accountId}/settings`)) }
-export async function updateWorkspace({ accountId, values }) { return unwrapData(await apiClient.put(`/accounts/${accountId}`, { name: values.name, default_timezone: values.defaultTimezone })) }
+export async function updateWorkspace({ accountId, values }) { return unwrapData(await apiClient.patch(`/accounts/${accountId}/profile`, { name: values.name, default_timezone: values.defaultTimezone })) }
 export async function manageBranch({ accountId, branch, action, values = {} }) { const payload = { ...values, is_active: action !== 'archive' }; return unwrapData(await (branch?.id ? apiClient.put(`/accounts/${accountId}/branches/${branch.id}`, payload) : apiClient.post(`/accounts/${accountId}/branches`, payload))) }
 export async function updateMembership({ accountId, member, role, status, branchIds, username, displayName }) { return unwrapData(await apiClient.patch(`/accounts/${accountId}/members/${member.id}`, { role, status, branch_ids: branchIds, username, display_name: displayName })) }
 export async function provisionMember({ accountId, values }) { return unwrapData(await apiClient.post(`/accounts/${accountId}/members`, { name: values.displayName, email: values.email, username: values.username, password: values.password, role: values.role, branch_ids: values.branchIds })) }

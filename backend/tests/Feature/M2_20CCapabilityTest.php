@@ -274,7 +274,10 @@ class M2_20CCapabilityTest extends TestCase
                 foreach (['components.replace.inventory', 'components.replace.external'] as $key) {
                     $this->assertSame($role !== 'operator' || $on, $data[$key], $role.' '.$key);
                 }
-                $this->assertFalse($data['account.manage']);
+                $this->assertSame($role === 'owner', $data['account.manage']);
+                $this->assertSame($role === 'owner', $data['audit.view']);
+                $this->assertSame(in_array($role, ['owner', 'admin']), $data['operational_people.manage']);
+                $this->assertSame(in_array($role, ['owner', 'admin']), $data['settings.view']);
                 $this->assertFalse($data['catalog.global.manage']);
 
             }

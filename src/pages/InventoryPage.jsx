@@ -88,7 +88,7 @@ function LocationsPanel({ locations, showArchived, canManage, onEdit, onDelete }
   return visible.length === 0 ? <div className="inventory-empty"><MapPin size={25} /><strong>No {showArchived ? 'archived' : 'active'} locations in this Branch.</strong><span>Locations represent real physical stock points owned by the global Branch context.</span></div> : <div className="inventory-location-list">{visible.map((location) => <article className={location.is_active ? '' : 'archived'} key={location.id}><span className="inventory-item-icon"><MapPin size={18} /></span><div><strong>{location.name}</strong><span>{location.code} · {location.branches?.name}</span>{location.notes && <small>{location.notes}</small>}</div>{!location.is_active && <span className="scope-pill archived"><Archive size={12} />Archived</span>}{canManage && <div className="inventory-row-actions"><button type="button" onClick={() => onEdit(location)} aria-label={`Edit ${location.name}`}><Edit3 size={15} /></button><button type="button" onClick={() => onDelete(location)} aria-label={`Delete ${location.name}`}><Trash2 size={15} /></button></div>}</article>)}</div>
 }
 
-export function InventoryPage() {
+export function InventoryPage({ navigate }) {
   const { user } = useAuth(); const { account, branch, branches, membership, can } = useTenant()
   const canManage = can('inventory.items.manage')
   const canAdjust = can('inventory.adjust')
@@ -123,7 +123,11 @@ export function InventoryPage() {
     try { setAccountSuppliers(await loadInventorySuppliers({ accountId: account.id, branchId: branch.id })) } catch (loadError) { setSupplierError(loadError) }
   }, [account.id, branch?.id, canManage])
   const loadAllAccountSuppliers = useCallback(async () => { if (!canManage || !branch?.id) return []; const all = await loadInventorySuppliers({ accountId: account.id, branchId: branch.id, includeIneligible: true }); setAllAccountSuppliers(all); return all }, [account.id, branch?.id, canManage])
-  const refresh = useCallback(async () => { setLoading(true); setError(null); try { setData(await loadInventory({ accountId: account.id, branchId: branch?.id, includeArchived: canManage })) } catch (loadError) { setError(loadError) } finally { setLoading(false) } }, [account.id, branch?.id, canManage])
+  const refresh = useCallback(async () => {
+    if (!branch?.id) { setData(emptyInventoryData()); setError(null); setLoading(false); return }
+    setLoading(true); setError(null)
+    try { setData(await loadInventory({ accountId: account.id, branchId: branch.id, includeArchived: canManage })) } catch (loadError) { setError(loadError) } finally { setLoading(false) }
+  }, [account.id, branch?.id, canManage])
   const reloadAll = useCallback(() => { refresh(); refreshSuppliers() }, [refresh, refreshSuppliers])
   useEffect(() => { refresh() }, [refresh])
   useEffect(() => { refreshSuppliers() }, [refreshSuppliers])
@@ -184,6 +188,10 @@ export function InventoryPage() {
   }, [canAdjust, canCreatePurchase, canManage, canReceiveGoods, canTransfer, closeWorkflow, error, loading, workflow.entityActiveAtOpen, workflow.type, workflowItem, workflowLocation, workflowMovement, workflowPurchase, workflowSupplier])
 
   const movementKind = workflow.type?.startsWith('stock:') ? workflow.type.slice('stock:'.length) : null
+  if (!branch) return <div className="page-stack inventory-page">
+    <PageHeader eyebrow={`${account.name} · Inventory`} title="Inventory" description="Create the first branch before setting up inventory locations and stock." />
+    <section className="starting-state glass-surface"><div><span className="card-kicker">Workspace setup</span><h3>No branches yet</h3><p>Inventory is ready after a workspace owner creates the first branch.</p></div>{can('settings.view') && <button className="primary-button" type="button" onClick={() => navigate?.('/settings')}>Open Settings</button>}</section>
+  </div>
   return <div className="page-stack inventory-page">
     <PageHeader eyebrow={`${account.name} · Inventory`} title="Inventory" description="Auditable physical stock by item and location, derived from an immutable movement ledger." action={canManage ? <div className="page-header-actions"><button className="secondary-button" type="button" onClick={() => openWorkflow('location:create')}><MapPin size={16} />Add location</button><button className="primary-button" type="button" onClick={() => openWorkflow('item:create')}><Plus size={17} />Add item</button></div> : null} />
     {!canManage && <div className="permission-banner"><ShieldCheck size={18} /><span>Your {membership?.role} role can read current stock and immutable history. Available actions reflect your current workspace permissions.</span></div>}

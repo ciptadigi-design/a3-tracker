@@ -102,8 +102,9 @@ export function TenantProvider({ children }) {
   if (isLoading || (tenantData && tenantData.contextUserId !== user?.id)) return <LoadingScreen label="Loading your account and branches" />
   if (error) return <ErrorState title="We couldn't load your workspace" detail={userErrorMessage(error, 'Workspace context is temporarily unavailable.')} onRetry={refresh} />
   if (!tenantData?.accounts.length) return <ErrorState title="No active workspace found" detail="Your account is authenticated, but it does not have an active account membership." />
-  if (!availableBranches.length) return <ErrorState title="No active Branch access" detail="This workspace has no active Branch available to your membership. Contact a workspace Owner or Platform Superuser." onRetry={refresh} />
-  if (!branch) return <LoadingScreen label="Selecting your active Branch" />
+  // A zero-branch Owner must reach Settings to create the first branch. Other
+  // pages receive an explicit null branch and render their setup empty state.
+  if (availableBranches.length && !branch) return <LoadingScreen label="Selecting your active Branch" />
 
   return <TenantContext.Provider value={value}>{children}</TenantContext.Provider>
 }

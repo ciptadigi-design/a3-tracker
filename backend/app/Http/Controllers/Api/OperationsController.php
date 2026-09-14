@@ -26,10 +26,12 @@ use App\Services\BranchAccessResolver;
 use App\Services\CorrectCounterReading;
 use App\Services\CounterPeriodService;
 use App\Services\CreateCounterReading;
+use App\Services\EffectiveCapabilityResolver;
 use App\Services\EffectiveCounterSequence;
 use App\Services\GovernanceAudit;
 use App\Services\MachineAccessResolver;
 use App\Services\MachineTimezoneResolver;
+use App\Services\PlatformPrivilegeService;
 use App\Services\ScopedReference;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -178,10 +180,11 @@ class OperationsController extends Controller
     public function storePerson(OperationalPersonRequest $r, string $account)
     {
         return DB::transaction(function () use ($r, $account) {
-            Gate::authorize('platform.manage');
-            $d = $r->validated();
+            $tenant = Account::lockForUpdate()->findOrFail($account);
+            app(EffectiveCapabilityResolver::class)->authorize($r->user(), $tenant, 'operational_people.manage');
+            $d = $this->personValues($r);
 
-            $p = OperationalPerson::create($d + ['account_id' => $account]);
+            $p = OperationalPerson::create($d + ['account_id' => $tenant->id]);
             app(GovernanceAudit::class)->changed($r->user(), 'operational_person.created', 'operational_person', $p->id, $p->account_id, [], app(GovernanceAudit::class)->snapshot($p));
 
             return response()->json(['data' => $p], 201);
@@ -191,8 +194,8 @@ class OperationsController extends Controller
     public function setPersonStatus(Request $r, string $id)
     {
         return DB::transaction(function () use ($r, $id) {
-            Gate::authorize('platform.manage');
             $p = OperationalPerson::lockForUpdate()->findOrFail($id);
+            app(EffectiveCapabilityResolver::class)->authorize($r->user(), $p->account, 'operational_people.manage');
             $active = $r->validate(['is_active' => 'required|boolean'])['is_active'];
             $before = app(GovernanceAudit::class)->snapshot($p);
             $p->update(['is_active' => $active, 'archived_at' => $active ? null : now()]);
@@ -203,12 +206,13 @@ class OperationsController extends Controller
         });
     }
 
-    public function updatePerson(Request $r, string $account, string $id)
+    public function updatePerson(OperationalPersonRequest $r, string $account, string $id)
     {
         return DB::transaction(function () use ($r, $account, $id) {
-            Gate::authorize('platform.manage');
+            $tenant = Account::lockForUpdate()->findOrFail($account);
+            app(EffectiveCapabilityResolver::class)->authorize($r->user(), $tenant, 'operational_people.manage');
             $p = OperationalPerson::where('account_id', $account)->lockForUpdate()->findOrFail($id);
-            $d = $r->validate(['name' => 'required|string|max:160', 'code' => 'nullable|string|max:64', 'linked_user_id' => 'nullable|uuid', 'is_active' => 'sometimes|boolean']);
+            $d = $this->personValues($r);
             $before = app(GovernanceAudit::class)->snapshot($p);
             $p->update($d);
 
@@ -221,8 +225,8 @@ class OperationsController extends Controller
     public function assignPerson(PersonBranchAssignmentRequest $r, string $person, string $branch)
     {
         return DB::transaction(function () use ($r, $person, $branch) {
-            Gate::authorize('platform.manage');
             $p = OperationalPerson::lockForUpdate()->findOrFail($person);
+            app(EffectiveCapabilityResolver::class)->authorize($r->user(), $p->account, 'operational_people.manage');
             $b = Branch::lockForUpdate()->findOrFail($branch);
             abort_unless($p->account_id === $b->account_id, 403);
             $before = OperationalPersonBranch::where('person_id', $p->id)->where('branch_id', $b->id)->first();
@@ -239,7 +243,6 @@ class OperationsController extends Controller
     public function replacePersonBranches(Request $r, string $person)
     {
         return DB::transaction(function () use ($r, $person) {
-            Gate::authorize('platform.manage');
             $validated = $r->validate([
                 'assignments' => 'present|array',
                 'assignments.*.branch_id' => 'required|uuid|distinct',
@@ -248,6 +251,7 @@ class OperationsController extends Controller
 
             $result = DB::transaction(function () use ($r, $person, $validated) {
                 $operationalPerson = OperationalPerson::lockForUpdate()->findOrFail($person);
+                app(EffectiveCapabilityResolver::class)->authorize($r->user(), $operationalPerson->account, 'operational_people.manage');
                 $audit = app(GovernanceAudit::class);
                 $before = OperationalPersonBranch::where('person_id', $operationalPerson->id)->get()->keyBy('id')->map(fn ($assignment) => $audit->snapshot($assignment));
                 $requested = collect($validated['assignments'])->keyBy('branch_id');
@@ -344,12 +348,24 @@ class OperationsController extends Controller
 
     public function governancePeople(Request $r, string $account)
     {
-        Gate::authorize('platform.manage');
+        $tenant = Account::findOrFail($account);
+        app(EffectiveCapabilityResolver::class)->authorize($r->user(), $tenant, 'operational_people.manage');
 
         $page = OperationalPerson::where('account_id', $account)->with('branchAssignments.branch')->orderBy('name')->paginate(min((int) $r->integer('per_page', 25), 50));
         $page->through(fn ($person) => (new OperationalPersonResource($person))->resolve($r));
 
         return response()->json(['data' => $page]);
+    }
+
+    private function personValues(OperationalPersonRequest $request): array
+    {
+        $values = $request->validated();
+        if (app(PlatformPrivilegeService::class)->isSuperuser($request->user()) === false) {
+            // Linking an operational record to global identity remains a platform path.
+            unset($values['linked_user_id']);
+        }
+
+        return $values;
     }
 
     public function counters(Request $r, string $machine)

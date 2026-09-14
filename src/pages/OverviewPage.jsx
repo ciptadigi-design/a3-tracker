@@ -64,7 +64,7 @@ export function OverviewPage({ navigate }) {
 
 function OverviewWorkspace({ navigate }) {
   const { user } = useAuth()
-  const { account, branch, membership, isPlatformSuperuser } = useTenant()
+  const { account, branch, membership, isPlatformSuperuser, can } = useTenant()
   const { machines, isLoading: machinesLoading, error: machinesError } = useMachines(account?.id, branch?.id)
   const activeMachines = useMemo(() => machines.filter((machine) => machine.is_active !== false && machine.status !== 'retired'), [machines])
   const canManageTargets = isPlatformSuperuser || ['owner', 'admin'].includes(membership?.role)
@@ -130,7 +130,7 @@ function OverviewWorkspace({ navigate }) {
       {!validPeriod && <div className="inline-error" role="alert">{rangeError}</div>}
 
       {machinesLoading ? null : machinesError ? <div className="inline-error" role="alert">{userErrorMessage(machinesError, 'Machine data is temporarily unavailable.')}</div> : activeMachines.length === 0 ? (
-        <section className="starting-state glass-surface"><div><span className="card-kicker">Starting point</span><h3>Your operations workspace is ready</h3><p>No fabricated activity or KPI data is shown. Real operational insights will appear as your team begins using A3 Tracker.</p></div><div className="starting-state-line"><span /></div></section>
+        <section className="starting-state glass-surface"><div><span className="card-kicker">Starting point</span><h3>{branch ? 'Your operations workspace is ready' : 'Create your first branch'}</h3><p>{branch ? 'No fabricated activity or KPI data is shown. Real operational insights will appear as your team begins using A3 Tracker.' : 'Branches establish the operational scope for machines, people, and inventory.'}</p></div>{!branch && can('settings.view') ? <button className="primary-button" type="button" onClick={() => navigate?.('/settings')}>Open Settings</button> : <div className="starting-state-line"><span /></div>}</section>
       ) : (
         <>
           {error && <div className="inline-error" role="alert">{userErrorMessage(error, 'Click target could not be loaded for this machine.')}</div>}

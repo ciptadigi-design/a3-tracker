@@ -69,14 +69,14 @@ class GovernanceParityTest extends TestCase
         $this->assertFalse(app(AccountAccessResolver::class)->canAccess($g['u'], $g['a']));
     }
 
-    public function test_settings_gate_is_explicitly_superuser_only(): void
+    public function test_settings_gate_uses_account_scoped_capability(): void
     {
         $g = $this->graph();
-        $g['m']->update(['role' => 'owner']);
         $this->actingAs($g['u']);
-        $this->assertFalse(Gate::forUser($g['u'])->allows('settings.access'));
-        PlatformUserPrivilege::create(['user_id' => $g['u']->id, 'role' => 'superuser', 'is_active' => true]);
-        $this->assertTrue(Gate::forUser($g['u'])->allows('settings.access'));
+        $this->assertFalse(Gate::forUser($g['u'])->allows('settings.access', $g['a']));
+        $g['m']->update(['role' => 'owner']);
+        $this->assertTrue(Gate::forUser($g['u'])->allows('settings.access', $g['a']));
+        $this->assertFalse(Gate::forUser($g['u'])->allows('settings.access', $g['b']));
     }
 
     public function test_last_active_owner_cannot_be_demoted_or_suspended(): void

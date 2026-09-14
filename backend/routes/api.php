@@ -30,6 +30,7 @@ Route::prefix('v1')->middleware('request.id')->group(function () {
             Route::get('accounts/{id}/audit', [GovernanceAuditController::class, 'index']);
             Route::get('platform/accounts/{id}/audit', [GovernanceAuditController::class, 'platform']);
             Route::get('accounts/{id}/settings', [GovernanceController::class, 'settings']);
+            Route::patch('accounts/{id}/profile', [GovernanceController::class, 'updateProfile']);
             Route::patch('accounts/{id}/settings/policy', [GovernanceController::class, 'updatePolicy']);
             Route::post('accounts/{id}/branches', [GovernanceController::class, 'storeBranch']);
             Route::put('accounts/{accountId}/branches/{id}', [GovernanceController::class, 'updateBranch']);

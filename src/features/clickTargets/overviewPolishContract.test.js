@@ -85,14 +85,14 @@ test('M2.13.2: Settings > Operations keeps its existing content and gains a Clic
 })
 
 test('M2.13.2: Machine Models remains a distinct Settings section, no new sidebar item was added', () => {
-  // Section tuples are ['id', 'Label', IconComponent] - the icon reference is
+  // Section tuples are ['id', 'Label', IconComponent, 'capability'] - the icon reference is
   // always a capitalized identifier, distinguishing this array from the
   // unrelated `capabilities` tuples (['key', 'label', booleanLiteral]).
-  const sectionIds = [...settings.matchAll(/\['(\w+)', '[^']+', ([A-Z]\w*)\]/g)].map((match) => match[1])
+  const sectionIds = [...settings.matchAll(/\['(\w+)', '[^']+', ([A-Z]\w*), '[^']+'\]/g)].map((match) => match[1])
   assert.deepEqual(sectionIds, ['workspace', 'branches', 'members', 'permissions', 'operations', 'models'])
 })
 
 test('M2.13.2: the Click Targets gateway respects existing Settings authorization (hidden/read-only when not authorized)', () => {
-  assert.match(settings, /\{canManage && <button className="secondary-button compact-button" type="button" onClick={\(\) => navigate\('\/settings\/click-targets'\)}/)
-  assert.match(settings, /\{!canManage && <p className="click-target-gateway-readonly">/)
+  assert.match(settings, /\{can\('click_targets\.manage'\) && <button className="secondary-button compact-button" type="button" onClick={\(\) => navigate\('\/settings\/click-targets'\)}/)
+  assert.match(settings, /\{!can\('click_targets\.manage'\) && <p className="click-target-gateway-readonly">/)
 })

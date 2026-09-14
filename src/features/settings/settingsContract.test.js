@@ -16,10 +16,10 @@ test('Settings route and six-section control-plane IA are active', () => {
   assert.doesNotMatch(app, /'\/settings': \['Settings'/)
   for (const label of ['Workspace', 'Branches', 'Members & Roles', 'Permissions', 'Operations', 'Machine Models']) assert.match(page, new RegExp(label.replace('&', '\\&')))
   assert.match(sidebar, /Settings, active: true/)
-  assert.match(sidebar, /isPlatformSuperuser && can\('settings.view'\) && <NavLink/)
+  assert.match(sidebar, /can\('settings.view'\) && <NavLink/)
   assert.doesNotMatch(sidebar, /membership\?\.role|\['owner'/)
-  assert.match(app, /path === '\/settings'.*tenant\.isPlatformSuperuser/)
-  assert.match(app, /Settings is temporarily available only to Platform Superusers/)
+  assert.match(app, /path === '\/settings'.*tenant\.can\('settings.view'\)/)
+  assert.match(app, /current workspace capabilities do not include Settings/)
 })
 
 test('Advanced Machine Economics is de-scoped from the active Settings navigation, but stays dormant in source', () => {
@@ -45,10 +45,9 @@ test('Settings does not fetch or depend on Advanced-only data to load its suppor
   assert.doesNotMatch(refreshFn, /advanced/i)
 })
 
-test('Direct Active member UX creates or activates accounts without invite copy', () => {
-  assert.match(page, /Direct Active onboarding/)
+test('Direct Active member UX creates fresh tenant identities without invite copy', () => {
+  assert.match(page, /Fresh-user onboarding/)
   assert.match(page, /Create account/)
-  assert.match(page, /Activate account/)
   assert.match(page, /Initial password/)
   assert.match(page, /Member account created and activated/)
   assert.match(service, /action: 'direct_create'/)
@@ -64,7 +63,7 @@ test('managed email and password actions stay explicit and separate', () => {
   assert.match(page, /Existing credentials were not revealed/)
 })
 
-test('My Account is available from the user menu without weakening Settings', () => {
+test('My Account is available while Settings uses backend capabilities', () => {
   assert.match(topbar, /My Account/)
   assert.match(app, /path === '\/my-account'/)
   assert.match(accountPage, /Display name & username/)
@@ -73,7 +72,7 @@ test('My Account is available from the user menu without weakening Settings', ()
   assert.match(accountPage, /Change password/)
   assert.match(accountService, /functions\.invoke\('manage-account'/)
   assert.match(accountService, /auth\.refreshSession/)
-  assert.match(page, /const canManage = isPlatformSuperuser/)
+  assert.match(page, /const canManage = can\('settings.view'\)/)
 })
 
 test('Workspace and branch forms preserve drafts, timezone inheritance, and compact mobile actions', () => {

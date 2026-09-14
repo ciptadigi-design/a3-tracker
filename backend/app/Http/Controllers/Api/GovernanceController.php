@@ -31,12 +31,29 @@ class GovernanceController extends Controller
     public function settings(Request $r, string $id)
     {
         $a = Account::findOrFail($id);
-        abort_unless(app(AccountAccessResolver::class)->canGovern($r->user(), $a), 403);
         $resolver = app(EffectiveCapabilityResolver::class);
+        $resolver->authorize($r->user(), $a, 'settings.view');
+        $capabilities = $resolver->resolve($r->user(), $a);
         $policy = $resolver->policy($a);
         $matrix = collect(['owner', 'admin', 'technician', 'operator'])->mapWithKeys(fn ($role) => [$role => $resolver->forRole($role, $policy)]);
 
-        return response()->json(['data' => ['branches' => $a->branches()->orderBy('name')->get(), 'members' => $a->memberships()->with(['user', 'branchAssignments'])->get()->map(fn ($m) => ['id' => $m->id, 'user_id' => $m->user_id, 'role' => $m->role, 'status' => $m->status, 'username' => $m->user?->username, 'display_name' => $m->user?->name, 'email' => $m->user?->email, 'branch_ids' => $m->branchAssignments->where('is_active', true)->pluck('branch_id')->values()]), 'policy' => $policy, 'capability_matrix' => $matrix, 'models' => MachineModel::with('manufacturer')->where(fn ($q) => $q->whereNull('account_id')->orWhere('account_id', $id))->get(), 'components' => ComponentCatalog::where(fn ($q) => $q->whereNull('account_id')->orWhere('account_id', $id))->get(), 'profiles' => ModelProfileSlot::with(['component', 'profile'])->whereHas('profile', fn ($q) => $q->where(fn ($x) => $x->whereNull('account_id')->orWhere('account_id', $id)))->get(), 'locations' => InventoryLocation::where('account_id', $id)->get(), 'people' => OperationalPersonResource::collection(OperationalPerson::where('account_id', $id)->with('branchAssignments.branch')->get()), 'manufacturers' => Manufacturer::where(fn ($q) => $q->whereNull('account_id')->orWhere('account_id', $id))->get(), 'audit' => []]]);
+        $canManageMembers = $capabilities['members.manage'] === true;
+        $canManagePeople = $capabilities['operational_people.manage'] === true;
+        $canManageGlobalCatalog = $capabilities['catalog.global.manage'] === true;
+
+        return response()->json(['data' => [
+            'branches' => $a->branches()->orderBy('name')->get(),
+            'members' => $canManageMembers ? $a->memberships()->with(['user', 'branchAssignments'])->get()->map(fn ($m) => ['id' => $m->id, 'user_id' => $m->user_id, 'role' => $m->role, 'status' => $m->status, 'username' => $m->user?->username, 'display_name' => $m->user?->name, 'email' => $m->user?->email, 'branch_ids' => $m->branchAssignments->where('is_active', true)->pluck('branch_id')->values()]) : [],
+            'policy' => $policy,
+            'capability_matrix' => $matrix,
+            'models' => $canManageGlobalCatalog ? MachineModel::with('manufacturer')->where(fn ($q) => $q->whereNull('account_id')->orWhere('account_id', $id))->get() : [],
+            'components' => $canManageGlobalCatalog ? ComponentCatalog::where(fn ($q) => $q->whereNull('account_id')->orWhere('account_id', $id))->get() : [],
+            'profiles' => $canManageGlobalCatalog ? ModelProfileSlot::with(['component', 'profile'])->whereHas('profile', fn ($q) => $q->where(fn ($x) => $x->whereNull('account_id')->orWhere('account_id', $id)))->get() : [],
+            'locations' => $canManageGlobalCatalog ? InventoryLocation::where('account_id', $id)->get() : [],
+            'people' => $canManagePeople ? OperationalPersonResource::collection(OperationalPerson::where('account_id', $id)->with('branchAssignments.branch')->get()) : [],
+            'manufacturers' => $canManageGlobalCatalog ? Manufacturer::where(fn ($q) => $q->whereNull('account_id')->orWhere('account_id', $id))->get() : [],
+            'audit' => [],
+        ]]);
     }
 
     public function updatePolicy(Request $r, string $id)
@@ -51,6 +68,26 @@ class GovernanceController extends Controller
             app(GovernanceAudit::class)->changed($r->user(), 'account.policy_updated', 'account', $a->id, $id, $before, app(EffectiveCapabilityResolver::class)->policy($a));
 
             return response()->json(['data' => DB::table('account_operational_permissions')->where('account_id', $id)->first()]);
+        });
+    }
+
+    public function updateProfile(Request $r, string $id)
+    {
+        return DB::transaction(function () use ($r, $id) {
+            $account = Account::lockForUpdate()->findOrFail($id);
+            app(EffectiveCapabilityResolver::class)->authorize($r->user(), $account, 'account.manage');
+            $values = $r->validate([
+                'name' => 'required|string|max:120',
+                'default_timezone' => 'required|timezone:all',
+            ]);
+            $before = app(GovernanceAudit::class)->snapshot($account);
+            $account->update($values);
+            app(GovernanceAudit::class)->changed(
+                $r->user(), 'account.profile_updated', 'account', $account->id, $account->id,
+                $before, app(GovernanceAudit::class)->snapshot($account), array_keys($account->getChanges()),
+            );
+
+            return response()->json(['data' => $account]);
         });
     }
 

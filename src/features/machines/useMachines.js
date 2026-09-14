@@ -9,7 +9,7 @@ export function useMachines(accountId, branchId) {
 
   const refresh = useCallback(async () => {
     const request = ++requestId.current
-    if (!accountId) { setMachines([]); setIsLoading(false); return }
+    if (!accountId || !branchId) { setMachines([]); setError(null); setIsLoading(false); return }
     setIsLoading(true)
     setError(null)
     try {

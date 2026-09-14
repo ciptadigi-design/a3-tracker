@@ -4,8 +4,9 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Account;
-use App\Services\AccountAccessResolver;
+use App\Services\EffectiveCapabilityResolver;
 use App\Services\GovernanceAudit;
+use App\Services\PlatformPrivilegeService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -16,7 +17,8 @@ class GovernanceAuditController extends Controller
     public function index(Request $request, string $id)
     {
         $account = Account::findOrFail($id);
-        abort_unless(app(AccountAccessResolver::class)->membership($request->user(), $account)?->role === 'owner', 403);
+        abort_if(app(PlatformPrivilegeService::class)->isSuperuser($request->user()), 403);
+        app(EffectiveCapabilityResolver::class)->authorize($request->user(), $account, 'audit.view');
 
         return $this->history($request, $account);
     }

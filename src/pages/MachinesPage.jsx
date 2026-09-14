@@ -57,11 +57,11 @@ export function MachinesPage({ navigate }) {
 
   return (
     <div className="page-stack">
-      <PageHeader eyebrow={`${account?.name} · ${branch?.name}`} title="Machines" description="Physical machines registered to the selected branch." action={addAction} />
+      <PageHeader eyebrow={`${account?.name} · ${branch?.name ?? 'No branch'}`} title="Machines" description="Physical machines registered to the selected branch." action={addAction} />
       {success && <div className="success-banner" role="status"><CheckCircle2 size={18} /><span>{success}</span><button type="button" onClick={() => setSuccess(null)}>Dismiss</button></div>}
       {!canManage && <div className="permission-banner"><ShieldCheck size={18} /><span>Your {membership?.role ?? 'member'} role has read-only access to machine master data.</span></div>}
       {catalog.error && canManage && <div className="inline-error catalog-error" role="alert"><span>{userErrorMessage(catalog.error, 'Machine catalog could not be loaded. Try again.')}</span><button className="secondary-button" type="button" onClick={catalog.refresh}>Try again</button></div>}
-      {canManage && branches.length === 0 && <div className="permission-banner"><ShieldCheck size={18} /><span>No branch access assigned. Contact the workspace owner.</span></div>}
+      {canManage && branches.length === 0 && <div className="permission-banner"><ShieldCheck size={18} /><span>No branches yet. Create the first branch in Settings.</span>{can('settings.view') && <button className="secondary-button compact-button" type="button" onClick={() => navigate('/settings')}>Open Settings</button>}</div>}
 
       <section className="machine-list-card glass-surface">
         <div className="list-toolbar"><div><span className="card-kicker">Machine master</span><h2>{isLoading ? 'Loading machines…' : `${activeMachines.length} active ${activeMachines.length === 1 ? 'machine' : 'machines'}`}</h2></div><button className="icon-button" type="button" onClick={refresh} aria-label="Refresh machines" disabled={isLoading}><RefreshCcw size={17} className={isLoading ? 'spin' : ''} /></button></div>
