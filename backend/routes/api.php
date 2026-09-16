@@ -134,6 +134,9 @@ Route::prefix('v1')->middleware('request.id')->group(function () {
             Route::post('maintenance/error-codes', [MaintenanceKnowledgeBaseController::class, 'storeErrorCode']);
             Route::put('maintenance/error-codes/{id}', [MaintenanceKnowledgeBaseController::class, 'updateErrorCode']);
             Route::patch('maintenance/error-codes/{id}/status', [MaintenanceKnowledgeBaseController::class, 'setErrorCodeStatus']);
+            Route::post('maintenance/error-codes/{errorCode}/solutions', [MaintenanceKnowledgeBaseController::class, 'storeSolution']);
+            Route::put('maintenance/error-codes/{errorCode}/solutions/{solution}', [MaintenanceKnowledgeBaseController::class, 'updateSolution']);
+            Route::delete('maintenance/error-codes/{errorCode}/solutions/{solution}', [MaintenanceKnowledgeBaseController::class, 'deleteSolution']);
             Route::get('maintenance/tickets', [MaintenanceTicketsController::class, 'index']);
             Route::post('maintenance/tickets', [MaintenanceTicketsController::class, 'store']);
             Route::get('maintenance/tickets/{id}', [MaintenanceTicketsController::class, 'show']);

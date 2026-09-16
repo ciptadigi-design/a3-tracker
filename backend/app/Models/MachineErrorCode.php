@@ -12,7 +12,7 @@ class MachineErrorCode extends Model
 
     protected $keyType = 'string';
 
-    protected $fillable = ['account_id', 'machine_model_id', 'code', 'title', 'category', 'severity', 'manufacturer_description', 'operator_description', 'official_solution', 'source_document_id', 'is_active', 'archived_at'];
+    protected $fillable = ['account_id', 'machine_model_id', 'code', 'title', 'category', 'severity', 'manufacturer_description', 'operator_description', 'official_solution', 'solution_summary', 'source_document_id', 'is_active', 'archived_at'];
 
     protected $casts = ['is_active' => 'boolean', 'archived_at' => 'datetime'];
 
@@ -37,5 +37,10 @@ class MachineErrorCode extends Model
     public function tickets()
     {
         return $this->hasMany(MaintenanceTicket::class, 'error_code_id');
+    }
+
+    public function solutions()
+    {
+        return $this->hasMany(MaintenanceErrorSolution::class, 'machine_error_code_id')->orderBy('step_number');
     }
 }

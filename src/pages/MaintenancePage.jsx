@@ -1,8 +1,9 @@
 import { useState } from 'react'
-import { BookOpen, CheckCircle2, ClipboardPlus, ListChecks, Plus, RefreshCcw, Wrench } from 'lucide-react'
+import { AlertTriangle, BookOpen, CheckCircle2, ClipboardPlus, ListChecks, Plus, RefreshCcw, Wrench } from 'lucide-react'
 import { PageHeader } from '../components/ui/PageHeader.jsx'
 import { useTenant } from '../features/account/useTenant.js'
 import { CreateTicketDialog } from '../features/maintenance/CreateTicketDialog.jsx'
+import { ErrorCodeKnowledgeSection } from '../features/maintenance/ErrorCodeKnowledgeSection.jsx'
 import { useMaintenanceKnowledge } from '../features/maintenance/useMaintenanceKnowledge.js'
 import { useMaintenanceTickets } from '../features/maintenance/useMaintenanceTickets.js'
 import { formatMaintenanceDate, ticketPriorityLabels, ticketStatusLabels } from '../features/maintenance/maintenanceUtils.js'
@@ -53,9 +54,12 @@ export function MaintenancePage({ navigate }) {
       <nav className="machine-view-tabs" role="tablist" aria-label="Maintenance sections">
         <button type="button" role="tab" aria-selected={tab === 'tickets'} className={tab === 'tickets' ? 'selected' : ''} onClick={() => setTab('tickets')}><ListChecks size={16} /> Tickets</button>
         <button type="button" role="tab" aria-selected={tab === 'knowledge'} className={tab === 'knowledge' ? 'selected' : ''} onClick={() => setTab('knowledge')}><BookOpen size={16} /> Knowledge base</button>
+        <button type="button" role="tab" aria-selected={tab === 'error-codes'} className={tab === 'error-codes' ? 'selected' : ''} onClick={() => setTab('error-codes')}><AlertTriangle size={16} /> Error Codes</button>
       </nav>
 
-      {tab === 'tickets' ? (
+      {tab === 'error-codes' ? (
+        <ErrorCodeKnowledgeSection />
+      ) : tab === 'tickets' ? (
         <section className="machine-list-card glass-surface">
           <div className="list-toolbar"><div><span className="card-kicker">Maintenance tickets</span><h2>{ticketsState.isLoading ? 'Loading tickets…' : `${ticketsState.tickets.length} ${ticketStatusLabels[statusFilter].toLowerCase()}`}</h2></div><button className="icon-button" type="button" onClick={ticketsState.refresh} aria-label="Refresh tickets" disabled={ticketsState.isLoading}><RefreshCcw size={17} className={ticketsState.isLoading ? 'spin' : ''} /></button></div>
           <div className="machine-view-tabs" role="tablist" aria-label="Ticket status filter">

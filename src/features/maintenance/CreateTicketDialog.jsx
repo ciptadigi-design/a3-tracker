@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { AlertCircle, ClipboardPlus, LoaderCircle, X } from 'lucide-react'
 import { BlockingDialog } from '../../components/ui/BlockingDialog.jsx'
 import { useMachineErrorCodes } from './useMachineErrorCodes.js'
-import { mapMaintenanceError, ticketPriorityLabels, ticketTypeLabels } from './maintenanceUtils.js'
+import { buildTicketPrefillFromErrorCode, mapMaintenanceError, ticketPriorityLabels, ticketTypeLabels } from './maintenanceUtils.js'
 
 function FieldError({ message }) {
   return message ? <small className="field-error"><AlertCircle size={13} />{message}</small> : null
@@ -21,6 +21,17 @@ export function CreateTicketDialog({ machines, defaultMachineId, onClose, onSave
 
   const selectedMachine = useMemo(() => machines.find((machine) => machine.id === machineId), [machines, machineId])
   const errorCodesState = useMachineErrorCodes(selectedMachine?.machine_model_id)
+
+  // Autofill title/description from the chosen error code, but never overwrite
+  // text the reporter already typed themselves - it only fills empty fields.
+  function changeErrorCode(nextErrorCodeId) {
+    setErrorCodeId(nextErrorCodeId)
+    const errorCode = errorCodesState.errorCodes.find((code) => code.id === nextErrorCodeId)
+    if (!errorCode) return
+    const prefill = buildTicketPrefillFromErrorCode(errorCode)
+    if (!title.trim()) setTitle(prefill.title)
+    if (!description.trim()) setDescription(prefill.description)
+  }
 
   function validate() {
     const next = {}
@@ -81,10 +92,11 @@ export function CreateTicketDialog({ machines, defaultMachineId, onClose, onSave
               <select value={priority} onChange={(event) => setPriority(event.target.value)}>{Object.entries(ticketPriorityLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select>
             </label>
             <label className="form-field"><span>Known error code <small>Optional</small></span>
-              <select value={errorCodeId} onChange={(event) => setErrorCodeId(event.target.value)} disabled={!selectedMachine || errorCodesState.isLoading}>
+              <select value={errorCodeId} onChange={(event) => changeErrorCode(event.target.value)} disabled={!selectedMachine || errorCodesState.isLoading}>
                 <option value="">No specific code</option>
                 {errorCodesState.errorCodes.map((code) => <option key={code.id} value={code.id}>{code.code} · {code.title}</option>)}
               </select>
+              <small>Selecting a code fills in the title/description below if they're still empty.</small>
             </label>
             <label className="form-field form-field-wide"><span>Title <b className="required-mark">*</b></span>
               <input value={title} onChange={(event) => setTitle(event.target.value)} placeholder="e.g. Fuser overheating" aria-invalid={Boolean(errors.title)} />

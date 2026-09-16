@@ -49,6 +49,18 @@ export function formatMaintenanceDate(value, timezone, options = {}) {
   }).format(new Date(value))
 }
 
+// Ticket creation autofill: derives a starting title/description from a selected
+// error code without ever overwriting what the reporter already typed themselves.
+export function buildTicketPrefillFromErrorCode(errorCode) {
+  if (!errorCode) return { title: '', description: '' }
+  const descriptionParts = [errorCode.operator_description, errorCode.solution_summary ? `Suggested fix: ${errorCode.solution_summary}` : null].filter(Boolean)
+
+  return {
+    title: [errorCode.code, errorCode.title].filter(Boolean).join(' · '),
+    description: descriptionParts.join('\n\n'),
+  }
+}
+
 export function mapMaintenanceError(error) {
   if (error?.status === 409) return 'This ticket already moved to a different state. Refresh and try again.'
   if (error?.status === 403) return 'Your role is not authorized to perform this maintenance action.'

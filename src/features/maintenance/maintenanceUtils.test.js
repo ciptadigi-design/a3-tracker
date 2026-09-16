@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { errorCodeSeverityLabels, knowledgeStatusLabels, mapMaintenanceError, nextTicketStatuses, ticketPriorityLabels, ticketStatusLabels, ticketTypeLabels } from './maintenanceUtils.js'
+import { buildTicketPrefillFromErrorCode, errorCodeSeverityLabels, knowledgeStatusLabels, mapMaintenanceError, nextTicketStatuses, ticketPriorityLabels, ticketStatusLabels, ticketTypeLabels } from './maintenanceUtils.js'
 
 test('ticket status workflow only allows OPEN -> IN_PROGRESS/CANCELLED and IN_PROGRESS -> DONE/CANCELLED', () => {
   assert.deepEqual(nextTicketStatuses.OPEN, ['IN_PROGRESS', 'CANCELLED'])
@@ -25,4 +25,18 @@ test('mapMaintenanceError translates known HTTP statuses into actionable copy', 
   assert.match(mapMaintenanceError({ status: 403 }), /not authorized/)
   assert.match(mapMaintenanceError({ status: 422 }), /highlighted fields/)
   assert.match(mapMaintenanceError({ status: 500 }), /could not be completed/)
+})
+
+test('buildTicketPrefillFromErrorCode combines code/title into a title and folds description + suggested fix together', () => {
+  const prefill = buildTicketPrefillFromErrorCode({ code: 'C-2801', title: 'Fuser unit error', operator_description: 'Prints show streaks.', solution_summary: 'Restart machine and check registration sensor condition.' })
+  assert.equal(prefill.title, 'C-2801 · Fuser unit error')
+  assert.match(prefill.description, /Prints show streaks\./)
+  assert.match(prefill.description, /Suggested fix: Restart machine and check registration sensor condition\./)
+})
+
+test('buildTicketPrefillFromErrorCode tolerates missing optional fields and no selection', () => {
+  assert.deepEqual(buildTicketPrefillFromErrorCode(null), { title: '', description: '' })
+  const prefill = buildTicketPrefillFromErrorCode({ code: 'C-9000', title: 'Global paper jam' })
+  assert.equal(prefill.title, 'C-9000 · Global paper jam')
+  assert.equal(prefill.description, '')
 })

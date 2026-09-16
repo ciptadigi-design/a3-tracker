@@ -12,6 +12,9 @@ export const laravelMaintenance = {
   createErrorCode: (payload) => apiClient.post('/maintenance/error-codes', payload),
   updateErrorCode: (id, payload) => apiClient.put(`/maintenance/error-codes/${id}`, payload),
   setErrorCodeStatus: (id, isActive) => apiClient.patch(`/maintenance/error-codes/${id}/status`, { is_active: isActive }),
+  addErrorCodeSolution: (errorCodeId, payload) => apiClient.post(`/maintenance/error-codes/${errorCodeId}/solutions`, payload),
+  updateErrorCodeSolution: (errorCodeId, solutionId, payload) => apiClient.put(`/maintenance/error-codes/${errorCodeId}/solutions/${solutionId}`, payload),
+  deleteErrorCodeSolution: (errorCodeId, solutionId) => apiClient.delete(`/maintenance/error-codes/${errorCodeId}/solutions/${solutionId}`),
 
   tickets: (params = '') => apiClient.get(`/maintenance/tickets${params ? `?${params}` : ''}`),
   ticket: (id) => apiClient.get(`/maintenance/tickets/${id}`),

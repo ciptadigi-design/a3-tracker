@@ -9,10 +9,13 @@ function toQueryString(params = {}) {
   return search.toString()
 }
 
-export const loadMachineErrorCodes = async ({ machineModelId } = {}) => unwrapCollection(await laravelMaintenance.errorCodes(toQueryString({ machine_model_id: machineModelId })))
+export const loadMachineErrorCodes = async ({ machineModelId, search } = {}) => unwrapCollection(await laravelMaintenance.errorCodes(toQueryString({ machine_model_id: machineModelId, search })))
 export const createMachineErrorCode = async (payload) => unwrapData(await laravelMaintenance.createErrorCode(payload))
 export const updateMachineErrorCode = async (id, payload) => unwrapData(await laravelMaintenance.updateErrorCode(id, payload))
 export const setMachineErrorCodeStatus = async (id, isActive) => unwrapData(await laravelMaintenance.setErrorCodeStatus(id, isActive))
+export const addErrorCodeSolution = async (errorCodeId, payload) => unwrapData(await laravelMaintenance.addErrorCodeSolution(errorCodeId, payload))
+export const updateErrorCodeSolution = async (errorCodeId, solutionId, payload) => unwrapData(await laravelMaintenance.updateErrorCodeSolution(errorCodeId, solutionId, payload))
+export const deleteErrorCodeSolution = async (errorCodeId, solutionId) => { await laravelMaintenance.deleteErrorCodeSolution(errorCodeId, solutionId) }
 
 export const loadMaintenanceDocuments = async ({ machineModelId } = {}) => unwrapCollection(await laravelMaintenance.documents(toQueryString({ machine_model_id: machineModelId })))
 export const createMaintenanceDocument = async (payload) => unwrapData(await laravelMaintenance.createDocument(payload))
