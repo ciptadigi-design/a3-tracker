@@ -9,7 +9,7 @@ const navigation = [
   { path: '/inventory', label: 'Inventory', icon: Package, active: true },
   { path: '/machine-cost', label: 'Machine Cost', icon: CircleDollarSign, active: true },
   { path: '/errors', label: 'Errors', icon: AlertTriangle, active: true },
-  { path: '/maintenance', label: 'Maintenance', icon: Wrench },
+  { path: '/maintenance', label: 'Maintenance', icon: Wrench, active: true },
   { path: '/reports', label: 'Reports', icon: BarChart3, active: true },
 ]
 
@@ -36,7 +36,7 @@ export function Sidebar({ path, navigate, account, branch, profile, roleLabel, c
       </div>
       <nav className="primary-nav" aria-label="Primary navigation">
         <span className="nav-label">Workspace</span>
-        {navigation.filter((item) => item.path === '/reports' ? can('reports.view') : item.path === '/machine-cost' ? can('machine_cost.view') : true).map((item) => <NavLink key={item.path} item={item} path={path} navigate={navigate} />)}
+        {navigation.filter((item) => item.path === '/reports' ? can('reports.view') : item.path === '/machine-cost' ? can('machine_cost.view') : item.path === '/maintenance' ? can('maintenance.view') : true).map((item) => <NavLink key={item.path} item={item} path={path} navigate={navigate} />)}
       </nav>
       <nav className="secondary-nav" aria-label="Settings navigation">
         {can('settings.view') && <NavLink item={{ path: '/settings', label: 'Settings', icon: Settings, active: true }} path={path} navigate={navigate} />}
