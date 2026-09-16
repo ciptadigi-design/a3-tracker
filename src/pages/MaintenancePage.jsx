@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { AlertTriangle, BookOpen, CheckCircle2, ClipboardPlus, ListChecks, Plus, RefreshCcw, Wrench } from 'lucide-react'
+import { AlertTriangle, BookOpen, CheckCircle2, ClipboardPlus, FileText, ListChecks, Plus, RefreshCcw, Wrench } from 'lucide-react'
 import { PageHeader } from '../components/ui/PageHeader.jsx'
 import { useTenant } from '../features/account/useTenant.js'
 import { CreateTicketDialog } from '../features/maintenance/CreateTicketDialog.jsx'
@@ -12,6 +12,18 @@ import { createMaintenanceTicket } from '../services/maintenance.js'
 import { userErrorMessage } from '../lib/appErrors.js'
 
 const statusTabs = ['OPEN', 'IN_PROGRESS', 'DONE', 'CANCELLED']
+
+// Architecture note: "Knowledge base" (this tab) holds approved internal
+// troubleshooting write-ups (maintenance_knowledge - DRAFT/REVIEW/PUBLISHED,
+// technician-submitted, admin-reviewed prose). "Documents" is a deliberately
+// separate future concept - manufacturer manuals, service documents, and
+// reference files (machine_error_codes.source_document_id already points at
+// the maintenance_documents table backing this; MaintenanceKnowledgeBaseController
+// already exposes documents()/storeDocument()). It is reference-metadata only
+// (a title + an external file_reference URL/path) by design - no file storage
+// or upload subsystem exists or should be added here yet. The tab below is a
+// placeholder only, matching this app's existing Sidebar "Soon" convention,
+// so the two concepts aren't conflated in the UI ahead of that decision.
 
 function TicketRow({ ticket, timezone, onOpen }) {
   return (
@@ -55,10 +67,22 @@ export function MaintenancePage({ navigate }) {
         <button type="button" role="tab" aria-selected={tab === 'tickets'} className={tab === 'tickets' ? 'selected' : ''} onClick={() => setTab('tickets')}><ListChecks size={16} /> Tickets</button>
         <button type="button" role="tab" aria-selected={tab === 'knowledge'} className={tab === 'knowledge' ? 'selected' : ''} onClick={() => setTab('knowledge')}><BookOpen size={16} /> Knowledge base</button>
         <button type="button" role="tab" aria-selected={tab === 'error-codes'} className={tab === 'error-codes' ? 'selected' : ''} onClick={() => setTab('error-codes')}><AlertTriangle size={16} /> Error Codes</button>
+        <button type="button" role="tab" aria-selected={tab === 'documents'} className={tab === 'documents' ? 'selected' : ''} onClick={() => setTab('documents')}><FileText size={16} /> Documents<span>Soon</span></button>
       </nav>
 
       {tab === 'error-codes' ? (
         <ErrorCodeKnowledgeSection />
+      ) : tab === 'documents' ? (
+        <section className="machine-list-card glass-surface maintenance-documents-placeholder">
+          <FileText size={38} strokeWidth={1.35} />
+          <h3>Documents is coming soon</h3>
+          <p>A separate place for manufacturer manuals, service documents, and other reference files - distinct from the approved troubleshooting Knowledge Base.</p>
+          <ul>
+            <li>Machine manuals</li>
+            <li>Service documents</li>
+            <li>Reference files</li>
+          </ul>
+        </section>
       ) : tab === 'tickets' ? (
         <section className="machine-list-card glass-surface">
           <div className="list-toolbar"><div><span className="card-kicker">Maintenance tickets</span><h2>{ticketsState.isLoading ? 'Loading tickets…' : `${ticketsState.tickets.length} ${ticketStatusLabels[statusFilter].toLowerCase()}`}</h2></div><button className="icon-button" type="button" onClick={ticketsState.refresh} aria-label="Refresh tickets" disabled={ticketsState.isLoading}><RefreshCcw size={17} className={ticketsState.isLoading ? 'spin' : ''} /></button></div>

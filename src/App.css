@@ -595,8 +595,38 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .incident-history-action .secondary-button { min-height: 38px; padding: 0 12px; font-size: 9px; }
 .incident-status-pill { width: fit-content; max-width: 100%; display: inline-flex; align-items: center; padding: 6px 9px; border-radius: 99px; color: var(--warning); background: rgba(197, 123, 23, 0.12); font-size: 8px; font-weight: 780; letter-spacing: 0.06em; text-transform: uppercase; }
 .incident-status-pill.resolved { color: var(--green); background: rgba(33, 164, 107, 0.11); }
-.incident-status-pill.voided { color: var(--danger); background: rgba(217, 71, 71, 0.1); }
+.incident-status-pill.voided, .incident-status-pill.critical { color: var(--danger); background: rgba(217, 71, 71, 0.1); }
+.incident-status-pill.info { color: var(--blue); background: var(--blue-soft); }
 .incident-dialog { width: min(1080px, 100%); }
+
+/* Maintenance module - Error Codes tab */
+.maintenance-error-toolbar-actions { flex: 0 0 auto; display: flex; align-items: center; gap: 8px; }
+.maintenance-error-search { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; padding: 14px 16px; margin: 16px 0 20px; border: 1px solid var(--border-subtle); border-radius: 14px; background: var(--surface-muted); }
+.maintenance-error-search .form-field { flex: 1 1 240px; min-width: 200px; }
+.maintenance-error-search > button { flex: 0 0 auto; min-height: 46px; }
+.maintenance-error-code-row { padding: 0; overflow: hidden; }
+.maintenance-error-code-row-header { width: 100%; min-width: 0; display: flex; align-items: center; gap: 12px; padding: 14px 16px; color: inherit; text-align: left; background: transparent; border: 0; cursor: pointer; }
+.maintenance-error-code-row-header > div { flex: 1 1 auto; min-width: 0; display: flex; align-items: center; gap: 10px; }
+.maintenance-error-code-row-header strong { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; }
+.maintenance-error-code-detail { padding: 0 16px 16px 42px; color: var(--text-soft); font-size: 11px; line-height: 1.65; }
+.maintenance-error-code-detail p { margin: 0 0 8px; }
+.maintenance-error-code-detail ol { margin: 8px 0 0; padding-left: 18px; display: grid; gap: 6px; }
+.maintenance-error-code-detail small { color: var(--text-muted); }
+.maintenance-step-section { margin: 22px 26px 26px; padding-top: 18px; border-top: 1px solid var(--border-subtle); }
+.maintenance-step-form { padding: 12px; margin-top: 10px; border: 1px solid var(--border-subtle); border-radius: 12px; background: var(--surface-muted); }
+.checkbox-field { flex-direction: row !important; align-items: center; gap: 8px !important; }
+.checkbox-field input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--blue); }
+.maintenance-documents-placeholder { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; min-height: 260px; padding: 34px; text-align: center; color: var(--text-soft); }
+.maintenance-documents-placeholder h3 { margin: 0; color: var(--text); font-size: 18px; }
+.maintenance-documents-placeholder ul { margin: 6px 0 0; padding: 0; list-style: none; display: grid; gap: 4px; font-size: 11px; }
+@media (max-width: 680px) {
+  .maintenance-error-search { flex-direction: column; align-items: stretch; }
+  .maintenance-error-search > button { width: 100%; justify-content: center; }
+  .maintenance-error-code-detail { padding-left: 16px; }
+  .list-toolbar:has(.maintenance-error-toolbar-actions) { align-items: stretch; flex-direction: column; }
+  .maintenance-error-toolbar-actions { justify-content: space-between; }
+  .maintenance-error-toolbar-actions .primary-button { flex: 1; justify-content: center; }
+}
 .incident-form-grid, .incident-loss-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .incident-loss-preview { min-width: 0; display: flex; flex-direction: column; gap: 4px; padding: 15px 16px; border: 1px solid var(--border-subtle); border-radius: 16px; background: var(--surface-muted); }
 .incident-loss-preview > span { color: var(--text-muted); font-size: 9px; font-weight: 720; letter-spacing: 0.06em; text-transform: uppercase; }

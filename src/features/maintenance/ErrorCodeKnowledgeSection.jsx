@@ -12,7 +12,7 @@ function ErrorCodeRow({ code, canManage, canManageThisRow, onEdit }) {
 
   return (
     <li className="incident-narrative-card glass-surface maintenance-error-code-row">
-      <button type="button" className="list-toolbar" onClick={() => setExpanded((v) => !v)} aria-expanded={expanded}>
+      <button type="button" className="maintenance-error-code-row-header" onClick={() => setExpanded((v) => !v)} aria-expanded={expanded}>
         {expanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
         <div>
           <strong>{code.code} · {code.title}</strong>
@@ -56,15 +56,20 @@ export function ErrorCodeKnowledgeSection() {
     <section className="machine-list-card glass-surface">
       <div className="list-toolbar">
         <div><span className="card-kicker">Error code knowledge base</span><h2>{state.isLoading ? 'Loading…' : `${state.errorCodes.length} ${state.errorCodes.length === 1 ? 'code' : 'codes'}`}</h2></div>
-        <button className="icon-button" type="button" onClick={state.refresh} aria-label="Refresh error codes" disabled={state.isLoading}><RefreshCcw size={17} className={state.isLoading ? 'spin' : ''} /></button>
+        {/* Admin actions live here, in the toolbar, deliberately separate from the
+            search/filter bar below - the two serve different intents (finding a
+            code vs. managing the catalog) and shouldn't compete for the same row. */}
+        <div className="maintenance-error-toolbar-actions">
+          <button className="icon-button" type="button" onClick={state.refresh} aria-label="Refresh error codes" disabled={state.isLoading}><RefreshCcw size={17} className={state.isLoading ? 'spin' : ''} /></button>
+          {canManage && <button className="primary-button" type="button" onClick={() => setWorkflow({ mode: 'create' })}><Plus size={16} /> Add error code</button>}
+        </div>
       </div>
 
       <form className="maintenance-error-search" onSubmit={handleSearchSubmit}>
-        <label className="form-field"><span className="sr-only">Search error codes</span>
+        <label className="form-field"><span>Search</span>
           <input value={searchInput} onChange={(event) => setSearchInput(event.target.value)} placeholder="Search by code or title…" aria-label="Search error codes" />
         </label>
         <button className="secondary-button" type="submit"><Search size={16} /> Search</button>
-        {canManage && <button className="primary-button" type="button" onClick={() => setWorkflow({ mode: 'create' })}><Plus size={16} /> Add error code</button>}
       </form>
 
       {state.isLoading ? <div className="machine-loading-state"><RefreshCcw className="spin" size={24} /><strong>Loading error codes…</strong></div>
