@@ -43,10 +43,9 @@ test('document detail shows related error-code references and gates linking behi
   assert.match(detail, /deleteDocumentReference/)
 })
 
-test('document form dialog is metadata-only - a file_path reference field, no upload input', () => {
+test('document form dialog offers an upload-PDF mode alongside the external-reference mode (superseded by V1.4 document storage)', () => {
   assert.match(formDialog, /File reference \(path or URL\)/)
-  assert.doesNotMatch(formDialog, /type="file"/)
-  assert.match(formDialog, /No file is uploaded here\./)
+  assert.match(formDialog, /<PdfUploadField file=\{selectedFile\} onFileSelected=\{setSelectedFile\} disabled=\{isSaving\} \/>/)
 })
 
 test('error code knowledge section renders related documents from document_references', () => {

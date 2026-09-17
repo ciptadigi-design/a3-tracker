@@ -116,3 +116,23 @@ export function mapMaintenanceError(error) {
   if (error?.status === 422) return 'Check the highlighted fields and try again.'
   return 'The request could not be completed. Please try again.'
 }
+
+// Mirrors DocumentStorageService::MAX_FILE_SIZE_BYTES - client-side validation is a
+// fast-fail UX convenience only; the backend remains the authoritative enforcement.
+export const MAX_DOCUMENT_FILE_SIZE_BYTES = 50 * 1024 * 1024
+
+export function formatFileSize(bytes) {
+  if (bytes == null) return '—'
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+}
+
+export function validatePdfFile(file) {
+  if (!file) return 'Select a file.'
+  const isPdfType = file.type === 'application/pdf'
+  const isPdfExtension = file.name.toLowerCase().endsWith('.pdf')
+  if (!isPdfType && !isPdfExtension) return 'Only PDF files are accepted.'
+  if (file.size > MAX_DOCUMENT_FILE_SIZE_BYTES) return `File exceeds the maximum allowed size of ${formatFileSize(MAX_DOCUMENT_FILE_SIZE_BYTES)}.`
+  return null
+}

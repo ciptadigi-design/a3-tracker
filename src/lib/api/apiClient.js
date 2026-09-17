@@ -14,6 +14,7 @@ const backend = dataBackend
 const baseUrl = resolveApiBaseUrl(import.meta.env?.VITE_API_BASE_URL)
 
 export const apiBackend = backend
+export const apiBaseUrl = baseUrl
 
 function assertLaravel() {
   if (backend !== 'laravel') throw new Error(`Laravel API client used while VITE_DATA_BACKEND=${backend}.`)
@@ -21,7 +22,11 @@ function assertLaravel() {
 
 export async function apiRequest(path, options = {}) {
   assertLaravel()
-  const headers = { Accept: 'application/json', 'Content-Type': 'application/json', ...(options.headers || {}) }
+  // A FormData body (file upload) must never get a JSON Content-Type - the browser
+  // sets its own multipart/form-data boundary, and JSON.stringify()-ing a FormData
+  // object would silently send "{}" instead of the file.
+  const isFormData = typeof FormData !== 'undefined' && options.body instanceof FormData
+  const headers = { Accept: 'application/json', ...(isFormData ? {} : { 'Content-Type': 'application/json' }), ...(options.headers || {}) }
   const csrf = document.cookie.split('; ').find((entry) => entry.startsWith('XSRF-TOKEN='))?.split('=').slice(1).join('=')
   if (csrf) headers['X-XSRF-TOKEN'] = decodeURIComponent(csrf)
   const response = await fetch(`${baseUrl}${path}`, { credentials: 'include', ...options, headers })
@@ -60,4 +65,5 @@ export const apiClient = {
   put: (path, body, options) => apiRequest(path, { ...options, method: 'PUT', body: JSON.stringify(body ?? {}) }),
   patch: (path, body, options) => apiRequest(path, { ...options, method: 'PATCH', body: JSON.stringify(body ?? {}) }),
   delete: (path, options) => apiRequest(path, { ...options, method: 'DELETE' }),
+  upload: (path, formData, options) => apiRequest(path, { ...options, method: 'POST', body: formData }),
 }

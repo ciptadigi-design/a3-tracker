@@ -136,6 +136,9 @@ Route::prefix('v1')->middleware('request.id')->group(function () {
             Route::delete('maintenance/documents/{id}', [MaintenanceDocumentController::class, 'destroy']);
             Route::post('maintenance/documents/{document}/references', [MaintenanceDocumentController::class, 'storeReference']);
             Route::delete('maintenance/documents/{document}/references/{reference}', [MaintenanceDocumentController::class, 'deleteReference']);
+            Route::post('maintenance/documents/{id}/upload', [MaintenanceDocumentController::class, 'upload']);
+            Route::get('maintenance/documents/{id}/download', [MaintenanceDocumentController::class, 'download']);
+            Route::delete('maintenance/documents/{id}/file', [MaintenanceDocumentController::class, 'deleteFile']);
             Route::get('maintenance/error-codes', [MaintenanceKnowledgeBaseController::class, 'errorCodes']);
             Route::post('maintenance/error-codes', [MaintenanceKnowledgeBaseController::class, 'storeErrorCode']);
             Route::put('maintenance/error-codes/{id}', [MaintenanceKnowledgeBaseController::class, 'updateErrorCode']);

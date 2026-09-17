@@ -12,9 +12,9 @@ class MaintenanceDocument extends Model
 
     protected $keyType = 'string';
 
-    protected $fillable = ['account_id', 'manufacturer_id', 'machine_model_id', 'title', 'description', 'document_type', 'file_reference', 'file_path', 'file_name', 'file_size', 'mime_type', 'version', 'status', 'uploaded_by', 'is_active', 'archived_at'];
+    protected $fillable = ['account_id', 'manufacturer_id', 'machine_model_id', 'title', 'description', 'document_type', 'file_reference', 'file_path', 'file_name', 'file_size', 'mime_type', 'storage_disk', 'uploaded_at', 'version', 'status', 'uploaded_by', 'is_active', 'archived_at'];
 
-    protected $casts = ['is_active' => 'boolean', 'archived_at' => 'datetime', 'file_size' => 'integer'];
+    protected $casts = ['is_active' => 'boolean', 'archived_at' => 'datetime', 'file_size' => 'integer', 'uploaded_at' => 'datetime'];
 
     protected static function booted(): void
     {

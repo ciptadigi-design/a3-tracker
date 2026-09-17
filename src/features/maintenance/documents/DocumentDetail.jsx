@@ -1,17 +1,83 @@
 import { useState } from 'react'
-import { AlertCircle, ClipboardList, ExternalLink, FileText, LoaderCircle, Plus, ShieldAlert, Trash2, X } from 'lucide-react'
+import { AlertCircle, ClipboardList, Download, ExternalLink, Eye, FileText, LoaderCircle, Plus, Sparkles, ShieldAlert, Trash2, X } from 'lucide-react'
 import { BlockingDialog } from '../../../components/ui/BlockingDialog.jsx'
 import { ErrorState } from '../../../components/ui/ErrorState.jsx'
 import { LoadingScreen } from '../../../components/ui/LoadingScreen.jsx'
 import { userErrorMessage } from '../../../lib/appErrors.js'
-import { addDocumentReference, createDocumentImport, deleteDocumentReference } from '../../../services/maintenance.js'
+import { addDocumentReference, createDocumentImport, deleteDocumentReference, deleteMaintenanceDocumentFile, maintenanceDocumentFileUrl, uploadMaintenanceDocumentFile } from '../../../services/maintenance.js'
 import { useMachineCatalog } from '../../machines/useMachineCatalog.js'
 import { useMachineErrorCodes } from '../useMachineErrorCodes.js'
-import { documentStatusLabels, documentTypeLabels, formatMaintenanceDate, mapMaintenanceError } from '../maintenanceUtils.js'
+import { documentStatusLabels, documentTypeLabels, formatFileSize, formatMaintenanceDate, mapMaintenanceError } from '../maintenanceUtils.js'
 import { KnowledgeImportDetail } from '../knowledge-import/KnowledgeImportDetail.jsx'
 import { KnowledgeImportList } from '../knowledge-import/KnowledgeImportList.jsx'
 import { useKnowledgeImports } from '../knowledge-import/useKnowledgeImports.js'
+import { PdfUploadField } from './PdfUploadField.jsx'
 import { useMaintenanceDocument } from './useMaintenanceDocument.js'
+
+function DocumentFileSection({ document, canManage, onChanged }) {
+  const [selectedFile, setSelectedFile] = useState(null)
+  const [isUploading, setIsUploading] = useState(false)
+  const [error, setError] = useState(null)
+
+  async function handleUpload() {
+    if (!selectedFile || isUploading) return
+    setIsUploading(true)
+    setError(null)
+    try {
+      const updated = await uploadMaintenanceDocumentFile(document.id, selectedFile)
+      setSelectedFile(null)
+      onChanged(updated)
+    } catch (uploadError) {
+      setError(mapMaintenanceError(uploadError))
+    } finally {
+      setIsUploading(false)
+    }
+  }
+
+  async function handleDeleteFile() {
+    setError(null)
+    try {
+      const updated = await deleteMaintenanceDocumentFile(document.id)
+      onChanged(updated)
+    } catch (deleteError) {
+      setError(mapMaintenanceError(deleteError))
+    }
+  }
+
+  return (
+    <div className="maintenance-step-section" style={{ margin: '18px 0 0', paddingTop: '16px' }}>
+      <div className="form-section-heading"><strong>Document file</strong><span>The stored PDF for this document.</span></div>
+
+      {document.storage_disk ? (
+        <div className="incident-narrative-card glass-surface">
+          <span><FileText size={16} /></span>
+          <div>
+            <strong>{document.file_name || 'document.pdf'}</strong>
+            <p>Size: {formatFileSize(document.file_size)}</p>
+            <small>Uploaded {formatMaintenanceDate(document.uploaded_at, undefined, { dateOnly: true })}</small>
+          </div>
+          <div className="dialog-actions">
+            <a className="secondary-button" href={maintenanceDocumentFileUrl(document.id, { inline: true })} target="_blank" rel="noreferrer"><Eye size={15} /> View PDF</a>
+            <a className="secondary-button" href={maintenanceDocumentFileUrl(document.id)}><Download size={15} /> Download</a>
+            {canManage && <button className="icon-button" type="button" onClick={handleDeleteFile} aria-label="Delete PDF"><Trash2 size={15} /></button>}
+          </div>
+        </div>
+      ) : document.file_path ? (
+        <p><a href={document.file_path} target="_blank" rel="noreferrer"><ExternalLink size={14} /> {document.file_name || 'Open file reference'}</a></p>
+      ) : (
+        <p className="machine-empty-state" style={{ minHeight: 0, padding: '18px' }}>No PDF uploaded yet</p>
+      )}
+
+      {canManage && !document.storage_disk && (
+        <>
+          <PdfUploadField file={selectedFile} onFileSelected={setSelectedFile} disabled={isUploading} />
+          {error && <small className="field-error"><AlertCircle size={13} />{error}</small>}
+          {selectedFile && <button className="primary-button" type="button" onClick={handleUpload} disabled={isUploading} style={{ marginTop: 10 }}>{isUploading ? <LoaderCircle className="spin" size={16} /> : null} {isUploading ? 'Uploading…' : 'Upload PDF'}</button>}
+        </>
+      )}
+    </div>
+  )
+}
 
 function ReferenceForm({ documentId, onCancel, onAdded }) {
   const errorCodesState = useMachineErrorCodes()
@@ -130,8 +196,15 @@ export function DocumentDetail({ documentId, canManage, onClose }) {
             <>
               <p><strong>Type:</strong> {documentTypeLabels[state.document.document_type] ?? state.document.document_type} · <strong>Status:</strong> {documentStatusLabels[state.document.status] ?? state.document.status}{state.document.version && <> · <strong>Version:</strong> {state.document.version}</>}</p>
               {state.document.description && <p>{state.document.description}</p>}
-              {state.document.file_path && <p><a href={state.document.file_path} target="_blank" rel="noreferrer"><ExternalLink size={14} /> {state.document.file_name || 'Open file reference'}</a></p>}
               <small>Added {formatMaintenanceDate(state.document.created_at, undefined, { dateOnly: true })}</small>
+
+              <DocumentFileSection document={state.document} canManage={canManage} onChanged={(updated) => state.setDocument((prev) => ({ ...prev, ...updated }))} />
+
+              {/* Future AI extraction (V1.5+): PDF Upload -> Text Extraction -> Knowledge
+                  Import -> Review -> Publish. Not implemented yet - placeholder only. */}
+              <div className="maintenance-step-section" style={{ margin: '18px 0 0', paddingTop: '16px' }}>
+                <button className="secondary-button" type="button" disabled title="Coming soon"><Sparkles size={16} /> Extract Knowledge <small>Coming soon</small></button>
+              </div>
 
               <div className="maintenance-step-section" style={{ margin: '18px 0 0', paddingTop: '16px' }}>
                 <div className="form-section-heading"><strong>Related error knowledge</strong><span>Error codes this document is a source for.</span></div>

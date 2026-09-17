@@ -619,6 +619,13 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .maintenance-documents-placeholder { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; min-height: 260px; padding: 34px; text-align: center; color: var(--text-soft); }
 .maintenance-documents-placeholder h3 { margin: 0; color: var(--text); font-size: 18px; }
 .maintenance-documents-placeholder ul { margin: 6px 0 0; padding: 0; list-style: none; display: grid; gap: 4px; font-size: 11px; }
+.maintenance-pdf-dropzone { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; margin-top: 10px; padding: 26px 16px; text-align: center; color: var(--text-soft); border: 1.5px dashed var(--border-subtle); border-radius: 14px; background: var(--surface-muted); transition: border-color 140ms, background 140ms; }
+.maintenance-pdf-dropzone.dragging { border-color: var(--blue); background: var(--blue-soft); }
+.maintenance-pdf-dropzone p { margin: 0; font-size: 11px; }
+.maintenance-pdf-selected { width: 100%; display: flex; align-items: center; gap: 12px; color: var(--text); }
+.maintenance-pdf-selected > div { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; text-align: left; }
+.maintenance-pdf-selected strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; }
+.maintenance-pdf-selected span { color: var(--text-muted); font-size: 10px; }
 @media (max-width: 680px) {
   .maintenance-error-search { flex-direction: column; align-items: stretch; }
   .maintenance-error-search > button { width: 100%; justify-content: center; }

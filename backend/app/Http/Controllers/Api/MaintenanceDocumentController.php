@@ -9,6 +9,7 @@ use App\Models\MaintenanceDocument;
 use App\Models\MaintenanceDocumentReference;
 use App\Models\Manufacturer;
 use App\Services\AccountAccessResolver;
+use App\Services\DocumentStorageService;
 use App\Services\GovernanceAudit;
 use App\Services\ScopedReference;
 use Illuminate\Http\Request;
@@ -28,11 +29,6 @@ use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
  */
 class MaintenanceDocumentController extends Controller
 {
-    // No existing upload convention exists anywhere in this app (grep confirms no
-    // controller handles $request->file()); this is a placeholder ceiling for the
-    // metadata-only file_size field until a real upload pipeline is designed.
-    private const MAX_FILE_SIZE_BYTES = 20 * 1024 * 1024;
-
     private function authorizeCatalogScope(Request $r, ?string $accountId): void
     {
         abort_unless(app(AccountAccessResolver::class)->canManageCatalogScope($r->user(), $accountId), 403);
@@ -95,7 +91,7 @@ class MaintenanceDocumentController extends Controller
             'version' => 'nullable|string|max:40',
             'file_path' => 'nullable|string|max:500',
             'file_name' => 'nullable|string|max:255',
-            'file_size' => 'nullable|integer|min:0|max:'.self::MAX_FILE_SIZE_BYTES,
+            'file_size' => 'nullable|integer|min:0|max:'.DocumentStorageService::MAX_FILE_SIZE_BYTES,
             'mime_type' => 'nullable|in:application/pdf',
             'status' => 'nullable|in:DRAFT,PUBLISHED,ARCHIVED',
         ]);
@@ -113,6 +109,11 @@ class MaintenanceDocumentController extends Controller
         // file_reference is V1's legacy required column, superseded by file_path/
         // file_name here but still NOT NULL at the DB level - see the V1.2 migration note.
         $d['file_reference'] = $d['file_path'] ?? '';
+        // Explicit, not left to the DB default - a column absent from create()'s array
+        // never appears on the in-memory model afterwards even though the DB applies a
+        // default, so the immediate JSON response would silently omit these keys.
+        $d['storage_disk'] = null;
+        $d['uploaded_at'] = null;
         $doc = MaintenanceDocument::create($d);
 
         app(GovernanceAudit::class)->changed($r->user(), 'maintenance_document.created', 'maintenance_document', $doc->id, $d['account_id'] ?? null, [], app(GovernanceAudit::class)->snapshot($doc));
@@ -125,6 +126,13 @@ class MaintenanceDocumentController extends Controller
         $doc = MaintenanceDocument::findOrFail($id);
         $this->authorizeCatalogScope($r, $doc->account_id);
         $d = $this->validated($r, requireTitle: false);
+        // A document with a real stored upload must go through upload() (replace) or
+        // deleteFile() to change its file - never this generic metadata endpoint, which
+        // would otherwise silently orphan the physical file on disk (the row would stop
+        // pointing at it, but nothing would ever delete it).
+        if (app(DocumentStorageService::class)->hasStoredFile($doc) && (array_key_exists('file_path', $d) || array_key_exists('file_name', $d))) {
+            throw new ConflictHttpException('[FILE_MANAGED_ELSEWHERE] This document has an uploaded file. Use the upload or delete-file endpoint to change it.');
+        }
         if (array_key_exists('manufacturer_id', $d)) {
             ScopedReference::activeGlobalOrOwned(Manufacturer::class, $d['manufacturer_id'], $doc->account_id, 'manufacturer_id');
         }
@@ -148,6 +156,7 @@ class MaintenanceDocumentController extends Controller
             throw new ConflictHttpException('[DOCUMENT_REFERENCED] This document is linked to error codes or knowledge references and cannot be deleted. Archive it instead.');
         }
         $before = app(GovernanceAudit::class)->snapshot($doc);
+        app(DocumentStorageService::class)->deleteFile($doc);
         $doc->delete();
 
         app(GovernanceAudit::class)->changed($r->user(), 'maintenance_document.deleted', 'maintenance_document', $id, $doc->account_id, $before, []);
@@ -197,5 +206,56 @@ class MaintenanceDocumentController extends Controller
         app(GovernanceAudit::class)->changed($r->user(), 'maintenance_document_reference.deleted', 'maintenance_document_reference', $referenceId, $doc->account_id, $before, []);
 
         return response()->noContent();
+    }
+
+    // Upload/replace/delete-file/download are mutation-gated (upload/delete-file via
+    // canManageCatalogScope, same as every other document mutation) or read-gated
+    // (download - any active tenant member, matching show()'s visibility), never a
+    // new capability.
+    public function upload(Request $r, string $id)
+    {
+        $doc = MaintenanceDocument::findOrFail($id);
+        $this->authorizeCatalogScope($r, $doc->account_id);
+        $r->validate(['file' => 'required|file|mimes:pdf|max:'.(DocumentStorageService::MAX_FILE_SIZE_BYTES / 1024)]);
+
+        $storage = app(DocumentStorageService::class);
+        $isReplacement = $storage->hasStoredFile($doc);
+        $audit = app(GovernanceAudit::class);
+        $before = $audit->snapshot($doc);
+        $metadata = $storage->store($doc, $r->file('file'));
+        $doc->update($metadata + ['file_reference' => $metadata['file_path']]);
+
+        // record(), not changed() - an upload/replace is a mutation regardless of
+        // whether the tracked metadata happens to be identical (e.g. re-uploading a
+        // same-named file within the same second-precision uploaded_at tick); the new
+        // file content itself is the audit-worthy event, not a metadata delta.
+        $audit->record($r->user(), $isReplacement ? 'maintenance_document.replaced' : 'maintenance_document.uploaded', 'maintenance_document', $doc->id, $doc->account_id, ['changes' => $audit->changes($before, $audit->snapshot($doc))]);
+
+        return response()->json(['data' => $doc->fresh()], 201);
+    }
+
+    public function download(Request $r, string $id)
+    {
+        $doc = MaintenanceDocument::findOrFail($id);
+        $ids = $r->user()->memberships()->where('status', 'active')->pluck('account_id');
+        abort_unless($doc->account_id === null || $ids->contains($doc->account_id), 404);
+
+        return app(DocumentStorageService::class)->download($doc, $r->boolean('inline'));
+    }
+
+    public function deleteFile(Request $r, string $id)
+    {
+        $doc = MaintenanceDocument::findOrFail($id);
+        $this->authorizeCatalogScope($r, $doc->account_id);
+        $storage = app(DocumentStorageService::class);
+        abort_unless($storage->hasStoredFile($doc), 404);
+
+        $before = app(GovernanceAudit::class)->snapshot($doc);
+        $storage->deleteFile($doc);
+        $doc->update($storage->clearedMetadata() + ['file_reference' => '']);
+
+        app(GovernanceAudit::class)->changed($r->user(), 'maintenance_document.file_deleted', 'maintenance_document', $doc->id, $doc->account_id, $before, app(GovernanceAudit::class)->snapshot($doc), array_keys($doc->getChanges()));
+
+        return response()->json(['data' => $doc->fresh()]);
     }
 }

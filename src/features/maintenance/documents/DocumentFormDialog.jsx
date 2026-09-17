@@ -2,8 +2,9 @@ import { useMemo, useState } from 'react'
 import { AlertCircle, LoaderCircle, PencilLine, Plus, X } from 'lucide-react'
 import { BlockingDialog } from '../../../components/ui/BlockingDialog.jsx'
 import { useMachineCatalog } from '../../machines/useMachineCatalog.js'
-import { createMaintenanceDocument, updateMaintenanceDocument } from '../../../services/maintenance.js'
+import { createMaintenanceDocument, updateMaintenanceDocument, uploadMaintenanceDocumentFile } from '../../../services/maintenance.js'
 import { documentStatusLabels, documentTypeLabels, mapMaintenanceError } from '../maintenanceUtils.js'
+import { PdfUploadField } from './PdfUploadField.jsx'
 
 function FieldError({ message }) {
   return message ? <small className="field-error"><AlertCircle size={13} />{message}</small> : null
@@ -26,7 +27,10 @@ function emptyForm(doc) {
 
 export function DocumentFormDialog({ document, accountId, onClose, onSaved }) {
   const isEdit = Boolean(document?.id)
+  const hasStoredFile = Boolean(document?.storage_disk)
   const [values, setValues] = useState(() => emptyForm(document))
+  const [fileMode, setFileMode] = useState('upload') // 'upload' | 'external'
+  const [selectedFile, setSelectedFile] = useState(null)
   const [errors, setErrors] = useState({})
   const [formError, setFormError] = useState(null)
   const [isSaving, setIsSaving] = useState(false)
@@ -56,18 +60,21 @@ export function DocumentFormDialog({ document, accountId, onClose, onSaved }) {
     setIsSaving(true)
     setFormError(null)
     try {
+      const useUploadFlow = !hasStoredFile && fileMode === 'upload' && selectedFile
       const payload = {
         ...values,
         manufacturer_id: values.manufacturer_id || null,
         machine_model_id: values.machine_model_id || null,
         description: values.description.trim() || null,
         version: values.version.trim() || null,
-        file_path: values.file_path.trim() || null,
-        file_name: values.file_name.trim() || null,
-        mime_type: values.file_path.trim() ? values.mime_type : null,
+        // Upload mode: the upload endpoint fills file_path/file_name/mime_type itself -
+        // sending them here would be redundant (and, once a file exists, rejected).
+        file_path: useUploadFlow ? null : (values.file_path.trim() || null),
+        file_name: useUploadFlow ? null : (values.file_name.trim() || null),
+        mime_type: useUploadFlow || !values.file_path.trim() ? null : values.mime_type,
       }
-      if (isEdit) await updateMaintenanceDocument(document.id, payload)
-      else await createMaintenanceDocument({ ...payload, account_id: accountId })
+      const saved = isEdit ? await updateMaintenanceDocument(document.id, payload) : await createMaintenanceDocument({ ...payload, account_id: accountId })
+      if (useUploadFlow) await uploadMaintenanceDocumentFile(saved.id, selectedFile)
       onSaved()
       onClose()
     } catch (error) {
@@ -80,7 +87,7 @@ export function DocumentFormDialog({ document, accountId, onClose, onSaved }) {
   return (
     <BlockingDialog className="machine-dialog glass-surface" backdropClassName="machine-dialog-backdrop" labelledBy="document-dialog-title" onClose={onClose} busy={isSaving}>
       <header className="dialog-header">
-        <div className="dialog-heading"><span className="dialog-icon">{isEdit ? <PencilLine size={22} /> : <Plus size={22} />}</span><div><span className="card-kicker">Document repository</span><h2 id="document-dialog-title">{isEdit ? 'Edit document' : 'Register document'}</h2><p>Reference metadata only - a title, an external file reference, and machine linkage. No file is uploaded here.</p></div></div>
+        <div className="dialog-heading"><span className="dialog-icon">{isEdit ? <PencilLine size={22} /> : <Plus size={22} />}</span><div><span className="card-kicker">Document repository</span><h2 id="document-dialog-title">{isEdit ? 'Edit document' : 'Register document'}</h2><p>{isEdit ? 'Update document metadata.' : 'Upload the PDF now, or register an external reference to add later.'}</p></div></div>
         <button className="icon-button" type="button" onClick={onClose} disabled={isSaving} aria-label="Close"><X size={19} /></button>
       </header>
       <form className="machine-form" onSubmit={handleSubmit} noValidate>
@@ -103,9 +110,27 @@ export function DocumentFormDialog({ document, accountId, onClose, onSaved }) {
               </select>
             </label>
             <label className="form-field form-field-wide"><span>Description <small>Optional</small></span><textarea value={values.description} onChange={(event) => change('description', event.target.value)} rows="2" /></label>
-            <label className="form-field form-field-wide"><span>File reference (path or URL) <small>Optional - PDF only, metadata reference, nothing is uploaded</small></span><input value={values.file_path} onChange={(event) => change('file_path', event.target.value)} placeholder="e.g. https://.../km-c1070-service-manual.pdf" /></label>
-            <label className="form-field"><span>File name <small>Optional</small></span><input value={values.file_name} onChange={(event) => change('file_name', event.target.value)} placeholder="e.g. km-c1070-service-manual.pdf" /></label>
           </div>
+
+          {hasStoredFile ? (
+            <div className="permission-banner"><span>This document already has an uploaded PDF. Manage it (view, download, replace, or delete) from the document detail view.</span></div>
+          ) : (
+            <>
+              <div className="machine-view-tabs" role="tablist" aria-label="Document file source" style={{ marginTop: 4 }}>
+                <button type="button" role="tab" aria-selected={fileMode === 'upload'} className={fileMode === 'upload' ? 'selected' : ''} onClick={() => setFileMode('upload')}>Upload PDF</button>
+                <button type="button" role="tab" aria-selected={fileMode === 'external'} className={fileMode === 'external' ? 'selected' : ''} onClick={() => setFileMode('external')}>External reference</button>
+              </div>
+              {fileMode === 'upload' ? (
+                <PdfUploadField file={selectedFile} onFileSelected={setSelectedFile} disabled={isSaving} />
+              ) : (
+                <div className="form-grid">
+                  <label className="form-field form-field-wide"><span>File reference (path or URL) <small>Optional - metadata reference only, nothing is uploaded</small></span><input value={values.file_path} onChange={(event) => change('file_path', event.target.value)} placeholder="e.g. https://.../km-c1070-service-manual.pdf" /></label>
+                  <label className="form-field"><span>File name <small>Optional</small></span><input value={values.file_name} onChange={(event) => change('file_name', event.target.value)} placeholder="e.g. km-c1070-service-manual.pdf" /></label>
+                </div>
+              )}
+            </>
+          )}
+
           {formError && <div className="form-error" role="alert"><AlertCircle size={16} /><span>{formError}</span></div>}
         </div>
         <footer className="dialog-actions form-action-footer">

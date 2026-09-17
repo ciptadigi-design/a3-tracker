@@ -1,5 +1,5 @@
 import { laravelMaintenance } from '../lib/api/maintenance.js'
-import { unwrapCollection, unwrapData } from '../lib/api/apiClient.js'
+import { apiBaseUrl, unwrapCollection, unwrapData } from '../lib/api/apiClient.js'
 
 function toQueryString(params = {}) {
   const search = new URLSearchParams()
@@ -24,6 +24,17 @@ export const updateMaintenanceDocument = async (id, payload) => unwrapData(await
 export const deleteMaintenanceDocument = async (id) => { await laravelMaintenance.deleteDocument(id) }
 export const addDocumentReference = async (documentId, payload) => unwrapData(await laravelMaintenance.addDocumentReference(documentId, payload))
 export const deleteDocumentReference = async (documentId, referenceId) => { await laravelMaintenance.deleteDocumentReference(documentId, referenceId) }
+
+export const uploadMaintenanceDocumentFile = async (documentId, file) => {
+  const formData = new FormData()
+  formData.append('file', file)
+  return unwrapData(await laravelMaintenance.uploadDocumentFile(documentId, formData))
+}
+export const deleteMaintenanceDocumentFile = async (documentId) => unwrapData(await laravelMaintenance.deleteDocumentFile(documentId))
+// Authenticated, session-cookie-based download - a plain same-origin URL, not a
+// fetch+blob dance, so the browser's native download/view handling (and the
+// existing session cookies) just work.
+export const maintenanceDocumentFileUrl = (documentId, { inline = false } = {}) => `${apiBaseUrl}/maintenance/documents/${documentId}/download${inline ? '?inline=1' : ''}`
 
 export const loadMaintenanceTickets = async ({ machineId, status, perPage } = {}) => unwrapData(await laravelMaintenance.tickets(toQueryString({ machine_id: machineId, status, per_page: perPage })))
 export const loadMaintenanceTicket = async (id) => unwrapData(await laravelMaintenance.ticket(id))
