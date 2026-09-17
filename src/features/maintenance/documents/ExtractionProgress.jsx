@@ -2,7 +2,10 @@ import { AlertCircle } from 'lucide-react'
 import { extractionStatusLabels } from '../maintenanceUtils.js'
 
 export function ExtractionProgress({ extraction }) {
-  const { status, total_pages: totalPages, processed_pages: processedPages, error_message: errorMessage } = extraction
+  // Defensive: callers are expected to only render this once an extraction actually
+  // exists (status !== 'NONE'), but guard here too rather than trust every call site.
+  const { status = 'NONE', total_pages: totalPages, processed_pages: processedPages, error_message: errorMessage } = extraction ?? {}
+  if (status === 'NONE') return null
   const showBar = (status === 'PROCESSING' || status === 'COMPLETED') && totalPages != null
   const percent = showBar && totalPages > 0 ? Math.round((processedPages / totalPages) * 100) : 0
 

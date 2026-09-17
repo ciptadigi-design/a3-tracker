@@ -219,12 +219,40 @@ class MaintenanceDocumentExtractionTest extends TestCase
         $this->assertNotEquals($older->id, $data['id']);
     }
 
-    public function test_status_endpoint_returns_null_when_no_extraction_has_ever_been_started(): void
+    /**
+     * V1.5.2 hotfix: this used to assert `data: null`, which crashed DocumentDetail
+     * for pre-V1.5 (V1.4) documents that were uploaded before extraction existed and
+     * never got a row - src/lib/api/apiClient.js's unwrapData() uses `payload?.data
+     * ?? payload`, and `??` can't distinguish "legitimately null" from "missing",
+     * so it returned the whole `{data: null}` envelope instead of `null`, and the
+     * frontend then destructured a `status` that was never there. An explicit NONE
+     * state (not a persisted row - extraction stays optional, no fake row is ever
+     * created) removes that ambiguity at the contract level instead.
+     */
+    public function test_status_endpoint_returns_explicit_none_state_when_no_extraction_has_ever_been_started(): void
     {
         $f = $this->fixture();
         $owner = $this->member($f['home'], 'owner', $f['branch']);
 
-        $this->actingAs($owner)->getJson("/api/v1/maintenance/documents/{$f['document']->id}/extraction")->assertOk()->assertJsonPath('data', null);
+        $this->actingAs($owner)->getJson("/api/v1/maintenance/documents/{$f['document']->id}/extraction")
+            ->assertOk()
+            ->assertExactJson(['data' => ['status' => 'NONE']]);
+
+        $this->assertSame(0, MaintenanceDocumentExtraction::count(), 'NONE is a response-only state - no extraction row is ever created for it.');
+    }
+
+    /** Regression: a V1.4 document with a stored PDF but no extraction row (uploaded before V1.5 existed) must not crash the status endpoint or fabricate a row. */
+    public function test_status_endpoint_returns_none_for_a_pre_v1_5_document_with_a_stored_pdf_and_no_extraction(): void
+    {
+        $f = $this->fixture();
+        $owner = $this->member($f['home'], 'owner', $f['branch']);
+        $this->attachStoredPdf($f['document'], '%PDF-1.4 pre-v1.5 upload, never extracted');
+
+        $this->actingAs($owner)->getJson("/api/v1/maintenance/documents/{$f['document']->id}/extraction")
+            ->assertOk()
+            ->assertExactJson(['data' => ['status' => 'NONE']]);
+
+        $this->assertSame(0, MaintenanceDocumentExtraction::count());
     }
 
     // --- Job processing: lifecycle, page storage, audit ---

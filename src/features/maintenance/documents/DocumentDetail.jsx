@@ -86,6 +86,7 @@ function DocumentFileSection({ document, canManage, onChanged }) {
 function ExtractionSection({ document, canManage }) {
   const { extraction, isLoading, start, isStarting, startError } = useDocumentExtraction(document.id)
   const [showModal, setShowModal] = useState(false)
+  const hasExtraction = Boolean(extraction) && extraction.status !== 'NONE'
   const isCompleted = extraction?.status === 'COMPLETED'
   const canRetry = extraction?.status === 'FAILED'
 
@@ -98,7 +99,7 @@ function ExtractionSection({ document, canManage }) {
     <div className="maintenance-step-section" style={{ margin: '18px 0 0', paddingTop: '16px' }}>
       <div className="form-section-heading"><strong>Extracted content</strong><span>Text extracted from the PDF, prepared for future knowledge processing.</span></div>
 
-      {isLoading ? <small>Loading extraction status…</small> : !extraction ? (
+      {isLoading ? <small>Loading extraction status…</small> : !hasExtraction ? (
         canManage && <button className="secondary-button" type="button" onClick={() => setShowModal(true)}><Sparkles size={16} /> Extract Knowledge</button>
       ) : (
         <>

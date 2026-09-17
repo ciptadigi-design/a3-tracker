@@ -83,7 +83,16 @@ class MaintenanceDocumentExtractionController extends Controller
         $doc = $this->findVisibleDocument($r, $document);
         $extraction = MaintenanceDocumentExtraction::where('document_id', $doc->id)->orderByDesc('created_at')->first();
 
-        return response()->json(['data' => $extraction]);
+        // Extraction is optional (V1.4 documents predate this V1.5 feature and never
+        // get one manually created for them - see class docblock). `data: null` here
+        // is a real, legitimate response, but src/lib/api/apiClient.js's unwrapData()
+        // uses `payload?.data ?? payload`, and `??` treats a genuinely-null `data` the
+        // same as a missing one, so it falls back to returning the whole `{data:
+        // null}` envelope instead of `null` - the frontend then destructures a
+        // `status` that was never there. An explicit NONE state (not a persisted row)
+        // sidesteps that ambiguity entirely rather than changing unwrapData's
+        // fallback behavior for every other endpoint that relies on it.
+        return response()->json(['data' => $extraction ?? ['status' => 'NONE']]);
     }
 
     public function pages(Request $r, string $document)

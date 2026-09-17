@@ -18,6 +18,22 @@ test('DocumentDetail shows an "Extract Knowledge" button (canManage-gated) when 
   assert.match(detail, /canManage && <button className="secondary-button" type="button" onClick=\{\(\) => setShowModal\(true\)\}><Sparkles size=\{16\} \/> Extract Knowledge<\/button>/)
 })
 
+// --- V1.5.2 hotfix: pre-V1.5 documents with no extraction record ---
+// The backend now returns `data: { status: 'NONE' }` (never `data: null`, never a
+// fake persisted row) when a document has no extraction yet - see
+// MaintenanceDocumentExtractionController::show(). These regression tests pin the
+// frontend contract that made the null-crash possible from happening again.
+
+test('DocumentDetail treats a NONE-status extraction the same as no extraction at all (shows the Extract Knowledge button, not a broken progress view)', () => {
+  assert.match(detail, /const hasExtraction = Boolean\(extraction\) && extraction\.status !== 'NONE'/)
+  assert.match(detail, /: !hasExtraction \? \(/)
+})
+
+test('ExtractionProgress never destructures a null/undefined extraction directly and renders nothing for a NONE status', () => {
+  assert.match(progress, /const \{ status = 'NONE', total_pages: totalPages, processed_pages: processedPages, error_message: errorMessage \} = extraction \?\? \{\}/)
+  assert.match(progress, /if \(status === 'NONE'\) return null/)
+})
+
 test('extraction status labels cover the full PENDING -> PROCESSING -> COMPLETED\\/FAILED lifecycle', () => {
   assert.deepEqual(extractionStatusLabels, { PENDING: 'Pending', PROCESSING: 'Processing', COMPLETED: 'Completed', FAILED: 'Failed' })
 })
