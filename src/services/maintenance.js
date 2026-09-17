@@ -36,6 +36,12 @@ export const deleteMaintenanceDocumentFile = async (documentId) => unwrapData(aw
 // existing session cookies) just work.
 export const maintenanceDocumentFileUrl = (documentId, { inline = false } = {}) => `${apiBaseUrl}/maintenance/documents/${documentId}/download${inline ? '?inline=1' : ''}`
 
+export const startDocumentExtraction = async (documentId) => unwrapData(await laravelMaintenance.startDocumentExtraction(documentId))
+export const loadDocumentExtraction = async (documentId) => unwrapData(await laravelMaintenance.documentExtraction(documentId))
+// unwrapData (not unwrapCollection) - the pagination metadata (current_page,
+// last_page, total) matters here, same reason loadMaintenanceTickets keeps it.
+export const loadDocumentPages = async (documentId, { page, perPage } = {}) => unwrapData(await laravelMaintenance.documentPages(documentId, toQueryString({ page, per_page: perPage })))
+
 export const loadMaintenanceTickets = async ({ machineId, status, perPage } = {}) => unwrapData(await laravelMaintenance.tickets(toQueryString({ machine_id: machineId, status, per_page: perPage })))
 export const loadMaintenanceTicket = async (id) => unwrapData(await laravelMaintenance.ticket(id))
 export const createMaintenanceTicket = async (payload) => unwrapData(await laravelMaintenance.createTicket(payload))

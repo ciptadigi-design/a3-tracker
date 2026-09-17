@@ -129,6 +129,15 @@ export function formatFileSize(bytes) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
 
+// Mirrors ExtractMaintenanceDocumentJob's PENDING -> PROCESSING -> COMPLETED
+// flow (or -> FAILED) - the UI never invents a state the backend doesn't have.
+export const extractionStatusLabels = {
+  PENDING: 'Pending',
+  PROCESSING: 'Processing',
+  COMPLETED: 'Completed',
+  FAILED: 'Failed',
+}
+
 export function validatePdfFile(file) {
   if (!file) return 'Select a file.'
   const isPdfType = file.type === 'application/pdf'

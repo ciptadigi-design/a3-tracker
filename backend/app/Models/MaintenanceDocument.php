@@ -40,4 +40,14 @@ class MaintenanceDocument extends Model
     {
         return $this->hasMany(MaintenanceDocumentReference::class, 'document_id');
     }
+
+    public function extractions()
+    {
+        return $this->hasMany(MaintenanceDocumentExtraction::class, 'document_id');
+    }
+
+    public function pages()
+    {
+        return $this->hasMany(MaintenanceDocumentPage::class, 'document_id');
+    }
 }

@@ -11,7 +11,11 @@ import { documentStatusLabels, documentTypeLabels, formatFileSize, formatMainten
 import { KnowledgeImportDetail } from '../knowledge-import/KnowledgeImportDetail.jsx'
 import { KnowledgeImportList } from '../knowledge-import/KnowledgeImportList.jsx'
 import { useKnowledgeImports } from '../knowledge-import/useKnowledgeImports.js'
+import { ExtractedPagesViewer } from './ExtractedPagesViewer.jsx'
+import { ExtractionModal } from './ExtractionModal.jsx'
+import { ExtractionProgress } from './ExtractionProgress.jsx'
 import { PdfUploadField } from './PdfUploadField.jsx'
+import { useDocumentExtraction } from './useDocumentExtraction.js'
 import { useMaintenanceDocument } from './useMaintenanceDocument.js'
 
 function DocumentFileSection({ document, canManage, onChanged }) {
@@ -75,6 +79,41 @@ function DocumentFileSection({ document, canManage, onChanged }) {
           {selectedFile && <button className="primary-button" type="button" onClick={handleUpload} disabled={isUploading} style={{ marginTop: 10 }}>{isUploading ? <LoaderCircle className="spin" size={16} /> : null} {isUploading ? 'Uploading…' : 'Upload PDF'}</button>}
         </>
       )}
+    </div>
+  )
+}
+
+function ExtractionSection({ document, canManage }) {
+  const { extraction, isLoading, start, isStarting, startError } = useDocumentExtraction(document.id)
+  const [showModal, setShowModal] = useState(false)
+  const isCompleted = extraction?.status === 'COMPLETED'
+  const canRetry = extraction?.status === 'FAILED'
+
+  async function handleStart() {
+    await start()
+    setShowModal(false)
+  }
+
+  return (
+    <div className="maintenance-step-section" style={{ margin: '18px 0 0', paddingTop: '16px' }}>
+      <div className="form-section-heading"><strong>Extracted content</strong><span>Text extracted from the PDF, prepared for future knowledge processing.</span></div>
+
+      {isLoading ? <small>Loading extraction status…</small> : !extraction ? (
+        canManage && <button className="secondary-button" type="button" onClick={() => setShowModal(true)}><Sparkles size={16} /> Extract Knowledge</button>
+      ) : (
+        <>
+          <ExtractionProgress extraction={extraction} />
+          {canManage && canRetry && <button className="secondary-button" type="button" onClick={() => setShowModal(true)} style={{ marginTop: 10 }}><Sparkles size={16} /> Retry Extraction</button>}
+        </>
+      )}
+
+      {isCompleted && (
+        <div style={{ marginTop: 14 }}>
+          <ExtractedPagesViewer documentId={document.id} />
+        </div>
+      )}
+
+      {showModal && <ExtractionModal document={document} isStarting={isStarting} startError={startError} onClose={() => setShowModal(false)} onStart={handleStart} />}
     </div>
   )
 }
@@ -200,11 +239,11 @@ export function DocumentDetail({ documentId, canManage, onClose }) {
 
               <DocumentFileSection document={state.document} canManage={canManage} onChanged={(updated) => state.setDocument((prev) => ({ ...prev, ...updated }))} />
 
-              {/* Future AI extraction (V1.5+): PDF Upload -> Text Extraction -> Knowledge
-                  Import -> Review -> Publish. Not implemented yet - placeholder only. */}
-              <div className="maintenance-step-section" style={{ margin: '18px 0 0', paddingTop: '16px' }}>
-                <button className="secondary-button" type="button" disabled title="Coming soon"><Sparkles size={16} /> Extract Knowledge <small>Coming soon</small></button>
-              </div>
+              {/* V1.5: PDF -> per-page text extraction (this section). Turning that
+                  extracted text into maintenance_knowledge_entries (AI-assisted or
+                  manual) stays a future phase, same as V1.3's import workflow was
+                  built before any OCR/AI step. */}
+              <ExtractionSection document={state.document} canManage={canManage} />
 
               <div className="maintenance-step-section" style={{ margin: '18px 0 0', paddingTop: '16px' }}>
                 <div className="form-section-heading"><strong>Related error knowledge</strong><span>Error codes this document is a source for.</span></div>

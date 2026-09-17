@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\IncidentsController;
 use App\Http\Controllers\Api\InventoryController;
 use App\Http\Controllers\Api\MachineCostController;
 use App\Http\Controllers\Api\MaintenanceDocumentController;
+use App\Http\Controllers\Api\MaintenanceDocumentExtractionController;
 use App\Http\Controllers\Api\MaintenanceKnowledgeBaseController;
 use App\Http\Controllers\Api\MaintenanceKnowledgeImportController;
 use App\Http\Controllers\Api\MaintenanceKnowledgeController;
@@ -139,6 +140,9 @@ Route::prefix('v1')->middleware('request.id')->group(function () {
             Route::post('maintenance/documents/{id}/upload', [MaintenanceDocumentController::class, 'upload']);
             Route::get('maintenance/documents/{id}/download', [MaintenanceDocumentController::class, 'download']);
             Route::delete('maintenance/documents/{id}/file', [MaintenanceDocumentController::class, 'deleteFile']);
+            Route::post('maintenance/documents/{document}/extract', [MaintenanceDocumentExtractionController::class, 'store']);
+            Route::get('maintenance/documents/{document}/extraction', [MaintenanceDocumentExtractionController::class, 'show']);
+            Route::get('maintenance/documents/{document}/pages', [MaintenanceDocumentExtractionController::class, 'pages']);
             Route::get('maintenance/error-codes', [MaintenanceKnowledgeBaseController::class, 'errorCodes']);
             Route::post('maintenance/error-codes', [MaintenanceKnowledgeBaseController::class, 'storeErrorCode']);
             Route::put('maintenance/error-codes/{id}', [MaintenanceKnowledgeBaseController::class, 'updateErrorCode']);

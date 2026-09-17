@@ -13,6 +13,9 @@ export const laravelMaintenance = {
   deleteDocumentReference: (documentId, referenceId) => apiClient.delete(`/maintenance/documents/${documentId}/references/${referenceId}`),
   uploadDocumentFile: (documentId, formData) => apiClient.upload(`/maintenance/documents/${documentId}/upload`, formData),
   deleteDocumentFile: (documentId) => apiClient.delete(`/maintenance/documents/${documentId}/file`),
+  startDocumentExtraction: (documentId) => apiClient.post(`/maintenance/documents/${documentId}/extract`),
+  documentExtraction: (documentId) => apiClient.get(`/maintenance/documents/${documentId}/extraction`),
+  documentPages: (documentId, params = '') => apiClient.get(`/maintenance/documents/${documentId}/pages${params ? `?${params}` : ''}`),
 
   errorCodes: (params = '') => apiClient.get(`/maintenance/error-codes${params ? `?${params}` : ''}`),
   createErrorCode: (payload) => apiClient.post('/maintenance/error-codes', payload),

@@ -92,11 +92,17 @@ test('DocumentDetail file section renders all three file-presence states', () =>
   assert.match(detail, /No PDF uploaded yet/)
 })
 
-test('DocumentDetail exposes View/Download links straight to the download endpoint (no blob fetch) and a disabled Extract Knowledge placeholder', () => {
+test('DocumentDetail exposes View/Download links straight to the download endpoint (no blob fetch)', () => {
   assert.match(detail, /href=\{maintenanceDocumentFileUrl\(document\.id, \{ inline: true \}\)\}/)
   assert.match(detail, /href=\{maintenanceDocumentFileUrl\(document\.id\)\}/)
-  assert.match(detail, /Extract Knowledge/)
-  assert.match(detail, /button className="secondary-button" type="button" disabled title="Coming soon"/)
+})
+
+// Extract Knowledge is no longer a disabled "Coming soon" placeholder - see
+// documentExtraction.test.js (V1.5) for the real extraction flow it was
+// replaced with.
+test('DocumentDetail wires the extraction section in, not the old placeholder', () => {
+  assert.match(detail, /<ExtractionSection document=\{state\.document\} canManage=\{canManage\} \/>/)
+  assert.doesNotMatch(detail, /Coming soon/)
 })
 
 // --- apiClient FormData support (backs the upload button end-to-end) ---
