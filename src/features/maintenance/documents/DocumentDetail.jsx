@@ -1,12 +1,16 @@
 import { useState } from 'react'
-import { AlertCircle, ExternalLink, FileText, LoaderCircle, Plus, ShieldAlert, Trash2, X } from 'lucide-react'
+import { AlertCircle, ClipboardList, ExternalLink, FileText, LoaderCircle, Plus, ShieldAlert, Trash2, X } from 'lucide-react'
 import { BlockingDialog } from '../../../components/ui/BlockingDialog.jsx'
 import { ErrorState } from '../../../components/ui/ErrorState.jsx'
 import { LoadingScreen } from '../../../components/ui/LoadingScreen.jsx'
 import { userErrorMessage } from '../../../lib/appErrors.js'
-import { addDocumentReference, deleteDocumentReference } from '../../../services/maintenance.js'
+import { addDocumentReference, createDocumentImport, deleteDocumentReference } from '../../../services/maintenance.js'
+import { useMachineCatalog } from '../../machines/useMachineCatalog.js'
 import { useMachineErrorCodes } from '../useMachineErrorCodes.js'
 import { documentStatusLabels, documentTypeLabels, formatMaintenanceDate, mapMaintenanceError } from '../maintenanceUtils.js'
+import { KnowledgeImportDetail } from '../knowledge-import/KnowledgeImportDetail.jsx'
+import { KnowledgeImportList } from '../knowledge-import/KnowledgeImportList.jsx'
+import { useKnowledgeImports } from '../knowledge-import/useKnowledgeImports.js'
 import { useMaintenanceDocument } from './useMaintenanceDocument.js'
 
 function ReferenceForm({ documentId, onCancel, onAdded }) {
@@ -56,9 +60,50 @@ function ReferenceForm({ documentId, onCancel, onAdded }) {
   )
 }
 
+function CreateImportForm({ documentId, accountId, onCancel, onCreated }) {
+  const catalog = useMachineCatalog(accountId, true)
+  const [machineModelId, setMachineModelId] = useState('')
+  const [error, setError] = useState(null)
+  const [isSaving, setIsSaving] = useState(false)
+
+  async function handleSubmit(event) {
+    event.preventDefault()
+    if (isSaving) return
+    setIsSaving(true)
+    setError(null)
+    try {
+      const created = await createDocumentImport({ document_id: documentId, machine_model_id: machineModelId || null })
+      onCreated(created)
+    } catch (submitError) {
+      setError(mapMaintenanceError(submitError))
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  return (
+    <form className="form-grid maintenance-step-form" onSubmit={handleSubmit}>
+      <label className="form-field form-field-wide"><span>Machine model <small>Optional</small></span>
+        <select value={machineModelId} onChange={(event) => setMachineModelId(event.target.value)} disabled={catalog.isLoading}>
+          <option value="">Not specified</option>
+          {catalog.models.map((model) => <option key={model.id} value={model.id}>{model.name}</option>)}
+        </select>
+      </label>
+      {error && <small className="field-error"><AlertCircle size={13} />{error}</small>}
+      <div className="dialog-actions">
+        <button className="secondary-button" type="button" onClick={onCancel} disabled={isSaving}>Cancel</button>
+        <button className="primary-button" type="submit" disabled={isSaving}>{isSaving ? <LoaderCircle className="spin" size={15} /> : null} Create knowledge import</button>
+      </div>
+    </form>
+  )
+}
+
 export function DocumentDetail({ documentId, canManage, onClose }) {
   const state = useMaintenanceDocument(documentId)
+  const importsState = useKnowledgeImports({ documentId })
   const [showReferenceForm, setShowReferenceForm] = useState(false)
+  const [showCreateImport, setShowCreateImport] = useState(false)
+  const [openImportId, setOpenImportId] = useState(null)
 
   async function handleRemoveReference(referenceId) {
     await deleteDocumentReference(documentId, referenceId)
@@ -113,10 +158,22 @@ export function DocumentDetail({ documentId, canManage, onClose }) {
                 ))}
               </div>
 
+              <div className="maintenance-step-section" style={{ margin: '18px 0 0', paddingTop: '16px' }}>
+                <div className="form-section-heading"><strong>Knowledge imports</strong><span>Turn this document into structured maintenance knowledge, then review and publish it.</span></div>
+                {importsState.isLoading ? <small>Loading import sessions…</small> : <KnowledgeImportList imports={importsState.imports} onOpen={(item) => setOpenImportId(item.id)} />}
+                {canManage && (showCreateImport ? (
+                  <CreateImportForm documentId={documentId} accountId={state.document.account_id} onCancel={() => setShowCreateImport(false)} onCreated={(created) => { importsState.refresh(); setShowCreateImport(false); setOpenImportId(created.id) }} />
+                ) : (
+                  <button className="secondary-button" type="button" onClick={() => setShowCreateImport(true)}><ClipboardList size={16} /> Import Knowledge</button>
+                ))}
+              </div>
+
               {!canManage && <div className="permission-banner"><ShieldAlert size={18} /><span>Read-only access.</span></div>}
             </>
           )}
       </div>
+
+      {openImportId && <KnowledgeImportDetail importId={openImportId} canManage={canManage} onClose={() => { setOpenImportId(null); importsState.refresh() }} />}
     </BlockingDialog>
   )
 }

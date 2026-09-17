@@ -54,6 +54,41 @@ export const nextTicketStatuses = {
   CANCELLED: [],
 }
 
+export const importStatusLabels = {
+  DRAFT: 'Draft',
+  PROCESSING: 'Processing',
+  REVIEW: 'In Review',
+  PUBLISHED: 'Published',
+  REJECTED: 'Rejected',
+}
+
+export const importTypeLabels = {
+  MANUAL_ENTRY: 'Manual Entry',
+  BULK_IMPORT: 'Bulk Import',
+}
+
+export const knowledgeTypeLabels = {
+  ERROR_CODE: 'Error Code',
+  JAM_CODE: 'Jam Code',
+  WARNING: 'Warning',
+  PM_SCHEDULE: 'PM Schedule',
+}
+
+export const entryStatusLabels = {
+  DRAFT: 'Draft',
+  APPROVED: 'Approved',
+  REJECTED: 'Rejected',
+}
+
+// Knowledge entry review workflow: DRAFT -> APPROVED/REJECTED, APPROVED -> REJECTED
+// (a change of mind before publish). Mirrors MaintenanceKnowledgeImportController::
+// ENTRY_TRANSITIONS so the UI never offers a transition the API would reject.
+export const nextEntryStatuses = {
+  DRAFT: ['APPROVED', 'REJECTED'],
+  APPROVED: ['REJECTED'],
+  REJECTED: [],
+}
+
 export function formatMaintenanceDate(value, timezone, options = {}) {
   if (!value) return '—'
   return new Intl.DateTimeFormat('id-ID', {

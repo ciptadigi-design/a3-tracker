@@ -36,3 +36,10 @@ export const recordMaintenanceAction = async (ticketId, payload) => unwrapData(a
 export const loadMaintenanceKnowledge = async ({ approvalStatus, machineModelId, errorCodeId } = {}) => unwrapCollection(await laravelMaintenance.knowledge(toQueryString({ approval_status: approvalStatus, machine_model_id: machineModelId, error_code_id: errorCodeId })))
 export const submitMaintenanceKnowledge = async (payload) => unwrapData(await laravelMaintenance.submitKnowledge(payload))
 export const reviewMaintenanceKnowledge = async (id, approvalStatus) => unwrapData(await laravelMaintenance.reviewKnowledge(id, approvalStatus))
+
+export const loadDocumentImports = async ({ documentId, status } = {}) => unwrapCollection(await laravelMaintenance.documentImports(toQueryString({ document_id: documentId, status })))
+export const loadDocumentImport = async (id) => unwrapData(await laravelMaintenance.documentImport(id))
+export const createDocumentImport = async (payload) => unwrapData(await laravelMaintenance.createDocumentImport(payload))
+export const addKnowledgeEntry = async (importId, payload) => unwrapData(await laravelMaintenance.addKnowledgeEntry(importId, payload))
+export const updateKnowledgeEntry = async (id, payload) => unwrapData(await laravelMaintenance.updateKnowledgeEntry(id, payload))
+export const publishKnowledgeEntry = async (id) => unwrapData(await laravelMaintenance.publishKnowledgeEntry(id))

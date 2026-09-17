@@ -31,4 +31,11 @@ export const laravelMaintenance = {
   knowledge: (params = '') => apiClient.get(`/maintenance/knowledge${params ? `?${params}` : ''}`),
   submitKnowledge: (payload) => apiClient.post('/maintenance/knowledge', payload),
   reviewKnowledge: (id, approvalStatus) => apiClient.patch(`/maintenance/knowledge/${id}/review`, { approval_status: approvalStatus }),
+
+  documentImports: (params = '') => apiClient.get(`/maintenance/document-imports${params ? `?${params}` : ''}`),
+  documentImport: (id) => apiClient.get(`/maintenance/document-imports/${id}`),
+  createDocumentImport: (payload) => apiClient.post('/maintenance/document-imports', payload),
+  addKnowledgeEntry: (importId, payload) => apiClient.post(`/maintenance/document-imports/${importId}/entries`, payload),
+  updateKnowledgeEntry: (id, payload) => apiClient.patch(`/maintenance/knowledge-entries/${id}`, payload),
+  publishKnowledgeEntry: (id) => apiClient.post(`/maintenance/knowledge-entries/${id}/publish`),
 }
