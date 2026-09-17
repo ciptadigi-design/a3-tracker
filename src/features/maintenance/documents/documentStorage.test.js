@@ -20,12 +20,18 @@ test('validatePdfFile rejects non-PDF files and missing selections', () => {
   assert.match(validatePdfFile(null), /Select a file/)
 })
 
-test('validatePdfFile enforces the same 50MB ceiling as DocumentStorageService::MAX_FILE_SIZE_BYTES', () => {
-  assert.equal(MAX_DOCUMENT_FILE_SIZE_BYTES, 50 * 1024 * 1024)
+test('validatePdfFile enforces the same 250MB ceiling as DocumentStorageService::MAX_FILE_SIZE_BYTES (raised from 50MB in V1.4.1)', () => {
+  assert.equal(MAX_DOCUMENT_FILE_SIZE_BYTES, 250 * 1024 * 1024)
   const oversized = { type: 'application/pdf', name: 'big.pdf', size: MAX_DOCUMENT_FILE_SIZE_BYTES + 1 }
   assert.match(validatePdfFile(oversized), /exceeds the maximum allowed size/)
+  assert.match(validatePdfFile(oversized), /250\.0 MB/)
   const atLimit = { type: 'application/pdf', name: 'big.pdf', size: MAX_DOCUMENT_FILE_SIZE_BYTES }
   assert.equal(validatePdfFile(atLimit), null)
+})
+
+test('validatePdfFile accepts a 121.8MB PDF, well above the old 50MB limit and under the new 250MB one', () => {
+  const largeFile = { type: 'application/pdf', name: 'large_service_manual.pdf', size: Math.round(121.8 * 1024 * 1024) }
+  assert.equal(validatePdfFile(largeFile), null)
 })
 
 test('formatFileSize renders human-readable B/KB/MB and tolerates missing values', () => {

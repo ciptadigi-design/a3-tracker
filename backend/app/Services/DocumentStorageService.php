@@ -28,9 +28,11 @@ class DocumentStorageService
 
     // No prior upload convention existed anywhere in this app (V1.2/V1.3 kept
     // documents reference-metadata-only). Production's PHP upload_max_filesize/
-    // post_max_size (2048M) impose no real ceiling, so 50MB is a deliberate,
-    // documented application-level choice sized for scanned service manuals.
-    public const MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024;
+    // post_max_size (2048M) impose no real ceiling, so this is a deliberate,
+    // documented application-level choice. Raised from 50MB to 250MB in V1.4.1
+    // after real service manuals (high-resolution scans, multi-model bundles)
+    // routinely exceeded the original limit.
+    public const MAX_FILE_SIZE_BYTES = 250 * 1024 * 1024;
 
     private function path(MaintenanceDocument $document): string
     {

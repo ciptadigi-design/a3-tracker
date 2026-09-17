@@ -119,7 +119,8 @@ export function mapMaintenanceError(error) {
 
 // Mirrors DocumentStorageService::MAX_FILE_SIZE_BYTES - client-side validation is a
 // fast-fail UX convenience only; the backend remains the authoritative enforcement.
-export const MAX_DOCUMENT_FILE_SIZE_BYTES = 50 * 1024 * 1024
+// Raised from 50MB to 250MB in V1.4.1.
+export const MAX_DOCUMENT_FILE_SIZE_BYTES = 250 * 1024 * 1024
 
 export function formatFileSize(bytes) {
   if (bytes == null) return '—'

@@ -20,6 +20,10 @@ use Tests\TestCase;
  * facade (private `local` disk) - no new storage abstraction. Reuses the exact
  * same global-or-owned catalog authorization every prior document/error-code/
  * knowledge-import resource already used - no new capability, no new RBAC.
+ *
+ * V1.4.1: raised DocumentStorageService::MAX_FILE_SIZE_BYTES from 50MB to
+ * 250MB. Every other upload/storage/security behavior in this suite is
+ * unchanged.
  */
 class MaintenanceDocumentStorageTest extends TestCase
 {
@@ -75,6 +79,24 @@ class MaintenanceDocumentStorageTest extends TestCase
         Storage::disk(DocumentStorageService::DISK)->assertExists("maintenance-documents/{$f['document']->id}.pdf");
     }
 
+    // V1.4.1: limit raised from 50MB to 250MB after real service manuals routinely
+    // exceeded the original ceiling. 121.8MB sits comfortably above the old limit
+    // and well under the new one - proving the raise actually took effect, not
+    // just that small files still work.
+    public function test_a_121_8mb_pdf_is_accepted_under_the_raised_250mb_limit(): void
+    {
+        $f = $this->fixture();
+        $owner = $this->member($f['home'], 'owner', $f['branch']);
+        $kilobytes = (int) round(121.8 * 1024);
+
+        $data = $this->actingAs($owner)->postJson("/api/v1/maintenance/documents/{$f['document']->id}/upload", [
+            'file' => $this->pdf('large_service_manual.pdf', $kilobytes),
+        ])->assertCreated()->json('data');
+
+        $this->assertSame($kilobytes * 1024, $data['file_size']);
+        Storage::disk(DocumentStorageService::DISK)->assertExists("maintenance-documents/{$f['document']->id}.pdf");
+    }
+
     public function test_uploading_again_replaces_the_existing_file_and_audits_a_replace_not_a_create(): void
     {
         $f = $this->fixture();
@@ -112,6 +134,10 @@ class MaintenanceDocumentStorageTest extends TestCase
 
     // --- Size validation ---
 
+    // Reads DocumentStorageService::MAX_FILE_SIZE_BYTES directly, so this always
+    // tests just above whatever the current ceiling is (250MB as of V1.4.1)
+    // rather than a value that would silently stop meaning anything after a
+    // future limit change.
     public function test_oversized_pdf_is_rejected(): void
     {
         $f = $this->fixture();
