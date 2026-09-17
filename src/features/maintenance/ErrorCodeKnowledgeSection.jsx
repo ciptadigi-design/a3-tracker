@@ -9,6 +9,7 @@ import { errorCodeSeverityLabels } from './maintenanceUtils.js'
 function ErrorCodeRow({ code, canManage, canManageThisRow, onEdit }) {
   const [expanded, setExpanded] = useState(false)
   const steps = code.solutions ?? []
+  const documentReferences = code.document_references ?? []
 
   return (
     <li className="incident-narrative-card glass-surface maintenance-error-code-row">
@@ -29,6 +30,16 @@ function ErrorCodeRow({ code, canManage, canManageThisRow, onEdit }) {
               {steps.map((step) => <li key={step.id}>{step.instruction}{step.requires_technician && <small> · Requires a technician</small>}</li>)}
             </ol>
           ) : <small>No step-by-step procedure recorded yet.</small>}
+          {documentReferences.length > 0 && (
+            <>
+              <p><strong>Related documents:</strong></p>
+              <ol>
+                {documentReferences.map((reference) => (
+                  <li key={reference.id}>{reference.document?.title}{reference.page_number ? ` · Page ${reference.page_number}` : ''}{reference.section_title ? ` · ${reference.section_title}` : ''}</li>
+                ))}
+              </ol>
+            </>
+          )}
         </div>
       )}
     </li>

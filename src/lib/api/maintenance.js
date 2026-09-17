@@ -5,8 +5,12 @@ import { apiClient } from './apiClient.js'
 // (services/dataBackend.js) that older domains still use for Supabase parity.
 export const laravelMaintenance = {
   documents: (params = '') => apiClient.get(`/maintenance/documents${params ? `?${params}` : ''}`),
+  document: (id) => apiClient.get(`/maintenance/documents/${id}`),
   createDocument: (payload) => apiClient.post('/maintenance/documents', payload),
-  setDocumentStatus: (id, isActive) => apiClient.patch(`/maintenance/documents/${id}/status`, { is_active: isActive }),
+  updateDocument: (id, payload) => apiClient.patch(`/maintenance/documents/${id}`, payload),
+  deleteDocument: (id) => apiClient.delete(`/maintenance/documents/${id}`),
+  addDocumentReference: (documentId, payload) => apiClient.post(`/maintenance/documents/${documentId}/references`, payload),
+  deleteDocumentReference: (documentId, referenceId) => apiClient.delete(`/maintenance/documents/${documentId}/references/${referenceId}`),
 
   errorCodes: (params = '') => apiClient.get(`/maintenance/error-codes${params ? `?${params}` : ''}`),
   createErrorCode: (payload) => apiClient.post('/maintenance/error-codes', payload),

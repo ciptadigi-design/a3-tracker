@@ -43,4 +43,9 @@ class MachineErrorCode extends Model
     {
         return $this->hasMany(MaintenanceErrorSolution::class, 'machine_error_code_id')->orderBy('step_number');
     }
+
+    public function documentReferences()
+    {
+        return $this->hasMany(MaintenanceDocumentReference::class, 'machine_error_code_id');
+    }
 }

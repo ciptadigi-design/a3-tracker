@@ -17,8 +17,13 @@ export const addErrorCodeSolution = async (errorCodeId, payload) => unwrapData(a
 export const updateErrorCodeSolution = async (errorCodeId, solutionId, payload) => unwrapData(await laravelMaintenance.updateErrorCodeSolution(errorCodeId, solutionId, payload))
 export const deleteErrorCodeSolution = async (errorCodeId, solutionId) => { await laravelMaintenance.deleteErrorCodeSolution(errorCodeId, solutionId) }
 
-export const loadMaintenanceDocuments = async ({ machineModelId } = {}) => unwrapCollection(await laravelMaintenance.documents(toQueryString({ machine_model_id: machineModelId })))
+export const loadMaintenanceDocuments = async ({ machineModelId, manufacturerId, documentType, status, search } = {}) => unwrapCollection(await laravelMaintenance.documents(toQueryString({ machine_model_id: machineModelId, manufacturer_id: manufacturerId, document_type: documentType, status, search })))
+export const loadMaintenanceDocument = async (id) => unwrapData(await laravelMaintenance.document(id))
 export const createMaintenanceDocument = async (payload) => unwrapData(await laravelMaintenance.createDocument(payload))
+export const updateMaintenanceDocument = async (id, payload) => unwrapData(await laravelMaintenance.updateDocument(id, payload))
+export const deleteMaintenanceDocument = async (id) => { await laravelMaintenance.deleteDocument(id) }
+export const addDocumentReference = async (documentId, payload) => unwrapData(await laravelMaintenance.addDocumentReference(documentId, payload))
+export const deleteDocumentReference = async (documentId, referenceId) => { await laravelMaintenance.deleteDocumentReference(documentId, referenceId) }
 
 export const loadMaintenanceTickets = async ({ machineId, status, perPage } = {}) => unwrapData(await laravelMaintenance.tickets(toQueryString({ machine_id: machineId, status, per_page: perPage })))
 export const loadMaintenanceTicket = async (id) => unwrapData(await laravelMaintenance.ticket(id))

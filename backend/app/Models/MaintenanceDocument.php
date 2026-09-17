@@ -12,9 +12,9 @@ class MaintenanceDocument extends Model
 
     protected $keyType = 'string';
 
-    protected $fillable = ['account_id', 'manufacturer_id', 'machine_model_id', 'title', 'document_type', 'file_reference', 'version', 'uploaded_by', 'is_active', 'archived_at'];
+    protected $fillable = ['account_id', 'manufacturer_id', 'machine_model_id', 'title', 'description', 'document_type', 'file_reference', 'file_path', 'file_name', 'file_size', 'mime_type', 'version', 'status', 'uploaded_by', 'is_active', 'archived_at'];
 
-    protected $casts = ['is_active' => 'boolean', 'archived_at' => 'datetime'];
+    protected $casts = ['is_active' => 'boolean', 'archived_at' => 'datetime', 'file_size' => 'integer'];
 
     protected static function booted(): void
     {
@@ -34,5 +34,10 @@ class MaintenanceDocument extends Model
     public function uploader()
     {
         return $this->belongsTo(User::class, 'uploaded_by');
+    }
+
+    public function references()
+    {
+        return $this->hasMany(MaintenanceDocumentReference::class, 'document_id');
     }
 }

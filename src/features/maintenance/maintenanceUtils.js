@@ -30,6 +30,20 @@ export const knowledgeStatusLabels = {
   PUBLISHED: 'Published',
 }
 
+export const documentStatusLabels = {
+  DRAFT: 'Draft',
+  PUBLISHED: 'Published',
+  ARCHIVED: 'Archived',
+}
+
+export const documentTypeLabels = {
+  SERVICE_MANUAL: 'Service Manual',
+  USER_MANUAL: 'User Manual',
+  PART_CATALOG: 'Part Catalog',
+  TROUBLESHOOTING_GUIDE: 'Troubleshooting Guide',
+  OTHER: 'Other',
+}
+
 // Ticket status is a strict workflow: OPEN -> IN_PROGRESS -> DONE, with CANCELLED
 // reachable from either open state. Mirrors MaintenanceTicketService::TRANSITIONS
 // on the backend so the UI never offers a transition the API would reject.

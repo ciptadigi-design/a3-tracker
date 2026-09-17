@@ -16,7 +16,7 @@
     "test:settings-ui": "node --test src/features/settings/*.test.js",
     "test:auth-ui": "node --test src/features/auth/*.test.js",
     "test:click-target-ui": "node --test src/features/clickTargets/*.test.js",
-    "test:maintenance-ui": "node --test src/features/maintenance/*.test.js",
+    "test:maintenance-ui": "node --test src/features/maintenance/*.test.js src/features/maintenance/documents/*.test.js",
     "test:migration": "node --test scripts/migration/*.test.mjs",
     "preview": "vite preview"
   },

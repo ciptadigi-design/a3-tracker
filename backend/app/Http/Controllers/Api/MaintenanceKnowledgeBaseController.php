@@ -7,7 +7,6 @@ use App\Models\MachineErrorCode;
 use App\Models\MachineModel;
 use App\Models\MaintenanceDocument;
 use App\Models\MaintenanceErrorSolution;
-use App\Models\Manufacturer;
 use App\Services\AccountAccessResolver;
 use App\Services\GovernanceAudit;
 use App\Services\ScopedReference;
@@ -29,48 +28,15 @@ class MaintenanceKnowledgeBaseController extends Controller
         abort_unless(app(AccountAccessResolver::class)->canManageCatalogScope($r->user(), $accountId), 403);
     }
 
-    public function documents(Request $r)
-    {
-        $ids = $r->user()->memberships()->where('status', 'active')->pluck('account_id');
-        $q = MaintenanceDocument::where('is_active', true)->where(fn ($q) => $q->whereNull('account_id')->orWhereIn('account_id', $ids));
-        if ($r->filled('machine_model_id')) {
-            $q->where('machine_model_id', $r->string('machine_model_id'));
-        }
-
-        return response()->json(['data' => $q->orderByDesc('created_at')->get()]);
-    }
-
-    public function storeDocument(Request $r)
-    {
-        $d = $r->validate(['account_id' => 'nullable|uuid', 'manufacturer_id' => 'nullable|uuid|exists:manufacturers,id', 'machine_model_id' => 'nullable|uuid', 'title' => 'required|string|max:200', 'document_type' => 'nullable|string|max:40', 'file_reference' => 'required|string|max:500', 'version' => 'nullable|string|max:40']);
-        $this->authorizeCatalogScope($r, $d['account_id'] ?? null);
-        ScopedReference::activeGlobalOrOwned(Manufacturer::class, $d['manufacturer_id'] ?? null, $d['account_id'] ?? null, 'manufacturer_id');
-        ScopedReference::activeGlobalOrOwned(MachineModel::class, $d['machine_model_id'] ?? null, $d['account_id'] ?? null, 'machine_model_id');
-        $d['uploaded_by'] = $r->user()->id;
-        $doc = MaintenanceDocument::create($d);
-
-        app(GovernanceAudit::class)->changed($r->user(), 'maintenance_document.created', 'maintenance_document', $doc->id, $d['account_id'] ?? null, [], app(GovernanceAudit::class)->snapshot($doc));
-
-        return response()->json(['data' => $doc], 201);
-    }
-
-    public function setDocumentStatus(Request $r, string $id)
-    {
-        $doc = MaintenanceDocument::findOrFail($id);
-        $this->authorizeCatalogScope($r, $doc->account_id);
-        $active = $r->validate(['is_active' => 'required|boolean'])['is_active'];
-        $before = app(GovernanceAudit::class)->snapshot($doc);
-        $doc->update(['is_active' => $active, 'archived_at' => $active ? null : now()]);
-
-        app(GovernanceAudit::class)->changed($r->user(), 'maintenance_document.status_changed', 'maintenance_document', $doc->id, $doc->account_id, $before, app(GovernanceAudit::class)->snapshot($doc));
-
-        return response()->json(['data' => $doc]);
-    }
+    // Document CRUD (list/show/create/update/delete) lives in MaintenanceDocumentController -
+    // Documents grew into a first-class resource (metadata, lifecycle, machine-model
+    // linkage, error-code references) rather than a minor appendage of this controller.
+    // MaintenanceDocument itself is still referenced here for ScopedReference checks below.
 
     public function errorCodes(Request $r)
     {
         $ids = $r->user()->memberships()->where('status', 'active')->pluck('account_id');
-        $q = MachineErrorCode::where('is_active', true)->where(fn ($q) => $q->whereNull('account_id')->orWhereIn('account_id', $ids))->with('solutions');
+        $q = MachineErrorCode::where('is_active', true)->where(fn ($q) => $q->whereNull('account_id')->orWhereIn('account_id', $ids))->with(['solutions', 'documentReferences.document']);
         if ($r->filled('machine_model_id')) {
             $q->where('machine_model_id', $r->string('machine_model_id'));
         }
