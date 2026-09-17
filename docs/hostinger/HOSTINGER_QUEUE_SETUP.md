@@ -1,10 +1,23 @@
-# Hostinger queue runner setup (V1.5.1)
+# Hostinger queue runner setup (V1.5.1, env fix in V1.5.2)
 
 Maintenance V1.5 introduced this app's first queue job
 (`App\Jobs\ExtractMaintenanceDocumentJob`, PDF knowledge extraction). This
 document is how that job actually gets processed on the Hostinger production
 host, where the job runs, is queued (`QUEUE_CONNECTION=database`), but nothing
 was ever running to drain that queue.
+
+**V1.5.2 note:** V1.5.1 shipped the runner itself, but production's
+`shared/.env` carried an explicit `QUEUE_CONNECTION=sync` left over from
+before this app had any queue jobs - `config/queue.php`'s own default
+(`env('QUEUE_CONNECTION', 'database')`) was always `database`, so this was
+invisible in code review and in every local/CI run (neither reads production's
+`shared/.env`). Under `sync`, `ExtractMaintenanceDocumentJob::dispatch()` ran
+the job inline at dispatch time instead of writing a `jobs` row, so
+`a3:run-queue` had nothing to ever drain - discovered during V1.5.1's
+post-deploy `QUEUE_STATUS` check. V1.5.2 changed production's `shared/.env` to
+`QUEUE_CONNECTION=database` (matching the code default and every environment
+below) and refreshed the live release's config cache; no code, migration, or
+runner-command change was needed.
 
 ## Why Supervisor is not used
 
@@ -70,13 +83,21 @@ minute of being requested.
 
 ## Required environment configuration
 
-No new environment variables and no `.env` changes are required:
-
-- `QUEUE_CONNECTION=database` is already the configured default
+- `QUEUE_CONNECTION=database` is the configured default
   (`config/queue.php`, `.env.example`) - the `jobs`, `job_batches`, and
   `failed_jobs` tables already exist (Laravel's default migration), and
   `CACHE_STORE=database` already provides the `cache_locks` table the lock
-  needs. **No database migration was added for this change.**
+  needs. **No database migration was ever added for this change.**
+- **Verify production's `shared/.env` does not override this.** V1.5.1
+  shipped with production carrying a stale `QUEUE_CONNECTION=sync` in
+  `shared/.env` (predating this app's first queue job), which silently made
+  every dispatched job run inline instead of queuing - fixed in V1.5.2 by
+  setting `shared/.env`'s `QUEUE_CONNECTION` to `database` and running
+  `php artisan config:clear && php artisan config:cache` in the *live*
+  release's `backend/` (config is cached per-release, so this must be re-run
+  against whichever release `current` points at, not just the source
+  release). Confirm with `php artisan config:show queue.default` -> `database`
+  after any release or env change.
 - `storage/app/private/maintenance-documents` is already symlinked into
   `shared/` by `scripts/deployment/link-shared-storage.sh` (V1.4) - the queue
   runner reads through that exact same path via `DocumentStorageService`, so
