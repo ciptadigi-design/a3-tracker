@@ -375,15 +375,27 @@ class MaintenanceDocumentExtractionTest extends TestCase
         $f = $this->fixture();
         $this->attachStoredPdf($f['document'], $this->buildFixturePdf(['Hello']));
         // DocumentExtractionService's pre-flight guard is judged against the
-        // document's file_size metadata, not the actual bytes on the fake disk -
-        // setting it far beyond what the CLI's real (unaltered) memory_limit could
-        // safely parse triggers the guard deterministically, without needing an
-        // actual huge fixture file or fiddling with ini_set (which PHP refuses
-        // below the process's current memory usage anyway).
+        // document's file_size metadata, not the actual bytes on the fake disk - so
+        // setting it huge is enough to exceed the threshold without needing an
+        // actual huge fixture file. But the threshold itself is relative to
+        // ini_get('memory_limit'), which varies by environment (this machine's PHP
+        // CLI default is 128M; CI's runner image ships PHP CLI with memory_limit=-1,
+        // i.e. unlimited, which made this test pass locally and fail on CI - the
+        // guard correctly has nothing to guard against there). ini_set() to a fixed,
+        // known value first so the assertion is deterministic everywhere: PHP only
+        // refuses ini_set('memory_limit', ...) *below* the process's current usage,
+        // and 512M is safely above what a PHPUnit process actually uses, on any
+        // environment, unlimited or not.
+        $previousLimit = ini_set('memory_limit', '512M');
+        $this->assertNotFalse($previousLimit, 'ini_set(memory_limit, 512M) must succeed on any CI/local environment for this test to be meaningful.');
         $f['document']->update(['file_size' => 5 * 1024 * 1024 * 1024]);
         $extraction = MaintenanceDocumentExtraction::create(['document_id' => $f['document']->id, 'status' => 'PENDING']);
 
-        (new ExtractMaintenanceDocumentJob($extraction->id))->handle(app(DocumentExtractionService::class));
+        try {
+            (new ExtractMaintenanceDocumentJob($extraction->id))->handle(app(DocumentExtractionService::class));
+        } finally {
+            ini_set('memory_limit', $previousLimit);
+        }
 
         $extraction->refresh();
         $this->assertSame('FAILED', $extraction->status);
