@@ -29,18 +29,8 @@ final class SecuredPdfTextExtractor implements PdfTextExtractor
     // substantially more work per byte (decrypt every string/stream, THEN build
     // Smalot's full typed object graph for potentially tens of thousands of
     // objects - the real production document has 42,236), so it needs its own,
-    // separately-calibrated guard rather than trusting the caller's.
-    //
-    // Measured directly against the real 121,833,361-byte production document
-    // (see docs/maintenance/V1.5.5_AESV2_EXTRACTION.md section 7): peak 1074.1MB,
-    // an 8.82x ratio - well above the 4x general-purpose estimate. 10x is a
-    // deliberately padded safety margin above that measurement, not the
-    // measurement itself, matching DocumentExtractionService's own "deliberately
-    // conservative, documented estimate, not a measured guarantee" precedent.
-    private const MEMORY_ESTIMATE_MULTIPLIER = 10;
-
-    private const MEMORY_SAFETY_FRACTION = 0.5;
-
+    // separately-calibrated guard rather than trusting the caller's - see
+    // SecuredExtractionMemoryGuard (V1.5.5.1) for the formula and its evidence.
     public function __construct(
         private readonly PdfObjectDictionaryReader $reader = new PdfObjectDictionaryReader,
     ) {}
@@ -103,18 +93,31 @@ final class SecuredPdfTextExtractor implements PdfTextExtractor
     private function assertWithinResourceLimits(int $fileSizeBytes): void
     {
         $memoryLimitBytes = $this->phpMemoryLimitBytes();
-        if ($memoryLimitBytes === null) {
-            return; // unlimited (-1) or unreadable ini value - nothing to guard against
-        }
-        $estimatedPeakBytes = $fileSizeBytes * self::MEMORY_ESTIMATE_MULTIPLIER;
-        if ($estimatedPeakBytes > $memoryLimitBytes * self::MEMORY_SAFETY_FRACTION) {
-            throw PdfExtractionException::resourceLimit($fileSizeBytes, $memoryLimitBytes);
+        $currentUsageBytes = memory_get_usage(true);
+        if (! SecuredExtractionMemoryGuard::fits($fileSizeBytes, $memoryLimitBytes, $currentUsageBytes)) {
+            throw PdfExtractionException::resourceLimit($fileSizeBytes, $memoryLimitBytes ?? -1);
         }
     }
 
     private function phpMemoryLimitBytes(): ?int
     {
-        $value = trim((string) ini_get('memory_limit'));
+        return self::parseMemoryLimit((string) ini_get('memory_limit'));
+    }
+
+    /**
+     * Pure string-parsing half of phpMemoryLimitBytes(), pulled out so it is
+     * directly testable with real, chosen ini strings (including malformed
+     * ones PHP itself would refuse to actually apply via ini_set - see
+     * AesV2SecuredExtractionTest) without touching php.ini.
+     *
+     * A value with no recognized numeric leading part (including anything
+     * malformed) resolves to 0 bytes, which SecuredExtractionMemoryGuard
+     * always rejects against - failing closed exactly like a memory_limit
+     * that is genuinely too small, never silently treated as unlimited.
+     */
+    public static function parseMemoryLimit(string $rawValue): ?int
+    {
+        $value = trim($rawValue);
         if ($value === '' || $value === '-1') {
             return null;
         }

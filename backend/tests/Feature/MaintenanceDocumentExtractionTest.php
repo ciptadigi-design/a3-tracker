@@ -311,7 +311,26 @@ class MaintenanceDocumentExtractionTest extends TestCase
         $this->attachStoredPdf($f['document'], $fixtureBytes);
         $extraction = MaintenanceDocumentExtraction::create(['document_id' => $f['document']->id, 'status' => 'PENDING']);
 
-        (new ExtractMaintenanceDocumentJob($extraction->id))->handle(app(DocumentExtractionService::class));
+        // SecuredExtractionMemoryGuard's fixed reserve is calibrated against
+        // memory_limit + current PHP process usage together, not file size
+        // alone - deep in the full test suite this same PHP process has
+        // already accumulated far more than the ~20MB fresh-bootstrap
+        // baseline it was calibrated for, from hundreds of prior tests'
+        // autoloading and fixtures. That accumulated usage is real for THIS
+        // process but has nothing to do with what a real queue worker (which
+        // only ever processes this document) would see, so - matching the
+        // existing ini_set pattern immediately below in this same file -
+        // pin memory_limit to a known, realistic worker value (Production's
+        // actual 2048M) so this test's outcome is deterministic regardless of
+        // suite run order or accumulated PHPUnit process memory.
+        $previousLimit = ini_set('memory_limit', '2048M');
+        $this->assertNotFalse($previousLimit, 'ini_set(memory_limit, 2048M) must succeed on any CI/local environment for this test to be meaningful.');
+
+        try {
+            (new ExtractMaintenanceDocumentJob($extraction->id))->handle(app(DocumentExtractionService::class));
+        } finally {
+            ini_set('memory_limit', $previousLimit);
+        }
 
         $extraction->refresh();
         $this->assertSame('COMPLETED', $extraction->status);

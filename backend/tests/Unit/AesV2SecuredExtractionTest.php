@@ -6,6 +6,8 @@ use App\Services\PdfExtraction\PdfExtractionErrorCode;
 use App\Services\PdfExtraction\PdfExtractionException;
 use App\Services\PdfExtraction\PdfSecurityInspector;
 use App\Services\PdfExtraction\ProfileAwarePdfTextExtractor;
+use App\Services\PdfExtraction\SecuredExtractionMemoryGuard;
+use App\Services\PdfExtraction\SecuredPdfTextExtractor;
 use App\Services\PdfExtraction\SmalotPdfTextExtractor;
 use PHPUnit\Framework\TestCase;
 
@@ -234,4 +236,35 @@ class AesV2SecuredExtractionTest extends TestCase
     // SecuredPdfFixtureCharacterizationTest already - this test adds the one
     // case not covered elsewhere: a *structurally real* but unsupported-cipher
     // encrypted PDF, already exercised above as test_unsupported_cipher_rc4_fails_closed.)
+
+    // --- 19. memory_limit ini-string parsing, including malformed input (V1.5.5.1) ---
+    //
+    // SecuredExtractionMemoryGuard::fits() itself is a pure function tested
+    // directly with real int/null inputs (SecuredExtractionMemoryGuardTest).
+    // The other half of the guard - turning ini_get('memory_limit')'s raw
+    // string into those bytes - is SecuredPdfTextExtractor::parseMemoryLimit().
+    // It can't be exercised via ini_set() with an actually-malformed string:
+    // PHP itself validates memory_limit at ini_set() time and refuses (with a
+    // warning, returning false) anything it can't parse, so a genuinely
+    // malformed value can never reach a running process this way. Testing the
+    // pure parsing function directly with a chosen malformed string is the
+    // only way to prove the fail-closed behavior it's designed for.
+
+    public function test_parse_memory_limit_handles_the_documented_unit_suffixes_and_unlimited(): void
+    {
+        $this->assertSame(128 * 1024 * 1024, SecuredPdfTextExtractor::parseMemoryLimit('128M'));
+        $this->assertSame(2 * 1024 * 1024 * 1024, SecuredPdfTextExtractor::parseMemoryLimit('2G'));
+        $this->assertSame(512 * 1024, SecuredPdfTextExtractor::parseMemoryLimit('512K'));
+        $this->assertNull(SecuredPdfTextExtractor::parseMemoryLimit('-1'));
+        $this->assertNull(SecuredPdfTextExtractor::parseMemoryLimit(''));
+    }
+
+    public function test_parse_memory_limit_resolves_a_malformed_value_to_zero_bytes_rather_than_unlimited(): void
+    {
+        // 0 bytes, not null/unlimited: SecuredExtractionMemoryGuard::fits()
+        // then always rejects, exactly like a memory_limit that is genuinely
+        // too small - never silently treated as "nothing to guard against".
+        $this->assertSame(0, SecuredPdfTextExtractor::parseMemoryLimit('not-a-real-value'));
+        $this->assertFalse(SecuredExtractionMemoryGuard::fits(1024, SecuredPdfTextExtractor::parseMemoryLimit('not-a-real-value'), 0));
+    }
 }
