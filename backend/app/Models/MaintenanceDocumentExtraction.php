@@ -11,7 +11,7 @@ class MaintenanceDocumentExtraction extends Model
 
     protected $keyType = 'string';
 
-    protected $fillable = ['document_id', 'status', 'total_pages', 'processed_pages', 'error_message', 'started_at', 'completed_at', 'created_by'];
+    protected $fillable = ['document_id', 'status', 'total_pages', 'processed_pages', 'error_code', 'error_message', 'started_at', 'completed_at', 'created_by'];
 
     protected $casts = ['total_pages' => 'integer', 'processed_pages' => 'integer', 'started_at' => 'datetime', 'completed_at' => 'datetime'];
 

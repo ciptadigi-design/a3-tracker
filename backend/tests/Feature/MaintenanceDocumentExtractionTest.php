@@ -13,6 +13,10 @@ use App\Models\MaintenanceDocumentPage;
 use App\Models\User;
 use App\Services\DocumentExtractionService;
 use App\Services\DocumentStorageService;
+use App\Services\PdfExtraction\ExtractedPdfDocument;
+use App\Services\PdfExtraction\PdfExtractionErrorCode;
+use App\Services\PdfExtraction\PdfExtractionException;
+use App\Services\PdfExtraction\PdfTextExtractor;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
@@ -80,7 +84,7 @@ class MaintenanceDocumentExtractionTest extends TestCase
     }
 
     /** Hand-builds a minimal but genuinely valid multi-page PDF (real xref/trailer, real per-page content streams) so extraction tests exercise the real Smalot\PdfParser parsing path rather than a mocked one. */
-    private function buildFixturePdf(array $pageTexts): string
+    private function buildFixturePdf(array $pageTexts, bool $secured = false): string
     {
         $objects = [];
         $n = count($pageTexts);
@@ -113,7 +117,13 @@ class MaintenanceDocumentExtractionTest extends TestCase
         for ($i = 1; $i < $totalObjs; $i++) {
             $out .= str_pad((string) ($offsets[$i] ?? 0), 10, '0', STR_PAD_LEFT)." 00000 n \n";
         }
-        $out .= "trailer\n<< /Size $totalObjs /Root 1 0 R >>\nstartxref\n$xrefStart\n%%EOF";
+        // Smalot\PdfParser\Parser::parseContent() throws its "Secured pdf file are
+        // currently not supported." exception purely from finding a `/Encrypt N G R`
+        // entry in the trailer dictionary (RawDataParser::getXrefData) - it never
+        // even needs to dereference object N, so a reference to a made-up object
+        // number is enough to exercise the real secured-PDF detection path.
+        $encryptClause = $secured ? ' /Encrypt 999 0 R' : '';
+        $out .= "trailer\n<< /Size $totalObjs /Root 1 0 R$encryptClause >>\nstartxref\n$xrefStart\n%%EOF";
 
         return $out;
     }
@@ -300,24 +310,46 @@ class MaintenanceDocumentExtractionTest extends TestCase
     }
 
     // --- Failed extraction handling ---
+    //
+    // V1.5.3: every classified failure (PdfExtractionErrorCode) is PERMANENT except
+    // EXTRACTION_RUNTIME_FAILURE - see PdfExtractionErrorCode::isPermanent(). A
+    // permanent failure's handle() call does NOT re-throw (it calls $this->fail()
+    // instead, a no-op here since these tests call handle() directly rather than
+    // through a real queue worker - see this class's docblock), so these tests
+    // assert the terminal row state directly instead of expecting a throw.
 
-    public function test_job_marks_extraction_failed_and_records_error_message_on_a_corrupt_pdf(): void
+    public function test_secured_pdf_maps_to_unsupported_pdf_security_and_does_not_retry(): void
+    {
+        $f = $this->fixture();
+        $this->attachStoredPdf($f['document'], $this->buildFixturePdf(['Hello'], secured: true));
+        $extraction = MaintenanceDocumentExtraction::create(['document_id' => $f['document']->id, 'status' => 'PENDING']);
+
+        // No throw: UNSUPPORTED_PDF_SECURITY is permanent, so handle() does not
+        // re-throw for queue retry/backoff to act on.
+        (new ExtractMaintenanceDocumentJob($extraction->id))->handle(app(DocumentExtractionService::class));
+
+        $extraction->refresh();
+        $this->assertSame('FAILED', $extraction->status);
+        $this->assertSame('UNSUPPORTED_PDF_SECURITY', $extraction->error_code);
+        $this->assertNotNull($extraction->completed_at);
+        $this->assertStringContainsString('security/encryption format', $extraction->error_message);
+        $this->assertStringNotContainsString(storage_path(), $extraction->error_message, 'error_message must never leak a filesystem path.');
+        $this->assertDatabaseHas('governance_audit_logs', ['action' => 'maintenance_document_extraction.failed', 'target_id' => $extraction->id]);
+    }
+
+    public function test_job_marks_extraction_failed_and_classifies_a_corrupt_pdf(): void
     {
         $f = $this->fixture();
         $this->attachStoredPdf($f['document'], "not a real pdf\n%PDF-ish but broken, no valid xref");
         $extraction = MaintenanceDocumentExtraction::create(['document_id' => $f['document']->id, 'status' => 'PENDING']);
 
-        try {
-            (new ExtractMaintenanceDocumentJob($extraction->id))->handle(app(DocumentExtractionService::class));
-            $this->fail('Expected the job to re-throw the parsing failure so queue retry/backoff still applies.');
-        } catch (\Throwable) {
-            // Expected: handle() re-throws after recording the failure so Laravel's
-            // own retry/backoff mechanism still sees it.
-        }
+        (new ExtractMaintenanceDocumentJob($extraction->id))->handle(app(DocumentExtractionService::class));
 
         $extraction->refresh();
         $this->assertSame('FAILED', $extraction->status);
+        $this->assertSame('INVALID_OR_CORRUPT_PDF', $extraction->error_code);
         $this->assertNotNull($extraction->error_message);
+        $this->assertNotNull($extraction->completed_at);
         $this->assertDatabaseHas('governance_audit_logs', ['action' => 'maintenance_document_extraction.failed', 'target_id' => $extraction->id]);
     }
 
@@ -330,15 +362,101 @@ class MaintenanceDocumentExtractionTest extends TestCase
         $f['document']->update(['storage_disk' => DocumentStorageService::DISK, 'file_path' => DocumentStorageService::DIRECTORY.'/missing.pdf', 'file_name' => 'missing.pdf']);
         $extraction = MaintenanceDocumentExtraction::create(['document_id' => $f['document']->id, 'status' => 'PENDING']);
 
+        (new ExtractMaintenanceDocumentJob($extraction->id))->handle(app(DocumentExtractionService::class));
+
+        $extraction->refresh();
+        $this->assertSame('FAILED', $extraction->status);
+        $this->assertSame('FILE_MISSING', $extraction->error_code);
+        $this->assertNotNull($extraction->completed_at);
+    }
+
+    public function test_a_file_too_large_for_the_workers_memory_limit_is_classified_as_resource_limit_and_does_not_retry(): void
+    {
+        $f = $this->fixture();
+        $this->attachStoredPdf($f['document'], $this->buildFixturePdf(['Hello']));
+        // DocumentExtractionService's pre-flight guard is judged against the
+        // document's file_size metadata, not the actual bytes on the fake disk -
+        // setting it far beyond what the CLI's real (unaltered) memory_limit could
+        // safely parse triggers the guard deterministically, without needing an
+        // actual huge fixture file or fiddling with ini_set (which PHP refuses
+        // below the process's current memory usage anyway).
+        $f['document']->update(['file_size' => 5 * 1024 * 1024 * 1024]);
+        $extraction = MaintenanceDocumentExtraction::create(['document_id' => $f['document']->id, 'status' => 'PENDING']);
+
+        (new ExtractMaintenanceDocumentJob($extraction->id))->handle(app(DocumentExtractionService::class));
+
+        $extraction->refresh();
+        $this->assertSame('FAILED', $extraction->status);
+        $this->assertSame('RESOURCE_LIMIT', $extraction->error_code);
+        $this->assertNotNull($extraction->completed_at);
+    }
+
+    public function test_an_unclassified_runtime_failure_still_retries_and_keeps_normal_backoff_semantics(): void
+    {
+        $f = $this->fixture();
+        $this->attachStoredPdf($f['document'], $this->buildFixturePdf(['Hello']));
+        $extraction = MaintenanceDocumentExtraction::create(['document_id' => $f['document']->id, 'status' => 'PENDING']);
+
+        $this->app->bind(PdfTextExtractor::class, function () {
+            return new class implements PdfTextExtractor
+            {
+                public function extract(string $absolutePath): ExtractedPdfDocument
+                {
+                    // An unclassified failure (not a PdfExtractionException) - e.g. a
+                    // transient DB/connection error unrelated to the PDF itself.
+                    throw new \RuntimeException('simulated transient failure');
+                }
+            };
+        });
+
         try {
             (new ExtractMaintenanceDocumentJob($extraction->id))->handle(app(DocumentExtractionService::class));
-            $this->fail('Expected an exception for a missing stored file.');
-        } catch (\Throwable) {
+            $this->fail('Expected an unclassified failure to re-throw so queue retry/backoff still applies.');
+        } catch (\Throwable $e) {
+            $this->assertInstanceOf(PdfExtractionException::class, $e);
+            $this->assertSame(PdfExtractionErrorCode::EXTRACTION_RUNTIME_FAILURE, $e->errorCode);
         }
 
         $extraction->refresh();
         $this->assertSame('FAILED', $extraction->status);
-        $this->assertStringContainsString('missing', strtolower($extraction->error_message));
+        $this->assertSame('EXTRACTION_RUNTIME_FAILURE', $extraction->error_code);
+    }
+
+    public function test_error_response_never_exposes_a_filesystem_path_or_stack_trace(): void
+    {
+        $f = $this->fixture();
+        $owner = $this->member($f['home'], 'owner', $f['branch']);
+        $this->attachStoredPdf($f['document'], $this->buildFixturePdf(['Hello'], secured: true));
+        $extraction = MaintenanceDocumentExtraction::create(['document_id' => $f['document']->id, 'status' => 'PENDING']);
+        (new ExtractMaintenanceDocumentJob($extraction->id))->handle(app(DocumentExtractionService::class));
+
+        $data = $this->actingAs($owner)->getJson("/api/v1/maintenance/documents/{$f['document']->id}/extraction")->assertOk()->json('data');
+
+        $this->assertSame('FAILED', $data['status']);
+        $this->assertSame('UNSUPPORTED_PDF_SECURITY', $data['error_code']);
+        $this->assertStringNotContainsString(storage_path(), $data['error_message']);
+        $this->assertStringNotContainsString('.php', $data['error_message']);
+        $this->assertStringNotContainsString('Stack trace', $data['error_message']);
+    }
+
+    public function test_a_successful_retry_after_a_transient_failure_clears_the_stale_error_code(): void
+    {
+        $f = $this->fixture();
+        $this->attachStoredPdf($f['document'], $this->buildFixturePdf(['Hello']));
+        $extraction = MaintenanceDocumentExtraction::create([
+            'document_id' => $f['document']->id,
+            'status' => 'FAILED',
+            'error_code' => 'EXTRACTION_RUNTIME_FAILURE',
+            'error_message' => 'Extraction failed due to an unexpected error. It will be retried automatically.',
+            'completed_at' => now(),
+        ]);
+
+        (new ExtractMaintenanceDocumentJob($extraction->id))->handle(app(DocumentExtractionService::class));
+
+        $extraction->refresh();
+        $this->assertSame('COMPLETED', $extraction->status);
+        $this->assertNull($extraction->error_code);
+        $this->assertNull($extraction->error_message);
     }
 
     public function test_failed_method_is_a_safety_net_when_handle_never_ran(): void
@@ -346,11 +464,13 @@ class MaintenanceDocumentExtractionTest extends TestCase
         $f = $this->fixture();
         $extraction = MaintenanceDocumentExtraction::create(['document_id' => $f['document']->id, 'status' => 'PENDING']);
 
-        (new ExtractMaintenanceDocumentJob($extraction->id))->failed(new \RuntimeException('job could not be deserialized'));
+        (new ExtractMaintenanceDocumentJob($extraction->id))->failed(new \RuntimeException('job could not be deserialized (internal detail, never shown to a user)'));
 
         $extraction->refresh();
         $this->assertSame('FAILED', $extraction->status);
-        $this->assertSame('job could not be deserialized', $extraction->error_message);
+        $this->assertSame('EXTRACTION_RUNTIME_FAILURE', $extraction->error_code);
+        $this->assertNotNull($extraction->completed_at);
+        $this->assertStringNotContainsString('internal detail', $extraction->error_message, 'The safety net must classify into a safe message, never store the raw exception text.');
     }
 
     // --- Large PDF compatibility ---

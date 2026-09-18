@@ -72,7 +72,7 @@ class MaintenanceDocumentController extends Controller
 
     public function show(Request $r, string $id)
     {
-        $doc = MaintenanceDocument::with(['references.errorCode'])->findOrFail($id);
+        $doc = MaintenanceDocument::with(['references.errorCode', 'manufacturer', 'machineModel'])->findOrFail($id);
         $ids = $r->user()->memberships()->where('status', 'active')->pluck('account_id');
         abort_unless($doc->account_id === null || $ids->contains($doc->account_id), 404);
 

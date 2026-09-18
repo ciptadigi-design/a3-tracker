@@ -138,6 +138,21 @@ export const extractionStatusLabels = {
   FAILED: 'Failed',
 }
 
+// Mirrors PdfExtractionErrorCode (backend/app/Services/PdfExtraction) - the backend
+// owns classification, this is display text only. The frontend never pattern-matches
+// a raw error_message to decide what happened; it always keys off error_code.
+export const extractionErrorMessages = {
+  UNSUPPORTED_PDF_SECURITY: 'This PDF is protected using a security format that the current extractor does not support. The original PDF remains safe and available.',
+  INVALID_OR_CORRUPT_PDF: 'This PDF file could not be read. It may be corrupted or not a valid PDF.',
+  FILE_MISSING: 'The stored PDF file could not be found. Try re-uploading the document.',
+  RESOURCE_LIMIT: 'This document is too large for the extraction worker to process safely right now.',
+  EXTRACTION_RUNTIME_FAILURE: 'Extraction failed due to an unexpected error. It will be retried automatically.',
+}
+
+// Mirrors PdfExtractionErrorCode::isPermanent() - retrying cannot fix these, so the
+// UI must not offer a meaningless Retry action for them.
+export const permanentExtractionErrorCodes = ['UNSUPPORTED_PDF_SECURITY', 'INVALID_OR_CORRUPT_PDF', 'FILE_MISSING', 'RESOURCE_LIMIT']
+
 export function validatePdfFile(file) {
   if (!file) return 'Select a file.'
   const isPdfType = file.type === 'application/pdf'

@@ -5,7 +5,7 @@ const statusPillClass = { DRAFT: '', PROCESSING: '', REVIEW: '', PUBLISHED: 'res
 
 export function KnowledgeImportList({ imports, onOpen }) {
   if (imports.length === 0) {
-    return <div className="machine-empty-state"><ClipboardList size={38} strokeWidth={1.35} /><h3>No knowledge imports yet.</h3><p>Start one to turn this document into structured maintenance knowledge.</p></div>
+    return <p className="maintenance-compact-empty"><ClipboardList size={16} /> No knowledge imports yet. Start one to turn this document into structured maintenance knowledge.</p>
   }
 
   return (

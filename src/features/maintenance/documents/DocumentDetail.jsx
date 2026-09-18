@@ -18,6 +18,15 @@ import { PdfUploadField } from './PdfUploadField.jsx'
 import { useDocumentExtraction } from './useDocumentExtraction.js'
 import { useMaintenanceDocument } from './useMaintenanceDocument.js'
 
+// Same green/neutral/red convention as KnowledgeImportList's statusPillClass.
+const documentStatusPillClass = { DRAFT: '', PUBLISHED: 'resolved', ARCHIVED: 'voided' }
+
+// Quick View PDF/Download actions live in the document header (they're the primary
+// per-document actions, and every viewer benefits from them being easy to find).
+// This section handles everything else: the initial upload when no file exists yet,
+// and replace/delete for managers once one does - it stays out of the way (renders
+// nothing) for a viewer once a file already exists, rather than repeating a second,
+// visually heavier copy of the same file card the header already covers.
 function DocumentFileSection({ document, canManage, onChanged }) {
   const [selectedFile, setSelectedFile] = useState(null)
   const [isUploading, setIsUploading] = useState(false)
@@ -48,47 +57,54 @@ function DocumentFileSection({ document, canManage, onChanged }) {
     }
   }
 
+  if (document.storage_disk) {
+    if (!canManage) return null
+    return (
+      <div className="maintenance-step-section" style={{ margin: '18px 0 0', paddingTop: '16px' }}>
+        <div className="form-section-heading"><strong>Document file</strong><span>{document.file_name || 'document.pdf'} · {formatFileSize(document.file_size)}</span></div>
+        <PdfUploadField file={selectedFile} onFileSelected={setSelectedFile} disabled={isUploading} />
+        {error && <small className="field-error"><AlertCircle size={13} />{error}</small>}
+        <div className="dialog-actions" style={{ marginTop: 10 }}>
+          {selectedFile && <button className="primary-button" type="button" onClick={handleUpload} disabled={isUploading}>{isUploading ? <LoaderCircle className="spin" size={16} /> : null} {isUploading ? 'Uploading…' : 'Replace PDF'}</button>}
+          <button className="icon-button" type="button" onClick={handleDeleteFile} aria-label="Delete PDF"><Trash2 size={15} /></button>
+        </div>
+      </div>
+    )
+  }
+
+  if (document.file_path) {
+    return (
+      <div className="maintenance-step-section" style={{ margin: '18px 0 0', paddingTop: '16px' }}>
+        <div className="form-section-heading"><strong>Document file</strong><span>External file reference.</span></div>
+        <p><a href={document.file_path} target="_blank" rel="noreferrer"><ExternalLink size={14} /> {document.file_name || 'Open file reference'}</a></p>
+      </div>
+    )
+  }
+
   return (
     <div className="maintenance-step-section" style={{ margin: '18px 0 0', paddingTop: '16px' }}>
-      <div className="form-section-heading"><strong>Document file</strong><span>The stored PDF for this document.</span></div>
-
-      {document.storage_disk ? (
-        <div className="incident-narrative-card glass-surface">
-          <span><FileText size={16} /></span>
-          <div>
-            <strong>{document.file_name || 'document.pdf'}</strong>
-            <p>Size: {formatFileSize(document.file_size)}</p>
-            <small>Uploaded {formatMaintenanceDate(document.uploaded_at, undefined, { dateOnly: true })}</small>
-          </div>
-          <div className="dialog-actions">
-            <a className="secondary-button" href={maintenanceDocumentFileUrl(document.id, { inline: true })} target="_blank" rel="noreferrer"><Eye size={15} /> View PDF</a>
-            <a className="secondary-button" href={maintenanceDocumentFileUrl(document.id)}><Download size={15} /> Download</a>
-            {canManage && <button className="icon-button" type="button" onClick={handleDeleteFile} aria-label="Delete PDF"><Trash2 size={15} /></button>}
-          </div>
-        </div>
-      ) : document.file_path ? (
-        <p><a href={document.file_path} target="_blank" rel="noreferrer"><ExternalLink size={14} /> {document.file_name || 'Open file reference'}</a></p>
-      ) : (
-        <p className="machine-empty-state" style={{ minHeight: 0, padding: '18px' }}>No PDF uploaded yet</p>
-      )}
-
-      {canManage && !document.storage_disk && (
+      <div className="form-section-heading"><strong>Document file</strong><span>Upload the PDF for this document.</span></div>
+      {canManage ? (
         <>
           <PdfUploadField file={selectedFile} onFileSelected={setSelectedFile} disabled={isUploading} />
           {error && <small className="field-error"><AlertCircle size={13} />{error}</small>}
           {selectedFile && <button className="primary-button" type="button" onClick={handleUpload} disabled={isUploading} style={{ marginTop: 10 }}>{isUploading ? <LoaderCircle className="spin" size={16} /> : null} {isUploading ? 'Uploading…' : 'Upload PDF'}</button>}
         </>
+      ) : (
+        <p className="maintenance-compact-empty"><FileText size={16} /> No PDF uploaded yet.</p>
       )}
     </div>
   )
 }
 
+// Two separate sections, not one: "Knowledge extraction" always renders (it *is*
+// the state - NONE through FAILED), while "Extracted content" only exists once
+// there is actual content to show, so a fresh/pending/processing document never
+// displays a large empty content area before extraction has produced anything.
 function ExtractionSection({ document, canManage }) {
   const { extraction, isLoading, start, isStarting, startError } = useDocumentExtraction(document.id)
   const [showModal, setShowModal] = useState(false)
-  const hasExtraction = Boolean(extraction) && extraction.status !== 'NONE'
   const isCompleted = extraction?.status === 'COMPLETED'
-  const canRetry = extraction?.status === 'FAILED'
 
   async function handleStart() {
     await start()
@@ -96,26 +112,23 @@ function ExtractionSection({ document, canManage }) {
   }
 
   return (
-    <div className="maintenance-step-section" style={{ margin: '18px 0 0', paddingTop: '16px' }}>
-      <div className="form-section-heading"><strong>Extracted content</strong><span>Text extracted from the PDF, prepared for future knowledge processing.</span></div>
-
-      {isLoading ? <small>Loading extraction status…</small> : !hasExtraction ? (
-        canManage && <button className="secondary-button" type="button" onClick={() => setShowModal(true)}><Sparkles size={16} /> Extract Knowledge</button>
-      ) : (
-        <>
-          <ExtractionProgress extraction={extraction} />
-          {canManage && canRetry && <button className="secondary-button" type="button" onClick={() => setShowModal(true)} style={{ marginTop: 10 }}><Sparkles size={16} /> Retry Extraction</button>}
-        </>
-      )}
+    <>
+      <div className="maintenance-step-section" style={{ margin: '18px 0 0', paddingTop: '16px' }}>
+        <div className="form-section-heading"><strong>Knowledge extraction</strong><span>Text extracted from the PDF, prepared for future knowledge processing.</span></div>
+        {isLoading ? <small>Loading extraction status…</small> : (
+          <ExtractionProgress extraction={extraction} canManage={canManage} isStarting={isStarting} onStart={() => setShowModal(true)} onReExtract={() => setShowModal(true)} />
+        )}
+      </div>
 
       {isCompleted && (
-        <div style={{ marginTop: 14 }}>
+        <div className="maintenance-step-section" style={{ margin: '18px 0 0', paddingTop: '16px' }}>
+          <div className="form-section-heading"><strong>Extracted content</strong><span>Per-page text extracted from the PDF.</span></div>
           <ExtractedPagesViewer documentId={document.id} />
         </div>
       )}
 
-      {showModal && <ExtractionModal document={document} isStarting={isStarting} startError={startError} onClose={() => setShowModal(false)} onStart={handleStart} />}
-    </div>
+      {showModal && <ExtractionModal document={document} extraction={extraction} isStarting={isStarting} startError={startError} onClose={() => setShowModal(false)} onStart={handleStart} />}
+    </>
   )
 }
 
@@ -222,7 +235,7 @@ export function DocumentDetail({ documentId, canManage, onClose }) {
   }
 
   return (
-    <BlockingDialog className="machine-dialog glass-surface" backdropClassName="machine-dialog-backdrop" labelledBy="document-detail-title" onClose={onClose}>
+    <BlockingDialog className="machine-dialog glass-surface document-detail-dialog" backdropClassName="machine-dialog-backdrop" labelledBy="document-detail-title" onClose={onClose}>
       <header className="dialog-header">
         <div className="dialog-heading"><span className="dialog-icon"><FileText size={22} /></span><div><span className="card-kicker">Document repository</span><h2 id="document-detail-title">{state.document?.title ?? 'Document'}</h2></div></div>
         <button className="icon-button" type="button" onClick={onClose} aria-label="Close"><X size={19} /></button>
@@ -234,9 +247,28 @@ export function DocumentDetail({ documentId, canManage, onClose }) {
           : !state.document ? <ErrorState title="Document not available" detail="It may belong to a different account." />
           : (
             <>
-              <p><strong>Type:</strong> {documentTypeLabels[state.document.document_type] ?? state.document.document_type} · <strong>Status:</strong> {documentStatusLabels[state.document.status] ?? state.document.status}{state.document.version && <> · <strong>Version:</strong> {state.document.version}</>}</p>
+              <div className="document-header">
+                <div className="document-header-badges">
+                  <span className="incident-status-pill info">{documentTypeLabels[state.document.document_type] ?? state.document.document_type}</span>
+                  <span className={`incident-status-pill ${documentStatusPillClass[state.document.status] ?? ''}`}>{documentStatusLabels[state.document.status] ?? state.document.status}</span>
+                </div>
+                {state.document.storage_disk && (
+                  <div className="document-header-actions">
+                    <a className="secondary-button" href={maintenanceDocumentFileUrl(state.document.id, { inline: true })} target="_blank" rel="noreferrer"><Eye size={15} /> View PDF</a>
+                    <a className="secondary-button" href={maintenanceDocumentFileUrl(state.document.id)}><Download size={15} /> Download</a>
+                  </div>
+                )}
+              </div>
+
+              <div className="document-meta-grid">
+                <div><span>Manufacturer</span><strong>{state.document.manufacturer?.name ?? '—'}</strong></div>
+                <div><span>Machine model</span><strong>{state.document.machine_model?.name ?? '—'}</strong></div>
+                <div><span>File size</span><strong>{formatFileSize(state.document.file_size)}</strong></div>
+                <div><span>Uploaded</span><strong>{formatMaintenanceDate(state.document.uploaded_at, undefined, { dateOnly: true })}</strong></div>
+                <div><span>Updated</span><strong>{formatMaintenanceDate(state.document.updated_at, undefined, { dateOnly: true })}</strong></div>
+                {state.document.version && <div><span>Version</span><strong>{state.document.version}</strong></div>}
+              </div>
               {state.document.description && <p>{state.document.description}</p>}
-              <small>Added {formatMaintenanceDate(state.document.created_at, undefined, { dateOnly: true })}</small>
 
               <DocumentFileSection document={state.document} canManage={canManage} onChanged={(updated) => state.setDocument((prev) => ({ ...prev, ...updated }))} />
 
@@ -249,7 +281,7 @@ export function DocumentDetail({ documentId, canManage, onClose }) {
               <div className="maintenance-step-section" style={{ margin: '18px 0 0', paddingTop: '16px' }}>
                 <div className="form-section-heading"><strong>Related error knowledge</strong><span>Error codes this document is a source for.</span></div>
                 {(state.document.references ?? []).length === 0 ? (
-                  <small>No error code references linked yet.</small>
+                  <p className="maintenance-compact-empty"><FileText size={16} /> No error code references linked yet.</p>
                 ) : (
                   <ul className="incident-narrative-list">
                     {state.document.references.map((reference) => (

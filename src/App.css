@@ -641,6 +641,36 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .maintenance-extracted-page hr { margin: 6px 0; border: none; border-top: 1px solid var(--border-subtle); }
 .maintenance-extracted-page p { margin: 0; font-size: 12px; white-space: pre-wrap; color: var(--text-soft); }
 .maintenance-extracted-pages-nav { display: flex; align-items: center; justify-content: center; gap: 12px; font-size: 12px; color: var(--text-soft); }
+
+/* V1.5.3 - Document Detail header/metadata + Knowledge Extraction state cards */
+.document-detail-dialog { width: min(1200px, 100%); }
+.document-header { min-width: 0; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+.document-header-badges { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.document-header-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.document-meta-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 14px 22px; margin-top: 16px; padding: 16px 18px; border: 1px solid var(--border-subtle); border-radius: 16px; background: var(--surface-muted); }
+.document-meta-grid > div { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.document-meta-grid span { color: var(--text-muted); font-size: 9px; font-weight: 720; letter-spacing: 0.06em; text-transform: uppercase; }
+.document-meta-grid strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; }
+
+.maintenance-compact-empty { min-width: 0; display: flex; align-items: center; gap: 10px; margin: 0; padding: 14px 16px; color: var(--text-soft); border: 1px dashed var(--border-subtle); border-radius: 14px; background: var(--surface-muted); font-size: 11px; line-height: 1.5; }
+.maintenance-compact-empty svg { flex: 0 0 auto; color: var(--text-muted); }
+
+.extraction-card { min-width: 0; display: flex; align-items: flex-start; gap: 14px; margin-top: 10px; padding: 18px; border-radius: 20px; background: var(--surface-muted); border: 1px solid var(--border-subtle); }
+.extraction-card-icon { width: 36px; height: 36px; display: grid; place-items: center; flex: 0 0 auto; border-radius: 12px; color: var(--text-soft); background: var(--surface-solid); }
+.extraction-card-none .extraction-card-icon { color: var(--blue); background: var(--blue-soft); }
+.extraction-card-pending .extraction-card-icon { color: var(--text-soft); background: var(--surface-solid); }
+.extraction-card-processing .extraction-card-icon { color: var(--blue); background: var(--blue-soft); }
+.extraction-card-completed .extraction-card-icon { color: var(--green); background: color-mix(in srgb, var(--green) 12%, transparent); }
+.extraction-card-failed .extraction-card-icon { color: var(--danger); background: color-mix(in srgb, var(--danger) 10%, transparent); }
+.extraction-card-body { min-width: 0; flex: 1 1 auto; display: flex; flex-direction: column; gap: 8px; }
+.extraction-card-body > strong { font-size: 13px; }
+.extraction-card-body > p { margin: 0; overflow-wrap: anywhere; color: var(--text-soft); font-size: 11px; line-height: 1.6; }
+.extraction-card-body > .primary-button, .extraction-card-body > .secondary-button { align-self: flex-start; margin-top: 2px; }
+.extraction-card-heading-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.extraction-card-heading-row strong { font-size: 13px; }
+.maintenance-progress-bar-indeterminate { position: relative; }
+.maintenance-progress-bar-fill-indeterminate { position: absolute; inset: 0; width: 40%; border-radius: inherit; background: var(--blue); animation: loading-slide 1.15s ease-in-out infinite alternate; }
+
 @media (max-width: 680px) {
   .maintenance-error-search { flex-direction: column; align-items: stretch; }
   .maintenance-error-search > button { width: 100%; justify-content: center; }
@@ -648,6 +678,12 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   .list-toolbar:has(.maintenance-error-toolbar-actions) { align-items: stretch; flex-direction: column; }
   .maintenance-error-toolbar-actions { justify-content: space-between; }
   .maintenance-error-toolbar-actions .primary-button { flex: 1; justify-content: center; }
+  .document-header { align-items: flex-start; flex-direction: column; }
+  .document-header-actions { width: 100%; }
+  .document-header-actions a { flex: 1 1 auto; justify-content: center; }
+  .document-meta-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 14px; }
+  .extraction-card { flex-direction: column; }
+  .extraction-card-body > .primary-button, .extraction-card-body > .secondary-button { align-self: stretch; justify-content: center; }
 }
 .incident-form-grid, .incident-loss-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .incident-loss-preview { min-width: 0; display: flex; flex-direction: column; gap: 4px; padding: 15px 16px; border: 1px solid var(--border-subtle); border-radius: 16px; background: var(--surface-muted); }

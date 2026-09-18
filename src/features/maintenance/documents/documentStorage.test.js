@@ -80,21 +80,25 @@ test('DocumentFormDialog upload flow lets the storage endpoint own file metadata
   assert.match(formDialog, /if \(useUploadFlow\) await uploadMaintenanceDocumentFile\(saved\.id, selectedFile\)/)
 })
 
-test('DocumentDetail file section gates upload and delete actions behind canManage, matching every other mutation in this dialog', () => {
+// V1.5.3: View PDF/Download moved into the document header (every viewer sees
+// them there once a file exists) - DocumentFileSection itself now renders nothing
+// for a non-manager once a file exists (nothing left for them to manage), and stays
+// canManage-gated for replace/delete/upload exactly as before.
+test('DocumentDetail file section gates upload/replace/delete actions behind canManage, matching every other mutation in this dialog', () => {
   assert.match(detail, /function DocumentFileSection\(\{ document, canManage, onChanged \}\)/)
-  assert.match(detail, /\{canManage && <button className="icon-button" type="button" onClick=\{handleDeleteFile\}/)
-  assert.match(detail, /\{canManage && !document\.storage_disk && \(/)
+  assert.match(detail, /if \(document\.storage_disk\) \{\s*if \(!canManage\) return null/)
+  assert.match(detail, /\{canManage \? \(/)
 })
 
 test('DocumentDetail file section renders all three file-presence states', () => {
-  assert.match(detail, /document\.storage_disk \? \(/)
-  assert.match(detail, /: document\.file_path \? \(/)
+  assert.match(detail, /if \(document\.storage_disk\) \{/)
+  assert.match(detail, /if \(document\.file_path\) \{/)
   assert.match(detail, /No PDF uploaded yet/)
 })
 
-test('DocumentDetail exposes View/Download links straight to the download endpoint (no blob fetch)', () => {
-  assert.match(detail, /href=\{maintenanceDocumentFileUrl\(document\.id, \{ inline: true \}\)\}/)
-  assert.match(detail, /href=\{maintenanceDocumentFileUrl\(document\.id\)\}/)
+test('DocumentDetail exposes View/Download links in the document header straight to the download endpoint (no blob fetch)', () => {
+  assert.match(detail, /href=\{maintenanceDocumentFileUrl\(state\.document\.id, \{ inline: true \}\)\}/)
+  assert.match(detail, /href=\{maintenanceDocumentFileUrl\(state\.document\.id\)\}/)
 })
 
 // Extract Knowledge is no longer a disabled "Coming soon" placeholder - see

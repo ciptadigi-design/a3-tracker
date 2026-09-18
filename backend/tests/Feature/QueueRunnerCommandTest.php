@@ -121,15 +121,16 @@ class QueueRunnerCommandTest extends TestCase
 
         $extraction->refresh();
         $this->assertSame('FAILED', $extraction->status);
+        $this->assertSame('INVALID_OR_CORRUPT_PDF', $extraction->error_code);
         $this->assertNotNull($extraction->error_message);
-        // The job's own backoff ([30, 90, 300]) re-releases it with a future
-        // available_at rather than exhausting retries within this one bounded
-        // invocation - it is correctly still sitting in `jobs` awaiting its next
-        // scheduled attempt, not lost, and not yet in Laravel's own failed_jobs
-        // table (that only happens once every try is exhausted - a Laravel
-        // queue-internals guarantee, not something this command changes).
-        $this->assertSame(1, DB::table('jobs')->count());
-        $this->assertSame(0, DB::table('failed_jobs')->count());
+        // V1.5.3: a corrupt/invalid PDF is a PERMANENT classification (see
+        // PdfExtractionErrorCode::isPermanent()) - ExtractMaintenanceDocumentJob
+        // calls $this->fail() instead of letting the job's own backoff ([30, 90,
+        // 300]) re-release it, so it is removed from `jobs` and moved straight to
+        // Laravel's own `failed_jobs` table by the framework's normal $job->fail()
+        // handling, rather than sitting queued for a retry that cannot succeed.
+        $this->assertSame(0, DB::table('jobs')->count());
+        $this->assertSame(1, DB::table('failed_jobs')->count());
     }
 
     public function test_concurrent_invocation_is_skipped_via_the_lock(): void
