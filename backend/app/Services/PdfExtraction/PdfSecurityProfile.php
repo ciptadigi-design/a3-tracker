@@ -49,4 +49,29 @@ final class PdfSecurityProfile
             emptyUserPasswordValid: null,
         );
     }
+
+    /**
+     * V1.5.5 capability gate - true ONLY for the exact profile proven against
+     * the real production document (docs/maintenance/V1.5.4_SECURED_PDF_COMPATIBILITY.md
+     * and V1.5.5_AESV2_EXTRACTION.md): Standard Security Handler, /V 4, /R 4,
+     * 128-bit AES (/CFM /AESV2) for both streams and strings, and a confirmed
+     * empty user password.
+     *
+     * Deliberately exhaustive rather than permissive - every other
+     * combination (R2/R3/R5/R6, RC4, split or Identity crypt filters, a real
+     * non-empty user password, an undetermined profile) returns false here
+     * and must be classified UNSUPPORTED_PDF_SECURITY by the caller. Fails
+     * closed by construction: this method has no "unless" clause.
+     */
+    public function isSupportedAesV2Profile(): bool
+    {
+        return $this->encrypted
+            && $this->filter === 'Standard'
+            && $this->version === 4
+            && $this->revision === 4
+            && $this->keyLengthBits === 128
+            && $this->streamCipher === 'AESV2'
+            && $this->stringCipher === 'AESV2'
+            && $this->emptyUserPasswordValid === true;
+    }
 }

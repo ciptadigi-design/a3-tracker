@@ -3,9 +3,9 @@
 namespace Tests\Unit;
 
 use App\Services\PdfExtraction\PdfExtractionException;
+use App\Services\PdfExtraction\PdfObjectDictionaryReader;
 use App\Services\PdfExtraction\PdfSecurityInspector;
 use PHPUnit\Framework\TestCase;
-use ReflectionMethod;
 
 /**
  * V1.5.4 research - PdfSecurityInspector is a read-only classifier (never a
@@ -69,12 +69,14 @@ class PdfSecurityInspectorTest extends TestCase
      * the fixture - both are spec-valid (ISO 32000-1 7.3.4). This exercises
      * the literal-string decoder directly against known escape sequences
      * rather than depending on a committed real-world example.
+     *
+     * V1.5.5: moved to PdfObjectDictionaryReader (shared with the new AESV2
+     * decryption path, which also needs raw dictionary values) - see that
+     * class's docblock.
      */
     public function test_literal_string_decoder_handles_every_pdf_escape_sequence(): void
     {
-        $decode = new ReflectionMethod(PdfSecurityInspector::class, 'decodeLiteralString');
-        $decode->setAccessible(true);
-        $inspector = new PdfSecurityInspector;
+        $reader = new PdfObjectDictionaryReader;
 
         $cases = [
             'plain bytes pass through' => ['hello', 'hello'],
@@ -88,7 +90,7 @@ class PdfSecurityInspectorTest extends TestCase
         ];
 
         foreach ($cases as $label => [$raw, $expected]) {
-            $this->assertSame($expected, $decode->invoke($inspector, $raw), $label);
+            $this->assertSame($expected, $reader->decodeLiteralString($raw), $label);
         }
     }
 

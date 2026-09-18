@@ -6,7 +6,7 @@ use App\Models\Account;
 use App\Models\User;
 use App\Services\EffectiveCapabilityResolver;
 use App\Services\PdfExtraction\PdfTextExtractor;
-use App\Services\PdfExtraction\SmalotPdfTextExtractor;
+use App\Services\PdfExtraction\ProfileAwarePdfTextExtractor;
 use App\Services\PlatformPrivilegeService;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
@@ -18,11 +18,13 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        // V1.5.3 - the only PdfTextExtractor implementation today. See
-        // SmalotPdfTextExtractor's docblock for why (Hostinger shared-hosting
-        // constraints) and DocumentExtractionService for how a future alternative
-        // engine could be bound here instead without touching either class.
-        $this->app->bind(PdfTextExtractor::class, SmalotPdfTextExtractor::class);
+        // V1.5.5 - ProfileAwarePdfTextExtractor dispatches unencrypted PDFs to
+        // SmalotPdfTextExtractor (unchanged since V1.5.3) and the one supported
+        // secured profile (Standard Security Handler /V4/R4/AESV2, empty user
+        // password) to SecuredPdfTextExtractor; everything else still ends up
+        // UNSUPPORTED_PDF_SECURITY exactly as before. See
+        // docs/maintenance/V1.5.5_AESV2_EXTRACTION.md.
+        $this->app->bind(PdfTextExtractor::class, ProfileAwarePdfTextExtractor::class);
     }
 
     /**

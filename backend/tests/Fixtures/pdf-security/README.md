@@ -1,9 +1,10 @@
-# PDF security fixtures (V1.5.4 research)
+# PDF security fixtures (V1.5.4 research, extended in V1.5.5)
 
-Both files here are synthetic. Neither contains any Konica Minolta content,
+Every file here is synthetic. None contains any Konica Minolta content,
 metadata, or security material - see
-`docs/maintenance/V1.5.4_SECURED_PDF_COMPATIBILITY.md` for the research these
-fixtures support.
+`docs/maintenance/V1.5.4_SECURED_PDF_COMPATIBILITY.md` and
+`docs/maintenance/V1.5.5_AESV2_EXTRACTION.md` for the work these fixtures
+support.
 
 ## `unencrypted-baseline.pdf`
 
@@ -69,3 +70,26 @@ real document's producer ("Antenna House PDF Output Library") encodes them as
 PDF **literal strings** (`(\373\252\261...)`) - both are spec-valid ways to
 write the same opaque byte value (ISO 32000-1 7.3.4). `PdfSecurityInspector`
 is tested against both encodings for exactly this reason.
+
+Regenerated during V1.5.5 with `--compress-streams=n --object-streams=disable
+--stream-data=uncompress` added to the command above: the security profile is
+identical, but the content stream is no longer FlateDecode-compressed, which
+avoids incidentally exercising an unrelated Smalot RawDataParser warning
+(`gzuncompress(): data error`, itself harmless and internally handled - see
+git history for the full explanation) that has nothing to do with what this
+fixture exists to test.
+
+## V1.5.5 negative fixtures
+
+Same generation method and security-material policy as above (qpdf, local
+research tool only, fresh synthetic credentials, never the real document's
+own material) - each reproduces one specific classification boundary from
+`docs/maintenance/V1.5.5_AESV2_EXTRACTION.md` section 2 ("Explicit Unsupported
+Profiles"):
+
+| File | Profile | Expected classification |
+|---|---|---|
+| `encrypted-r4-aes128-nonempty-user-password.pdf` | Same as the empty-password fixture, but a real user password (`SomeUserPassword123`, fixture-only, never a credential used anywhere else) is required to open it | `UNSUPPORTED_PDF_SECURITY` - V1.5.5 never attempts a non-empty password; there is no code path through which one could be supplied |
+| `encrypted-r6-aes256-unsupported.pdf` | Standard Security Handler R6 / AES-256, empty user password valid | `UNSUPPORTED_PDF_SECURITY` - only R4/AESV2 is implemented; R5/R6 use a different (SHA-256-based) key derivation entirely |
+| `encrypted-r3-rc4-unsupported.pdf` | Standard Security Handler R3 / RC4-128 (`--allow-weak-crypto`, deliberately generating a profile this project does NOT want to support even if it could) | `UNSUPPORTED_PDF_SECURITY` - only AESV2 is implemented; RC4 is out of scope by design, not merely unimplemented |
+| `encrypted-truncated-corrupt.pdf` | `encrypted-r4-aes128-empty-user-password.pdf` truncated to 60% of its length | `INVALID_OR_CORRUPT_PDF` - a structurally broken file, not a security-policy rejection; the distinction matters because the two error codes carry different (both safe) user-facing messages |

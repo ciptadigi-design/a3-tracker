@@ -293,6 +293,44 @@ class MaintenanceDocumentExtractionTest extends TestCase
         $this->assertDatabaseHas('governance_audit_logs', ['action' => 'maintenance_document_extraction.completed', 'target_id' => $extraction->id, 'account_id' => $f['home']->id]);
     }
 
+    /**
+     * V1.5.5 - the one real behavior change this milestone makes: a
+     * Standard-Security-Handler /V4/R4/AESV2, empty-user-password encrypted
+     * PDF (previously always FAILED/UNSUPPORTED_PDF_SECURITY, see V1.5.3/
+     * V1.5.4) now completes successfully end to end through the exact same
+     * lifecycle/persistence/audit code every other document already uses -
+     * DocumentExtractionService and ExtractMaintenanceDocumentJob are
+     * completely unmodified for this to work; only the bound PdfTextExtractor
+     * (AppServiceProvider) changed. Uses the committed sanitized fixture
+     * (tests/Fixtures/pdf-security/, see its README) - no Konica content.
+     */
+    public function test_supported_aesv2_encrypted_pdf_completes_successfully_through_the_real_pipeline(): void
+    {
+        $f = $this->fixture();
+        $fixtureBytes = file_get_contents(__DIR__.'/../Fixtures/pdf-security/encrypted-r4-aes128-empty-user-password.pdf');
+        $this->attachStoredPdf($f['document'], $fixtureBytes);
+        $extraction = MaintenanceDocumentExtraction::create(['document_id' => $f['document']->id, 'status' => 'PENDING']);
+
+        (new ExtractMaintenanceDocumentJob($extraction->id))->handle(app(DocumentExtractionService::class));
+
+        $extraction->refresh();
+        $this->assertSame('COMPLETED', $extraction->status);
+        $this->assertNull($extraction->error_code);
+        $this->assertSame(1, $extraction->total_pages);
+        $this->assertSame(1, $extraction->processed_pages);
+
+        $page = MaintenanceDocumentPage::where('document_id', $f['document']->id)->where('page_number', 1)->first();
+        $this->assertNotNull($page);
+        $this->assertStringContainsString('A3 Tracker PDF Security Fixture', $page->raw_text);
+        $this->assertStringContainsString('Error Code Example: C-0000', $page->raw_text);
+
+        // The stored PDF DocumentStorageService manages is never touched by
+        // decryption - confirms V1.5.5's "never modify the original uploaded
+        // PDF" requirement holds through the full real pipeline, not just the
+        // extractor in isolation.
+        $this->assertSame($fixtureBytes, Storage::disk($f['document']->storage_disk)->get($f['document']->file_path));
+    }
+
     public function test_re_running_extraction_upserts_the_same_page_rows_instead_of_duplicating_them(): void
     {
         $f = $this->fixture();

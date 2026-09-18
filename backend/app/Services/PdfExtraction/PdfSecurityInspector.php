@@ -47,6 +47,13 @@ class PdfSecurityInspector
 
     private const PADDING = "\x28\xBF\x4E\x5E\x4E\x75\x8A\x41\x64\x00\x4E\x56\xFF\xFA\x01\x08\x2E\x2E\x00\xB6\xD0\x68\x3E\x80\x2F\x0C\xA9\xFE\x64\x53\x69\x7A";
 
+    private readonly PdfObjectDictionaryReader $reader;
+
+    public function __construct(?PdfObjectDictionaryReader $reader = null)
+    {
+        $this->reader = $reader ?? new PdfObjectDictionaryReader;
+    }
+
     public function inspect(string $absolutePath): PdfSecurityProfile
     {
         if (! is_file($absolutePath)) {
@@ -63,8 +70,8 @@ class PdfSecurityInspector
             return PdfSecurityProfile::unencrypted();
         }
 
-        $encryptDict = $this->resolveEncryptDictionary($xref['trailer']['encrypt'], $data);
-        $fileId = $this->resolveFileId($xref['trailer']['id'][0] ?? null);
+        $encryptDict = $this->reader->resolveDictionary($xref['trailer']['encrypt'], $data);
+        $fileId = $this->reader->resolveFileId($xref['trailer']['id'][0] ?? null);
 
         $filter = $encryptDict['Filter'] ?? null;
         $subFilter = $encryptDict['SubFilter'] ?? null;
@@ -91,132 +98,6 @@ class PdfSecurityInspector
             encryptMetadata: $encryptMetadata,
             emptyUserPasswordValid: $emptyUserPasswordValid,
         );
-    }
-
-    /** @return array<string,mixed> flat map of /Encrypt dictionary keys, e.g. ['V'=>4,'CF'=>['StdCF'=>['CFM'=>'AESV2','Length'=>16,...]],...] */
-    private function resolveEncryptDictionary(string $ref, array $data): array
-    {
-        $parts = $data[$ref] ?? null;
-        if (! is_array($parts) || ! isset($parts[0]) || ($parts[0][0] ?? null) !== '<<') {
-            throw new PdfExtractionException(PdfExtractionErrorCode::INVALID_OR_CORRUPT_PDF, "/Encrypt object {$ref} is not a dictionary.");
-        }
-
-        return $this->walkDictTokens($parts[0][1]);
-    }
-
-    /** @param array<int,array> $tokens flat [nameToken, valueToken, nameToken, valueToken, ...] as produced by RawDataParser */
-    private function walkDictTokens(array $tokens): array
-    {
-        $dict = [];
-        $count = count($tokens);
-        for ($i = 0; $i + 1 < $count; $i += 2) {
-            $nameToken = $tokens[$i];
-            if (($nameToken[0] ?? null) !== '/') {
-                continue; // Not a name key - skip defensively rather than assume well-formed input.
-            }
-            $dict[$nameToken[1]] = $this->tokenValue($tokens[$i + 1]);
-        }
-
-        return $dict;
-    }
-
-    private function tokenValue(array $token): mixed
-    {
-        return match ($token[0] ?? null) {
-            '<<' => $this->walkDictTokens($token[1]),
-            '/' => $token[1],
-            'numeric' => is_numeric($token[1]) ? $token[1] + 0 : null,
-            'boolean' => $token[1] === 'true',
-            '<' => @hex2bin((string) $token[1]), // hex string, e.g. <28BF4E5E...> - raw bytes
-            '(' => $this->decodeLiteralString((string) $token[1]), // literal string, e.g. (\373\252\261...) - raw bytes
-            default => null,
-        };
-    }
-
-    /**
-     * PDF literal-string decoding (ISO 32000-1 7.3.4.2). RawDataParser hands
-     * back the raw source bytes between the outer parentheses verbatim
-     * (including any backslash escapes) - a real PDF producer is free to
-     * encode a dictionary string value as EITHER a hex string <...> or a
-     * literal string (...), and /O and /U are exactly the kind of opaque
-     * 32-byte binary values commonly written the second way (the real
-     * production Konica PDF does; the qpdf-generated V1.5.4 fixture happens
-     * to use hex strings instead - both are spec-valid, and this method is
-     * why the inspector handles either).
-     */
-    private function decodeLiteralString(string $raw): string
-    {
-        $out = '';
-        $len = strlen($raw);
-        for ($i = 0; $i < $len; $i++) {
-            $ch = $raw[$i];
-            if ($ch !== '\\') {
-                $out .= $ch;
-
-                continue;
-            }
-            $next = $raw[$i + 1] ?? '';
-            switch (true) {
-                case $next === 'n': $out .= "\n";
-                    $i++;
-                    break;
-                case $next === 'r': $out .= "\r";
-                    $i++;
-                    break;
-                case $next === 't': $out .= "\t";
-                    $i++;
-                    break;
-                case $next === 'b': $out .= "\x08";
-                    $i++;
-                    break;
-                case $next === 'f': $out .= "\x0C";
-                    $i++;
-                    break;
-                case $next === '(': $out .= '(';
-                    $i++;
-                    break;
-                case $next === ')': $out .= ')';
-                    $i++;
-                    break;
-                case $next === '\\': $out .= '\\';
-                    $i++;
-                    break;
-                case $next === "\r": // line continuation: \<CR>, \<LF>, or \<CR><LF> produces nothing
-                    $i++;
-                    if (($raw[$i + 1] ?? '') === "\n") {
-                        $i++;
-                    }
-                    break;
-                case $next === "\n":
-                    $i++;
-                    break;
-                case ctype_digit($next) && (int) $next < 8:
-                    $octal = $next;
-                    $i++;
-                    for ($d = 0; $d < 2 && ctype_digit($raw[$i + 1] ?? '') && (int) $raw[$i + 1] < 8; $d++) {
-                        $octal .= $raw[$i + 1];
-                        $i++;
-                    }
-                    $out .= chr(octdec($octal) & 0xFF);
-                    break;
-                default:
-                    // Per spec: an unrecognized escape drops the backslash and keeps the character.
-                    $out .= $next;
-                    $i++;
-            }
-        }
-
-        return $out;
-    }
-
-    private function resolveFileId(?string $hex): ?string
-    {
-        if ($hex === null || $hex === '') {
-            return null;
-        }
-        $bytes = @hex2bin($hex);
-
-        return $bytes === false ? null : $bytes;
     }
 
     private function resolveBool(mixed $value, bool $default): bool
