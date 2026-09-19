@@ -1,4 +1,4 @@
-# Hostinger queue runner setup (V1.5.1, env fix in V1.5.2)
+# Hostinger queue runner setup (V1.5.1, env fix in V1.5.2, timing/observability hardening in V1.5.6)
 
 Maintenance V1.5 introduced this app's first queue job
 (`App\Jobs\ExtractMaintenanceDocumentJob`, PDF knowledge extraction). This
@@ -45,21 +45,45 @@ daemon.
 
 `app/Console/Commands/RunQueueOnce.php` wraps Laravel's own
 `queue:work --stop-when-empty` (the officially-supported "no daemon" queue
-pattern) with two additional safety properties a raw `queue:work` cron entry
+pattern) with additional safety properties a raw `queue:work` cron entry
 would not have on a shared host:
 
 1. **Bounded execution.** `--max-time=50` (default) and `--max-jobs=25`
    (default) mean a single invocation can never run past a safe budget or
    process an unbounded burst of jobs - it always returns control to cron.
-2. **Overlap protection.** A `Cache::lock('a3-queue-runner', ...)` (backed by
+   Note `--max-time` only stops the loop from picking up *new* jobs after that
+   many seconds have elapsed; it does not interrupt a job already in progress
+   (see next point).
+2. **Per-job timeout.** `--timeout=300` (5 minutes) is queue:work's own
+   pcntl-based per-job kill switch. V1.5.5's real 121.8MB Konica extraction
+   took ~107 seconds - this leaves ~2.8x margin. **V1.5.6 finding:** the prior
+   version of this runner never passed `--timeout` at all, silently defaulting
+   to queue:work's own CLI default of 60 seconds; the real ~107s job still
+   completed successfully despite that, even with both `pcntl` and `posix`
+   loaded on Production - proving the alarm-based kill did not fire in that
+   run, for a reason not fully root-caused. Do not rely on that non-enforcement
+   continuing to hold; the explicit `--timeout=300` closes the ambiguity.
+3. **Overlap protection.** A `Cache::lock('a3-queue-runner', ...)` (backed by
    the `cache_locks` table - `CACHE_STORE=database` already, no schema change
    needed) means that if one cron tick is still mid-job (e.g. a slow
    large-PDF extraction) when the next tick fires a minute later, the second
-   invocation sees the lock held, prints `QUEUE_RUNNER_SKIPPED=already_running`,
-   and exits immediately instead of starting a second overlapping
-   `queue:work` process. The lock's own TTL (`--max-time` + 60s) self-expires
-   even if a run is killed by a host execution-time limit before it can
-   release the lock cleanly - the runner can never wedge itself permanently.
+   invocation sees the lock held, prints `QUEUE_RUNNER_STATUS=SKIPPED` /
+   `QUEUE_RUNNER_REASON=LOCK_HELD`, and exits immediately instead of starting a
+   second overlapping `queue:work` process. **V1.5.6 change:** the lock's TTL
+   is now `--max-time + --timeout + 30s buffer` (380s with the defaults above),
+   derived from the same values actually passed to queue:work - not the old
+   fixed `--max-time + 60s` (110s), which left only a 3-second margin over the
+   real ~107s job it needed to survive. It still self-expires even if a run is
+   killed by a host execution-time limit before it can release the lock
+   cleanly - the runner can never wedge itself permanently.
+4. **`retry_after` (config/queue.php, `DB_QUEUE_RETRY_AFTER`) raised to 420s.**
+   This is the actual correctness-critical value, not just cron-tick overlap
+   protection: it is enforced unconditionally by the database queue driver's
+   own `reserved_at < now() - retry_after` query on every pop, regardless of
+   pcntl/signals. The old default (90s) was below the real ~107s job -
+   a legitimately-still-running job could have had its reservation treated as
+   abandoned and become poppable by a second worker mid-extraction. 420s gives
+   120s of margin above the 300s `--timeout` ceiling itself.
 
 `queue:work --stop-when-empty` itself is what keeps this from ever becoming a
 long-running process: it processes whatever is currently on the queue and
@@ -113,18 +137,33 @@ minute of being requested.
 
 Locally or against a staging copy:
 
+Note: Hostinger's PsySH/Tinker is not usable in this environment - use
+`php artisan queue:monitor database:default` or a direct read-only DB query
+for inspection instead of `php artisan tinker`.
+
 ```bash
 # 1. Confirm something is actually queued (optional - the command is a safe
 #    no-op on an empty queue either way):
-php artisan tinker --execute="DB::table('jobs')->count()"
+php artisan queue:monitor database:default
 
 # 2. Run one bounded drain, exactly as cron would:
 php artisan a3:run-queue
 
-# Expected output on success:
+# Expected output on success (whether or not any jobs were actually queued):
+#   QUEUE_RUNNER_STATUS=STARTED
+#   QUEUE_RUNNER_STATUS=COMPLETED
 #   QUEUE_RUNNER_EXIT_CODE=0
+#   QUEUE_RUNNER_JOBS_PROCESSED=<n>
+#   QUEUE_RUNNER_JOBS_FAILED=<n>
+#   QUEUE_RUNNER_JOBS_TIMED_OUT=<n>
 # Expected output if a previous invocation is still running:
-#   QUEUE_RUNNER_SKIPPED=already_running
+#   QUEUE_RUNNER_STATUS=SKIPPED
+#   QUEUE_RUNNER_REASON=LOCK_HELD
+# Expected output if the runner invocation itself breaks (e.g. queue
+# connection/config problem - never a single job's own business failure,
+# which is what QUEUE_RUNNER_JOBS_FAILED counts):
+#   QUEUE_RUNNER_STATUS=FAILED
+#   QUEUE_RUNNER_EXIT_CODE=1
 ```
 
 To exercise a real extraction end-to-end: upload a PDF to a document, call
@@ -158,9 +197,14 @@ extraction status) without shell access.
   behavior, unrelated to the Hostinger-specific runner - `php artisan
   queue:retry <id>` re-queues it for the next `a3:run-queue` cron tick to pick
   up.
-- **`QUEUE_RUNNER_SKIPPED=already_running` on every tick.** The lock never
-  self-expired in the interval you checked, or a run is genuinely still
-  processing a very large PDF. The lock TTL is `--max-time` (default 50s)
-  + 60s, so this should clear itself within roughly two minutes at most; if
-  it doesn't, check whether a stuck PHP process is visible in the host's
-  process list.
+- **`QUEUE_RUNNER_STATUS=SKIPPED` / `QUEUE_RUNNER_REASON=LOCK_HELD` on every
+  tick.** The lock never self-expired in the interval you checked, or a run is
+  genuinely still processing a very large PDF. The lock TTL is `--max-time` +
+  `--timeout` + 30s (380s with the V1.5.6 defaults: 50 + 300 + 30), so this
+  should clear itself within roughly 6-7 minutes at most; if it doesn't, check
+  whether a stuck PHP process is visible in the host's process list.
+- **`QUEUE_RUNNER_STATUS=FAILED`.** The runner invocation itself broke - not a
+  single job's business failure (that shows up as a nonzero
+  `QUEUE_RUNNER_JOBS_FAILED` alongside `QUEUE_RUNNER_STATUS=COMPLETED`
+  instead). Check `QUEUE_RUNNER_ERROR=<exception class>` for the cause (e.g. a
+  queue connection/config problem after a bad deploy).

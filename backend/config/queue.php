@@ -39,7 +39,17 @@ return [
             'connection' => env('DB_QUEUE_CONNECTION'),
             'table' => env('DB_QUEUE_TABLE', 'jobs'),
             'queue' => env('DB_QUEUE', 'default'),
-            'retry_after' => (int) env('DB_QUEUE_RETRY_AFTER', 90),
+            // V1.5.6: Laravel's stock default (90s) is below the ~107s the real
+            // 121.8MB Konica extraction took in V1.5.5 Production acceptance. This
+            // value is enforced unconditionally by the database queue driver's own
+            // `reserved_at < now() - retry_after` query on every pop - unlike
+            // queue:work's --timeout, it does not depend on pcntl/signal delivery.
+            // A legitimately-still-processing job whose retry_after has elapsed
+            // becomes poppable by a second worker, which is the actual "overlapping
+            // workers" correctness risk, not just lock contention between cron
+            // ticks. 420s gives a 120s margin above RunQueueOnce's own --timeout
+            // (300s), which itself has ~2.8x margin above the observed real job.
+            'retry_after' => (int) env('DB_QUEUE_RETRY_AFTER', 420),
             'after_commit' => false,
         ],
 
