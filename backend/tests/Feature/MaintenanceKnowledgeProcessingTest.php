@@ -266,6 +266,35 @@ class MaintenanceKnowledgeProcessingTest extends TestCase
         $this->assertNotSame($firstImport->extraction_id, $secondImport->extraction_id);
     }
 
+    // --- V1.6.1: a bumped processing_version (real detector-logic change - the
+    // UTF-8-safe context fix) never resumes/mutates a historical run recorded
+    // under an older version, exactly the real Production scenario
+    // (92ccfa24-... failed under version 1 before this fix). ---
+
+    public function test_a_bumped_processing_version_creates_a_fresh_import_leaving_the_old_version_historical_and_untouched(): void
+    {
+        $f = $this->fixture();
+        $user = $this->member($f['home']);
+        $extraction = $this->completedExtraction($f['document'], [1 => "C-1001\nCause:\nFixture.\nAction:\nFixture."]);
+
+        $oldVersionImport = MaintenanceDocumentImport::create([
+            'document_id' => $f['document']->id,
+            'extraction_id' => $extraction->id,
+            'import_type' => 'PDF_EXTRACTION',
+            'status' => 'FAILED',
+            'processing_version' => 1,
+            'pages_processed' => 0,
+            'candidate_count' => 0,
+        ]);
+
+        Queue::fake();
+        $freshImport = app(MaintenanceKnowledgeProcessingService::class)->startProcessing($f['document'], $user);
+
+        $this->assertNotSame($oldVersionImport->id, $freshImport->id);
+        $this->assertSame(MaintenanceKnowledgeProcessingService::CURRENT_PROCESSING_VERSION, $freshImport->processing_version);
+        $this->assertSame('FAILED', $oldVersionImport->fresh()->status, 'the old-version historical import must remain untouched, not resumed');
+    }
+
     // --- 13. an already-reviewed candidate is never silently overwritten by reprocessing ---
 
     public function test_reprocessing_never_overwrites_an_already_approved_candidate(): void

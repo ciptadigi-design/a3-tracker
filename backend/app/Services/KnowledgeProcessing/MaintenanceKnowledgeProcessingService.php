@@ -29,7 +29,17 @@ use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
  */
 class MaintenanceKnowledgeProcessingService
 {
-    public const CURRENT_PROCESSING_VERSION = 1;
+    // V1.6.1: bumped from 1. The UTF-8-safe bounded-context fix
+    // (PdfKnowledgeCandidateDetector::boundedContext()/deriveTitle()) is
+    // exactly the kind of detector-logic change this constant's own original
+    // docblock called out - "bumped only if the detector's own logic changes
+    // in a way that should be distinguishable from a prior run's candidates".
+    // A processing_version bump also means startProcessing() for the same
+    // (document, extraction) never matches the real Production version-1
+    // import that failed under the old byte-unsafe slicing (92ccfa24-...) -
+    // that import is never resumed/mutated; a genuinely new one is created,
+    // preserving the old as untouched historical evidence.
+    public const CURRENT_PROCESSING_VERSION = 2;
 
     public const DEFAULT_CHUNK_SIZE = 100;
 
