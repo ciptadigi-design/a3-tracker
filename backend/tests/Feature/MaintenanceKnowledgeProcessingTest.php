@@ -471,4 +471,155 @@ class MaintenanceKnowledgeProcessingTest extends TestCase
         $this->assertSame(0, $import->candidate_count);
         $this->assertNotNull($import->processing_completed_at);
     }
+
+    // --- V1.6.1: real Production run failed with a MySQL "Incorrect string value:
+    // '\xE2'" on description - a byte-boundary UTF-8 truncation bug in
+    // PdfKnowledgeCandidateDetector, not a charset/schema problem. This proves the
+    // fix end to end through the real chunk-processing/persistence path (not just
+    // the detector in isolation - see PdfKnowledgeCandidateDetectorUtf8Test for
+    // that), so CI's MySQL job (not just local/CI sqlite) validates the actual
+    // INSERT succeeds against a real utf8mb4 column.
+
+    public function test_a_candidate_with_multibyte_unicode_near_the_context_boundary_persists_successfully(): void
+    {
+        $f = $this->fixture();
+        $user = $this->member($f['home']);
+        $emDash = "\u{2014}";
+        $prefix = str_repeat($emDash, 150); // matches the real failure's shape: a multi-byte run straddling the +/-220-char radius
+        $this->completedExtraction($f['document'], [1 => $prefix.'C-9001 trailing filler text after the match continues here.']);
+
+        Queue::fake();
+        $import = app(MaintenanceKnowledgeProcessingService::class)->startProcessing($f['document'], $user);
+        app(MaintenanceKnowledgeProcessingService::class)->processChunk($import->fresh(), 1, 100);
+
+        $entry = MaintenanceKnowledgeEntry::where('import_id', $import->id)->firstOrFail();
+        $this->assertSame('C-9001', $entry->normalized_code);
+        $this->assertTrue(mb_check_encoding($entry->description, 'UTF-8'));
+    }
+
+    // ==================================================
+    // V1.6.1 - evidence filter / server-side pagination (Section E/F)
+    // ==================================================
+
+    /** Builds a real import with one entry of each evidence level via the real detector, not hand-crafted rows. */
+    private function importWithMixedEvidence(array $f, User $user): MaintenanceDocumentImport
+    {
+        $this->completedExtraction($f['document'], [
+            1 => "C-1001\nCause:\nFixture.\nAction:\nFixture.", // HIGH
+            2 => 'Troubleshooting'."\n".'C-1002 nearby but no further explanation appears anywhere on this page.', // MEDIUM (weak marker only, no strong marker substring anywhere)
+            3 => '2.1.1 C-1003.......................................... 42', // LOW (TOC-shaped)
+        ]);
+        Queue::fake();
+        $import = app(MaintenanceKnowledgeProcessingService::class)->startProcessing($f['document'], $user);
+        app(MaintenanceKnowledgeProcessingService::class)->processChunk($import->fresh(), 1, 100);
+
+        return $import->fresh();
+    }
+
+    public function test_evidence_high_filter_returns_only_high_rows(): void
+    {
+        $f = $this->fixture();
+        $user = $this->member($f['home']);
+        $import = $this->importWithMixedEvidence($f, $user);
+
+        $response = $this->actingAs($user)->getJson("/api/v1/maintenance/document-imports/{$import->id}/entries?evidence=HIGH")->assertOk();
+        $rows = $response->json('data.data');
+        $this->assertCount(1, $rows);
+        $this->assertSame('HIGH', $rows[0]['evidence']);
+        $this->assertSame(1, $response->json('data.total'));
+    }
+
+    public function test_evidence_medium_filter_returns_only_medium_rows(): void
+    {
+        $f = $this->fixture();
+        $user = $this->member($f['home']);
+        $import = $this->importWithMixedEvidence($f, $user);
+
+        $response = $this->actingAs($user)->getJson("/api/v1/maintenance/document-imports/{$import->id}/entries?evidence=MEDIUM")->assertOk();
+        $rows = $response->json('data.data');
+        $this->assertCount(1, $rows);
+        $this->assertSame('MEDIUM', $rows[0]['evidence']);
+    }
+
+    public function test_evidence_low_filter_returns_only_low_rows(): void
+    {
+        $f = $this->fixture();
+        $user = $this->member($f['home']);
+        $import = $this->importWithMixedEvidence($f, $user);
+
+        $response = $this->actingAs($user)->getJson("/api/v1/maintenance/document-imports/{$import->id}/entries?evidence=LOW")->assertOk();
+        $rows = $response->json('data.data');
+        $this->assertCount(1, $rows);
+        $this->assertSame('LOW', $rows[0]['evidence']);
+    }
+
+    public function test_invalid_evidence_filter_value_is_rejected(): void
+    {
+        $f = $this->fixture();
+        $user = $this->member($f['home']);
+        $import = $this->importWithMixedEvidence($f, $user);
+
+        $this->actingAs($user)->getJson("/api/v1/maintenance/document-imports/{$import->id}/entries?evidence=NOT_A_REAL_LEVEL")
+            ->assertStatus(422);
+    }
+
+    public function test_evidence_filter_composes_with_status_filter(): void
+    {
+        $f = $this->fixture();
+        $user = $this->member($f['home']);
+        $import = $this->importWithMixedEvidence($f, $user);
+        MaintenanceKnowledgeEntry::where('import_id', $import->id)->where('evidence', 'HIGH')->update(['status' => 'APPROVED', 'approved_by' => $user->id]);
+
+        $onlyHigh = $this->actingAs($user)->getJson("/api/v1/maintenance/document-imports/{$import->id}/entries?evidence=HIGH&status=APPROVED")->assertOk();
+        $this->assertSame(1, $onlyHigh->json('data.total'));
+
+        $mismatched = $this->actingAs($user)->getJson("/api/v1/maintenance/document-imports/{$import->id}/entries?evidence=LOW&status=APPROVED")->assertOk();
+        $this->assertSame(0, $mismatched->json('data.total'));
+    }
+
+    public function test_evidence_filter_tenant_isolation(): void
+    {
+        $f = $this->fixture();
+        $owner = $this->member($f['home']);
+        $foreignUser = $this->member($f['foreign']);
+        $import = $this->importWithMixedEvidence($f, $owner);
+
+        $this->actingAs($foreignUser)->getJson("/api/v1/maintenance/document-imports/{$import->id}/entries?evidence=HIGH")
+            ->assertStatus(404);
+    }
+
+    public function test_entries_pagination_metadata_reflects_the_filtered_set_not_the_whole_import(): void
+    {
+        $f = $this->fixture();
+        $user = $this->member($f['home']);
+        $import = $this->importWithMixedEvidence($f, $user);
+
+        $response = $this->actingAs($user)->getJson("/api/v1/maintenance/document-imports/{$import->id}/entries?evidence=LOW&per_page=1")->assertOk();
+        $this->assertSame(1, $response->json('data.total'), 'total must reflect the LOW-only filtered count (1), not all 3 entries');
+        $this->assertSame(1, $response->json('data.last_page'));
+    }
+
+    public function test_existing_collision_and_status_filters_still_work_through_the_new_paginated_endpoint(): void
+    {
+        $f = $this->fixture();
+        $user = $this->member($f['home']);
+        $import = $this->importWithMixedEvidence($f, $user);
+
+        $newOnly = $this->actingAs($user)->getJson("/api/v1/maintenance/document-imports/{$import->id}/entries?collision_status=NEW")->assertOk();
+        $this->assertSame(3, $newOnly->json('data.total'), 'all 3 fixture entries have no matching machine_error_codes row, so all are NEW');
+
+        $draftOnly = $this->actingAs($user)->getJson("/api/v1/maintenance/document-imports/{$import->id}/entries?status=DRAFT")->assertOk();
+        $this->assertSame(3, $draftOnly->json('data.total'));
+    }
+
+    public function test_show_exposes_a_real_evidence_summary_aggregate_not_an_embedded_entries_array(): void
+    {
+        $f = $this->fixture();
+        $user = $this->member($f['home']);
+        $import = $this->importWithMixedEvidence($f, $user);
+
+        $response = $this->actingAs($user)->getJson("/api/v1/maintenance/document-imports/{$import->id}")->assertOk();
+        $this->assertSame(['HIGH' => 1, 'MEDIUM' => 1, 'LOW' => 1], $response->json('data.evidence_summary'));
+        $this->assertArrayNotHasKey('entries', $response->json('data'));
+    }
 }

@@ -61,13 +61,73 @@ class MaintenanceKnowledgeImportController extends Controller
         return response()->json(['data' => $q->orderByDesc('created_at')->get()]);
     }
 
+    /**
+     * V1.6.1: no longer eager-loads `entries` here - the real Production
+     * Konica run produced 1285 candidates in a single import, which an
+     * unpaginated response can't safely carry. Candidates are listed
+     * separately via listEntries() (paginated, server-side filterable).
+     * `evidence_summary` is a cheap, single grouped-aggregate query so a
+     * reviewer sees real HIGH/MEDIUM/LOW counts without paginating through
+     * everything first.
+     */
     public function show(Request $r, string $id)
     {
-        $import = MaintenanceDocumentImport::with(['document', 'machineModel', 'extraction', 'entries' => fn ($q) => $q->orderBy('created_at')])->findOrFail($id);
+        $import = MaintenanceDocumentImport::with(['document', 'machineModel', 'extraction'])->findOrFail($id);
         $ids = $this->membershipAccountIds($r);
         abort_unless($import->document->account_id === null || $ids->contains($import->document->account_id), 404);
 
+        $import->setAttribute('evidence_summary', $this->evidenceSummary($import->id));
+
         return response()->json(['data' => $import]);
+    }
+
+    private function evidenceSummary(string $importId): array
+    {
+        $counts = MaintenanceKnowledgeEntry::where('import_id', $importId)
+            ->whereNotNull('evidence')
+            ->selectRaw('evidence, COUNT(*) as total')
+            ->groupBy('evidence')
+            ->pluck('total', 'evidence');
+
+        return ['HIGH' => (int) ($counts['HIGH'] ?? 0), 'MEDIUM' => (int) ($counts['MEDIUM'] ?? 0), 'LOW' => (int) ($counts['LOW'] ?? 0)];
+    }
+
+    /**
+     * V1.6.1 - paginated, server-side-filterable candidate listing (Section E/F).
+     * Filtering happens entirely in SQL so pagination metadata (total/last_page)
+     * stays truthful for the filtered set, not the full unfiltered import.
+     */
+    public function listEntries(Request $r, string $importId)
+    {
+        $import = MaintenanceDocumentImport::with('document')->findOrFail($importId);
+        $ids = $this->membershipAccountIds($r);
+        abort_unless($import->document->account_id === null || $ids->contains($import->document->account_id), 404);
+
+        $d = $r->validate([
+            'status' => 'nullable|in:DRAFT,APPROVED,REJECTED',
+            'collision_status' => 'nullable|in:NEW,EXISTING,POTENTIAL_UPDATE',
+            'evidence' => 'nullable|in:HIGH,MEDIUM,LOW',
+            'code' => 'nullable|string|max:64',
+        ]);
+
+        $q = MaintenanceKnowledgeEntry::where('import_id', $importId);
+        if (! empty($d['status'])) {
+            $q->where('status', $d['status']);
+        }
+        if (! empty($d['collision_status'])) {
+            $q->where('collision_status', $d['collision_status']);
+        }
+        if (! empty($d['evidence'])) {
+            $q->where('evidence', $d['evidence']);
+        }
+        if (! empty($d['code'])) {
+            $q->where(fn ($q2) => $q2->where('code', 'like', '%'.$d['code'].'%')->orWhere('title', 'like', '%'.$d['code'].'%'));
+        }
+
+        $perPage = min((int) $r->integer('per_page', 20), 50);
+        $entries = $q->orderBy('created_at')->paginate($perPage);
+
+        return response()->json(['data' => $entries]);
     }
 
     public function store(Request $r)

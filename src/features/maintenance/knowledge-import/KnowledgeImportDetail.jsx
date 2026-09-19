@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { CheckCircle2, ClipboardList, Plus, Rocket, ShieldAlert, X, XCircle } from 'lucide-react'
 import { BlockingDialog } from '../../../components/ui/BlockingDialog.jsx'
 import { ErrorState } from '../../../components/ui/ErrorState.jsx'
@@ -8,6 +8,7 @@ import { addKnowledgeEntry, updateKnowledgeEntry } from '../../../services/maint
 import { collisionStatusLabels, entryStatusLabels, evidenceLabels, formatMaintenanceDate, importStatusLabels, knowledgeTypeLabels, mapMaintenanceError, nextEntryStatuses } from '../maintenanceUtils.js'
 import { KnowledgeEntryForm } from './KnowledgeEntryForm.jsx'
 import { PublishDialog } from './PublishDialog.jsx'
+import { useKnowledgeEntries } from './useKnowledgeEntries.js'
 import { useKnowledgeImport } from './useKnowledgeImport.js'
 
 const entryStatusPillClass = { DRAFT: '', APPROVED: 'resolved', REJECTED: 'voided' }
@@ -44,7 +45,10 @@ function EntryRow({ entry, canManage, onEdit, onTransition, onPublish }) {
 
 const ALL_FILTER = ''
 
-function EntryFilters({ statusFilter, onStatusFilter, collisionFilter, onCollisionFilter, codeSearch, onCodeSearch }) {
+// V1.6.1: evidence filter alongside the existing status/collision filters -
+// all three (plus code search) are sent server-side (useKnowledgeEntries),
+// never applied client-side against an already-paginated page of rows.
+function EntryFilters({ statusFilter, onStatusFilter, collisionFilter, onCollisionFilter, evidenceFilter, onEvidenceFilter, codeSearch, onCodeSearch }) {
   return (
     <div className="maintenance-filter-row" role="search">
       <select value={statusFilter} onChange={(event) => onStatusFilter(event.target.value)} aria-label="Filter by review status">
@@ -55,8 +59,24 @@ function EntryFilters({ statusFilter, onStatusFilter, collisionFilter, onCollisi
         <option value={ALL_FILTER}>New &amp; existing</option>
         {Object.entries(collisionStatusLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
       </select>
+      <select value={evidenceFilter} onChange={(event) => onEvidenceFilter(event.target.value)} aria-label="Filter by evidence">
+        <option value={ALL_FILTER}>All evidence</option>
+        {Object.entries(evidenceLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+      </select>
       <input value={codeSearch} onChange={(event) => onCodeSearch(event.target.value)} placeholder="Search code…" aria-label="Search by code" />
     </div>
+  )
+}
+
+// V1.6.1: real Production counts (HIGH 0 / MEDIUM 3 / LOW 1282 on the first
+// real run) - always real DB counts from the import's own evidence_summary,
+// never a fabricated confidence score.
+function EvidenceSummary({ summary }) {
+  if (!summary) return null
+  return (
+    <p className="maintenance-processing-progress">
+      Evidence: HIGH {summary.HIGH} · MEDIUM {summary.MEDIUM} · LOW {summary.LOW}
+    </p>
   )
 }
 
@@ -68,43 +88,37 @@ export function KnowledgeImportDetail({ importId, canManage, onClose }) {
   const [actionError, setActionError] = useState(null)
   const [statusFilter, setStatusFilter] = useState(ALL_FILTER)
   const [collisionFilter, setCollisionFilter] = useState(ALL_FILTER)
+  const [evidenceFilter, setEvidenceFilter] = useState(ALL_FILTER)
   const [codeSearch, setCodeSearch] = useState('')
 
+  const entriesState = useKnowledgeEntries({ importId, status: statusFilter || undefined, collisionStatus: collisionFilter || undefined, evidence: evidenceFilter || undefined, code: codeSearch.trim() || undefined })
   const isProcessing = state.documentImport?.import_type === 'PDF_EXTRACTION' && state.documentImport?.status === 'PROCESSING'
-  const filteredEntries = useMemo(() => {
-    const entries = state.documentImport?.entries ?? []
-    const search = codeSearch.trim().toLowerCase()
-    return entries.filter((entry) => (
-      (!statusFilter || entry.status === statusFilter)
-      && (!collisionFilter || entry.collision_status === collisionFilter)
-      && (!search || (entry.code ?? '').toLowerCase().includes(search) || entry.title.toLowerCase().includes(search))
-    ))
-  }, [state.documentImport, statusFilter, collisionFilter, codeSearch])
+  const hasAnyFilter = Boolean(statusFilter || collisionFilter || evidenceFilter || codeSearch.trim())
 
   async function handleAddEntry(payload) {
-    const entry = await addKnowledgeEntry(importId, payload)
-    state.setDocumentImport((prev) => ({ ...prev, entries: [...(prev.entries ?? []), entry] }))
+    await addKnowledgeEntry(importId, payload)
     setShowAddEntry(false)
+    entriesState.refresh()
   }
 
   async function handleEditEntry(payload) {
-    const entry = await updateKnowledgeEntry(editingEntry.id, payload)
-    state.setDocumentImport((prev) => ({ ...prev, entries: prev.entries.map((e) => (e.id === entry.id ? entry : e)) }))
+    await updateKnowledgeEntry(editingEntry.id, payload)
     setEditingEntry(null)
+    entriesState.refresh()
   }
 
   async function handleTransition(entryId, status) {
     setActionError(null)
     try {
-      const entry = await updateKnowledgeEntry(entryId, { status })
-      state.setDocumentImport((prev) => ({ ...prev, entries: prev.entries.map((e) => (e.id === entry.id ? entry : e)) }))
+      await updateKnowledgeEntry(entryId, { status })
+      entriesState.refresh()
     } catch (error) {
       setActionError(mapMaintenanceError(error))
     }
   }
 
-  function handlePublished(result) {
-    state.setDocumentImport((prev) => ({ ...prev, entries: prev.entries.map((e) => (e.id === result.entry.id ? result.entry : e)) }))
+  function handlePublished() {
+    entriesState.refresh()
     state.refresh()
   }
 
@@ -127,23 +141,36 @@ export function KnowledgeImportDetail({ importId, canManage, onClose }) {
                   Processing page {state.documentImport.pages_processed ?? 0} of {state.documentImport.extraction?.total_pages ?? '…'} · {state.documentImport.candidate_count ?? 0} candidate{state.documentImport.candidate_count === 1 ? '' : 's'} found so far
                 </p>
               )}
+              <EvidenceSummary summary={state.documentImport.evidence_summary} />
               {actionError && <div className="form-error" role="alert"><span>{actionError}</span></div>}
 
               <div className="maintenance-step-section" style={{ margin: '18px 0 0', paddingTop: '16px' }}>
                 <div className="form-section-heading"><strong>Knowledge entries</strong><span>Add, review, approve, then publish into the live knowledge base.</span></div>
-                {(state.documentImport.entries ?? []).length === 0 ? (
+
+                {(state.documentImport.candidate_count ?? 0) === 0 && !hasAnyFilter ? (
                   <small>{isProcessing ? 'No candidates detected yet.' : 'No knowledge entries recorded yet.'}</small>
                 ) : (
                   <>
-                    <EntryFilters statusFilter={statusFilter} onStatusFilter={setStatusFilter} collisionFilter={collisionFilter} onCollisionFilter={setCollisionFilter} codeSearch={codeSearch} onCodeSearch={setCodeSearch} />
-                    {filteredEntries.length === 0 ? (
+                    <EntryFilters statusFilter={statusFilter} onStatusFilter={setStatusFilter} collisionFilter={collisionFilter} onCollisionFilter={setCollisionFilter} evidenceFilter={evidenceFilter} onEvidenceFilter={setEvidenceFilter} codeSearch={codeSearch} onCodeSearch={setCodeSearch} />
+                    {entriesState.isLoading && entriesState.entries.length === 0 ? (
+                      <small>Loading entries…</small>
+                    ) : entriesState.total === 0 ? (
                       <small>No entries match the current filters.</small>
                     ) : (
-                      <ul className="incident-narrative-list">
-                        {filteredEntries.map((entry) => (
-                          <EntryRow key={entry.id} entry={entry} canManage={canManage} onEdit={setEditingEntry} onTransition={handleTransition} onPublish={setPublishingEntry} />
-                        ))}
-                      </ul>
+                      <>
+                        <ul className="incident-narrative-list">
+                          {entriesState.entries.map((entry) => (
+                            <EntryRow key={entry.id} entry={entry} canManage={canManage} onEdit={setEditingEntry} onTransition={handleTransition} onPublish={setPublishingEntry} />
+                          ))}
+                        </ul>
+                        {entriesState.lastPage > 1 && (
+                          <div className="maintenance-extracted-pages-nav">
+                            <button className="secondary-button" type="button" disabled={entriesState.currentPage <= 1 || entriesState.isLoading} onClick={() => entriesState.goToPage(entriesState.currentPage - 1)}>Previous</button>
+                            <span>Page {entriesState.currentPage} of {entriesState.lastPage} ({entriesState.total} total)</span>
+                            <button className="secondary-button" type="button" disabled={entriesState.currentPage >= entriesState.lastPage || entriesState.isLoading} onClick={() => entriesState.goToPage(entriesState.currentPage + 1)}>Next</button>
+                          </div>
+                        )}
+                      </>
                     )}
                   </>
                 )}

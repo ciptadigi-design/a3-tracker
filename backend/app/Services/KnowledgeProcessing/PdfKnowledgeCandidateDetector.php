@@ -31,10 +31,33 @@ namespace App\Services\KnowledgeProcessing;
  * regex can do without risking fabrication; that stays a human review step
  * (MaintenanceKnowledgePublishService already requires APPROVED + human
  * publish action either way).
+ *
+ * V1.6.1 - UTF-8-safe bounded slicing. The real Production run (2639-page
+ * Konica document) failed with a MySQL "Incorrect string value: '\xE2'" on
+ * `description` - not a charset/schema problem (the column is already
+ * utf8mb4) but a real bug here: boundedContext()/deriveTitle() sliced with
+ * byte-oriented `substr()` at an arbitrary fixed radius (+/-220 bytes),
+ * which real manual text's legitimate multi-byte Unicode punctuation
+ * (curly quotes, em/en dashes, bullets, degree signs, accented Latin, etc.)
+ * can land in the middle of, producing truncated/invalid UTF-8 that MySQL
+ * correctly rejected. Fixed by expressing every arbitrary radius/length in
+ * CHARACTERS via mb_*, never bytes - `preg_match`'s PREG_OFFSET_CAPTURE
+ * offsets are always byte offsets even for a plain (non-`/u`) pattern, but
+ * they are safe to convert to a character offset via a plain `substr()`
+ * prefix cut specifically because ErrorCodeNormalizer's pattern only ever
+ * matches pure ASCII (`C`, `-`, digits, whitespace) - an ASCII byte can
+ * never be a UTF-8 continuation byte, so cutting a valid UTF-8 string right
+ * before one is always safe, regardless of what precedes it.
+ *
+ * Deliberately distinct from "already-corrupt extracted text": toValidUtf8()
+ * only ever touches a string that fails mb_check_encoding() to begin with
+ * (never rewrites text that trusted extraction has always shown to be
+ * valid UTF-8) - a slicing bug and a corrupt-input problem are two
+ * different failure modes and are never conflated here.
  */
 final class PdfKnowledgeCandidateDetector
 {
-    /** Characters of context kept on each side of a match - bounded, never a whole page. */
+    /** Characters (never bytes) of context kept on each side of a match - bounded, never a whole page. */
     private const CONTEXT_RADIUS = 220;
 
     /** How close to the end of a page a match must be to even consider page-spanning continuation. */
@@ -49,18 +72,25 @@ final class PdfKnowledgeCandidateDetector
      */
     public static function detectOnPage(string $pageText, ?string $nextPageText): array
     {
+        $safePageText = self::toValidUtf8($pageText);
         $candidates = [];
-        foreach (ErrorCodeNormalizer::detectCandidates($pageText) as $match) {
-            $matchLength = strlen($match['code']);
-            $context = self::boundedContext($pageText, $match['offset'], $matchLength);
-            $evidence = self::classifyEvidence($pageText, $match['offset'], $matchLength);
-            $nearEnd = ($match['offset'] + $matchLength) > (strlen($pageText) - self::NEAR_PAGE_END_CHARS);
+        foreach (ErrorCodeNormalizer::detectCandidates($safePageText) as $match) {
+            $matchByteLength = strlen($match['code']);
+            $charOffset = self::byteOffsetToCharOffset($safePageText, $match['offset']);
+            // The match itself is pure ASCII (see ErrorCodeNormalizer::DETECT_PATTERN),
+            // so its byte length equals its character length.
+            $matchCharLength = $matchByteLength;
+
+            $context = self::boundedContext($safePageText, $charOffset, $matchCharLength);
+            $evidence = self::classifyEvidence($safePageText, $charOffset, $matchCharLength);
+            $totalChars = mb_strlen($safePageText, 'UTF-8');
+            $nearEnd = ($charOffset + $matchCharLength) > ($totalChars - self::NEAR_PAGE_END_CHARS);
             $spansNextPage = $nearEnd && $nextPageText !== null && self::likelyContinuation($nextPageText);
 
             $candidates[] = [
                 'code' => $match['code'],
                 'normalized_code' => $match['normalized_code'],
-                'title' => self::deriveTitle($pageText, $match['offset'], $matchLength, $match['normalized_code']),
+                'title' => self::deriveTitle($safePageText, $charOffset, $matchCharLength, $match['normalized_code']),
                 'description' => $context,
                 'evidence' => $evidence,
                 'spans_next_page' => $spansNextPage,
@@ -70,12 +100,43 @@ final class PdfKnowledgeCandidateDetector
         return $candidates;
     }
 
-    private static function boundedContext(string $text, int $offset, int $matchLength): string
+    /**
+     * Only ever rewrites input that is NOT already valid UTF-8 - a distinct,
+     * separately-handled case from a valid string later sliced incorrectly
+     * (see class docblock). Strips invalid byte sequences rather than
+     * letting them ever reach a slicing operation or MySQL.
+     */
+    private static function toValidUtf8(string $text): string
     {
-        $start = max(0, $offset - self::CONTEXT_RADIUS);
-        $length = min(strlen($text), $offset + $matchLength + self::CONTEXT_RADIUS) - $start;
+        if (mb_check_encoding($text, 'UTF-8')) {
+            return $text;
+        }
+        $fixed = @iconv('UTF-8', 'UTF-8//IGNORE', $text);
 
-        return trim(substr($text, $start, $length));
+        return $fixed !== false ? $fixed : '';
+    }
+
+    /**
+     * Converts a byte offset (as returned by preg_match_all's
+     * PREG_OFFSET_CAPTURE, always byte-based) into a character offset.
+     * Safe only because every caller passes an offset that points at the
+     * start of an ASCII match - substr() cutting a valid UTF-8 string right
+     * before an ASCII byte can never split a multi-byte character, so the
+     * prefix this counts is always a complete, valid string.
+     */
+    private static function byteOffsetToCharOffset(string $validUtf8Text, int $byteOffset): int
+    {
+        return mb_strlen(substr($validUtf8Text, 0, $byteOffset), 'UTF-8');
+    }
+
+    /** $charOffset/$matchCharLength are character positions, never bytes - see class docblock. */
+    private static function boundedContext(string $validUtf8Text, int $charOffset, int $matchCharLength): string
+    {
+        $totalChars = mb_strlen($validUtf8Text, 'UTF-8');
+        $start = max(0, $charOffset - self::CONTEXT_RADIUS);
+        $end = min($totalChars, $charOffset + $matchCharLength + self::CONTEXT_RADIUS);
+
+        return trim(mb_substr($validUtf8Text, $start, $end - $start, 'UTF-8'));
     }
 
     /**
@@ -88,9 +149,13 @@ final class PdfKnowledgeCandidateDetector
      * LOW: no marker nearby at all, or the match sits inside an obvious
      * table-of-contents/index dotted-leader line.
      */
-    private static function classifyEvidence(string $pageText, int $offset, int $matchLength): string
+    private static function classifyEvidence(string $validUtf8Text, int $charOffset, int $matchCharLength): string
     {
-        $window = strtolower(self::boundedContext($pageText, $offset, $matchLength));
+        // strtolower() (not mb_strtolower()) is intentional and safe here: it only
+        // ever rewrites ASCII A-Z bytes, leaving multi-byte UTF-8 sequences
+        // byte-for-byte untouched (their bytes are all >= 0x80) - proper Unicode
+        // case-folding is unnecessary since only ASCII marker words are searched for.
+        $window = strtolower(self::boundedContext($validUtf8Text, $charOffset, $matchCharLength));
 
         $tocLeaderNearby = preg_match('/\.{5,}/', $window) === 1;
         if ($tocLeaderNearby && ! self::containsAny($window, self::STRONG_MARKERS)) {
@@ -101,7 +166,7 @@ final class PdfKnowledgeCandidateDetector
             return 'HIGH';
         }
 
-        $pageLower = strtolower($pageText);
+        $pageLower = strtolower($validUtf8Text);
         if (self::containsAny($window, self::WEAK_MARKERS) || self::containsAny($pageLower, self::STRONG_MARKERS)) {
             return 'MEDIUM';
         }
@@ -129,7 +194,8 @@ final class PdfKnowledgeCandidateDetector
      */
     private static function likelyContinuation(string $nextPageText): bool
     {
-        $leadingSlice = substr(ltrim($nextPageText), 0, 100);
+        $safeText = self::toValidUtf8(ltrim($nextPageText));
+        $leadingSlice = mb_substr($safeText, 0, 100, 'UTF-8');
 
         return ErrorCodeNormalizer::detectCandidates($leadingSlice) === [];
     }
@@ -140,11 +206,18 @@ final class PdfKnowledgeCandidateDetector
      * letters and is not itself dominated by TOC dot-leaders or bare
      * numbers - otherwise falls back to a plain, honest placeholder rather
      * than fabricating a heading from noise.
+     *
+     * strcspn()'s returned position is a byte offset, but cutting
+     * $afterMatch (already a valid, complete mb_substr() result) right
+     * before a literal "\n"/"\r" byte is always safe: those bytes are pure
+     * ASCII and can never be a UTF-8 continuation byte, so they can never
+     * sit in the middle of another character - substr() there cannot split
+     * anything, unlike the old fixed-radius slicing this replaced.
      */
-    private static function deriveTitle(string $pageText, int $offset, int $matchLength, string $normalizedCode): string
+    private static function deriveTitle(string $validUtf8Text, int $charOffset, int $matchCharLength, string $normalizedCode): string
     {
         $fallback = 'Error Code '.$normalizedCode;
-        $afterMatch = substr($pageText, $offset + $matchLength, 120);
+        $afterMatch = mb_substr($validUtf8Text, $charOffset + $matchCharLength, 120, 'UTF-8');
         $newlinePos = strcspn($afterMatch, "\n\r");
         $candidate = trim(substr($afterMatch, 0, $newlinePos), " \t.-:");
 
@@ -155,11 +228,11 @@ final class PdfKnowledgeCandidateDetector
             return $fallback; // no real word-like content - likely dots/numbers/whitespace only
         }
         $dotCount = substr_count($candidate, '.');
-        if ($dotCount > 0 && $dotCount >= (strlen($candidate) * 0.3)) {
+        if ($dotCount > 0 && $dotCount >= (mb_strlen($candidate, 'UTF-8') * 0.3)) {
             return $fallback; // dominated by TOC dot-leaders
         }
-        if (strlen($candidate) > 100) {
-            $candidate = rtrim(substr($candidate, 0, 100));
+        if (mb_strlen($candidate, 'UTF-8') > 100) {
+            $candidate = rtrim(mb_substr($candidate, 0, 100, 'UTF-8'));
         }
 
         return $candidate;
