@@ -13,6 +13,7 @@ use App\Services\KnowledgeProcessing\MaintenanceKnowledgeProcessingService;
 use App\Services\MaintenanceKnowledgePublishService;
 use App\Services\ScopedReference;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 
 /**
@@ -35,6 +36,25 @@ class MaintenanceKnowledgeImportController extends Controller
         'APPROVED' => ['REJECTED'],
         'REJECTED' => [],
     ];
+
+    /**
+     * V1.7 - Bulk Knowledge Review. Deliberately narrower than
+     * ENTRY_TRANSITIONS and kept as its own map, not merged into it: bulk
+     * review never touches an APPROVED row at all (in either direction),
+     * because "published" in this domain is `status=APPROVED AND
+     * published_at IS NOT NULL` - there is no distinct PUBLISHED status
+     * value. Scoping bulk actions to DRAFT<->REJECTED only makes it
+     * structurally impossible for a bulk action to ever reach a published
+     * row, rather than relying solely on a runtime published_at check.
+     * No bulk approve, no bulk publish - see class/method docblocks.
+     */
+    private const BULK_TRANSITIONS = [
+        'reject' => ['from' => 'DRAFT', 'to' => 'REJECTED'],
+        'restore' => ['from' => 'REJECTED', 'to' => 'DRAFT'],
+    ];
+
+    /** Existing per_page cap is 50 (listEntries) - 100 is a deliberate, documented 2x margin, never an unbounded array. */
+    private const BULK_BATCH_LIMIT = 100;
 
     private function authorizeCatalogScope(Request $r, ?string $accountId): void
     {
@@ -262,5 +282,65 @@ class MaintenanceKnowledgeImportController extends Controller
             'solution' => $result['solution'],
             'reference' => $result['reference'],
         ]]);
+    }
+
+    /**
+     * V1.7 - Bulk Knowledge Review. Reviewing 2680 real Production candidates
+     * one at a time is not practical - this lets a reviewer reject (or
+     * restore) many DRAFT/REJECTED candidates in one request, synchronously
+     * (no queue needed - set-based, bounded by BULK_BATCH_LIMIT).
+     *
+     * Never calls MaintenanceKnowledgePublishService and never touches
+     * machine_error_codes/maintenance_error_solutions/
+     * maintenance_document_references - there is no bulk publish/approve in
+     * V1.7. Fails the ENTIRE request (zero mutation) if any entry_id does
+     * not belong to this import or is not currently in the expected source
+     * status - never a partial bulk mutation.
+     */
+    public function bulkReview(Request $r, string $importId)
+    {
+        $import = MaintenanceDocumentImport::with('document')->findOrFail($importId);
+        $this->authorizeCatalogScope($r, $import->document->account_id);
+
+        $d = $r->validate([
+            'entry_ids' => 'required|array|min:1|max:'.self::BULK_BATCH_LIMIT,
+            'entry_ids.*' => 'required|uuid',
+            'action' => ['required', 'string', 'in:'.implode(',', array_keys(self::BULK_TRANSITIONS))],
+        ]);
+        $transition = self::BULK_TRANSITIONS[$d['action']];
+        $entryIds = array_values(array_unique($d['entry_ids']));
+
+        $affected = DB::transaction(function () use ($r, $import, $entryIds, $transition, $d) {
+            // Locks and fetches only rows genuinely belonging to this import -
+            // the client's claimed IDs are never trusted; the count comparison
+            // below is what actually proves membership.
+            $entries = MaintenanceKnowledgeEntry::where('import_id', $import->id)
+                ->whereIn('id', $entryIds)
+                ->lockForUpdate()
+                ->get();
+
+            if ($entries->count() !== count($entryIds)) {
+                throw new ConflictHttpException('one or more entries do not belong to this import');
+            }
+
+            $ineligible = $entries->first(fn ($e) => $e->status !== $transition['from'] || $e->published_at !== null);
+            if ($ineligible) {
+                throw new ConflictHttpException("entry {$ineligible->id} is not eligible for this action");
+            }
+
+            MaintenanceKnowledgeEntry::where('import_id', $import->id)
+                ->whereIn('id', $entryIds)
+                ->update(['status' => $transition['to']]);
+
+            $affectedCount = count($entryIds);
+            $auditAction = $d['action'] === 'reject' ? 'knowledge_candidates_bulk_rejected' : 'knowledge_candidates_bulk_restored';
+            app(GovernanceAudit::class)->record($r->user(), $auditAction, 'maintenance_document_import', $import->id, $import->document->account_id, [
+                'changes' => ['affected_count' => ['before' => null, 'after' => $affectedCount]],
+            ]);
+
+            return $affectedCount;
+        });
+
+        return response()->json(['data' => ['action' => $d['action'], 'affected' => $affected]]);
     }
 }

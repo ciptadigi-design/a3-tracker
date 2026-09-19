@@ -661,6 +661,11 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .maintenance-filter-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
 .maintenance-filter-row select, .maintenance-filter-row input { min-width: 0; flex: 1 1 140px; }
 
+/* V1.7 - Bulk Knowledge Review: select-page row + sticky-feeling inline bulk bar. */
+.maintenance-select-page-row { display: flex; align-items: center; gap: 8px; margin: 4px 0 8px; font-size: 11px; color: var(--text-soft); }
+.maintenance-bulk-action-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 10px 0; padding: 10px 14px; border-radius: 14px; background: var(--surface-muted); border: 1px solid var(--border-subtle); font-size: 12px; }
+.maintenance-bulk-action-bar > span:first-child { font-weight: 700; }
+
 .extraction-card { min-width: 0; display: flex; align-items: flex-start; gap: 14px; margin-top: 10px; padding: 18px; border-radius: 20px; background: var(--surface-muted); border: 1px solid var(--border-subtle); }
 .extraction-card-icon { width: 36px; height: 36px; display: grid; place-items: center; flex: 0 0 auto; border-radius: 12px; color: var(--text-soft); background: var(--surface-solid); }
 .extraction-card-none .extraction-card-icon { color: var(--blue); background: var(--blue-soft); }

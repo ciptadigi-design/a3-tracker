@@ -16,7 +16,10 @@ class GovernanceAudit
         // page bounds, evidence/collision classification are labels, not free text -
         // the actual bounded-context excerpt lives in `description`, already covered by
         // OMITTED_FIELDS below.
-        'extraction_id', 'normalized_code', 'source_page_start', 'source_page_end', 'evidence', 'collision_status', 'processing_started_at', 'processing_completed_at', 'pages_processed', 'candidate_count', 'processing_version'];
+        'extraction_id', 'normalized_code', 'source_page_start', 'source_page_end', 'evidence', 'collision_status', 'processing_started_at', 'processing_completed_at', 'pages_processed', 'candidate_count', 'processing_version',
+        // V1.7 - Bulk Knowledge Review. A single count, never raw candidate
+        // text or an unbounded ID list - see MaintenanceKnowledgeImportController::bulkReview().
+        'affected_count'];
 
     public const OMITTED_FIELDS = ['notes', 'description', 'address', 'phone', 'email', 'contact_name', 'linked_user_id', 'serial_number', 'problem', 'symptoms', 'solution', 'success_notes', 'manufacturer_description', 'operator_description', 'official_solution', 'solution_summary', 'instruction', 'file_path', 'operator_solution', 'technician_solution', 'error_message', 'raw_text'];
 

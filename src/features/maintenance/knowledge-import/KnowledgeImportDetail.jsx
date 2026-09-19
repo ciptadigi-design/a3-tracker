@@ -1,11 +1,12 @@
-import { useState } from 'react'
-import { CheckCircle2, ClipboardList, Plus, Rocket, ShieldAlert, X, XCircle } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import { CheckCircle2, ClipboardList, Plus, Rocket, RotateCcw, ShieldAlert, Trash2, X, XCircle } from 'lucide-react'
 import { BlockingDialog } from '../../../components/ui/BlockingDialog.jsx'
 import { ErrorState } from '../../../components/ui/ErrorState.jsx'
 import { LoadingScreen } from '../../../components/ui/LoadingScreen.jsx'
 import { userErrorMessage } from '../../../lib/appErrors.js'
 import { addKnowledgeEntry, updateKnowledgeEntry } from '../../../services/maintenance.js'
 import { collisionStatusLabels, entryStatusLabels, evidenceLabels, formatMaintenanceDate, importStatusLabels, knowledgeTypeLabels, mapMaintenanceError, nextEntryStatuses } from '../maintenanceUtils.js'
+import { BulkReviewDialog } from './BulkReviewDialog.jsx'
 import { KnowledgeEntryForm } from './KnowledgeEntryForm.jsx'
 import { PublishDialog } from './PublishDialog.jsx'
 import { useKnowledgeEntries } from './useKnowledgeEntries.js'
@@ -14,15 +15,25 @@ import { useKnowledgeImport } from './useKnowledgeImport.js'
 const entryStatusPillClass = { DRAFT: '', APPROVED: 'resolved', REJECTED: 'voided' }
 const collisionPillClass = { NEW: 'resolved', EXISTING: '', POTENTIAL_UPDATE: 'voided' }
 
-function EntryRow({ entry, canManage, onEdit, onTransition, onPublish }) {
+// V1.7 - only DRAFT/REJECTED are ever reachable by a bulk action (never
+// APPROVED, which is how "published" is represented in this domain - status
+// stays APPROVED with published_at set, there is no separate PUBLISHED
+// value) - see backend BULK_TRANSITIONS' own docblock. A row outside these
+// two statuses gets no checkbox at all, not merely a disabled one.
+const BULK_ELIGIBLE_STATUSES = new Set(['DRAFT', 'REJECTED'])
+
+function EntryRow({ entry, canManage, onEdit, onTransition, onPublish, selected, onToggleSelect }) {
   const availableTransitions = canManage ? (nextEntryStatuses[entry.status] ?? []) : []
   const pageLabel = entry.source_page_start
     ? (entry.source_page_start === entry.source_page_end ? `Page ${entry.source_page_start}` : `Pages ${entry.source_page_start}–${entry.source_page_end}`)
     : (entry.page_reference ? `Page ${entry.page_reference}` : null)
+  const bulkEligible = canManage && BULK_ELIGIBLE_STATUSES.has(entry.status)
 
   return (
     <li className="incident-narrative-card glass-surface">
-      <span><ClipboardList size={16} /></span>
+      {bulkEligible
+        ? <input type="checkbox" checked={selected} onChange={() => onToggleSelect(entry.id)} aria-label={`Select ${entry.code ?? entry.title}`} />
+        : <span><ClipboardList size={16} /></span>}
       <div>
         <strong>{entry.code ? `${entry.code} · ` : ''}{entry.title}</strong>
         <span className={`incident-status-pill ${entryStatusPillClass[entry.status] ?? ''}`}>{entryStatusLabels[entry.status] ?? entry.status}</span>
@@ -80,6 +91,30 @@ function EvidenceSummary({ summary }) {
   )
 }
 
+// V1.7 - Bulk Knowledge Review. Selection is deliberately scoped to the
+// current page only (Section D: "a safe page-level selection model is
+// acceptable") and cleared on ANY filter or page change (Section E/K) - a
+// selection never silently refers to rows the reviewer can no longer see.
+// The offered action is derived from the selected rows' shared status: all
+// DRAFT -> "Reject selected"; all REJECTED -> "Restore to draft"; a mixed
+// selection offers neither, rather than guessing which action was intended.
+function BulkActionBar({ selectedIds, entries, onClearSelection, onRequestAction }) {
+  if (selectedIds.size === 0) return null
+  const selectedEntries = entries.filter((e) => selectedIds.has(e.id))
+  const statuses = new Set(selectedEntries.map((e) => e.status))
+  const uniformStatus = statuses.size === 1 ? [...statuses][0] : null
+
+  return (
+    <div className="maintenance-bulk-action-bar" role="toolbar" aria-label="Bulk candidate review actions">
+      <span>{selectedIds.size} selected</span>
+      {uniformStatus === 'DRAFT' && <button className="danger-outline-button" type="button" onClick={() => onRequestAction('reject')}><Trash2 size={15} /> Reject selected</button>}
+      {uniformStatus === 'REJECTED' && <button className="secondary-button" type="button" onClick={() => onRequestAction('restore')}><RotateCcw size={15} /> Restore to draft</button>}
+      {!uniformStatus && <small>Select candidates with the same review status to act on them together.</small>}
+      <button className="icon-button" type="button" onClick={onClearSelection} aria-label="Clear selection">Clear</button>
+    </div>
+  )
+}
+
 export function KnowledgeImportDetail({ importId, canManage, onClose }) {
   const state = useKnowledgeImport(importId)
   const [showAddEntry, setShowAddEntry] = useState(false)
@@ -90,10 +125,37 @@ export function KnowledgeImportDetail({ importId, canManage, onClose }) {
   const [collisionFilter, setCollisionFilter] = useState(ALL_FILTER)
   const [evidenceFilter, setEvidenceFilter] = useState(ALL_FILTER)
   const [codeSearch, setCodeSearch] = useState('')
+  const [selectedIds, setSelectedIds] = useState(() => new Set())
+  const [pendingBulkAction, setPendingBulkAction] = useState(null)
 
   const entriesState = useKnowledgeEntries({ importId, status: statusFilter || undefined, collisionStatus: collisionFilter || undefined, evidence: evidenceFilter || undefined, code: codeSearch.trim() || undefined })
   const isProcessing = state.documentImport?.import_type === 'PDF_EXTRACTION' && state.documentImport?.status === 'PROCESSING'
   const hasAnyFilter = Boolean(statusFilter || collisionFilter || evidenceFilter || codeSearch.trim())
+  const eligibleOnPage = useMemo(() => entriesState.entries.filter((e) => BULK_ELIGIBLE_STATUSES.has(e.status)), [entriesState.entries])
+  const allEligibleSelected = eligibleOnPage.length > 0 && eligibleOnPage.every((e) => selectedIds.has(e.id))
+
+  // Selection never silently outlives the context it was made in - any filter
+  // or page change clears it (Section E/U#12/U#13). React's own recommended
+  // "adjust state during render" pattern, not useEffect + setState (which
+  // would cause an extra cascading render for a value derivable from props).
+  const selectionContextKey = `${statusFilter}|${collisionFilter}|${evidenceFilter}|${codeSearch}|${entriesState.currentPage}`
+  const [lastSelectionContextKey, setLastSelectionContextKey] = useState(selectionContextKey)
+  if (selectionContextKey !== lastSelectionContextKey) {
+    setLastSelectionContextKey(selectionContextKey)
+    setSelectedIds(new Set())
+  }
+
+  function toggleSelect(entryId) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(entryId)) next.delete(entryId); else next.add(entryId)
+      return next
+    })
+  }
+
+  function toggleSelectPage() {
+    setSelectedIds(allEligibleSelected ? new Set() : new Set(eligibleOnPage.map((e) => e.id)))
+  }
 
   async function handleAddEntry(payload) {
     await addKnowledgeEntry(importId, payload)
@@ -120,6 +182,11 @@ export function KnowledgeImportDetail({ importId, canManage, onClose }) {
   function handlePublished() {
     entriesState.refresh()
     state.refresh()
+  }
+
+  function handleBulkReviewed() {
+    setSelectedIds(new Set())
+    entriesState.refresh()
   }
 
   return (
@@ -158,11 +225,18 @@ export function KnowledgeImportDetail({ importId, canManage, onClose }) {
                       <small>No entries match the current filters.</small>
                     ) : (
                       <>
+                        {canManage && eligibleOnPage.length > 0 && (
+                          <label className="maintenance-select-page-row">
+                            <input type="checkbox" checked={allEligibleSelected} onChange={toggleSelectPage} aria-label="Select all eligible candidates on this page" />
+                            <span>Select all on this page ({eligibleOnPage.length})</span>
+                          </label>
+                        )}
                         <ul className="incident-narrative-list">
                           {entriesState.entries.map((entry) => (
-                            <EntryRow key={entry.id} entry={entry} canManage={canManage} onEdit={setEditingEntry} onTransition={handleTransition} onPublish={setPublishingEntry} />
+                            <EntryRow key={entry.id} entry={entry} canManage={canManage} onEdit={setEditingEntry} onTransition={handleTransition} onPublish={setPublishingEntry} selected={selectedIds.has(entry.id)} onToggleSelect={toggleSelect} />
                           ))}
                         </ul>
+                        <BulkActionBar selectedIds={selectedIds} entries={entriesState.entries} onClearSelection={() => setSelectedIds(new Set())} onRequestAction={setPendingBulkAction} />
                         {entriesState.lastPage > 1 && (
                           <div className="maintenance-extracted-pages-nav">
                             <button className="secondary-button" type="button" disabled={entriesState.currentPage <= 1 || entriesState.isLoading} onClick={() => entriesState.goToPage(entriesState.currentPage - 1)}>Previous</button>
@@ -190,6 +264,15 @@ export function KnowledgeImportDetail({ importId, canManage, onClose }) {
       </div>
 
       {publishingEntry && <PublishDialog entry={publishingEntry} onClose={() => setPublishingEntry(null)} onPublished={handlePublished} />}
+      {pendingBulkAction && (
+        <BulkReviewDialog
+          importId={importId}
+          entryIds={[...selectedIds]}
+          action={pendingBulkAction}
+          onClose={() => setPendingBulkAction(null)}
+          onReviewed={handleBulkReviewed}
+        />
+      )}
     </BlockingDialog>
   )
 }

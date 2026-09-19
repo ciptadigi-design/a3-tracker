@@ -41,6 +41,7 @@ export const laravelMaintenance = {
   documentImports: (params = '') => apiClient.get(`/maintenance/document-imports${params ? `?${params}` : ''}`),
   documentImport: (id) => apiClient.get(`/maintenance/document-imports/${id}`),
   documentImportEntries: (importId, params = '') => apiClient.get(`/maintenance/document-imports/${importId}/entries${params ? `?${params}` : ''}`),
+  bulkReviewEntries: (importId, payload) => apiClient.post(`/maintenance/document-imports/${importId}/entries/bulk-review`, payload),
   createDocumentImport: (payload) => apiClient.post('/maintenance/document-imports', payload),
   addKnowledgeEntry: (importId, payload) => apiClient.post(`/maintenance/document-imports/${importId}/entries`, payload),
   updateKnowledgeEntry: (id, payload) => apiClient.patch(`/maintenance/knowledge-entries/${id}`, payload),

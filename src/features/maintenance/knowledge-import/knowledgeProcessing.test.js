@@ -179,6 +179,6 @@ test('pagination controls appear only when more than one page exists, matching t
 })
 
 test('candidate detail rendering (EntryRow) is unchanged by the pagination refactor', () => {
-  assert.match(importDetail, /function EntryRow\(\{ entry, canManage, onEdit, onTransition, onPublish \}\)/)
+  assert.match(importDetail, /function EntryRow\(\{ entry, canManage, onEdit, onTransition, onPublish, selected, onToggleSelect \}\)/)
   assert.match(importDetail, /entry\.source_page_start === entry\.source_page_end/)
 })
