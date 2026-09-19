@@ -93,25 +93,59 @@ blocking/polling forever like a normal worker would.
 ## Cron configuration
 
 Add one cron entry in Hostinger's control panel (hPanel → Advanced → Cron
-Jobs), running every minute, targeting the **`current`** symlink so it always
+Jobs → "Daftar Cron Job"), targeting the **`current`** symlink so it always
 executes against whichever release is actually live - no cron reconfiguration
-is ever needed on a normal deploy:
+is ever needed on a normal deploy.
+
+**V1.5.6 - actually installed and empirically proven working** (first
+automatic invocation observed at the very first scheduled boundary after
+saving, consuming a real queued job with no manual intervention - see
+`docs/maintenance/V1.5.6_QUEUE_AUTOMATION.md` for the full acceptance
+evidence):
 
 ```
-* * * * * cd /home/u777904340/a3-production-app/current/backend && php artisan a3:run-queue >> /dev/null 2>&1
+Schedule: */5 * * * *
+Command:  /usr/bin/php /home/u777904340/a3-production-app/current/backend/artisan a3:run-queue
 ```
 
-Every-minute cadence plus the lock guard above means: at most one drain runs
-at a time, and a queued extraction is picked up within, at worst, about a
-minute of being requested.
+Note the command form: `/usr/bin/php <path-to-artisan>` rather than
+`cd <dir> && php artisan ...` - both are equivalent here because Laravel's
+`artisan` script resolves its own application path via `__DIR__`, not the
+caller's working directory, so it still transparently follows the `current`
+symlink to whichever release is actually live. hPanel's own cron UI in this
+account accepted this form directly, without needing a `cd &&` wrapper or an
+explicit output redirect.
+
+Every-5-minutes cadence plus the lock guard above means: at most one drain
+runs at a time, and a queued extraction is picked up within, at worst, about
+5 minutes of being requested. (An earlier draft of this doc recommended
+`* * * * *` for a tighter worst-case latency; the actually-installed `*/5`
+cadence is what Production runs today and is what was proven end to end -
+tightening it further is a possible future improvement, not required by
+V1.5.6's acceptance criteria.)
 
 ## Required environment configuration
 
 - `QUEUE_CONNECTION=database` is the configured default
   (`config/queue.php`, `.env.example`) - the `jobs`, `job_batches`, and
-  `failed_jobs` tables already exist (Laravel's default migration), and
-  `CACHE_STORE=database` already provides the `cache_locks` table the lock
-  needs. **No database migration was ever added for this change.**
+  `failed_jobs` tables already exist (Laravel's default migration).
+  **V1.5.6 correction:** this doc previously claimed `CACHE_STORE=database`
+  was already Production's config, providing the `cache_locks` table for the
+  overlap lock. Read-only verification during V1.5.6 found Production's
+  `shared/.env` actually carries an explicit `CACHE_STORE=file` override
+  (`config('cache.default')` resolves to `file`, backed by
+  `storage/framework/cache/data`), predating this investigation. This is
+  still safe and correct for this architecture: Hostinger is a single host,
+  `current` resolves to one physical release directory at a time, and every
+  cron tick's `a3:run-queue` invocation resolves the same
+  `storage/framework/cache` path as long as no deploy happens mid-lock (an
+  already-narrow window - the lock TTL is a few minutes - further protected
+  by the database queue driver's own row-level locking during `pop()`, which
+  prevents two workers from ever popping the same job row regardless of the
+  cache lock). No `CACHE_STORE` change was made for V1.5.6 - file-based
+  locking is sufficient here and changing the account-wide cache driver would
+  be unrelated scope creep for this milestone. **No database migration was
+  ever added for the queue runner itself.**
 - **Verify production's `shared/.env` does not override this.** V1.5.1
   shipped with production carrying a stale `QUEUE_CONNECTION=sync` in
   `shared/.env` (predating this app's first queue job), which silently made
