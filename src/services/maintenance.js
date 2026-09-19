@@ -54,6 +54,7 @@ export const loadMaintenanceKnowledge = async ({ approvalStatus, machineModelId,
 export const submitMaintenanceKnowledge = async (payload) => unwrapData(await laravelMaintenance.submitKnowledge(payload))
 export const reviewMaintenanceKnowledge = async (id, approvalStatus) => unwrapData(await laravelMaintenance.reviewKnowledge(id, approvalStatus))
 
+export const processDocumentKnowledge = async (documentId, payload = {}) => unwrapData(await laravelMaintenance.processDocumentKnowledge(documentId, payload))
 export const loadDocumentImports = async ({ documentId, status } = {}) => unwrapCollection(await laravelMaintenance.documentImports(toQueryString({ document_id: documentId, status })))
 export const loadDocumentImport = async (id) => unwrapData(await laravelMaintenance.documentImport(id))
 export const createDocumentImport = async (payload) => unwrapData(await laravelMaintenance.createDocumentImport(payload))

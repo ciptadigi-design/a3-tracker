@@ -11,9 +11,9 @@ class MaintenanceKnowledgeEntry extends Model
 
     protected $keyType = 'string';
 
-    protected $fillable = ['import_id', 'knowledge_type', 'code', 'title', 'category', 'severity', 'description', 'operator_solution', 'technician_solution', 'page_reference', 'status', 'created_by', 'approved_by', 'published_at'];
+    protected $fillable = ['import_id', 'extraction_id', 'knowledge_type', 'code', 'normalized_code', 'title', 'category', 'severity', 'description', 'operator_solution', 'technician_solution', 'page_reference', 'source_page_start', 'source_page_end', 'evidence', 'collision_status', 'status', 'created_by', 'approved_by', 'published_at'];
 
-    protected $casts = ['published_at' => 'datetime'];
+    protected $casts = ['published_at' => 'datetime', 'source_page_start' => 'integer', 'source_page_end' => 'integer'];
 
     protected static function booted(): void
     {
@@ -33,5 +33,10 @@ class MaintenanceKnowledgeEntry extends Model
     public function approver()
     {
         return $this->belongsTo(User::class, 'approved_by');
+    }
+
+    public function extraction()
+    {
+        return $this->belongsTo(MaintenanceDocumentExtraction::class, 'extraction_id');
     }
 }

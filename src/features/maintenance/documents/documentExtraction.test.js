@@ -104,7 +104,11 @@ test('ExtractionProgress never offers a meaningless Retry action for a permanent
 // --- Extract/Retry action wiring ---
 
 test('DocumentDetail wires the modal to useDocumentExtraction.start and closes on completion', () => {
-  assert.match(detail, /const \{ extraction, isLoading, start, isStarting, startError \} = useDocumentExtraction\(document\.id\)/)
+  // V1.6: the hook call moved up to DocumentDetail itself (extractionState),
+  // spread into ExtractionSection as props, so the "Process Knowledge" trigger
+  // can also gate on extraction.status without a second, independent poll.
+  assert.match(detail, /const extractionState = useDocumentExtraction\(documentId\)/)
+  assert.match(detail, /function ExtractionSection\(\{ document, canManage, extraction, isLoading, start, isStarting, startError \}\)/)
   assert.match(detail, /async function handleStart\(\) \{\s*await start\(\)\s*setShowModal\(false\)/)
   assert.match(detail, /<ExtractionModal document=\{document\} extraction=\{extraction\} isStarting=\{isStarting\} startError=\{startError\} onClose=\{\(\) => setShowModal\(false\)\} onStart=\{handleStart\} \/>/)
 })
@@ -187,6 +191,6 @@ test('Related error knowledge uses a compact empty state, not the large machine-
 test('Extract/Retry/Re-extract actions and reference/import management stay canManage-gated', () => {
   assert.match(progress, /canManage && \(/)
   assert.match(detail, /canManage && \(showReferenceForm \? \(/)
-  assert.match(detail, /canManage && \(showCreateImport \? \(/)
+  assert.match(detail, /canManage && \(\s*<div className="dialog-actions"/)
   assert.match(detail, /\{!canManage && <div className="permission-banner">/)
 })

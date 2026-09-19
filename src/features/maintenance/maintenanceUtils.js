@@ -60,11 +60,33 @@ export const importStatusLabels = {
   REVIEW: 'In Review',
   PUBLISHED: 'Published',
   REJECTED: 'Rejected',
+  // V1.6 - a chunk job exhausted its retries; see FAILED handling in ProcessMaintenanceKnowledgeJob.
+  FAILED: 'Processing Failed',
 }
 
 export const importTypeLabels = {
   MANUAL_ENTRY: 'Manual Entry',
   BULK_IMPORT: 'Bulk Import',
+  // V1.6 - Extracted Knowledge Processing: deterministic candidate detection over a
+  // completed PDF extraction, not a human typing entries by hand.
+  PDF_EXTRACTION: 'PDF Processing',
+}
+
+// V1.6 - deterministic, explainable evidence classification (never a fabricated
+// AI-style percentage) - see PdfKnowledgeCandidateDetector.
+export const evidenceLabels = {
+  HIGH: 'High',
+  MEDIUM: 'Medium',
+  LOW: 'Low',
+}
+
+// V1.6 - whether a candidate's normalized code already exists in the live
+// knowledge base at detection time (Section J). Never auto-resolved -
+// always a human review signal.
+export const collisionStatusLabels = {
+  NEW: 'New',
+  EXISTING: 'Existing',
+  POTENTIAL_UPDATE: 'Potential Update',
 }
 
 export const knowledgeTypeLabels = {

@@ -160,6 +160,7 @@ Route::prefix('v1')->middleware('request.id')->group(function () {
             Route::get('maintenance/knowledge', [MaintenanceKnowledgeController::class, 'index']);
             Route::post('maintenance/knowledge', [MaintenanceKnowledgeController::class, 'store']);
             Route::patch('maintenance/knowledge/{id}/review', [MaintenanceKnowledgeController::class, 'review']);
+            Route::post('maintenance/documents/{document}/process-knowledge', [MaintenanceKnowledgeImportController::class, 'processKnowledge']);
             Route::get('maintenance/document-imports', [MaintenanceKnowledgeImportController::class, 'index']);
             Route::post('maintenance/document-imports', [MaintenanceKnowledgeImportController::class, 'store']);
             Route::get('maintenance/document-imports/{id}', [MaintenanceKnowledgeImportController::class, 'show']);

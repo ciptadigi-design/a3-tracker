@@ -9,6 +9,7 @@ use App\Models\MaintenanceDocumentImport;
 use App\Models\MaintenanceKnowledgeEntry;
 use App\Services\AccountAccessResolver;
 use App\Services\GovernanceAudit;
+use App\Services\KnowledgeProcessing\MaintenanceKnowledgeProcessingService;
 use App\Services\MaintenanceKnowledgePublishService;
 use App\Services\ScopedReference;
 use Illuminate\Http\Request;
@@ -49,7 +50,7 @@ class MaintenanceKnowledgeImportController extends Controller
     {
         $ids = $this->membershipAccountIds($r);
         $q = MaintenanceDocumentImport::whereHas('document', fn ($q) => $q->where(fn ($q2) => $q2->whereNull('account_id')->orWhereIn('account_id', $ids)))
-            ->with(['document', 'machineModel']);
+            ->with(['document', 'machineModel', 'extraction']);
         if ($r->filled('document_id')) {
             $q->where('document_id', $r->string('document_id'));
         }
@@ -62,7 +63,7 @@ class MaintenanceKnowledgeImportController extends Controller
 
     public function show(Request $r, string $id)
     {
-        $import = MaintenanceDocumentImport::with(['document', 'machineModel', 'entries' => fn ($q) => $q->orderBy('created_at')])->findOrFail($id);
+        $import = MaintenanceDocumentImport::with(['document', 'machineModel', 'extraction', 'entries' => fn ($q) => $q->orderBy('created_at')])->findOrFail($id);
         $ids = $this->membershipAccountIds($r);
         abort_unless($import->document->account_id === null || $ids->contains($import->document->account_id), 404);
 
@@ -89,6 +90,27 @@ class MaintenanceKnowledgeImportController extends Controller
         ]);
 
         app(GovernanceAudit::class)->changed($r->user(), 'maintenance_document_import.created', 'maintenance_document_import', $import->id, $doc->account_id, [], app(GovernanceAudit::class)->snapshot($import));
+
+        return response()->json(['data' => $import], 201);
+    }
+
+    /**
+     * V1.6 - Extracted Knowledge Processing. Starts (or, if a run already
+     * finished/failed for this exact extraction, restarts) deterministic
+     * candidate detection over the document's latest COMPLETED extraction.
+     * Idempotent per (document, extraction, processing version) - see
+     * MaintenanceKnowledgeProcessingService::startProcessing().
+     */
+    public function processKnowledge(Request $r, string $document)
+    {
+        $doc = MaintenanceDocument::findOrFail($document);
+        $this->authorizeCatalogScope($r, $doc->account_id);
+        $d = $r->validate(['machine_model_id' => 'nullable|uuid']);
+        if (! empty($d['machine_model_id'])) {
+            ScopedReference::activeGlobalOrOwned(MachineModel::class, $d['machine_model_id'], $doc->account_id, 'machine_model_id');
+        }
+
+        $import = app(MaintenanceKnowledgeProcessingService::class)->startProcessing($doc, $r->user(), $d['machine_model_id'] ?? null);
 
         return response()->json(['data' => $import], 201);
     }
@@ -154,7 +176,15 @@ class MaintenanceKnowledgeImportController extends Controller
         $before = app(GovernanceAudit::class)->snapshot($entry);
         $entry->update($d);
 
-        app(GovernanceAudit::class)->changed($r->user(), 'maintenance_knowledge_entry.updated', 'maintenance_knowledge_entry', $entry->id, $accountId, $before, app(GovernanceAudit::class)->snapshot($entry), array_keys($entry->getChanges()));
+        // V1.6: an approve/reject transition gets its own named lifecycle event
+        // (Section T) rather than the generic "updated" - a plain content edit
+        // (still possible while DRAFT) keeps the original, pre-existing event name.
+        $action = match ($d['status'] ?? null) {
+            'APPROVED' => 'knowledge_candidate_reviewed',
+            'REJECTED' => 'knowledge_candidate_rejected',
+            default => 'maintenance_knowledge_entry.updated',
+        };
+        app(GovernanceAudit::class)->changed($r->user(), $action, 'maintenance_knowledge_entry', $entry->id, $accountId, $before, app(GovernanceAudit::class)->snapshot($entry), array_keys($entry->getChanges()));
 
         return response()->json(['data' => $entry]);
     }

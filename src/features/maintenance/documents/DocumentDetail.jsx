@@ -4,7 +4,7 @@ import { BlockingDialog } from '../../../components/ui/BlockingDialog.jsx'
 import { ErrorState } from '../../../components/ui/ErrorState.jsx'
 import { LoadingScreen } from '../../../components/ui/LoadingScreen.jsx'
 import { userErrorMessage } from '../../../lib/appErrors.js'
-import { addDocumentReference, createDocumentImport, deleteDocumentReference, deleteMaintenanceDocumentFile, maintenanceDocumentFileUrl, uploadMaintenanceDocumentFile } from '../../../services/maintenance.js'
+import { addDocumentReference, createDocumentImport, deleteDocumentReference, deleteMaintenanceDocumentFile, maintenanceDocumentFileUrl, processDocumentKnowledge, uploadMaintenanceDocumentFile } from '../../../services/maintenance.js'
 import { useMachineCatalog } from '../../machines/useMachineCatalog.js'
 import { useMachineErrorCodes } from '../useMachineErrorCodes.js'
 import { documentStatusLabels, documentTypeLabels, formatFileSize, formatMaintenanceDate, mapMaintenanceError } from '../maintenanceUtils.js'
@@ -101,8 +101,10 @@ function DocumentFileSection({ document, canManage, onChanged }) {
 // the state - NONE through FAILED), while "Extracted content" only exists once
 // there is actual content to show, so a fresh/pending/processing document never
 // displays a large empty content area before extraction has produced anything.
-function ExtractionSection({ document, canManage }) {
-  const { extraction, isLoading, start, isStarting, startError } = useDocumentExtraction(document.id)
+// extraction state is lifted to DocumentDetail (not a private hook here) so the
+// V1.6 "Process Knowledge" trigger in the Knowledge imports section can also
+// gate on extraction.status === 'COMPLETED' without a second, independent poll.
+function ExtractionSection({ document, canManage, extraction, isLoading, start, isStarting, startError }) {
   const [showModal, setShowModal] = useState(false)
   const isCompleted = extraction?.status === 'COMPLETED'
 
@@ -219,10 +221,28 @@ function CreateImportForm({ documentId, accountId, onCancel, onCreated }) {
 
 export function DocumentDetail({ documentId, canManage, onClose }) {
   const state = useMaintenanceDocument(documentId)
+  const extractionState = useDocumentExtraction(documentId)
   const importsState = useKnowledgeImports({ documentId })
   const [showReferenceForm, setShowReferenceForm] = useState(false)
   const [showCreateImport, setShowCreateImport] = useState(false)
   const [openImportId, setOpenImportId] = useState(null)
+  const [isStartingProcessing, setIsStartingProcessing] = useState(false)
+  const [processingError, setProcessingError] = useState(null)
+
+  async function handleProcessKnowledge() {
+    if (isStartingProcessing) return
+    setIsStartingProcessing(true)
+    setProcessingError(null)
+    try {
+      const created = await processDocumentKnowledge(documentId)
+      importsState.refresh()
+      setOpenImportId(created.id)
+    } catch (error) {
+      setProcessingError(mapMaintenanceError(error))
+    } finally {
+      setIsStartingProcessing(false)
+    }
+  }
 
   async function handleRemoveReference(referenceId) {
     await deleteDocumentReference(documentId, referenceId)
@@ -272,11 +292,11 @@ export function DocumentDetail({ documentId, canManage, onClose }) {
 
               <DocumentFileSection document={state.document} canManage={canManage} onChanged={(updated) => state.setDocument((prev) => ({ ...prev, ...updated }))} />
 
-              {/* V1.5: PDF -> per-page text extraction (this section). Turning that
-                  extracted text into maintenance_knowledge_entries (AI-assisted or
-                  manual) stays a future phase, same as V1.3's import workflow was
-                  built before any OCR/AI step. */}
-              <ExtractionSection document={state.document} canManage={canManage} />
+              {/* V1.5: PDF -> per-page text extraction. V1.6 turns that extracted
+                  text into maintenance_knowledge_entries candidates via deterministic
+                  detection (Process Knowledge, in the Knowledge imports section below)
+                  - no AI/LLM involved. */}
+              <ExtractionSection document={state.document} canManage={canManage} {...extractionState} />
 
               <div className="maintenance-step-section" style={{ margin: '18px 0 0', paddingTop: '16px' }}>
                 <div className="form-section-heading"><strong>Related error knowledge</strong><span>Error codes this document is a source for.</span></div>
@@ -306,11 +326,21 @@ export function DocumentDetail({ documentId, canManage, onClose }) {
               <div className="maintenance-step-section" style={{ margin: '18px 0 0', paddingTop: '16px' }}>
                 <div className="form-section-heading"><strong>Knowledge imports</strong><span>Turn this document into structured maintenance knowledge, then review and publish it.</span></div>
                 {importsState.isLoading ? <small>Loading import sessions…</small> : <KnowledgeImportList imports={importsState.imports} onOpen={(item) => setOpenImportId(item.id)} />}
-                {canManage && (showCreateImport ? (
-                  <CreateImportForm documentId={documentId} accountId={state.document.account_id} onCancel={() => setShowCreateImport(false)} onCreated={(created) => { importsState.refresh(); setShowCreateImport(false); setOpenImportId(created.id) }} />
-                ) : (
-                  <button className="secondary-button" type="button" onClick={() => setShowCreateImport(true)}><ClipboardList size={16} /> Import Knowledge</button>
-                ))}
+                {processingError && <small className="field-error"><AlertCircle size={13} />{processingError}</small>}
+                {canManage && (
+                  <div className="dialog-actions" style={{ marginTop: 10 }}>
+                    {extractionState.extraction?.status === 'COMPLETED' && (
+                      <button className="primary-button" type="button" onClick={handleProcessKnowledge} disabled={isStartingProcessing}>
+                        {isStartingProcessing ? <LoaderCircle className="spin" size={16} /> : <Sparkles size={16} />} {isStartingProcessing ? 'Starting…' : 'Process Knowledge'}
+                      </button>
+                    )}
+                    {showCreateImport ? (
+                      <CreateImportForm documentId={documentId} accountId={state.document.account_id} onCancel={() => setShowCreateImport(false)} onCreated={(created) => { importsState.refresh(); setShowCreateImport(false); setOpenImportId(created.id) }} />
+                    ) : (
+                      <button className="secondary-button" type="button" onClick={() => setShowCreateImport(true)}><ClipboardList size={16} /> Import Knowledge</button>
+                    )}
+                  </div>
+                )}
               </div>
 
               {!canManage && <div className="permission-banner"><ShieldAlert size={18} /><span>Read-only access.</span></div>}

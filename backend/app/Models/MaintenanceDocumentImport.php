@@ -11,9 +11,9 @@ class MaintenanceDocumentImport extends Model
 
     protected $keyType = 'string';
 
-    protected $fillable = ['document_id', 'machine_model_id', 'status', 'import_type', 'created_by', 'reviewed_by', 'reviewed_at'];
+    protected $fillable = ['document_id', 'extraction_id', 'machine_model_id', 'status', 'import_type', 'created_by', 'reviewed_by', 'reviewed_at', 'processing_started_at', 'processing_completed_at', 'pages_processed', 'candidate_count', 'processing_version'];
 
-    protected $casts = ['reviewed_at' => 'datetime'];
+    protected $casts = ['reviewed_at' => 'datetime', 'processing_started_at' => 'datetime', 'processing_completed_at' => 'datetime', 'pages_processed' => 'integer', 'candidate_count' => 'integer', 'processing_version' => 'integer'];
 
     protected static function booted(): void
     {
@@ -47,5 +47,10 @@ class MaintenanceDocumentImport extends Model
     public function entries()
     {
         return $this->hasMany(MaintenanceKnowledgeEntry::class, 'import_id');
+    }
+
+    public function extraction()
+    {
+        return $this->belongsTo(MaintenanceDocumentExtraction::class, 'extraction_id');
     }
 }

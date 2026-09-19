@@ -37,6 +37,7 @@ export const laravelMaintenance = {
   submitKnowledge: (payload) => apiClient.post('/maintenance/knowledge', payload),
   reviewKnowledge: (id, approvalStatus) => apiClient.patch(`/maintenance/knowledge/${id}/review`, { approval_status: approvalStatus }),
 
+  processDocumentKnowledge: (documentId, payload = {}) => apiClient.post(`/maintenance/documents/${documentId}/process-knowledge`, payload),
   documentImports: (params = '') => apiClient.get(`/maintenance/document-imports${params ? `?${params}` : ''}`),
   documentImport: (id) => apiClient.get(`/maintenance/document-imports/${id}`),
   createDocumentImport: (payload) => apiClient.post('/maintenance/document-imports', payload),

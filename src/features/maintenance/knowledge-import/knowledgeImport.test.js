@@ -15,7 +15,8 @@ test('Document detail renders the Knowledge imports section with an "Import Know
 })
 
 test('capability gate: only canManage can create an import session or manage entries, read access is unconditional', () => {
-  assert.match(documentDetail, /canManage && \(showCreateImport \?/)
+  assert.match(documentDetail, /canManage && \(\s*<div className="dialog-actions"/)
+  assert.match(documentDetail, /showCreateImport \? \(/)
   assert.match(importDetail, /canManage && \(editingEntry \?/)
   assert.match(importDetail, /const availableTransitions = canManage \? \(nextEntryStatuses\[entry\.status\] \?\? \[\]\) : \[\]/)
   // The entries list itself renders regardless of canManage.
