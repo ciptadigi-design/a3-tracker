@@ -165,7 +165,12 @@ class MaintenanceBulkKnowledgeReviewTest extends TestCase
 
         $log = DB::table('governance_audit_logs')->where('target_id', $f['import']->id)->where('action', 'knowledge_candidates_bulk_rejected')->first();
         $this->assertNotNull($log);
-        $this->assertStringContainsString('"after":3', $log->metadata);
+        // Decode rather than match a raw JSON substring: MySQL's native JSON
+        // column type re-serializes on read (e.g. spaces after ":"), unlike
+        // SQLite's plain-text storage of json_encode()'s exact bytes - the
+        // stored VALUE is what matters, not incidental formatting.
+        $metadata = json_decode($log->metadata, true);
+        $this->assertSame(3, $metadata['changes']['affected_count']['after']);
         $this->assertStringNotContainsString($secretText, $log->metadata);
     }
 
