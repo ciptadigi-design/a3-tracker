@@ -7,6 +7,7 @@ import { userErrorMessage } from '../../../lib/appErrors.js'
 import { addKnowledgeEntry, updateKnowledgeEntry } from '../../../services/maintenance.js'
 import { collisionStatusLabels, entryStatusLabels, evidenceLabels, formatMaintenanceDate, importStatusLabels, knowledgeTypeLabels, mapMaintenanceError, nextEntryStatuses } from '../maintenanceUtils.js'
 import { BulkReviewDialog } from './BulkReviewDialog.jsx'
+import { CodeGroupsPanel } from './CodeGroupsPanel.jsx'
 import { KnowledgeEntryForm } from './KnowledgeEntryForm.jsx'
 import { PublishDialog } from './PublishDialog.jsx'
 import { useKnowledgeEntries } from './useKnowledgeEntries.js'
@@ -127,9 +128,16 @@ export function KnowledgeImportDetail({ importId, canManage, onClose }) {
   const [codeSearch, setCodeSearch] = useState('')
   const [selectedIds, setSelectedIds] = useState(() => new Set())
   const [pendingBulkAction, setPendingBulkAction] = useState(null)
+  // V1.7.2: PDF-derived imports open on the consolidated code-group view; the flat candidate list
+  // (with its individual actions and V1.7 ID-based bulk selection) stays one tab away, unchanged.
+  const [viewMode, setViewMode] = useState(null)
+  const [groupsVersion, setGroupsVersion] = useState(0)
 
   const entriesState = useKnowledgeEntries({ importId, status: statusFilter || undefined, collisionStatus: collisionFilter || undefined, evidence: evidenceFilter || undefined, code: codeSearch.trim() || undefined })
   const isProcessing = state.documentImport?.import_type === 'PDF_EXTRACTION' && state.documentImport?.status === 'PROCESSING'
+  const isPdfImport = state.documentImport?.import_type === 'PDF_EXTRACTION'
+  const activeView = viewMode ?? (isPdfImport ? 'groups' : 'flat')
+  const bumpGroups = () => setGroupsVersion((v) => v + 1)
   const hasAnyFilter = Boolean(statusFilter || collisionFilter || evidenceFilter || codeSearch.trim())
   const eligibleOnPage = useMemo(() => entriesState.entries.filter((e) => BULK_ELIGIBLE_STATUSES.has(e.status)), [entriesState.entries])
   const allEligibleSelected = eligibleOnPage.length > 0 && eligibleOnPage.every((e) => selectedIds.has(e.id))
@@ -174,6 +182,7 @@ export function KnowledgeImportDetail({ importId, canManage, onClose }) {
     try {
       await updateKnowledgeEntry(entryId, { status })
       entriesState.refresh()
+      bumpGroups()
     } catch (error) {
       setActionError(mapMaintenanceError(error))
     }
@@ -182,11 +191,20 @@ export function KnowledgeImportDetail({ importId, canManage, onClose }) {
   function handlePublished() {
     entriesState.refresh()
     state.refresh()
+    bumpGroups()
   }
 
   function handleBulkReviewed() {
     setSelectedIds(new Set())
     entriesState.refresh()
+    bumpGroups()
+  }
+
+  // Any review change made from the consolidated view refreshes the flat list, the import header and the groups.
+  function handleGroupsChanged() {
+    entriesState.refresh()
+    state.refresh()
+    bumpGroups()
   }
 
   return (
@@ -214,8 +232,17 @@ export function KnowledgeImportDetail({ importId, canManage, onClose }) {
               <div className="maintenance-step-section" style={{ margin: '18px 0 0', paddingTop: '16px' }}>
                 <div className="form-section-heading"><strong>Knowledge entries</strong><span>Add, review, approve, then publish into the live knowledge base.</span></div>
 
+                {isPdfImport && (state.documentImport.candidate_count ?? 0) > 0 && (
+                  <div className="maintenance-view-tabs" role="tablist" aria-label="Review view">
+                    <button role="tab" type="button" aria-selected={activeView === 'groups'} className={activeView === 'groups' ? 'primary-button' : 'secondary-button'} onClick={() => setViewMode('groups')}>Code groups</button>
+                    <button role="tab" type="button" aria-selected={activeView === 'flat'} className={activeView === 'flat' ? 'primary-button' : 'secondary-button'} onClick={() => setViewMode('flat')}>All candidates</button>
+                  </div>
+                )}
+
                 {(state.documentImport.candidate_count ?? 0) === 0 && !hasAnyFilter ? (
                   <small>{isProcessing ? 'No candidates detected yet.' : 'No knowledge entries recorded yet.'}</small>
+                ) : activeView === 'groups' && isPdfImport ? (
+                  <CodeGroupsPanel importId={importId} canManage={canManage} documentImport={state.documentImport} version={groupsVersion} onChanged={handleGroupsChanged} onPublish={setPublishingEntry} />
                 ) : (
                   <>
                     <EntryFilters statusFilter={statusFilter} onStatusFilter={setStatusFilter} collisionFilter={collisionFilter} onCollisionFilter={setCollisionFilter} evidenceFilter={evidenceFilter} onEvidenceFilter={setEvidenceFilter} codeSearch={codeSearch} onCodeSearch={setCodeSearch} />

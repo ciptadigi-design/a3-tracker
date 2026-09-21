@@ -59,6 +59,13 @@ export const loadDocumentImports = async ({ documentId, status } = {}) => unwrap
 export const loadDocumentImport = async (id) => unwrapData(await laravelMaintenance.documentImport(id))
 export const loadDocumentImportEntries = async (importId, { status, collisionStatus, evidence, code, page, perPage } = {}) => unwrapData(await laravelMaintenance.documentImportEntries(importId, toQueryString({ status, collision_status: collisionStatus, evidence, code, page, per_page: perPage })))
 export const bulkReviewEntries = async (importId, { entryIds, action }) => unwrapData(await laravelMaintenance.bulkReviewEntries(importId, { entry_ids: entryIds, action }))
+
+// V1.7.2 - code-group read model + filter-based bulk triage. The query string is built by
+// codeGroupUtils.buildCodeGroupQuery so the exact same criteria vocabulary is used everywhere.
+export const loadCodeGroups = async (importId, queryString = '') => unwrapData(await laravelMaintenance.codeGroups(importId, queryString))
+export const loadCodeGroup = async (importId, code) => unwrapData(await laravelMaintenance.codeGroup(importId, code))
+export const previewFilterBulkReview = async (importId, { action, filters }) => unwrapData(await laravelMaintenance.previewFilterBulkReview(importId, { action, filters }))
+export const applyFilterBulkReview = async (importId, { action, filters, confirmationToken }) => unwrapData(await laravelMaintenance.applyFilterBulkReview(importId, { action, filters, confirmation_token: confirmationToken }))
 export const createDocumentImport = async (payload) => unwrapData(await laravelMaintenance.createDocumentImport(payload))
 export const addKnowledgeEntry = async (importId, payload) => unwrapData(await laravelMaintenance.addKnowledgeEntry(importId, payload))
 export const updateKnowledgeEntry = async (id, payload) => unwrapData(await laravelMaintenance.updateKnowledgeEntry(id, payload))
