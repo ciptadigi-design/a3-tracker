@@ -2,12 +2,13 @@
 
 namespace Database\Factories;
 
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\User>
+ * @extends Factory<User>
  */
 class UserFactory extends Factory
 {
@@ -25,7 +26,10 @@ class UserFactory extends Factory
     {
         return [
             'name' => fake()->name(),
-            'email' => fake()->unique()->safeEmail(),
+            // fake()->unique() only remembers values within one test's Faker instance, but the
+            // MySQL concurrency tests DB::commit() their users and never delete them, so a later
+            // test's fresh generator can re-produce a committed email (UserFactoryEmailUniquenessTest).
+            'email' => fake()->unique()->userName().'.'.Str::lower(Str::random(10)).'@example.com',
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),
