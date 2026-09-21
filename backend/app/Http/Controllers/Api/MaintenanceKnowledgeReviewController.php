@@ -8,6 +8,7 @@ use App\Services\AccountAccessResolver;
 use App\Services\KnowledgeReview\KnowledgeCandidateFilter;
 use App\Services\KnowledgeReview\KnowledgeCodeGroupQuery;
 use App\Services\KnowledgeReview\KnowledgeFilterBulkReview;
+use App\Services\KnowledgeReview\KnowledgeGroupPublisher;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -81,6 +82,8 @@ class MaintenanceKnowledgeReviewController extends Controller
 
         $group = app(KnowledgeCodeGroupQuery::class)->detail($import->id, $normalized);
         abort_if($group === null, 404);
+        // V1.8: publication facts (published?, suggested canonical, supporting pages, server-side collision) for the review UI.
+        $group['publication'] = app(KnowledgeGroupPublisher::class)->summary($import, $normalized);
 
         return response()->json(['data' => $group]);
     }
@@ -101,6 +104,53 @@ class MaintenanceKnowledgeReviewController extends Controller
         return response()->json(['data' => app(KnowledgeFilterBulkReview::class)->apply(
             $r->user(), $import, $action, $filters, (string) $r->input('confirmation_token'), $import->document->account_id,
         )]);
+    }
+
+    /** V1.8 - authoritative, read-only preview of publishing ONE code group with a reviewer-chosen canonical occurrence. */
+    public function publishPreview(Request $r, string $importId, string $code)
+    {
+        $import = $this->manageableImport($r, $importId);
+        $normalized = $this->groupCode($code);
+
+        return response()->json(['data' => app(KnowledgeGroupPublisher::class)->preview($r->user(), $import, $normalized, $this->validatedPublishInput($r))]);
+    }
+
+    /** V1.8 - the single-code publish. One group, one transaction; needs a valid preview token. No bulk variant exists. */
+    public function publishGroup(Request $r, string $importId, string $code)
+    {
+        $import = $this->manageableImport($r, $importId);
+        $normalized = $this->groupCode($code);
+        $input = $this->validatedPublishInput($r, true);
+
+        return response()->json(['data' => app(KnowledgeGroupPublisher::class)->publish(
+            $r->user(), $import, $normalized, $input, (string) $input['confirmation_token'], (bool) ($input['confirm_update'] ?? false),
+        )]);
+    }
+
+    private function groupCode(string $code): string
+    {
+        $normalized = strtoupper(trim($code));
+        abort_unless(preg_match('/^[A-Z0-9\-]{1,64}$/', $normalized) === 1, 404);
+
+        return $normalized;
+    }
+
+    /** @return array<string, mixed> */
+    private function validatedPublishInput(Request $r, bool $requireToken = false): array
+    {
+        $rules = [
+            'canonical_candidate_id' => ['required', 'uuid'],
+            'title' => ['required', 'string', 'max:200'],
+            'description' => ['nullable', 'string', 'max:10000'],
+            'operator_guidance' => ['nullable', 'string', 'max:10000'],
+            'technician_solution' => ['nullable', 'string', 'max:10000'],
+        ];
+        if ($requireToken) {
+            $rules['confirmation_token'] = ['required', 'string', 'max:2000'];
+            $rules['confirm_update'] = ['sometimes', 'boolean'];
+        }
+
+        return $r->validate($rules);
     }
 
     /** @return array{0: string, 1: array<string, mixed>} */

@@ -82,8 +82,12 @@ test('NEW/EXISTING/POTENTIAL_UPDATE collision status renders from the shared lab
 
 // --- 10. publish action respects capability (unchanged from V1.3 - still gated) ---
 
-test('publish action remains canManage-gated for PDF-derived candidates exactly as for manual entries', () => {
-  assert.match(importDetail, /entry\.status === 'APPROVED' && !entry\.published_at && <button className="secondary-button" type="button" onClick=\{\(\) => onPublish\(entry\)\}/)
+// V1.8 intentionally narrows this: a PDF-derived candidate is one OCCURRENCE of an error-code group, and the legacy
+// per-candidate publish upserts the catalog record last-writer-wins, so the flat list no longer offers it for candidates
+// that carry a normalized_code (the backend refuses it too). Manual entries keep the original, canManage-gated button.
+test('the flat-list publish action stays canManage-gated for manual entries and is replaced by a code-group pointer for PDF-derived candidates', () => {
+  assert.match(importDetail, /entry\.status === 'APPROVED' && !entry\.published_at && !entry\.normalized_code && <button className="secondary-button" type="button" onClick=\{\(\) => onPublish\(entry\)\}/)
+  assert.match(importDetail, /entry\.status === 'APPROVED' && !entry\.published_at && entry\.normalized_code && <small>Publish from its code group\.<\/small>/)
   assert.match(importDetail, /canManage && \(\s*<div className="dialog-actions">/)
 })
 

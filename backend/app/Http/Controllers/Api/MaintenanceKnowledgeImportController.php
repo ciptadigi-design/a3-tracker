@@ -274,6 +274,14 @@ class MaintenanceKnowledgeImportController extends Controller
         $entry = MaintenanceKnowledgeEntry::with('import.document')->findOrFail($entryId);
         $this->authorizeCatalogScope($r, $entry->import->document->account_id);
 
+        // V1.8: a PDF-derived candidate is one OCCURRENCE of an error-code group. This legacy path upserts
+        // machine_error_codes by (account, model, code) with last-writer-wins, so publishing occurrences one by
+        // one would let candidate order decide the published text (or overwrite a group's canonical record).
+        // PDF-derived knowledge publishes only through the explicit single-code group flow.
+        if ($entry->import->import_type === 'PDF_EXTRACTION' && $entry->normalized_code !== null) {
+            throw new ConflictHttpException('[GROUP_PUBLISH_REQUIRED] PDF-derived candidates are published per code group, with a reviewed canonical occurrence.');
+        }
+
         $result = app(MaintenanceKnowledgePublishService::class)->publish($entry, $r->user());
 
         return response()->json(['data' => [

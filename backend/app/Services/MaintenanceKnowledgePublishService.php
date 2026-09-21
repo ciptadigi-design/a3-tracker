@@ -106,7 +106,7 @@ class MaintenanceKnowledgePublishService
     // Once every entry in the import is either published or rejected, the import
     // itself is considered done - a coarse, foundation-level state, not a precise
     // per-entry audit trail (that lives on the entries themselves).
-    private function advanceImportStatusIfComplete(MaintenanceDocumentImport $import): void
+    public function advanceImportStatusIfComplete(MaintenanceDocumentImport $import): void
     {
         $unresolved = $import->entries()->whereNull('published_at')->where('status', '!=', 'REJECTED')->exists();
         if (! $unresolved && $import->status !== 'PUBLISHED') {

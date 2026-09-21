@@ -23,7 +23,10 @@ class GovernanceAudit
         // V1.7.2 - Filter-based bulk review. A short server-built filter label
         // (validated enum/integer/code values only) and a truncated hash - never
         // candidate text, never an ID list. See KnowledgeFilterBulkReview.
-        'filter_fingerprint', 'filter_summary'];
+        'filter_fingerprint', 'filter_summary',
+        // V1.8 - group-aware publish. Compact structural facts only (one candidate id, counts, a label, a truncated
+        // hash) - never candidate or solution prose, never an ID list. See KnowledgeGroupPublisher.
+        'canonical_candidate_id', 'occurrence_count', 'supporting_page_count', 'publish_mode', 'publication_fingerprint'];
 
     public const OMITTED_FIELDS = ['notes', 'description', 'address', 'phone', 'email', 'contact_name', 'linked_user_id', 'serial_number', 'problem', 'symptoms', 'solution', 'success_notes', 'manufacturer_description', 'operator_description', 'official_solution', 'solution_summary', 'instruction', 'file_path', 'operator_solution', 'technician_solution', 'error_message', 'raw_text'];
 

@@ -161,6 +161,8 @@ final class KnowledgeCodeGroupQuery
             'extraction_id' => $o->extraction_id,
             'created_at' => $o->created_at,
             'reference_like' => (bool) $o->reference_like,
+            // The detector's generic "Error Code C-XXXX" fallback title - never publishable as final knowledge.
+            'title_is_placeholder' => PlaceholderTitle::isPlaceholder($o->title, (string) $o->normalized_code),
         ])->values()->all();
         $group['occurrences_truncated'] = (int) $row->occurrence_count > self::DETAIL_LIMIT;
 

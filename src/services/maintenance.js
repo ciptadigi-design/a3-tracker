@@ -66,6 +66,10 @@ export const loadCodeGroups = async (importId, queryString = '') => unwrapData(a
 export const loadCodeGroup = async (importId, code) => unwrapData(await laravelMaintenance.codeGroup(importId, code))
 export const previewFilterBulkReview = async (importId, { action, filters }) => unwrapData(await laravelMaintenance.previewFilterBulkReview(importId, { action, filters }))
 export const applyFilterBulkReview = async (importId, { action, filters, confirmationToken }) => unwrapData(await laravelMaintenance.applyFilterBulkReview(importId, { action, filters, confirmation_token: confirmationToken }))
+
+// V1.8 - group-aware canonical publish. The payload is built by groupPublishUtils.buildPublishPayload.
+export const previewGroupPublish = async (importId, code, payload) => unwrapData(await laravelMaintenance.previewGroupPublish(importId, code, payload))
+export const publishCodeGroup = async (importId, code, payload, { confirmationToken, confirmUpdate }) => unwrapData(await laravelMaintenance.publishGroup(importId, code, { ...payload, confirmation_token: confirmationToken, confirm_update: Boolean(confirmUpdate) }))
 export const createDocumentImport = async (payload) => unwrapData(await laravelMaintenance.createDocumentImport(payload))
 export const addKnowledgeEntry = async (importId, payload) => unwrapData(await laravelMaintenance.addKnowledgeEntry(importId, payload))
 export const updateKnowledgeEntry = async (id, payload) => unwrapData(await laravelMaintenance.updateKnowledgeEntry(id, payload))

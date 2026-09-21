@@ -47,6 +47,9 @@ export const laravelMaintenance = {
   codeGroup: (importId, code) => apiClient.get(`/maintenance/document-imports/${importId}/code-groups/${encodeURIComponent(code)}`),
   previewFilterBulkReview: (importId, payload) => apiClient.post(`/maintenance/document-imports/${importId}/entries/bulk-review/preview`, payload),
   applyFilterBulkReview: (importId, payload) => apiClient.post(`/maintenance/document-imports/${importId}/entries/bulk-review/apply`, payload),
+  // V1.8 - single-code group publish (preview -> confirm -> publish). There is deliberately no bulk variant.
+  previewGroupPublish: (importId, code, payload) => apiClient.post(`/maintenance/document-imports/${importId}/code-groups/${encodeURIComponent(code)}/publish-preview`, payload),
+  publishGroup: (importId, code, payload) => apiClient.post(`/maintenance/document-imports/${importId}/code-groups/${encodeURIComponent(code)}/publish`, payload),
   createDocumentImport: (payload) => apiClient.post('/maintenance/document-imports', payload),
   addKnowledgeEntry: (importId, payload) => apiClient.post(`/maintenance/document-imports/${importId}/entries`, payload),
   updateKnowledgeEntry: (id, payload) => apiClient.patch(`/maintenance/knowledge-entries/${id}`, payload),

@@ -171,10 +171,11 @@ test('consolidation never publishes or approves in bulk: no publish call anywher
     assert.doesNotMatch(source, /publishKnowledgeEntry|PublishDialog|onPublish\(/)
   }
   assert.doesNotMatch(triage, /action: 'approve'|action: 'publish'|'APPROVED'/)
-  // The only publish affordance is the existing, explicit, single-entry PublishDialog, opened by the parent.
-  assert.match(detailDialog, /<Rocket size=\{14\} \/> Publish/)
-  assert.match(detailDialog, /occurrence\.status === 'APPROVED' && !published/)
-  assert.match(importDetail, /onPublish=\{setPublishingEntry\}/)
+  // V1.8: an OCCURRENCE is never published on its own. Publishing is the explicit single-code group flow (GroupPublishDialog).
+  assert.doesNotMatch(detailDialog, /\bonPublish\b|publishKnowledgeEntry|from '\.\/PublishDialog\.jsx'/)
+  assert.doesNotMatch(detailDialog, /<Rocket size=\{14\} \/> Publish/)
+  assert.match(detailDialog, /<GroupPublishDialog importId=\{importId\} code=\{code\}/)
+  assert.doesNotMatch(importDetail, /<CodeGroupsPanel[^\n]*onPublish/)
   assert.match(routes, /bulk-review\/preview/)
   assert.doesNotMatch(controller, /MaintenanceKnowledgePublishService/)
 })

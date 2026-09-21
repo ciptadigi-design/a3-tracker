@@ -48,7 +48,9 @@ function EntryRow({ entry, canManage, onEdit, onTransition, onPublish, selected,
           {entry.status === 'DRAFT' && <button className="icon-button" type="button" onClick={() => onEdit(entry)} aria-label="Edit entry">Edit</button>}
           {availableTransitions.includes('APPROVED') && <button className="icon-button" type="button" onClick={() => onTransition(entry.id, 'APPROVED')} aria-label="Approve entry"><CheckCircle2 size={15} /></button>}
           {availableTransitions.includes('REJECTED') && <button className="icon-button" type="button" onClick={() => onTransition(entry.id, 'REJECTED')} aria-label="Reject entry"><XCircle size={15} /></button>}
-          {entry.status === 'APPROVED' && !entry.published_at && <button className="secondary-button" type="button" onClick={() => onPublish(entry)}><Rocket size={14} /> Publish</button>}
+          {/* V1.8: a PDF-derived candidate is one occurrence of a code group and publishes only through the group flow. */}
+          {entry.status === 'APPROVED' && !entry.published_at && !entry.normalized_code && <button className="secondary-button" type="button" onClick={() => onPublish(entry)}><Rocket size={14} /> Publish</button>}
+          {entry.status === 'APPROVED' && !entry.published_at && entry.normalized_code && <small>Publish from its code group.</small>}
         </div>
       )}
     </li>
@@ -242,7 +244,7 @@ export function KnowledgeImportDetail({ importId, canManage, onClose }) {
                 {(state.documentImport.candidate_count ?? 0) === 0 && !hasAnyFilter ? (
                   <small>{isProcessing ? 'No candidates detected yet.' : 'No knowledge entries recorded yet.'}</small>
                 ) : activeView === 'groups' && isPdfImport ? (
-                  <CodeGroupsPanel importId={importId} canManage={canManage} documentImport={state.documentImport} version={groupsVersion} onChanged={handleGroupsChanged} onPublish={setPublishingEntry} />
+                  <CodeGroupsPanel importId={importId} canManage={canManage} documentImport={state.documentImport} version={groupsVersion} onChanged={handleGroupsChanged} />
                 ) : (
                   <>
                     <EntryFilters statusFilter={statusFilter} onStatusFilter={setStatusFilter} collisionFilter={collisionFilter} onCollisionFilter={setCollisionFilter} evidenceFilter={evidenceFilter} onEvidenceFilter={setEvidenceFilter} codeSearch={codeSearch} onCodeSearch={setCodeSearch} />

@@ -122,7 +122,7 @@ function Toolbar({ filters, onChange, onPreset, perPage, onPerPage, sort, onSort
  * server-side, with every underlying candidate one click away in the group detail.
  * Consolidation is for REVIEW only - nothing here approves or publishes in bulk.
  */
-export function CodeGroupsPanel({ importId, canManage, documentImport, version, onChanged, onPublish }) {
+export function CodeGroupsPanel({ importId, canManage, documentImport, version, onChanged }) {
   const [filters, setFilters] = useState({ ...EMPTY_FILTERS })
   const [perPage, setPerPage] = useState(DEFAULT_PER_PAGE)
   const [sort, setSort] = useState('best_evidence')
@@ -180,7 +180,7 @@ export function CodeGroupsPanel({ importId, canManage, documentImport, version, 
       )}
 
       {openCode && (
-        <CodeGroupDetailDialog importId={importId} code={openCode} canManage={canManage} version={version} onClose={() => setOpenCode(null)} onChanged={onChanged} onPublish={onPublish} />
+        <CodeGroupDetailDialog importId={importId} code={openCode} canManage={canManage} version={version} onClose={() => setOpenCode(null)} onChanged={onChanged} />
       )}
       {triageAction && (
         <TriageDialog importId={importId} action={triageAction} bulkFilters={bulkFilters} ignoredFilters={ignored} onClose={() => setTriageAction(null)} onApplied={onChanged} />

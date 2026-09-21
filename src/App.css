@@ -698,6 +698,26 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .maintenance-triage-counts dd { margin: 0; font-size: 20px; font-weight: 800; }
 .maintenance-triage-sample { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; font-size: 12px; color: var(--text-soft); }
 .maintenance-triage-result { display: flex; align-items: center; gap: 8px; font-weight: 700; }
+
+/* V1.8 - group-aware canonical review and single-code publish. */
+.maintenance-occurrence-row.is-canonical { border: 2px solid var(--blue); background: var(--blue-soft); }
+.maintenance-canonical-editor { min-width: 0; display: grid; gap: 8px; margin-top: 14px; padding: 14px; border-radius: 14px; background: var(--surface-muted); border: 1px solid var(--border-subtle); }
+.maintenance-canonical-editor textarea, .maintenance-canonical-editor input { width: 100%; min-width: 0; box-sizing: border-box; }
+.maintenance-field { display: grid; gap: 4px; font-size: 12px; }
+.maintenance-field > span { font-weight: 700; color: var(--text-soft); }
+.maintenance-supporting-evidence { min-width: 0; margin-top: 14px; }
+.maintenance-supporting-evidence p { margin: 4px 0; overflow-wrap: anywhere; }
+.maintenance-published-banner { display: flex; gap: 10px; align-items: flex-start; margin: 8px 0; padding: 12px 14px; border-radius: 14px; background: var(--blue-soft); border: 1px solid var(--border-subtle); }
+.maintenance-published-banner > div { display: grid; gap: 2px; min-width: 0; }
+.maintenance-publish-preview { display: grid; gap: 8px; margin: 10px 0; }
+.maintenance-publish-facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 14px; margin: 0; }
+.maintenance-publish-facts div { min-width: 0; display: grid; gap: 2px; }
+.maintenance-publish-facts dt { font-size: 11px; color: var(--text-soft); }
+.maintenance-publish-facts dd { margin: 0; font-size: 13px; overflow-wrap: anywhere; }
+.maintenance-publish-mutation { margin: 0; padding-left: 18px; display: grid; gap: 2px; font-size: 13px; }
+@media (max-width: 680px) {
+  .maintenance-publish-facts { grid-template-columns: 1fr; }
+}
 @media (max-width: 860px) {
   .maintenance-summary-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .maintenance-code-group-row { grid-template-columns: minmax(0, 1fr); }

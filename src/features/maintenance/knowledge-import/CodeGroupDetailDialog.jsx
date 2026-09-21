@@ -4,25 +4,31 @@ import { BlockingDialog } from '../../../components/ui/BlockingDialog.jsx'
 import { ErrorState } from '../../../components/ui/ErrorState.jsx'
 import { LoadingScreen } from '../../../components/ui/LoadingScreen.jsx'
 import { bulkReviewEntries, updateKnowledgeEntry } from '../../../services/maintenance.js'
-import { collisionStatusLabels, entryStatusLabels, mapMaintenanceError } from '../maintenanceUtils.js'
+import { collisionStatusLabels, entryStatusLabels, formatMaintenanceDate, mapMaintenanceError } from '../maintenanceUtils.js'
 import { EVIDENCE_LABELS, REVIEW_STATE_LABELS, REVIEW_STATE_PILL_CLASS, evidenceMix, occurrenceLabel, occurrencePageLabel, pageRangeLabel } from './codeGroupUtils.js'
+import { GroupPublishDialog } from './GroupPublishDialog.jsx'
+import {
+  DRAFT_LIMITS, EMPTY_DRAFT, PLACEHOLDER_TITLE_MESSAGE, WORKFLOW_LABELS, canRequestPreview, collisionLabel, isPlaceholderTitle, previewIsCurrent, supportingPagesLabel, validateDraft, workflowState,
+} from './groupPublishUtils.js'
 import { useCodeGroupDetail } from './useCodeGroupDetail.js'
 
 const statusPillClass = { DRAFT: '', APPROVED: 'resolved', REJECTED: 'voided' }
 const evidencePillClass = { HIGH: 'resolved', MEDIUM: '', LOW: 'voided' }
 
-function OccurrenceRow({ occurrence, canManage, busy, onApprove, onReject, onRestore, onPublish }) {
+function OccurrenceRow({ occurrence, canManage, busy, isCanonical, isSuggested, canChooseCanonical, onUseCanonical, onApprove, onReject, onRestore }) {
   const published = Boolean(occurrence.published_at)
   return (
-    <li className="maintenance-occurrence-row glass-surface" data-evidence={occurrence.evidence} data-status={occurrence.status}>
+    <li className={`maintenance-occurrence-row glass-surface${isCanonical ? ' is-canonical' : ''}`} data-evidence={occurrence.evidence} data-status={occurrence.status} data-canonical={isCanonical ? 'true' : 'false'}>
       <div className="maintenance-occurrence-head">
         <span className={`incident-status-pill ${evidencePillClass[occurrence.evidence] ?? ''}`}>{EVIDENCE_LABELS[occurrence.evidence] ?? occurrence.evidence ?? 'No evidence'}</span>
         <strong>{occurrencePageLabel(occurrence)}</strong>
         <span className={`incident-status-pill ${statusPillClass[occurrence.status] ?? ''}`}>{published ? 'Published' : (entryStatusLabels[occurrence.status] ?? occurrence.status)}</span>
         {occurrence.collision_status && <span className="incident-status-pill">{collisionStatusLabels[occurrence.collision_status] ?? occurrence.collision_status}</span>}
         {occurrence.reference_like && <span className="incident-status-pill" title="Dotted-leader signal: table-of-contents / index style">Reference-like</span>}
+        {isCanonical && <span className="incident-status-pill resolved">Canonical</span>}
+        {isSuggested && !isCanonical && <span className="incident-status-pill" title="Strongest evidence, earliest page. A suggestion only - you decide.">Suggested</span>}
       </div>
-      <p className="maintenance-occurrence-title">{occurrence.title}</p>
+      <p className="maintenance-occurrence-title">{occurrence.title}{occurrence.title_is_placeholder ? ' (placeholder title)' : ''}</p>
       {occurrence.description && (
         <details className="maintenance-occurrence-excerpt">
           <summary>Stored excerpt</summary>
@@ -31,27 +37,72 @@ function OccurrenceRow({ occurrence, canManage, busy, onApprove, onReject, onRes
       )}
       {canManage && (
         <div className="dialog-actions">
+          {canChooseCanonical && occurrence.status !== 'REJECTED' && (
+            <button className={isCanonical ? 'primary-button' : 'secondary-button'} type="button" aria-pressed={isCanonical} disabled={busy} onClick={() => onUseCanonical(occurrence)}>
+              {isCanonical ? 'Canonical occurrence' : 'Use as canonical'}
+            </button>
+          )}
           {occurrence.status === 'DRAFT' && <button className="icon-button" type="button" disabled={busy} onClick={() => onApprove(occurrence)} aria-label={`Approve occurrence on ${occurrencePageLabel(occurrence)}`}><CheckCircle2 size={15} /></button>}
           {occurrence.status === 'DRAFT' && <button className="icon-button" type="button" disabled={busy} onClick={() => onReject(occurrence)} aria-label={`Reject occurrence on ${occurrencePageLabel(occurrence)}`}><XCircle size={15} /></button>}
           {occurrence.status === 'REJECTED' && <button className="secondary-button" type="button" disabled={busy} onClick={() => onRestore(occurrence)}><RotateCcw size={14} /> Restore to draft</button>}
-          {occurrence.status === 'APPROVED' && !published && <button className="secondary-button" type="button" disabled={busy} onClick={() => onPublish(occurrence)}><Rocket size={14} /> Publish</button>}
         </div>
       )}
     </li>
   )
 }
 
+function CanonicalEditor({ code, draft, onChange, canonicalOccurrence, publication, errors, showErrors }) {
+  const set = (key) => (event) => onChange({ ...draft, [key]: event.target.value })
+  const titleIsPlaceholder = draft.title.trim() !== '' && isPlaceholderTitle(draft.title)
+  return (
+    <section className="maintenance-canonical-editor" aria-label="Canonical knowledge">
+      <div className="form-section-heading"><strong>Canonical knowledge</strong><span>You are writing the published knowledge for {code}; the source PDF and its excerpts are never changed.</span></div>
+      {canonicalOccurrence
+        ? <p><small>Based on the occurrence from {occurrencePageLabel(canonicalOccurrence).toLowerCase()}.</small></p>
+        : <p><small>Choose the canonical occurrence above to begin.</small></p>}
+
+      <label className="maintenance-field"><span>Code</span><input value={code} readOnly aria-readonly="true" aria-label="Code (fixed by the group)" /></label>
+      <label className="maintenance-field">
+        <span>Title</span>
+        <input value={draft.title} onChange={set('title')} maxLength={DRAFT_LIMITS.title} aria-label="Canonical title" aria-invalid={Boolean(titleIsPlaceholder || (showErrors && errors.title))} />
+      </label>
+      {(titleIsPlaceholder || (showErrors && errors.title)) && <div className="form-error" role="alert"><span>{PLACEHOLDER_TITLE_MESSAGE}</span></div>}
+      {publication?.suggested_title && draft.title.trim() === '' && (
+        <button className="secondary-button" type="button" onClick={() => onChange({ ...draft, title: publication.suggested_title })}>Use suggested title: “{publication.suggested_title}”</button>
+      )}
+      <label className="maintenance-field"><span>Description / cause</span><textarea rows={4} value={draft.description} onChange={set('description')} maxLength={DRAFT_LIMITS.description} aria-label="Canonical description or cause" /></label>
+      {canonicalOccurrence?.description && draft.description.trim() === '' && (
+        <button className="secondary-button" type="button" onClick={() => onChange({ ...draft, description: canonicalOccurrence.description })}>Start from the stored excerpt</button>
+      )}
+      <label className="maintenance-field"><span>Operator guidance</span><textarea rows={3} value={draft.operatorGuidance} onChange={set('operatorGuidance')} maxLength={DRAFT_LIMITS.operatorGuidance} aria-label="Canonical operator guidance" /></label>
+      <label className="maintenance-field"><span>Technician solution</span><textarea rows={4} value={draft.technicianSolution} onChange={set('technicianSolution')} maxLength={DRAFT_LIMITS.technicianSolution} aria-label="Canonical technician solution" /></label>
+      {showErrors && errors.content && <div className="form-error" role="alert"><span>{errors.content}</span></div>}
+      <small>Nothing is generated for you: every field is written or confirmed by a reviewer.</small>
+    </section>
+  )
+}
+
 /**
- * V1.7.2 - one normalized code with EVERY underlying candidate occurrence, individually.
- * Order comes from the backend (High, then Medium, then Low, then page) and is never
- * collapsed or re-sorted here. Each occurrence keeps its own status: reviewing one
- * occurrence never silently reviews another, and publishing stays a separate explicit step.
+ * One normalized code with EVERY underlying candidate occurrence, and the place where a reviewer turns them into ONE
+ * published error code: choose the canonical occurrence explicitly, author the canonical knowledge, review the
+ * server's publish preview, then publish that single code. Supporting occurrences are provenance (page references),
+ * not competing publications; there is no publish-all and no bulk publish anywhere.
  */
-export function CodeGroupDetailDialog({ importId, code, canManage, version, onClose, onChanged, onPublish }) {
+export function CodeGroupDetailDialog({ importId, code, canManage, version, onClose, onChanged }) {
   const detail = useCodeGroupDetail({ importId, code, version })
   const [busyId, setBusyId] = useState(null)
   const [actionError, setActionError] = useState(null)
+  const [canonicalId, setCanonicalId] = useState(null)
+  const [draft, setDraft] = useState({ ...EMPTY_DRAFT })
+  const [showErrors, setShowErrors] = useState(false)
+  const [showPublish, setShowPublish] = useState(false)
+  const [lastPreview, setLastPreview] = useState(null)
   const group = detail.group
+  const publication = group?.publication
+  const published = Boolean(publication?.published)
+  const canonicalOccurrence = group?.occurrences.find((o) => o.id === (published ? publication.canonical_candidate_id : canonicalId)) ?? null
+  const errors = validateDraft(draft, canonicalId)
+  const state = workflowState({ published, canonicalId, draft, previewIsFresh: previewIsCurrent(lastPreview, canonicalId, draft) && Boolean(lastPreview?.can_publish) })
 
   async function run(occurrence, action) {
     if (busyId) return
@@ -68,6 +119,16 @@ export function CodeGroupDetailDialog({ importId, code, canManage, version, onCl
     }
   }
 
+  function requestPublishReview() {
+    if (!canRequestPreview({ published, canonicalId, draft })) { setShowErrors(true); return }
+    setShowPublish(true)
+  }
+
+  function handlePublished() {
+    detail.refresh()
+    onChanged?.()
+  }
+
   return (
     <BlockingDialog className="machine-dialog glass-surface" backdropClassName="machine-dialog-backdrop" labelledBy="code-group-title" onClose={onClose}>
       <header className="dialog-header">
@@ -80,14 +141,29 @@ export function CodeGroupDetailDialog({ importId, code, canManage, version, onCl
           : !group ? null
           : (
             <>
-              <div className="maintenance-code-group-header">
+              <div className="maintenance-code-group-header" data-testid="group-header">
                 <span className={`incident-status-pill ${evidencePillClass[group.best_evidence] ?? ''}`}>Best evidence: {EVIDENCE_LABELS[group.best_evidence] ?? group.best_evidence}</span>
+                <span className="incident-status-pill">{collisionLabel(publication?.server_collision_status)}</span>
                 <span className={`incident-status-pill ${REVIEW_STATE_PILL_CLASS[group.review_state] ?? ''}`}>{REVIEW_STATE_LABELS[group.review_state] ?? group.review_state}</span>
+                <span className={`incident-status-pill ${state === 'PUBLISHED' ? 'resolved' : ''}`} data-testid="workflow-state">{WORKFLOW_LABELS[state]}</span>
                 <span>{occurrenceLabel(group.occurrence_count)}</span>
+                <span>{publication?.supporting_page_count ?? 0} supporting page{publication?.supporting_page_count === 1 ? '' : 's'}</span>
                 <span>{evidenceMix(group)}</span>
                 <span>{pageRangeLabel(group)}</span>
               </div>
-              <p><small>Each row below is one detected candidate. Several can support the same machine error code, from different places in the manual. Approving an occurrence is a review decision for that occurrence only; publishing is a separate step.</small></p>
+
+              {published && (
+                <div className="maintenance-published-banner" role="status" data-testid="published-banner">
+                  <CheckCircle2 size={18} />
+                  <div>
+                    <strong>Published</strong>
+                    <span>{code} · {publication.published_at ? formatMaintenanceDate(publication.published_at) : 'published'} · {publication.supporting_page_count} supporting page{publication.supporting_page_count === 1 ? '' : 's'}</span>
+                    <small>Find it under Maintenance → Error Codes. Changing published knowledge needs a separate update review.</small>
+                  </div>
+                </div>
+              )}
+
+              <p><small>Each row below is one detected candidate. Several can support the same machine error code, from different places in the manual. {published ? '' : 'Choose ONE canonical occurrence, then write the canonical knowledge. The rest stay as supporting page references.'}</small></p>
               {actionError && <div className="form-error" role="alert"><span>{actionError}</span></div>}
               <ul className="incident-narrative-list">
                 {group.occurrences.map((occurrence) => (
@@ -96,18 +172,42 @@ export function CodeGroupDetailDialog({ importId, code, canManage, version, onCl
                     occurrence={occurrence}
                     canManage={canManage}
                     busy={busyId !== null}
+                    isCanonical={occurrence.id === (published ? publication.canonical_candidate_id : canonicalId)}
+                    isSuggested={occurrence.id === publication?.suggested_canonical_candidate_id}
+                    canChooseCanonical={!published}
+                    onUseCanonical={(o) => { setCanonicalId(o.id); setLastPreview(null) }}
                     onApprove={(o) => run(o, () => updateKnowledgeEntry(o.id, { status: 'APPROVED' }))}
                     onReject={(o) => run(o, () => updateKnowledgeEntry(o.id, { status: 'REJECTED' }))}
                     onRestore={(o) => run(o, () => bulkReviewEntries(importId, { entryIds: [o.id], action: 'restore' }))}
-                    onPublish={onPublish}
                   />
                 ))}
               </ul>
               {group.occurrences_truncated && <small>Showing the first {group.occurrences.length} occurrences.</small>}
               {busyId && <small><LoaderCircle className="spin" size={13} /> Saving…</small>}
+
+              <section className="maintenance-supporting-evidence" aria-label="Supporting evidence">
+                <div className="form-section-heading"><strong>Supporting evidence</strong><span>{publication?.supporting_occurrence_count ?? 0} occurrence{publication?.supporting_occurrence_count === 1 ? '' : 's'}{publication?.excluded_rejected_count > 0 ? ` · ${publication.excluded_rejected_count} rejected (not used)` : ''}</span></div>
+                <p data-testid="supporting-pages">{supportingPagesLabel(publication?.supporting_pages, publication?.supporting_page_count ?? 0)}</p>
+                <small>Each unique page becomes a page reference when this code is published. Reject noise (for example table-of-contents lines) first if it should not be cited.</small>
+              </section>
+
+              {canManage && !published && (
+                <>
+                  <CanonicalEditor code={code} draft={draft} onChange={(next) => { setDraft(next); setLastPreview(null) }} canonicalOccurrence={canonicalOccurrence} publication={publication} errors={errors} showErrors={showErrors} />
+                  {showErrors && errors.canonical && <div className="form-error" role="alert"><span>{errors.canonical}</span></div>}
+                  <div className="dialog-actions">
+                    <button className="primary-button" type="button" onClick={requestPublishReview}><Rocket size={16} /> Review Publish</button>
+                    <small>Opens a read-only preview first. Nothing is published until you confirm there.</small>
+                  </div>
+                </>
+              )}
+              {!canManage && <small>Read-only access: reviewing and publishing need a manager role.</small>}
             </>
           )}
       </div>
+      {showPublish && (
+        <GroupPublishDialog importId={importId} code={code} canonicalId={canonicalId} draft={draft} onClose={() => setShowPublish(false)} onPreviewed={setLastPreview} onPublished={handlePublished} />
+      )}
     </BlockingDialog>
   )
 }
