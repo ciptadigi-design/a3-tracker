@@ -2,6 +2,7 @@
 
 namespace App\Services\KnowledgeReview;
 
+use App\Models\MaintenanceDocumentPage;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -43,6 +44,32 @@ final class KnowledgeCodeGroupQuery
 
     /** Safety cap on occurrences returned by one group detail. */
     private const DETAIL_LIMIT = 200;
+
+    /**
+     * V1.9 - Source Page Context. A single occurrence's source_page_start..source_page_end is
+     * real provenance (e.g. a procedure that spans two printed pages), but malformed/extreme
+     * data must never turn into an unbounded page load. Matches the precedent already set by
+     * KnowledgeGroupPublisher::MAX_RANGE_SPAN for the same "one candidate, one range" shape.
+     * Real Production data (2639 pages, 2680 candidates) never exceeds a span of 1.
+     */
+    private const MAX_OCCURRENCE_PAGE_SPAN = 20;
+
+    /**
+     * V1.9 - total distinct pages fetched for one group's Source Page Context, across every
+     * occurrence's range, after dedup. The worst case actually observed across all 705 real
+     * code groups is 8 distinct pages; this stays generous without ever loading anywhere near
+     * the full 2639-page extraction for one review action.
+     */
+    private const SOURCE_PAGE_LIMIT = 40;
+
+    /**
+     * V1.9 - how far a reviewer may step beyond a group's own source pages via the adjacent-page
+     * endpoint. This is NOT a generic page reader: a requested page must be within this many
+     * pages of one of the group's own source pages, or it is refused. Chosen from the real C-1127
+     * review itself, which needed page 1459 (-1 from 1460) and pages 1462-1463 (+1/+2 from 1461)
+     * to correctly attribute a procedure to the right code section.
+     */
+    private const ADJACENT_PAGE_MAX_DISTANCE = 3;
 
     private const BEST_RANK_SQL = 'MAX('.KnowledgeCandidateFilter::RANK_SQL.')';
 
@@ -118,9 +145,15 @@ final class KnowledgeCodeGroupQuery
      * order: HIGH, then MEDIUM, then LOW, then source page ascending; contradictory
      * evidence inside a group is shown, never collapsed.
      *
+     * V1.9 - also returns `source_pages`: the full extracted text of the group's own
+     * supporting pages (see sourcePages()), scoped to $documentId so a page can never be
+     * read across a document/account boundary. Pass null to omit page text entirely (e.g.
+     * an existing caller that has no document context yet); the rest of the contract is
+     * unchanged either way.
+     *
      * @return array<string, mixed>|null
      */
-    public function detail(string $importId, string $normalizedCode): ?array
+    public function detail(string $importId, string $normalizedCode, ?string $documentId = null): ?array
     {
         $row = KnowledgeCandidateFilter::candidates($importId)
             ->where('normalized_code', $normalizedCode)
@@ -166,7 +199,123 @@ final class KnowledgeCodeGroupQuery
         ])->values()->all();
         $group['occurrences_truncated'] = (int) $row->occurrence_count > self::DETAIL_LIMIT;
 
+        $pageSet = self::occurrencePageNumbers($occurrences);
+        $primaryPageNumbers = $occurrences->pluck('source_page_start')->filter(fn ($p) => $p !== null)->map(fn ($p) => (int) $p)->unique()->values()->all();
+        $group['source_pages'] = $documentId === null ? [] : $this->sourcePages($documentId, $pageSet['pages'], $primaryPageNumbers);
+        $group['source_pages_truncated'] = $pageSet['truncated'];
+
         return $group;
+    }
+
+    /**
+     * V1.9 - the deduplicated, bounded, ascending set of real page numbers a group's own
+     * occurrences provide evidence for, expanding each occurrence's own
+     * source_page_start..source_page_end (bounded per-occurrence by MAX_OCCURRENCE_PAGE_SPAN so
+     * one malformed range can never explode the set). Pure computation over rows already in
+     * memory - no extra query.
+     *
+     * @return array{pages: list<int>, truncated: bool}
+     */
+    private static function occurrencePageNumbers($occurrences): array
+    {
+        $pages = [];
+        foreach ($occurrences as $occurrence) {
+            if ($occurrence->source_page_start === null) {
+                continue;
+            }
+            $start = (int) $occurrence->source_page_start;
+            $end = min(max($start, (int) ($occurrence->source_page_end ?? $start)), $start + self::MAX_OCCURRENCE_PAGE_SPAN);
+            for ($p = $start; $p <= $end; $p++) {
+                $pages[$p] = true;
+            }
+        }
+        $pages = array_keys($pages);
+        sort($pages);
+
+        return ['pages' => array_slice($pages, 0, self::SOURCE_PAGE_LIMIT), 'truncated' => count($pages) > self::SOURCE_PAGE_LIMIT];
+    }
+
+    /**
+     * V1.9 - fetches full extracted text for exactly the given page numbers of ONE document, in
+     * a single bulk query (no N+1), never any other document's pages. `is_primary` marks a page
+     * that is some occurrence's actual detected source_page_start, as opposed to a page only
+     * included because it falls inside another occurrence's start..end span.
+     *
+     * @param  list<int>  $pageNumbers
+     * @return list<array<string, mixed>>
+     */
+    private function sourcePages(string $documentId, array $pageNumbers, array $primaryPageNumbers = []): array
+    {
+        if ($pageNumbers === []) {
+            return [];
+        }
+        $rows = MaintenanceDocumentPage::where('document_id', $documentId)
+            ->whereIn('page_number', $pageNumbers)
+            ->get(['page_number', 'raw_text'])
+            ->keyBy('page_number');
+
+        $primary = array_flip($primaryPageNumbers);
+
+        return array_values(array_filter(array_map(fn ($p) => $rows->has($p) ? [
+            'page_number' => $p,
+            'raw_text' => (string) $rows->get($p)->raw_text,
+            'is_primary' => $primaryPageNumbers === [] ? true : isset($primary[$p]),
+        ] : null, $pageNumbers)));
+    }
+
+    /**
+     * V1.9 - the adjacent-page endpoint's read model: ONE page's full text, only if it is
+     * within ADJACENT_PAGE_MAX_DISTANCE of one of the group's own source pages. This is
+     * deliberately not a generic page reader - a page far from any of this group's own
+     * evidence is refused (null), exactly like a page not found at all, so the caller cannot
+     * distinguish "too far" from "does not exist" and cannot use this to browse the document.
+     *
+     * @return array{page_number: int, raw_text: string, is_direct_source: bool}|null
+     */
+    public function adjacentPage(string $importId, string $normalizedCode, ?string $documentId, int $pageNumber): ?array
+    {
+        if ($documentId === null) {
+            return null;
+        }
+        $anchors = $this->rawSourcePageNumbers($importId, $normalizedCode);
+        if ($anchors === []) {
+            return null;
+        }
+        $withinReach = false;
+        foreach ($anchors as $anchor) {
+            if (abs($anchor - $pageNumber) <= self::ADJACENT_PAGE_MAX_DISTANCE) {
+                $withinReach = true;
+                break;
+            }
+        }
+        if (! $withinReach) {
+            return null;
+        }
+
+        $page = MaintenanceDocumentPage::where('document_id', $documentId)->where('page_number', $pageNumber)->first(['page_number', 'raw_text']);
+        if ($page === null) {
+            return null;
+        }
+
+        return ['page_number' => (int) $page->page_number, 'raw_text' => (string) $page->raw_text, 'is_direct_source' => in_array($pageNumber, $anchors, true)];
+    }
+
+    /**
+     * V1.9 - the group's own anchor page numbers, computed the same way as detail()'s
+     * source_pages but with a fresh, lightweight query (no candidate text) - used only to
+     * validate an adjacent-page request's distance bound.
+     *
+     * @return list<int>
+     */
+    private function rawSourcePageNumbers(string $importId, string $normalizedCode): array
+    {
+        $rows = KnowledgeCandidateFilter::candidates($importId)
+            ->where('normalized_code', $normalizedCode)
+            ->selectRaw('source_page_start, source_page_end')
+            ->limit(self::DETAIL_LIMIT)
+            ->get();
+
+        return self::occurrencePageNumbers($rows)['pages'];
     }
 
     /** Import-level, filter-independent overview: every figure is an aggregate of the same rows. */

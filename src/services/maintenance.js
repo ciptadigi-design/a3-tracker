@@ -64,6 +64,8 @@ export const bulkReviewEntries = async (importId, { entryIds, action }) => unwra
 // codeGroupUtils.buildCodeGroupQuery so the exact same criteria vocabulary is used everywhere.
 export const loadCodeGroups = async (importId, queryString = '') => unwrapData(await laravelMaintenance.codeGroups(importId, queryString))
 export const loadCodeGroup = async (importId, code) => unwrapData(await laravelMaintenance.codeGroup(importId, code))
+// V1.9 - one adjacent context page (not one of the group's own direct source pages).
+export const loadCodeGroupPage = async (importId, code, pageNumber) => unwrapData(await laravelMaintenance.codeGroupPage(importId, code, pageNumber))
 export const previewFilterBulkReview = async (importId, { action, filters }) => unwrapData(await laravelMaintenance.previewFilterBulkReview(importId, { action, filters }))
 export const applyFilterBulkReview = async (importId, { action, filters, confirmationToken }) => unwrapData(await laravelMaintenance.applyFilterBulkReview(importId, { action, filters, confirmation_token: confirmationToken }))
 

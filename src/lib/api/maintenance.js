@@ -45,6 +45,9 @@ export const laravelMaintenance = {
   // V1.7.2 - consolidated code-group review + filter-based bulk triage (preview -> confirm -> apply).
   codeGroups: (importId, params = '') => apiClient.get(`/maintenance/document-imports/${importId}/code-groups${params ? `?${params}` : ''}`),
   codeGroup: (importId, code) => apiClient.get(`/maintenance/document-imports/${importId}/code-groups/${encodeURIComponent(code)}`),
+  // V1.9 - one adjacent context page beyond the group's own source pages (e.g. a procedure that
+  // continues across a page break). Read-only; refused (404) if too far from the group's own evidence.
+  codeGroupPage: (importId, code, pageNumber) => apiClient.get(`/maintenance/document-imports/${importId}/code-groups/${encodeURIComponent(code)}/pages/${encodeURIComponent(pageNumber)}`),
   previewFilterBulkReview: (importId, payload) => apiClient.post(`/maintenance/document-imports/${importId}/entries/bulk-review/preview`, payload),
   applyFilterBulkReview: (importId, payload) => apiClient.post(`/maintenance/document-imports/${importId}/entries/bulk-review/apply`, payload),
   // V1.8 - single-code group publish (preview -> confirm -> publish). There is deliberately no bulk variant.

@@ -170,6 +170,7 @@ Route::prefix('v1')->middleware('request.id')->group(function () {
             Route::post('maintenance/document-imports/{id}/entries/bulk-review', [MaintenanceKnowledgeImportController::class, 'bulkReview']);
             Route::get('maintenance/document-imports/{id}/code-groups', [MaintenanceKnowledgeReviewController::class, 'codeGroups']);
             Route::get('maintenance/document-imports/{id}/code-groups/{code}', [MaintenanceKnowledgeReviewController::class, 'codeGroup']);
+            Route::get('maintenance/document-imports/{id}/code-groups/{code}/pages/{pageNumber}', [MaintenanceKnowledgeReviewController::class, 'codeGroupPage']);
             Route::post('maintenance/document-imports/{id}/code-groups/{code}/publish-preview', [MaintenanceKnowledgeReviewController::class, 'publishPreview']);
             Route::post('maintenance/document-imports/{id}/code-groups/{code}/publish', [MaintenanceKnowledgeReviewController::class, 'publishGroup']);
             Route::post('maintenance/document-imports/{id}/entries/bulk-review/preview', [MaintenanceKnowledgeReviewController::class, 'bulkFilterPreview']);

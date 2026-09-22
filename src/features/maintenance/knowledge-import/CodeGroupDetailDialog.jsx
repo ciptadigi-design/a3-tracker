@@ -7,6 +7,7 @@ import { bulkReviewEntries, updateKnowledgeEntry } from '../../../services/maint
 import { collisionStatusLabels, entryStatusLabels, formatMaintenanceDate, mapMaintenanceError } from '../maintenanceUtils.js'
 import { EVIDENCE_LABELS, REVIEW_STATE_LABELS, REVIEW_STATE_PILL_CLASS, evidenceMix, occurrenceLabel, occurrencePageLabel, pageRangeLabel } from './codeGroupUtils.js'
 import { GroupPublishDialog } from './GroupPublishDialog.jsx'
+import { SourcePageContext } from './SourcePageContext.jsx'
 import {
   DRAFT_LIMITS, EMPTY_DRAFT, EMPTY_SOLUTION, PLACEHOLDER_TITLE_MESSAGE, WORKFLOW_LABELS, canRequestPreview, collisionLabel, isPlaceholderTitle, previewIsCurrent, supportingPagesLabel, validateDraft, workflowState,
 } from './groupPublishUtils.js'
@@ -236,6 +237,8 @@ export function CodeGroupDetailDialog({ importId, code, canManage, version, onCl
                 <p data-testid="supporting-pages">{supportingPagesLabel(publication?.supporting_pages, publication?.supporting_page_count ?? 0)}</p>
                 <small>Each unique page becomes a page reference when this code is published. Reject noise (for example table-of-contents lines) first if it should not be cited.</small>
               </section>
+
+              <SourcePageContext importId={importId} code={code} sourcePages={group.source_pages} truncated={group.source_pages_truncated} />
 
               {canManage && !published && (
                 <>

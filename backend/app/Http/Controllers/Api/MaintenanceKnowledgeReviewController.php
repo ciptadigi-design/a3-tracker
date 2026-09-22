@@ -77,15 +77,36 @@ class MaintenanceKnowledgeReviewController extends Controller
     public function codeGroup(Request $r, string $importId, string $code)
     {
         $import = $this->readableImport($r, $importId);
-        $normalized = strtoupper(trim($code));
-        abort_unless(preg_match('/^[A-Z0-9\-]{1,64}$/', $normalized) === 1, 404);
+        $normalized = $this->groupCode($code);
 
-        $group = app(KnowledgeCodeGroupQuery::class)->detail($import->id, $normalized);
+        // V1.9: source_pages carries full extracted text of this group's own supporting pages,
+        // scoped to this import's document - see KnowledgeCodeGroupQuery::detail().
+        $group = app(KnowledgeCodeGroupQuery::class)->detail($import->id, $normalized, $import->document_id);
         abort_if($group === null, 404);
         // V1.8: publication facts (published?, suggested canonical, supporting pages, server-side collision) for the review UI.
         $group['publication'] = app(KnowledgeGroupPublisher::class)->summary($import, $normalized);
 
         return response()->json(['data' => $group]);
+    }
+
+    /**
+     * V1.9 - one ADJACENT context page beyond a group's own source pages (e.g. the page just
+     * before/after a procedure that continues across a page break). Read-only, no mutation.
+     * Deliberately not a generic page reader: KnowledgeCodeGroupQuery::adjacentPage() refuses
+     * (404, same as "does not exist") any page outside a small bound of the group's own
+     * evidence, and every lookup is scoped to this import's own document - never another
+     * account's or another document's pages.
+     */
+    public function codeGroupPage(Request $r, string $importId, string $code, string $pageNumber)
+    {
+        $import = $this->readableImport($r, $importId);
+        $normalized = $this->groupCode($code);
+        abort_unless(preg_match('/^[1-9][0-9]{0,6}$/', $pageNumber) === 1, 404);
+
+        $page = app(KnowledgeCodeGroupQuery::class)->adjacentPage($import->id, $normalized, $import->document_id, (int) $pageNumber);
+        abort_if($page === null, 404);
+
+        return response()->json(['data' => $page]);
     }
 
     public function bulkFilterPreview(Request $r, string $importId)

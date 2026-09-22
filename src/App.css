@@ -644,6 +644,16 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .maintenance-extracted-page p { margin: 0; font-size: 12px; white-space: pre-wrap; color: var(--text-soft); }
 .maintenance-extracted-pages-nav { display: flex; align-items: center; justify-content: center; gap: 12px; font-size: 12px; color: var(--text-soft); }
 
+/* V1.9 - Source Page Context: reuses .maintenance-extracted-page for the text block itself. */
+.maintenance-source-page-context { margin-top: 10px; display: flex; flex-direction: column; gap: 10px; }
+.maintenance-source-page-selector { display: flex; flex-wrap: wrap; gap: 6px; }
+.maintenance-source-page-selector button { cursor: pointer; border: none; background: none; }
+.maintenance-source-page-nav { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.maintenance-source-page-text mark { background: var(--yellow, #fde68a); color: inherit; border-radius: 3px; padding: 0 2px; }
+@media (max-width: 640px) {
+  .maintenance-source-page-nav { flex-direction: column; align-items: stretch; }
+}
+
 /* V1.5.3 - Document Detail header/metadata + Knowledge Extraction state cards */
 .document-detail-dialog { width: min(1200px, 100%); }
 .document-header { min-width: 0; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
