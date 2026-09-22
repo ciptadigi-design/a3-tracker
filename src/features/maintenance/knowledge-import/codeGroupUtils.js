@@ -23,6 +23,18 @@ export const REVIEW_STATE_PILL_CLASS = { UNREVIEWED: '', PARTIALLY_REVIEWED: '',
 
 export const REFERENCE_LIKE_LABELS = { yes: 'Reference-like only', no: 'Not reference-like' }
 
+// V1.10 - Knowledge Review Context Triage. A structural hint only: it describes where a group's
+// own evidence sits on its page, never whether the candidate is correct, good, or safe. See
+// KnowledgeCodeGroupQuery::classifyContext() for the (deterministic, real-data-justified) rule.
+export const CONTEXT_HINT_LABELS = { SELF_CONTAINED: 'Quick review', CONTEXT_RECOMMENDED: 'Check context' }
+
+export const CONTEXT_REASON_LABELS = {
+  PAGE_END_CONTINUATION: 'This code’s text sits near the end of its page - the manual’s content for it may continue onto the next page.',
+  PAGE_START_CONTINUATION: 'This code’s text sits near the start of its page - the manual’s content for it may have begun on the previous page.',
+}
+
+export const CONTEXT_HINT_HELP = 'Describes document structure, not candidate correctness. "Check context" means a reviewer may want to also read a neighbouring page before deciding - open the group and use Source Page Context.'
+
 export const PER_PAGE_OPTIONS = [10, 25, 50]
 export const DEFAULT_PER_PAGE = 25
 
@@ -32,7 +44,7 @@ export const ACKNOWLEDGE_THRESHOLD = 100
 
 export const EMPTY_FILTERS = Object.freeze({
   code: '', evidence: '', collisionStatus: '', status: '', bestEvidence: '', reviewState: '',
-  pageFrom: '', pageTo: '', referenceLike: '', minOccurrences: '', maxOccurrences: '',
+  pageFrom: '', pageTo: '', referenceLike: '', minOccurrences: '', maxOccurrences: '', context: '',
 })
 
 // Named, transparent presets - each is just a set of ordinary filters the reviewer can see and edit.
@@ -62,6 +74,7 @@ export function buildCodeGroupQuery(filters = {}, { page = 1, perPage = DEFAULT_
   if (f.bestEvidence) params.set('best_evidence', f.bestEvidence)
   if (f.reviewState) params.set('review_state', f.reviewState)
   if (f.referenceLike) params.set('reference_like', f.referenceLike)
+  if (f.context) params.set('context', f.context)
   const pageFrom = toInt(f.pageFrom)
   const pageTo = toInt(f.pageTo)
   const minOcc = toInt(f.minOccurrences)
@@ -119,6 +132,7 @@ export function filtersIgnoredByBulk(filters = {}) {
   if (f.status) ignored.push('Review status')
   if (f.reviewState) ignored.push('Group review state')
   if (toInt(f.minOccurrences) || toInt(f.maxOccurrences)) ignored.push('Occurrence count')
+  if (f.context) ignored.push('Context hint')
   return ignored
 }
 

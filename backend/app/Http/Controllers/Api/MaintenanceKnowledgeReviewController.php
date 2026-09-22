@@ -62,7 +62,7 @@ class MaintenanceKnowledgeReviewController extends Controller
         if ($errors = KnowledgeCandidateFilter::rangeErrors($d)) {
             throw ValidationException::withMessages($errors);
         }
-        $filters = KnowledgeCandidateFilter::canonicalize($d, ['code', 'evidence', 'collision_status', 'status', 'source_page_from', 'source_page_to', 'reference_like', 'best_evidence', 'review_state', 'min_occurrences', 'max_occurrences']);
+        $filters = KnowledgeCandidateFilter::canonicalize($d, ['code', 'evidence', 'collision_status', 'status', 'source_page_from', 'source_page_to', 'reference_like', 'best_evidence', 'review_state', 'min_occurrences', 'max_occurrences', 'context']);
 
         return response()->json(['data' => app(KnowledgeCodeGroupQuery::class)->groups(
             $import->id,
@@ -71,6 +71,8 @@ class MaintenanceKnowledgeReviewController extends Controller
             (int) ($d['page'] ?? 1),
             $d['sort'] ?? 'best_evidence',
             $d['direction'] ?? 'desc',
+            // V1.10 - context_hint/context_reason are derived from this import's own document pages.
+            $import->document_id,
         )]);
     }
 

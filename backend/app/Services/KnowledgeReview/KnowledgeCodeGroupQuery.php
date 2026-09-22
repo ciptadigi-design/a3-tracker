@@ -71,6 +71,30 @@ final class KnowledgeCodeGroupQuery
      */
     private const ADJACENT_PAGE_MAX_DISTANCE = 3;
 
+    /**
+     * V1.10 - Knowledge Review Context Triage. A cheap, deterministic, PURELY STRUCTURAL signal:
+     * where a group's representative candidate's code text falls within its own source page, as
+     * a proportion of that page's length. This document's own layout puts a code's content
+     * (Code/Classification/Cause/Measures/Solution/...) AFTER the code heading, so a match very
+     * near the page's END means that content likely continues onto the NEXT page; very near the
+     * START suggests the opposite - the group's context likely began on the PREVIOUS page. This
+     * says NOTHING about whether a candidate is correct, good, or safe - only that a reviewer may
+     * want to also read a neighbouring page (the V1.9 Source Page Context / adjacent-page tool)
+     * before deciding.
+     *
+     * Thresholds are justified from real Production data, not guessed: across all 534 real
+     * HIGH-evidence groups (representative-candidate selection identical to pageProvenance()'s
+     * own), 79 (14.8%) sit >= NEAR_END, 143 (26.8%) sit <= NEAR_START, 312 (58.4%) fall
+     * comfortably mid-page - a genuinely useful, non-degenerate split, not "nearly everything
+     * flagged". Independently confirmed against two real codes read directly during V1.9's
+     * acceptance: C-1124 and C-1125 sit on the SAME source page (1459) - C-1124 classifies
+     * mid-page (self-contained, matching its confirmed complete Code..DIPSW section) while C-1125
+     * classifies >= NEAR_END (matching its confirmed continuation onto page 1460).
+     */
+    private const CONTEXT_NEAR_END_RATIO = 0.75;
+
+    private const CONTEXT_NEAR_START_RATIO = 0.10;
+
     private const BEST_RANK_SQL = 'MAX('.KnowledgeCandidateFilter::RANK_SQL.')';
 
     private const STATE_SQL = "CASE
@@ -111,9 +135,9 @@ final class KnowledgeCodeGroupQuery
      * @param  array<string, mixed>  $filters  validated criteria (see KnowledgeCandidateFilter)
      * @return array<string, mixed> a Laravel paginator array plus an import-level `summary`
      */
-    public function groups(string $importId, array $filters, int $perPage, int $page, string $sort = 'best_evidence', string $direction = 'desc'): array
+    public function groups(string $importId, array $filters, int $perPage, int $page, string $sort = 'best_evidence', string $direction = 'desc', ?string $documentId = null): array
     {
-        $q = $this->groupedQuery($importId, $filters);
+        $q = $this->groupedQuery($importId, $filters, $documentId);
 
         $sortKey = self::SORTS[$sort] ?? self::SORTS['best_evidence'];
         $dir = strtolower($direction) === 'asc' ? 'asc' : 'desc';
@@ -130,8 +154,10 @@ final class KnowledgeCodeGroupQuery
 
         $provenance = $this->pageProvenance($importId, $codes);
         $matching = $this->matchingCounts($importId, $filters, $codes);
+        // V1.10 - one bulk lookup for the whole page of groups, never one per group.
+        $contextHints = $documentId === null ? [] : $this->contextHints($documentId, $provenance);
 
-        $groups = $rows->map(fn ($row) => $this->shape($row, $provenance[$row->normalized_code] ?? null, $matching[$row->normalized_code] ?? null, $filters))->values()->all();
+        $groups = $rows->map(fn ($row) => $this->shape($row, $provenance[$row->normalized_code] ?? null, $matching[$row->normalized_code] ?? null, $filters, $contextHints[$row->normalized_code] ?? null))->values()->all();
 
         $out = $paginator->toArray();
         $out['data'] = $groups;
@@ -174,7 +200,11 @@ final class KnowledgeCodeGroupQuery
             ->limit(self::DETAIL_LIMIT)
             ->get();
 
-        $group = $this->shape($row, $this->provenanceFromRows($occurrences), null, []);
+        $detailProvenance = $this->provenanceFromRows($occurrences);
+        // V1.10 - same structural hint shown in the list, for consistency when a reviewer opens
+        // the group directly (e.g. from a bookmark) without having seen the list row.
+        $contextHint = $documentId === null ? null : ($this->contextHints($documentId, $detailProvenance)[$normalizedCode] ?? null);
+        $group = $this->shape($row, $detailProvenance, null, [], $contextHint);
         $group['occurrences'] = $occurrences->map(fn ($o) => [
             'id' => $o->id,
             'knowledge_type' => $o->knowledge_type,
@@ -318,6 +348,94 @@ final class KnowledgeCodeGroupQuery
         return self::occurrencePageNumbers($rows)['pages'];
     }
 
+    /**
+     * V1.10 - one bulk page-text fetch for every group on the current page/detail call, keyed by
+     * page number (never by code, since two groups could share a representative page) - exactly
+     * one additional query regardless of how many groups are being classified. The fetched text
+     * is used only to compute a position ratio in PHP and is discarded immediately after;
+     * `classifyContext()`'s return value (never the text) is what reaches shape() and the API.
+     *
+     * @param  array<string, array{representative_page?: int|null}>  $provenance  keyed by normalized_code
+     * @return array<string, array{context_hint: string, context_reason: string|null}>
+     */
+    private function contextHints(string $documentId, array $provenance): array
+    {
+        $pageNumbers = collect($provenance)->pluck('representative_page')->filter(fn ($p) => $p !== null)->unique()->values()->all();
+        if ($pageNumbers === []) {
+            return [];
+        }
+        $pages = MaintenanceDocumentPage::where('document_id', $documentId)
+            ->whereIn('page_number', $pageNumbers)
+            ->pluck('raw_text', 'page_number');
+
+        $hints = [];
+        foreach ($provenance as $code => $p) {
+            $pageNumber = $p['representative_page'] ?? null;
+            $hints[$code] = self::classifyContext($code, $pageNumber === null ? null : $pages->get($pageNumber));
+        }
+
+        return $hints;
+    }
+
+    /**
+     * V1.10 - which codes in this import match one context_hint, across the WHOLE import, not
+     * just one list page - so the `context` filter composes correctly with pagination (a filtered
+     * request must know which codes qualify BEFORE deciding what page 2 even contains). This is
+     * deliberately more expensive than the per-page hint groups()/detail() compute on every
+     * ordinary request: it fetches every group's representative candidate (entries table only,
+     * cheap) plus a bulk page-text fetch bounded by the import's own distinct representative
+     * pages (352 pages / ~1.1MB for the real 705-group Konica import - not the full 2639-page
+     * extraction). It runs ONLY when a reviewer explicitly applies the context filter.
+     *
+     * @return list<string>
+     */
+    private function codesMatchingContext(string $importId, string $documentId, string $wantedHint): array
+    {
+        $entries = KnowledgeCandidateFilter::candidates($importId)
+            ->whereNotNull('normalized_code')
+            ->selectRaw('id, normalized_code, source_page_start, '.KnowledgeCandidateFilter::RANK_SQL.' AS rank_value')
+            ->orderBy('normalized_code')
+            ->orderByRaw('rank_value DESC')
+            ->orderBy('source_page_start')
+            ->orderBy('id')
+            ->get();
+
+        $provenance = $this->provenanceFromRows($entries);
+        $hints = $this->contextHints($documentId, $provenance);
+
+        return collect($hints)->filter(fn ($h) => $h['context_hint'] === $wantedHint)->keys()->values()->all();
+    }
+
+    /**
+     * V1.10 - the classification itself. Fails safe to SELF_CONTAINED (the neutral, no-hint
+     * default) whenever the position cannot be determined - a missing page, an empty page, or the
+     * code literally not found on its own recorded page (never observed in real data, but a
+     * malformed/legacy row must never produce a false "check the adjacent page" alarm).
+     *
+     * @return array{context_hint: string, context_reason: string|null}
+     */
+    private static function classifyContext(string $code, ?string $rawText): array
+    {
+        $selfContained = ['context_hint' => 'SELF_CONTAINED', 'context_reason' => null];
+        $length = $rawText === null ? 0 : mb_strlen($rawText);
+        if ($length === 0) {
+            return $selfContained;
+        }
+        $position = mb_strpos($rawText, $code);
+        if ($position === false) {
+            return $selfContained;
+        }
+        $ratio = $position / $length;
+        if ($ratio >= self::CONTEXT_NEAR_END_RATIO) {
+            return ['context_hint' => 'CONTEXT_RECOMMENDED', 'context_reason' => 'PAGE_END_CONTINUATION'];
+        }
+        if ($ratio <= self::CONTEXT_NEAR_START_RATIO) {
+            return ['context_hint' => 'CONTEXT_RECOMMENDED', 'context_reason' => 'PAGE_START_CONTINUATION'];
+        }
+
+        return $selfContained;
+    }
+
     /** Import-level, filter-independent overview: every figure is an aggregate of the same rows. */
     public function summary(string $importId): array
     {
@@ -359,7 +477,7 @@ final class KnowledgeCodeGroupQuery
         ];
     }
 
-    private function groupedQuery(string $importId, array $filters)
+    private function groupedQuery(string $importId, array $filters, ?string $documentId = null)
     {
         $q = KnowledgeCandidateFilter::candidates($importId)->whereNotNull('normalized_code');
 
@@ -372,6 +490,14 @@ final class KnowledgeCodeGroupQuery
                 $sub->from('maintenance_knowledge_entries')->select('normalized_code')->where('import_id', $importId)->whereNotNull('normalized_code');
                 KnowledgeCandidateFilter::applyRowCriteria($sub, $rowFilters);
             });
+        }
+
+        // V1.10 - group-level, like review_state below, but the classification itself needs page
+        // text: resolved once, across the WHOLE import, before pagination (see
+        // codesMatchingContext()) so filtering never disturbs which groups land on which page.
+        if (isset($filters['context']) && $documentId !== null) {
+            $matchingCodes = $this->codesMatchingContext($importId, $documentId, $filters['context']);
+            $q->whereIn('normalized_code', $matchingCodes === [] ? ['__none__'] : $matchingCodes);
         }
 
         $q->groupBy('normalized_code')->selectRaw(self::SELECT_SQL);
@@ -426,11 +552,15 @@ final class KnowledgeCodeGroupQuery
         $out = [];
         foreach ($rows->groupBy('normalized_code') as $code => $set) {
             $pages = $set->pluck('source_page_start')->filter(fn ($p) => $p !== null)->map(fn ($p) => (int) $p)->unique()->sort()->values();
+            $representative = $set->first();
             $out[$code] = [
                 'pages' => $pages->take(self::PAGES_PREVIEW)->all(),
                 'truncated' => $pages->count() > self::PAGES_PREVIEW,
                 // Rows arrive best-evidence first, then earliest page (list) or in the detail order (detail).
-                'representative' => (string) $set->first()->id,
+                'representative' => (string) $representative->id,
+                // V1.10 - the representative's own page, reused by contextHints() below at zero extra
+                // query cost (the row is already in memory here).
+                'representative_page' => $representative->source_page_start === null ? null : (int) $representative->source_page_start,
             ];
         }
 
@@ -456,7 +586,7 @@ final class KnowledgeCodeGroupQuery
     }
 
     /** @return array<string, mixed> */
-    private function shape($row, ?array $provenance, ?int $matching, array $filters): array
+    private function shape($row, ?array $provenance, ?int $matching, array $filters, ?array $contextHint = null): array
     {
         $best = match ((int) $row->best_rank) {
             3 => 'HIGH', 2 => 'MEDIUM', default => 'LOW',
@@ -484,6 +614,9 @@ final class KnowledgeCodeGroupQuery
             'reference_like_count' => (int) $row->reference_like_count,
             'reference_like_all' => $count > 0 && (int) $row->reference_like_count === $count,
             'representative_candidate_id' => $provenance['representative'] ?? null,
+            // V1.10 - structural review hint only; never implies correctness. See classifyContext().
+            'context_hint' => $contextHint['context_hint'] ?? 'SELF_CONTAINED',
+            'context_reason' => $contextHint['context_reason'] ?? null,
         ];
     }
 }

@@ -174,6 +174,22 @@ here should ever be "remembered" instead of run.
     through Laravel, not Supabase, and the authenticated workspace loads,
     before declaring the release accepted.
 
+20. **Release retention (V1.10, optional, AFTER acceptance only).**
+    `scripts/deployment/prune-old-releases.sh <releases_root> <current_symlink>
+    <keep_count> [--apply]` - never run before step 19 has passed for the
+    release just activated, and never as part of activation itself. Defaults
+    to dry run (no `--apply`): reports exactly what it would keep/remove
+    without touching anything. Always preserves the active release regardless
+    of its position in the mtime ordering, fails closed on any path that
+    doesn't look like `.../a3-production-app/releases`, and only removes
+    directories directly under that root. This exists because the real V1.9
+    deployment hit a genuine Hostinger account-level disk quota (separate
+    from the physical filesystem) after 56 releases had accumulated with no
+    retention mechanism at all; the oldest 46 were pruned by hand with
+    explicit operator approval mid-deployment. A reasonable `keep_count` is
+    10 - enough for a realistic rollback window (see ROLLBACK_RUNBOOK.md)
+    while keeping `releases/` well clear of quota pressure.
+
 ## NEVER
 
 - `cp -al` or hard-link a release directory from another one (step 6 - every

@@ -1,11 +1,11 @@
 import { useState } from 'react'
-import { CheckCircle2, ClipboardList, LoaderCircle, Plus, RotateCcw, Rocket, Trash2, X, XCircle } from 'lucide-react'
+import { BookOpenCheck, CheckCircle2, ClipboardList, LoaderCircle, Plus, RotateCcw, Rocket, Trash2, X, XCircle } from 'lucide-react'
 import { BlockingDialog } from '../../../components/ui/BlockingDialog.jsx'
 import { ErrorState } from '../../../components/ui/ErrorState.jsx'
 import { LoadingScreen } from '../../../components/ui/LoadingScreen.jsx'
 import { bulkReviewEntries, updateKnowledgeEntry } from '../../../services/maintenance.js'
 import { collisionStatusLabels, entryStatusLabels, formatMaintenanceDate, mapMaintenanceError } from '../maintenanceUtils.js'
-import { EVIDENCE_LABELS, REVIEW_STATE_LABELS, REVIEW_STATE_PILL_CLASS, evidenceMix, occurrenceLabel, occurrencePageLabel, pageRangeLabel } from './codeGroupUtils.js'
+import { CONTEXT_HINT_HELP, CONTEXT_HINT_LABELS, CONTEXT_REASON_LABELS, EVIDENCE_LABELS, REVIEW_STATE_LABELS, REVIEW_STATE_PILL_CLASS, evidenceMix, occurrenceLabel, occurrencePageLabel, pageRangeLabel } from './codeGroupUtils.js'
 import { GroupPublishDialog } from './GroupPublishDialog.jsx'
 import { SourcePageContext } from './SourcePageContext.jsx'
 import {
@@ -197,6 +197,11 @@ export function CodeGroupDetailDialog({ importId, code, canManage, version, onCl
                 <span>{publication?.supporting_page_count ?? 0} supporting page{publication?.supporting_page_count === 1 ? '' : 's'}</span>
                 <span>{evidenceMix(group)}</span>
                 <span>{pageRangeLabel(group)}</span>
+                {group.context_hint === 'CONTEXT_RECOMMENDED' && (
+                  <span className="maintenance-context-hint-badge" data-testid="context-hint" title={CONTEXT_HINT_HELP}>
+                    <BookOpenCheck size={13} /> {CONTEXT_HINT_LABELS.CONTEXT_RECOMMENDED} — {CONTEXT_REASON_LABELS[group.context_reason] ?? ''}
+                  </span>
+                )}
               </div>
 
               {published && (

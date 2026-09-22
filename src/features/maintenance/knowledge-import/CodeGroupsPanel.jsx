@@ -1,10 +1,10 @@
 import { useState } from 'react'
-import { ChevronRight, RotateCcw, Trash2 } from 'lucide-react'
+import { BookOpenCheck, ChevronRight, RotateCcw, Trash2 } from 'lucide-react'
 import { collisionStatusLabels } from '../maintenanceUtils.js'
 import { CodeGroupDetailDialog } from './CodeGroupDetailDialog.jsx'
 import { TriageDialog } from './TriageDialog.jsx'
 import {
-  BEST_EVIDENCE_LABELS, DEFAULT_PER_PAGE, EMPTY_FILTERS, EVIDENCE_LABELS, FILTER_PRESETS, PER_PAGE_OPTIONS, REFERENCE_LIKE_LABELS, REVIEW_STATE_LABELS, REVIEW_STATE_PILL_CLASS,
+  BEST_EVIDENCE_LABELS, CONTEXT_HINT_HELP, CONTEXT_HINT_LABELS, CONTEXT_REASON_LABELS, DEFAULT_PER_PAGE, EMPTY_FILTERS, EVIDENCE_LABELS, FILTER_PRESETS, PER_PAGE_OPTIONS, REFERENCE_LIKE_LABELS, REVIEW_STATE_LABELS, REVIEW_STATE_PILL_CLASS,
   evidenceMix, filterValidationError, filtersIgnoredByBulk, hasBulkCriteria, occurrenceLabel, pageRangeLabel, reviewProgress, sourcePagesLabel, toBulkFilters,
 } from './codeGroupUtils.js'
 import { useCodeGroups } from './useCodeGroups.js'
@@ -55,6 +55,14 @@ function GroupRow({ group, filtersActive, onOpen }) {
         <span title="High · Medium · Low occurrences">{evidenceMix(group)}</span>
         <span title={sourcePagesLabel(group)}>{pageRangeLabel(group)}{group.has_multi_page_candidate ? ' · spans pages' : ''}</span>
         <span>{collisionLabel(group)}</span>
+        {group.context_hint === 'CONTEXT_RECOMMENDED' && (
+          <span
+            className="maintenance-context-hint-badge"
+            title={`${CONTEXT_REASON_LABELS[group.context_reason] ?? CONTEXT_HINT_LABELS.CONTEXT_RECOMMENDED} ${CONTEXT_HINT_HELP}`}
+          >
+            <BookOpenCheck size={13} /> {CONTEXT_HINT_LABELS.CONTEXT_RECOMMENDED}
+          </span>
+        )}
       </div>
       <button className="secondary-button" type="button" onClick={() => onOpen(group.normalized_code)}>Review <ChevronRight size={14} /></button>
     </li>
@@ -95,6 +103,10 @@ function Toolbar({ filters, onChange, onPreset, perPage, onPerPage, sort, onSort
         <select value={filters.collisionStatus} onChange={set('collisionStatus')} aria-label="Filter by collision status">
           <option value="">Any collision status</option>
           {Object.entries(collisionStatusLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+        </select>
+        <select value={filters.context} onChange={set('context')} aria-label="Filter by context hint" title={CONTEXT_HINT_HELP}>
+          <option value="">Context: all</option>
+          {Object.entries(CONTEXT_HINT_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
         </select>
       </div>
       <details className="maintenance-more-filters">

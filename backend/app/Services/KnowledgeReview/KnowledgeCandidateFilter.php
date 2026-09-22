@@ -43,6 +43,9 @@ final class KnowledgeCandidateFilter
 
     public const REVIEW_STATES = ['UNREVIEWED', 'PARTIALLY_REVIEWED', 'REJECTED', 'APPROVED', 'PUBLISHED'];
 
+    /** V1.10 - group-level, like review_state: KnowledgeCodeGroupQuery::classifyContext()'s two outcomes. */
+    public const CONTEXT_HINTS = ['SELF_CONTAINED', 'CONTEXT_RECOMMENDED'];
+
     public const REFERENCE_LIKE = ['yes', 'no'];
 
     /** The five dots the detector itself treats as a table-of-contents leader. */
@@ -68,6 +71,7 @@ final class KnowledgeCandidateFilter
             'review_state' => ['nullable', Rule::in(self::REVIEW_STATES)],
             'min_occurrences' => ['nullable', 'integer', 'min:1', 'max:1000'],
             'max_occurrences' => ['nullable', 'integer', 'min:1', 'max:1000'],
+            'context' => ['nullable', Rule::in(self::CONTEXT_HINTS)],
         ];
     }
 
@@ -104,6 +108,7 @@ final class KnowledgeCandidateFilter
         $rules['filters.review_state'] = ['prohibited'];
         $rules['filters.min_occurrences'] = ['prohibited'];
         $rules['filters.max_occurrences'] = ['prohibited'];
+        $rules['filters.context'] = ['prohibited'];
 
         return $rules;
     }
