@@ -135,7 +135,14 @@ class MaintenanceKnowledgeReviewController extends Controller
         return $normalized;
     }
 
-    /** @return array<string, mixed> */
+    /**
+     * V1.8.1 - accepts either the legacy single `technician_solution` string or the new
+     * `technician_solutions[]` array (each item optionally `applicability_label`d) - see
+     * KnowledgeGroupPublisher::solutionProposals() for how the two are reconciled. Both are
+     * validated here so a malformed array element never reaches the service layer.
+     *
+     * @return array<string, mixed>
+     */
     private function validatedPublishInput(Request $r, bool $requireToken = false): array
     {
         $rules = [
@@ -144,6 +151,9 @@ class MaintenanceKnowledgeReviewController extends Controller
             'description' => ['nullable', 'string', 'max:10000'],
             'operator_guidance' => ['nullable', 'string', 'max:10000'],
             'technician_solution' => ['nullable', 'string', 'max:10000'],
+            'technician_solutions' => ['nullable', 'array', 'max:'.KnowledgeGroupPublisher::MAX_SOLUTIONS],
+            'technician_solutions.*.applicability_label' => ['nullable', 'string', 'max:160'],
+            'technician_solutions.*.instruction' => ['nullable', 'string', 'max:10000'],
         ];
         if ($requireToken) {
             $rules['confirmation_token'] = ['required', 'string', 'max:2000'];

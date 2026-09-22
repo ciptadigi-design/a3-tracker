@@ -612,6 +612,8 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .maintenance-error-code-detail p { margin: 0 0 8px; }
 .maintenance-error-code-detail ol { margin: 8px 0 0; padding-left: 18px; display: grid; gap: 6px; }
 .maintenance-error-code-detail small { color: var(--text-muted); }
+.maintenance-solution-group + .maintenance-solution-group { margin-top: 10px; }
+.maintenance-solution-group strong { display: block; font-size: 11px; color: var(--text-primary); }
 .maintenance-step-section { margin: 22px 26px 26px; padding-top: 18px; border-top: 1px solid var(--border-subtle); }
 .maintenance-step-form { padding: 12px; margin-top: 10px; border: 1px solid var(--border-subtle); border-radius: 12px; background: var(--surface-muted); }
 .checkbox-field { flex-direction: row !important; align-items: center; gap: 8px !important; }
@@ -715,6 +717,16 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .maintenance-publish-facts dt { font-size: 11px; color: var(--text-soft); }
 .maintenance-publish-facts dd { margin: 0; font-size: 13px; overflow-wrap: anywhere; }
 .maintenance-publish-mutation { margin: 0; padding-left: 18px; display: grid; gap: 2px; font-size: 13px; }
+
+/* V1.8.1 - solution variants: a repeatable editor row, and the grouped preview list. */
+.maintenance-solution-list { display: grid; gap: 10px; margin-top: 4px; }
+.maintenance-solution-row { min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) auto; gap: 10px; align-items: start; padding: 10px; border-radius: 12px; background: var(--surface-solid); border: 1px solid var(--border-subtle); }
+.maintenance-solution-row textarea, .maintenance-solution-row input { width: 100%; min-width: 0; box-sizing: border-box; }
+.maintenance-publish-solutions { margin: 4px 0; }
+.maintenance-publish-solutions ul { list-style: none; margin: 6px 0 0; padding: 0; display: grid; gap: 6px; }
+.maintenance-publish-solutions li { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 13px; }
+.maintenance-solution-applicability { font-weight: 700; }
+
 @media (max-width: 680px) {
   .maintenance-publish-facts { grid-template-columns: 1fr; }
 }
@@ -725,6 +737,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 @media (max-width: 430px) {
   .maintenance-triage-counts { grid-template-columns: 1fr; }
   .maintenance-code-group-row .secondary-button { justify-self: start; }
+  .maintenance-solution-row { grid-template-columns: minmax(0, 1fr); }
 }
 
 .extraction-card { min-width: 0; display: flex; align-items: flex-start; gap: 14px; margin-top: 10px; padding: 18px; border-radius: 20px; background: var(--surface-muted); border: 1px solid var(--border-subtle); }

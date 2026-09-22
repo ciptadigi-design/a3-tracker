@@ -6,6 +6,9 @@ const page = readFileSync(new URL('../../pages/MaintenancePage.jsx', import.meta
 const section = readFileSync(new URL('./ErrorCodeKnowledgeSection.jsx', import.meta.url), 'utf8')
 const dialog = readFileSync(new URL('./ErrorCodeManagementDialog.jsx', import.meta.url), 'utf8')
 const ticketDialog = readFileSync(new URL('./CreateTicketDialog.jsx', import.meta.url), 'utf8')
+// Code only: block/line comments are stripped where a test asserts something must not exist in the
+// BEHAVIOR - a docblock explaining why a feature exists (e.g. referencing the real motivating example) is fine.
+const code = (source) => source.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '')
 
 test('Maintenance page exposes an Error Codes tab that renders the knowledge section', () => {
   assert.match(page, /Error Codes/)
@@ -36,6 +39,22 @@ test('admin dialog supports both create and edit, and only shows the ordered ste
   assert.match(dialog, /\{isEdit && \(/)
   assert.match(dialog, /Ordered solution steps/)
   assert.match(dialog, /Add solution step/)
+})
+
+// V1.8.1 - published technician solutions are grouped by applicability_label; NULL displays as "General".
+
+test('published solution steps are grouped by applicability, ordered as the API returns them (by step_number)', () => {
+  assert.match(section, /function groupSolutionsByApplicability\(/)
+  assert.doesNotMatch(section, /\.sort\(/, 'never re-sorted alphabetically - the API already orders by step_number')
+  assert.match(section, /const label = step\.applicability_label \?\? null/)
+})
+
+test('a single unlabelled solution group renders without a visible "General" heading, but a labelled group shows its label', () => {
+  assert.match(section, /solutionGroups\.length > 1 && <strong>\[\{group\.label \?\? 'General'\}\]<\/strong>/)
+})
+
+test('the section never hard-codes a real accessory label in its behavior - applicability is entirely server data', () => {
+  assert.doesNotMatch(code(section), /PK-512|PK-513|PK-522/)
 })
 
 test('ticket creation autofills from the selected error code without discarding manually typed text', () => {

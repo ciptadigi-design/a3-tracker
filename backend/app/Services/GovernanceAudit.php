@@ -26,7 +26,11 @@ class GovernanceAudit
         'filter_fingerprint', 'filter_summary',
         // V1.8 - group-aware publish. Compact structural facts only (one candidate id, counts, a label, a truncated
         // hash) - never candidate or solution prose, never an ID list. See KnowledgeGroupPublisher.
-        'canonical_candidate_id', 'occurrence_count', 'supporting_page_count', 'publish_mode', 'publication_fingerprint'];
+        'canonical_candidate_id', 'occurrence_count', 'supporting_page_count', 'publish_mode', 'publication_fingerprint',
+        // V1.8.1 - solution variants. Counts and a bounded, comma-joined list of reviewer-authored short
+        // labels (e.g. "PK-512/513") - never the technician instruction text itself (that stays
+        // covered by OMITTED_FIELDS' `instruction`/`technician_solution` below).
+        'solutions_proposed', 'solutions_added', 'solutions_skipped_identical', 'applicability_labels'];
 
     public const OMITTED_FIELDS = ['notes', 'description', 'address', 'phone', 'email', 'contact_name', 'linked_user_id', 'serial_number', 'problem', 'symptoms', 'solution', 'success_notes', 'manufacturer_description', 'operator_description', 'official_solution', 'solution_summary', 'instruction', 'file_path', 'operator_solution', 'technician_solution', 'error_message', 'raw_text'];
 

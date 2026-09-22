@@ -16,31 +16,53 @@ use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 
 /**
- * V1.8 - Group-aware canonical review and SINGLE-CODE publish.
+ * V1.8 / V1.8.1 - Group-aware canonical review and SINGLE-CODE publish, with technician SOLUTION
+ * VARIANTS.
  *
- * The review-to-publish unit for PDF-derived knowledge is the normalized error-code GROUP, not a candidate
- * row. One group publishes as exactly ONE logical error-code publication in ONE transaction:
+ * The review-to-publish unit for PDF-derived knowledge is the normalized error-code GROUP, not a
+ * candidate row. One group publishes as exactly ONE logical error-code publication in ONE
+ * transaction:
  *
- *   ONE machine_error_code  <-  the reviewer's canonical title/description/operator guidance
- *   0..1 maintenance_error_solution step  <-  the reviewer's technician solution
- *   N maintenance_document_references  <-  one per unique SUPPORTING source page (provenance)
+ *   ONE machine_error_code       <-  the reviewer's canonical title/description/operator guidance
+ *   0..N maintenance_error_solutions rows  <-  the reviewer's technician solution(s), each
+ *                                     optionally labelled with the hardware/accessory/model
+ *                                     context it applies to (V1.8.1)
+ *   N maintenance_document_references     <-  one per unique SUPPORTING source page (provenance)
  *
- * Why not the legacy per-candidate MaintenanceKnowledgePublishService: it upserts machine_error_codes by
- * (account, model, code) with last-writer-wins, so publishing several occurrences of one code would let
- * candidate order decide the published text. Here the reviewer's explicit canonical selection and authored
- * content decide, and the supporting occurrences are provenance only. Nothing here calls that service per
- * occurrence, and legacy candidate-level publish is refused for PDF-derived candidates (see the controller).
+ * Why not the legacy per-candidate MaintenanceKnowledgePublishService: it upserts machine_error_codes
+ * by (account, model, code) with last-writer-wins, so publishing several occurrences of one code
+ * would let candidate order decide the published text. Here the reviewer's explicit canonical
+ * selection and authored content decide, and the supporting occurrences are provenance only.
+ * Nothing here calls that service per occurrence, and legacy candidate-level publish is refused
+ * for PDF-derived candidates (see the controller).
  *
- * No migration: the canonical content travels in the (token-bound) request; the server recomputes every
- * fact it relies on (collision, supporting pages, existing record) at preview AND at publish, inside a
- * transaction that row-locks the group. Publishing marks ONLY the canonical row (APPROVED + published_at);
- * supporting occurrences are never rewritten, so the V1.7.2 derived group state becomes PUBLISHED with no
- * fake per-row mutation. Candidate text (the detector's excerpts) is never modified or copied.
+ * V1.8.1 - SOLUTION VARIANTS. Read-only investigation of the real Production document (code
+ * C-1127, and confirmed as a recurring pattern across 20+ other codes, not a one-off) found that a
+ * single error code can have genuinely different, mutually-exclusive technician procedures
+ * depending on which optional accessory/hardware is installed. maintenance_error_solutions was
+ * already a multi-row table (unique on machine_error_code_id + step_number); it only lacked a way
+ * to say WHICH context a row applies to. `applicability_label` (nullable) is that label. A
+ * "solution variant identity" is (normalized applicability_label, normalized instruction) - see
+ * classifySolution(): same instruction under a different label is a different, legitimate variant;
+ * the same label with materially different instruction is a CONFLICT, never silently resolved.
  *
- * Idempotency is decided BEFORE staleness: if the group is already published and the requested canonical
- * state is identical to what is already in the catalog, the call succeeds without writing (a double click or
- * a network retry is not a conflict); if it differs, publishing is refused (409) - changing published
- * content needs a future update flow and must never happen because a duplicate request arrived.
+ * No migration was needed for the canonical/group mechanics: the proposed content travels in the
+ * (token-bound) request; the server recomputes every fact it relies on (collision, supporting
+ * pages, existing record, existing solution variants) at preview AND at publish, inside a
+ * transaction that row-locks the group and the catalog record. Publishing marks ONLY the canonical
+ * row (APPROVED + published_at); supporting occurrences and all candidate text are never rewritten.
+ *
+ * CANONICAL OCCURRENCE IS IMMUTABLE ONCE A GROUP IS PUBLISHED (V1.8.1): the first publish fixes
+ * which occurrence anchors the group's provenance; a later request naming a different occurrence as
+ * canonical is refused (CANONICAL_MISMATCH) rather than silently re-anchoring the group.
+ *
+ * IDEMPOTENCY is decided before staleness: if the group is already published and the requested
+ * state is byte-identical to what is already in the catalog (shared fields, every solution
+ * variant, every reference), the call succeeds without writing - a double click or a network retry
+ * is not a conflict. A request that only ADDS a new labelled variant, or updates the shared fields
+ * with explicit confirmation, is a legitimate, allowed mutation of an already-published group - see
+ * plan()'s $groupOutcome. A request containing a solution CONFLICT is refused in full: nothing is
+ * partially published.
  */
 final class KnowledgeGroupPublisher
 {
@@ -52,6 +74,9 @@ final class KnowledgeGroupPublisher
     private const PAGE_LIST_LIMIT = 500;
 
     private const MAX_RANGE_SPAN = 20;
+
+    /** A client input error, not a domain limit - real groups never need anywhere near this many variants. */
+    public const MAX_SOLUTIONS = 20;
 
     // ---------------------------------------------------------------- read side (group detail)
 
@@ -77,6 +102,7 @@ final class KnowledgeGroupPublisher
             'suggested_title' => $suggested && ! PlaceholderTitle::isPlaceholder($suggested->title, $code) ? $suggested->title : null,
             'server_collision_status' => $this->collision($ctx['existing'], $ctx['solutions']->count()),
             'existing_record' => $ctx['existing'] ? ['id' => $ctx['existing']->id, 'title' => $ctx['existing']->title] : null,
+            'existing_solution_labels' => $ctx['solutions']->pluck('applicability_label')->map(fn ($l) => $l ?? 'General')->unique()->values()->all(),
         ];
     }
 
@@ -98,9 +124,14 @@ final class KnowledgeGroupPublisher
             'normalized_code' => $code,
             'canonical_candidate_id' => $canonical->id,
             'canonical_source_page' => $canonical->source_page_start === null ? null : (int) $canonical->source_page_start,
+            'published' => $ctx['published']->isNotEmpty(),
+            'group_outcome' => $plan['group_outcome'],
             'collision_status' => $plan['collision'],
             'requires_update_confirmation' => $plan['requires_update_confirmation'],
-            'proposed' => ['title' => $proposed['title'], 'description' => $proposed['description'], 'operator_guidance' => $proposed['operator_guidance'], 'technician_solution' => $proposed['technician_solution']],
+            // Echoed back exactly as submitted (the reviewer's own just-typed content, never existing
+            // catalog prose) so the frontend can detect a stale preview by simple equality, the same way
+            // it already does for title/description/operator_guidance.
+            'proposed' => ['title' => $proposed['title'], 'description' => $proposed['description'], 'operator_guidance' => $proposed['operator_guidance'], 'solutions' => $proposed['solutions']],
             'existing' => $ctx['existing'] ? ['id' => $ctx['existing']->id, 'title' => $ctx['existing']->title, 'changed_fields' => $plan['changed_fields']] : null,
             'provenance' => [
                 'occurrence_count' => $ctx['entries']->count(),
@@ -109,7 +140,21 @@ final class KnowledgeGroupPublisher
                 'supporting_page_count' => count($ctx['pages']),
                 'supporting_pages' => array_slice($ctx['pages'], 0, self::PAGE_LIST_LIMIT),
             ],
-            'mutation' => ['error_code' => $plan['error_code'], 'solution' => $plan['solution'], 'references_to_create' => count($plan['pages_to_create']), 'references_existing' => count($ctx['pages']) - count($plan['pages_to_create'])],
+            // Per-proposed-variant planning: safe to expose (labels + a status the reviewer already knows,
+            // since they typed both sides), never a hash, never unrelated candidate/manual text.
+            'solutions' => array_map(fn ($sp) => [
+                'applicability_label' => $sp['applicability_label'],
+                'status' => $sp['status'],
+                'existing_instruction' => $sp['status'] === 'CONFLICT' ? $sp['existing_instruction'] : null,
+            ], $plan['solution_plans']),
+            'mutation' => [
+                'error_code' => $plan['error_code'],
+                'solutions_new' => $plan['solutions_new'],
+                'solutions_identical' => $plan['solutions_identical'],
+                'solutions_conflict' => $plan['solutions_conflict'],
+                'references_to_create' => count($plan['pages_to_create']),
+                'references_existing' => count($ctx['pages']) - count($plan['pages_to_create']),
+            ],
             'already_published' => $plan['already_published'],
         ];
 
@@ -152,21 +197,24 @@ final class KnowledgeGroupPublisher
             $canonical = $this->canonical($ctx, $proposed['canonical_candidate_id']);
             $plan = $this->plan($ctx, $proposed);
 
-            // 1. Idempotency first: a retry of an already-completed identical publication is a success, never a conflict.
+            // 1. Idempotency first: a retry of an already-completed, byte-identical publication is a
+            // success, never a conflict - regardless of how many times it is retried.
             if ($plan['already_published'] === 'IDENTICAL') {
-                return $this->result($ctx, $plan, $canonical, false, 'unchanged', false, 0);
+                return $this->result($ctx, $canonical, false, 'unchanged', 0, 0, 0);
             }
-            if ($plan['already_published'] === 'DIFFERENT') {
-                throw new ConflictHttpException('[ALREADY_PUBLISHED] This code group is already published with different content. Changing published knowledge needs a separate update review.');
-            }
-            // 2. State conflicts and staleness.
+            // 2. A solution CONFLICT fails the WHOLE request - never a partial publish of only the
+            // non-conflicting variants.
             if ($plan['blocked_reason'] !== null) {
                 throw new ConflictHttpException('['.$plan['blocked_reason'].'] This code group cannot be published in its current state.');
             }
+            // 3. Staleness: the group or the existing catalog record (including its solution variants)
+            // changed since this exact preview was issued.
             if (PreviewToken::isExpired($claims) || ! hash_equals((string) ($claims['s'] ?? ''), $ctx['fingerprint'])) {
                 throw new ConflictHttpException('[STALE_PREVIEW] The group or the existing catalog record changed after the preview. Nothing was published; preview again.');
             }
-            // 3. An existing catalog record is never touched without the reviewer's explicit awareness.
+            // 4. An existing catalog record's SHARED fields are never touched without the reviewer's
+            // explicit awareness - published or not. Adding a new labelled variant alone never requires
+            // this (see plan(): requires_update_confirmation is about changed_fields only).
             if ($plan['requires_update_confirmation'] && ! $confirmUpdate) {
                 throw ValidationException::withMessages(['confirm_update' => '[UPDATE_CONFIRMATION_REQUIRED] A catalog record for this code already exists. Confirm the update explicitly to publish.']);
             }
@@ -200,12 +248,25 @@ final class KnowledgeGroupPublisher
                 $audit->changed($actor, 'machine_error_code.published_from_import', 'machine_error_code', $errorCode->id, $accountId, $before, $audit->snapshot($errorCode), array_keys($errorCode->getChanges()));
             }
 
-            $solutionCreated = false;
-            if ($plan['solution'] === 'CREATE') {
-                $next = (int) MaintenanceErrorSolution::where('machine_error_code_id', $errorCode->id)->max('step_number') + 1;
-                MaintenanceErrorSolution::create(['machine_error_code_id' => $errorCode->id, 'step_number' => $next, 'instruction' => $proposed['technician_solution'], 'requires_technician' => true, 'created_by' => $actor->id]);
-                $solutionCreated = true;
+            // Insert only the NEW_VARIANT proposals, in the reviewer's submitted order, with deterministic
+            // consecutive step_number values after the current max - IDENTICAL proposals consume no
+            // sequence number. Safe under concurrent publish attempts for the SAME code because $errorCode
+            // was resolved through context()'s lockForUpdate() when it already existed; for a brand-new
+            // code the (account, model, code) unique index is the existing, already-relied-upon race guard.
+            $solutionsAdded = 0;
+            $next = (int) MaintenanceErrorSolution::where('machine_error_code_id', $errorCode->id)->max('step_number') + 1;
+            foreach ($plan['solution_plans'] as $sp) {
+                if ($sp['status'] !== 'NEW_VARIANT') {
+                    continue;
+                }
+                MaintenanceErrorSolution::create([
+                    'machine_error_code_id' => $errorCode->id, 'step_number' => $next, 'applicability_label' => $sp['applicability_label'],
+                    'instruction' => $sp['instruction'], 'requires_technician' => true, 'created_by' => $actor->id,
+                ]);
+                $next++;
+                $solutionsAdded++;
             }
+            $solutionsSkipped = $plan['solutions_identical'];
 
             // One reference per unique supporting page not already referenced for this document + code. Page numbers only.
             $refsCreated = 0;
@@ -215,10 +276,14 @@ final class KnowledgeGroupPublisher
                 $refsCreated++;
             }
 
-            // Mark ONLY the canonical occurrence: the reviewer's explicit publish is the approval. Supporting rows stay as they are.
-            $canonical->update(['status' => 'APPROVED', 'approved_by' => $canonical->approved_by ?? $actor->id, 'published_at' => now()]);
+            // Mark ONLY the canonical occurrence: the reviewer's explicit publish is the approval. Supporting
+            // rows stay as they are. A repeat publish against the same, already-published canonical is a
+            // harmless no-op update (still the same row, still APPROVED, published_at left as first set).
+            if ($canonical->published_at === null) {
+                $canonical->update(['status' => 'APPROVED', 'approved_by' => $canonical->approved_by ?? $actor->id, 'published_at' => now()]);
+            }
 
-            $mode = $created ? 'created' : 'updated';
+            $mode = $created ? 'created' : ($plan['changed_fields'] !== [] ? 'updated' : ($solutionsAdded > 0 || $refsCreated > 0 ? 'variants_added' : 'unchanged'));
             $audit->record($actor, 'maintenance_knowledge_group.published', 'maintenance_document_import', $import->id, $accountId, [
                 'changes' => [
                     'normalized_code' => ['before' => null, 'after' => $code],
@@ -227,15 +292,17 @@ final class KnowledgeGroupPublisher
                     'supporting_page_count' => ['before' => null, 'after' => count($ctx['pages'])],
                     'collision_status' => ['before' => null, 'after' => $plan['collision']],
                     'publish_mode' => ['before' => null, 'after' => $mode],
+                    'solutions_proposed' => ['before' => null, 'after' => count($plan['solution_plans'])],
+                    'solutions_added' => ['before' => null, 'after' => $solutionsAdded],
+                    'solutions_skipped_identical' => ['before' => null, 'after' => $solutionsSkipped],
+                    'applicability_labels' => ['before' => null, 'after' => mb_substr(implode(',', array_map(fn ($sp) => $sp['applicability_label'] ?? 'General', array_filter($plan['solution_plans'], fn ($sp) => $sp['status'] === 'NEW_VARIANT'))), 0, 300)],
                     'publication_fingerprint' => ['before' => null, 'after' => substr(hash('sha256', $this->contentHash($proposed).'|'.$canonical->id), 0, 16)],
                 ],
             ]);
 
             app(MaintenanceKnowledgePublishService::class)->advanceImportStatusIfComplete($import);
 
-            $ctx['existing'] = $errorCode;
-
-            return $this->result($ctx, $plan, $canonical->fresh(), true, $mode, $solutionCreated, $refsCreated);
+            return $this->result($ctx, $canonical->fresh(), true, $mode, $solutionsAdded, $solutionsSkipped, $refsCreated, $errorCode);
         });
     }
 
@@ -272,15 +339,20 @@ final class KnowledgeGroupPublisher
 
         $eq = MachineErrorCode::where('account_id', $import->document->account_id)->where('machine_model_id', $import->machine_model_id)->where('code', $code);
         $existing = ($lock ? $eq->lockForUpdate() : $eq)->first();
-        $solutions = $existing ? MaintenanceErrorSolution::where('machine_error_code_id', $existing->id)->orderBy('step_number')->get(['step_number', 'instruction']) : collect();
+        $sq = MaintenanceErrorSolution::where('machine_error_code_id', $existing?->id)->orderBy('step_number');
+        $solutions = $existing ? ($lock ? $sq->lockForUpdate() : $sq)->get(['step_number', 'applicability_label', 'instruction']) : collect();
         $refPages = $existing
             ? MaintenanceDocumentReference::where('document_id', $import->document_id)->where('machine_error_code_id', $existing->id)->whereNotNull('page_number')->pluck('page_number')->map(fn ($p) => (int) $p)->unique()->values()->all()
             : [];
         $refCount = $existing ? MaintenanceDocumentReference::where('machine_error_code_id', $existing->id)->count() : 0;
 
         $entriesDigest = hash('sha256', $entries->map(fn ($e) => implode(':', [$e->id, $e->status, $e->published_at ? 'P' : '-', $e->source_page_start, $e->source_page_end]))->implode('|'));
+        // Every existing solution row's (label, instruction) pair is folded in - not just a count/max
+        // step - so an out-of-band edit to a solution's text (not just adding/removing a row) also
+        // invalidates a stale preview.
+        $solutionsDigest = $solutions->map(fn ($s) => ($s->applicability_label ?? '').'='.$this->squash($s->instruction))->sort()->values()->implode('|');
         $existingDigest = $existing
-            ? hash('sha256', json_encode([$existing->id, $existing->title, $existing->manufacturer_description, $existing->operator_description, $existing->official_solution, $existing->solution_summary, (bool) $existing->is_active, $solutions->count(), (int) $solutions->max('step_number'), $refCount]))
+            ? hash('sha256', json_encode([$existing->id, $existing->title, $existing->manufacturer_description, $existing->operator_description, $existing->official_solution, $existing->solution_summary, (bool) $existing->is_active, $solutionsDigest, $refCount]))
             : 'NEW';
 
         return [
@@ -332,37 +404,80 @@ final class KnowledgeGroupPublisher
             $changed = array_values(array_filter(['title', $proposed['description'] !== null ? 'manufacturer_description' : null, $proposed['operator_guidance'] !== null ? 'operator_description' : null]));
         }
 
-        $solution = 'NONE';
-        if ($proposed['technician_solution'] !== null) {
-            $needle = $this->squash($proposed['technician_solution']);
-            $solution = $ctx['solutions']->contains(fn ($s) => $this->squash($s->instruction) === $needle) ? 'SKIP_EXISTS' : 'CREATE';
-        }
+        $solutionPlans = array_map(fn ($s) => $this->classifySolution($ctx['solutions'], $s), $proposed['solutions']);
+        $solutionsNew = count(array_filter($solutionPlans, fn ($sp) => $sp['status'] === 'NEW_VARIANT'));
+        $solutionsIdentical = count(array_filter($solutionPlans, fn ($sp) => $sp['status'] === 'IDENTICAL'));
+        $solutionsConflict = count(array_filter($solutionPlans, fn ($sp) => $sp['status'] === 'CONFLICT'));
 
         $pagesToCreate = array_values(array_diff($ctx['pages'], $ctx['ref_pages']));
 
-        $already = null;
-        if ($ctx['published']->isNotEmpty()) {
-            $identical = $ctx['published']->count() === 1 && $ctx['published']->first()->id === $proposed['canonical_candidate_id']
-                && $existing !== null && $changed === [] && $solution !== 'CREATE' && $pagesToCreate === [];
-            $already = $identical ? 'IDENTICAL' : 'DIFFERENT';
-        }
+        // The canonical occurrence is fixed at first publish; a later request naming a different
+        // occurrence is a hard conflict, never a silent re-anchor.
+        $canonicalMismatch = $ctx['published']->isNotEmpty()
+            && ! ($ctx['published']->count() === 1 && $ctx['published']->first()->id === $proposed['canonical_candidate_id']);
+
+        $identical = $ctx['published']->isNotEmpty() && ! $canonicalMismatch
+            && $existing !== null && $changed === [] && $solutionsConflict === 0 && $solutionsNew === 0 && $pagesToCreate === [];
 
         $blocked = null;
-        if ($already === 'DIFFERENT') {
-            $blocked = 'ALREADY_PUBLISHED_DIFFERENT';
-        } elseif ($already === null && $canonical->status === 'REJECTED') {
+        if ($canonicalMismatch) {
+            $blocked = 'CANONICAL_MISMATCH';
+        } elseif ($solutionsConflict > 0) {
+            $blocked = 'SOLUTION_CONFLICT';
+        } elseif (! $identical && $canonical->status === 'REJECTED') {
             $blocked = 'CANONICAL_REJECTED';
         }
 
+        $groupOutcome = match (true) {
+            $blocked === 'SOLUTION_CONFLICT' || $blocked === 'CANONICAL_MISMATCH' => 'CONFLICT',
+            $existing === null => 'CREATE',
+            $identical => 'NO_CHANGE',
+            $changed !== [] => 'UPDATE_SHARED',
+            $solutionsNew > 0 || $pagesToCreate !== [] => 'ADD_VARIANTS',
+            default => 'NO_CHANGE',
+        };
+
         return [
             'collision' => $collision,
-            'requires_update_confirmation' => $existing !== null && $already === null,
+            'requires_update_confirmation' => $existing !== null && ! $identical && $changed !== [],
             'changed_fields' => $changed,
             'error_code' => $existing === null ? 'CREATE' : ($changed === [] ? 'NONE' : 'UPDATE'),
-            'solution' => $solution,
+            'solution_plans' => $solutionPlans,
+            'solutions_new' => $solutionsNew,
+            'solutions_identical' => $solutionsIdentical,
+            'solutions_conflict' => $solutionsConflict,
             'pages_to_create' => $pagesToCreate,
-            'already_published' => $already,
+            'already_published' => $identical ? 'IDENTICAL' : null,
+            'group_outcome' => $groupOutcome,
             'blocked_reason' => $blocked,
+        ];
+    }
+
+    /**
+     * One proposed (applicability_label, instruction) pair against the code's EXISTING solution rows.
+     * Identity is the (normalized label, normalized instruction) pair - see the class docblock.
+     *
+     * @param  Collection<int, MaintenanceErrorSolution>  $existingSolutions
+     * @param  array{applicability_label: ?string, instruction: string}  $proposed
+     * @return array{applicability_label: ?string, instruction: string, status: string, existing_instruction: ?string}
+     */
+    private function classifySolution(Collection $existingSolutions, array $proposed): array
+    {
+        $label = $proposed['applicability_label'];
+        $needle = $this->squash($proposed['instruction']);
+        $sameLabel = $existingSolutions->filter(fn ($s) => $s->applicability_label === $label);
+
+        $status = match (true) {
+            $sameLabel->isEmpty() => 'NEW_VARIANT',
+            $sameLabel->contains(fn ($s) => $this->squash($s->instruction) === $needle) => 'IDENTICAL',
+            default => 'CONFLICT',
+        };
+
+        return [
+            'applicability_label' => $label,
+            'instruction' => $proposed['instruction'],
+            'status' => $status,
+            'existing_instruction' => $status === 'CONFLICT' ? $sameLabel->first()->instruction : null,
         ];
     }
 
@@ -380,23 +495,23 @@ final class KnowledgeGroupPublisher
         return $hasContent ? 'EXISTING' : 'POTENTIAL_UPDATE';
     }
 
-    /**
-     * @param  array<string, mixed>  $ctx
-     * @param  array<string, mixed>  $plan
-     * @return array<string, mixed>
-     */
-    private function result(array $ctx, array $plan, MaintenanceKnowledgeEntry $canonical, bool $published, string $mode, bool $solutionCreated, int $refsCreated): array
+    /** @param  array<string, mixed>  $ctx */
+    private function result(array $ctx, MaintenanceKnowledgeEntry $canonical, bool $published, string $mode, int $solutionsAdded, int $solutionsSkipped, int $refsCreated, ?MachineErrorCode $errorCode = null): array
     {
+        $ec = $errorCode ?? $ctx['existing'];
+
         return [
             'published' => $published,
             'already_published' => ! $published,
             'mode' => $mode,
             'normalized_code' => $canonical->normalized_code,
             'canonical_candidate_id' => $canonical->id,
-            'machine_error_code' => $ctx['existing'] ? ['id' => $ctx['existing']->id, 'code' => $ctx['existing']->code, 'title' => $ctx['existing']->title] : null,
+            'machine_error_code' => $ec ? ['id' => $ec->id, 'code' => $ec->code, 'title' => $ec->title] : null,
             'published_at' => ($published ? $canonical->published_at : ($ctx['published']->first()?->published_at))?->toIso8601String(),
             'supporting_page_count' => count($ctx['pages']),
-            'solution_created' => $solutionCreated,
+            'solution_created' => $solutionsAdded > 0,
+            'solutions_added' => $solutionsAdded,
+            'solutions_skipped' => $solutionsSkipped,
             'references_created' => $refsCreated,
         ];
     }
@@ -420,8 +535,45 @@ final class KnowledgeGroupPublisher
             'title' => (string) $clean($input['title'] ?? ''),
             'description' => $clean($input['description'] ?? null),
             'operator_guidance' => $clean($input['operator_guidance'] ?? null),
-            'technician_solution' => $clean($input['technician_solution'] ?? null),
+            'solutions' => $this->solutionProposals($input, $clean),
         ];
+    }
+
+    /**
+     * V1.8.1 - accepts the new `technician_solutions[]` array shape, and stays backward compatible
+     * with the V1.8 single `technician_solution` string (wrapped as one unlabelled proposal). If a
+     * caller somehow sends both, the array takes precedence - the legacy field is documented as the
+     * single-solution shorthand for callers who have not adopted the array, not a second input.
+     *
+     * @param  array<string, mixed>  $input
+     * @return list<array{applicability_label: ?string, instruction: string}>
+     */
+    private function solutionProposals(array $input, \Closure $clean): array
+    {
+        $raw = $input['technician_solutions'] ?? null;
+        if (! is_array($raw) || $raw === []) {
+            $legacy = $clean($input['technician_solution'] ?? null);
+
+            return $legacy === null ? [] : [['applicability_label' => null, 'instruction' => $legacy]];
+        }
+
+        $out = [];
+        $seenLabels = [];
+        foreach ($raw as $item) {
+            $instruction = $clean(is_array($item) ? ($item['instruction'] ?? null) : null);
+            if ($instruction === null) {
+                continue; // a blank instruction is not a real proposal - never a validation trap for an empty trailing row
+            }
+            $label = $clean(is_array($item) ? ($item['applicability_label'] ?? null) : null);
+            $labelKey = $label === null ? "\0null" : mb_strtolower($label);
+            if (isset($seenLabels[$labelKey])) {
+                throw ValidationException::withMessages(['technician_solutions' => 'Each technician solution must have a distinct applicability (or leave it blank for at most one general solution).']);
+            }
+            $seenLabels[$labelKey] = true;
+            $out[] = ['applicability_label' => $label, 'instruction' => $instruction];
+        }
+
+        return $out;
     }
 
     /** @param  array<string, mixed>  $p */
@@ -430,7 +582,7 @@ final class KnowledgeGroupPublisher
         if (PlaceholderTitle::isPlaceholder($p['title'], $code)) {
             throw ValidationException::withMessages(['title' => 'Review and replace the placeholder title before publishing.']);
         }
-        if ($p['description'] === null && $p['operator_guidance'] === null && $p['technician_solution'] === null) {
+        if ($p['description'] === null && $p['operator_guidance'] === null && $p['solutions'] === []) {
             throw ValidationException::withMessages(['description' => 'Add at least a description, operator guidance or a technician solution before publishing.']);
         }
     }
@@ -438,7 +590,9 @@ final class KnowledgeGroupPublisher
     /** @param  array<string, mixed>  $p */
     private function contentHash(array $p): string
     {
-        return hash('sha256', json_encode([$p['title'], $p['description'], $p['operator_guidance'], $p['technician_solution']], JSON_THROW_ON_ERROR));
+        $solutions = array_map(fn ($s) => [$s['applicability_label'], $s['instruction']], $p['solutions']);
+
+        return hash('sha256', json_encode([$p['title'], $p['description'], $p['operator_guidance'], $solutions], JSON_THROW_ON_ERROR));
     }
 
     private function norm(?string $s): string

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { CheckCircle2, ClipboardList, LoaderCircle, RotateCcw, Rocket, X, XCircle } from 'lucide-react'
+import { CheckCircle2, ClipboardList, LoaderCircle, Plus, RotateCcw, Rocket, Trash2, X, XCircle } from 'lucide-react'
 import { BlockingDialog } from '../../../components/ui/BlockingDialog.jsx'
 import { ErrorState } from '../../../components/ui/ErrorState.jsx'
 import { LoadingScreen } from '../../../components/ui/LoadingScreen.jsx'
@@ -8,7 +8,7 @@ import { collisionStatusLabels, entryStatusLabels, formatMaintenanceDate, mapMai
 import { EVIDENCE_LABELS, REVIEW_STATE_LABELS, REVIEW_STATE_PILL_CLASS, evidenceMix, occurrenceLabel, occurrencePageLabel, pageRangeLabel } from './codeGroupUtils.js'
 import { GroupPublishDialog } from './GroupPublishDialog.jsx'
 import {
-  DRAFT_LIMITS, EMPTY_DRAFT, PLACEHOLDER_TITLE_MESSAGE, WORKFLOW_LABELS, canRequestPreview, collisionLabel, isPlaceholderTitle, previewIsCurrent, supportingPagesLabel, validateDraft, workflowState,
+  DRAFT_LIMITS, EMPTY_DRAFT, EMPTY_SOLUTION, PLACEHOLDER_TITLE_MESSAGE, WORKFLOW_LABELS, canRequestPreview, collisionLabel, isPlaceholderTitle, previewIsCurrent, supportingPagesLabel, validateDraft, workflowState,
 } from './groupPublishUtils.js'
 import { useCodeGroupDetail } from './useCodeGroupDetail.js'
 
@@ -51,6 +51,50 @@ function OccurrenceRow({ occurrence, canManage, busy, isCanonical, isSuggested, 
   )
 }
 
+/**
+ * V1.8.1 - a repeatable list, not a single field: a code can have more than one technician
+ * procedure, each applying to a different accessory/hardware/model context (a real, recurring
+ * pattern in the source manuals - see KnowledgeGroupPublisher's docblock). Applicability is
+ * optional; at most one solution may be left unlabelled ("General"), enforced client-side by
+ * validateDraft and authoritatively by the server. Examples shown as placeholders are generic
+ * ("Accessory A/B") - real labels are reviewer-authored data, never hard-coded here.
+ */
+function SolutionEditor({ solutions, onChange, rowErrors, showErrors }) {
+  function updateRow(index, patch) {
+    onChange(solutions.map((s, i) => (i === index ? { ...s, ...patch } : s)))
+  }
+  function addRow() {
+    onChange([...solutions, { ...EMPTY_SOLUTION }])
+  }
+  function removeRow(index) {
+    onChange(solutions.filter((_, i) => i !== index))
+  }
+
+  return (
+    <div className="maintenance-solution-list" role="group" aria-label="Technician solutions">
+      {solutions.map((solution, index) => {
+        const errors = rowErrors?.[index] ?? {}
+        return (
+          <div className="maintenance-solution-row" key={index}>
+            <label className="maintenance-field">
+              <span>Applicability <small>(optional)</small></span>
+              <input value={solution.applicabilityLabel} onChange={(event) => updateRow(index, { applicabilityLabel: event.target.value })} maxLength={DRAFT_LIMITS.applicabilityLabel} placeholder="e.g. Accessory A/B" aria-label={`Applicability for technician solution ${index + 1}`} aria-invalid={Boolean(showErrors && errors.applicabilityLabel)} />
+            </label>
+            <label className="maintenance-field">
+              <span>Technician solution</span>
+              <textarea rows={4} value={solution.instruction} onChange={(event) => updateRow(index, { instruction: event.target.value })} maxLength={DRAFT_LIMITS.instruction} aria-label={`Technician solution ${index + 1}`} aria-invalid={Boolean(showErrors && errors.instruction)} />
+            </label>
+            {showErrors && (errors.applicabilityLabel || errors.instruction) && <div className="form-error" role="alert"><span>{errors.applicabilityLabel ?? errors.instruction}</span></div>}
+            <button className="icon-button" type="button" onClick={() => removeRow(index)} aria-label={`Remove technician solution ${index + 1}`}><Trash2 size={15} /></button>
+          </div>
+        )
+      })}
+      <button className="secondary-button" type="button" onClick={addRow}><Plus size={15} /> Add another solution</button>
+      {solutions.length === 0 && <small>Optional - a code can be published with no technician solution yet, using only its description and operator guidance.</small>}
+    </div>
+  )
+}
+
 function CanonicalEditor({ code, draft, onChange, canonicalOccurrence, publication, errors, showErrors }) {
   const set = (key) => (event) => onChange({ ...draft, [key]: event.target.value })
   const titleIsPlaceholder = draft.title.trim() !== '' && isPlaceholderTitle(draft.title)
@@ -75,8 +119,10 @@ function CanonicalEditor({ code, draft, onChange, canonicalOccurrence, publicati
         <button className="secondary-button" type="button" onClick={() => onChange({ ...draft, description: canonicalOccurrence.description })}>Start from the stored excerpt</button>
       )}
       <label className="maintenance-field"><span>Operator guidance</span><textarea rows={3} value={draft.operatorGuidance} onChange={set('operatorGuidance')} maxLength={DRAFT_LIMITS.operatorGuidance} aria-label="Canonical operator guidance" /></label>
-      <label className="maintenance-field"><span>Technician solution</span><textarea rows={4} value={draft.technicianSolution} onChange={set('technicianSolution')} maxLength={DRAFT_LIMITS.technicianSolution} aria-label="Canonical technician solution" /></label>
       {showErrors && errors.content && <div className="form-error" role="alert"><span>{errors.content}</span></div>}
+      <div className="form-section-heading"><strong>Technician solutions</strong><span>One code can have more than one procedure - add a separate row for each accessory, hardware or model context the manual distinguishes.</span></div>
+      <SolutionEditor solutions={draft.solutions} onChange={(solutions) => onChange({ ...draft, solutions })} rowErrors={errors.solutionRows} showErrors={showErrors} />
+      {showErrors && errors.solutions && <div className="form-error" role="alert"><span>{errors.solutions}</span></div>}
       <small>Nothing is generated for you: every field is written or confirmed by a reviewer.</small>
     </section>
   )

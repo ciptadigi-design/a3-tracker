@@ -3,7 +3,33 @@ import { AlertTriangle, CheckCircle2, LoaderCircle, Rocket, X } from 'lucide-rea
 import { BlockingDialog } from '../../../components/ui/BlockingDialog.jsx'
 import { previewGroupPublish, publishCodeGroup } from '../../../services/maintenance.js'
 import { collisionStatusLabels } from '../maintenanceUtils.js'
-import { blockedMessage, buildPublishPayload, canConfirmPublish, changedFieldLabels, classifyPublishError, collisionLabel, mutationLines, supportingPagesLabel } from './groupPublishUtils.js'
+import { SOLUTION_STATUS_LABELS, applicabilityDisplayLabel, blockedMessage, buildPublishPayload, canConfirmPublish, changedFieldLabels, classifyPublishError, collisionLabel, mutationLines, supportingPagesLabel } from './groupPublishUtils.js'
+
+const solutionStatusPillClass = { NEW_VARIANT: 'resolved', IDENTICAL: '', CONFLICT: 'voided' }
+
+/**
+ * V1.8.1 - technician solutions grouped by applicability, each with the server's own per-variant
+ * planning status. A CONFLICT is never merely noted in passing: it is the reason the confirm button
+ * stays disabled (see canConfirmPublish/blockedMessage), because it means two irreconcilable claims
+ * about the same context exist and a fresh review is needed, not just an acknowledgement.
+ */
+function SolutionsPreview({ solutions }) {
+  if (!solutions || solutions.length === 0) return null
+  return (
+    <div className="maintenance-publish-solutions" aria-label="Technician solutions">
+      <strong>Technician solutions</strong>
+      <ul>
+        {solutions.map((s, i) => (
+          <li key={i}>
+            <span className="maintenance-solution-applicability">[{applicabilityDisplayLabel(s.applicability_label)}]</span>
+            <span className={`incident-status-pill ${solutionStatusPillClass[s.status] ?? ''}`}>{SOLUTION_STATUS_LABELS[s.status] ?? s.status}</span>
+            {s.status === 'CONFLICT' && <small>Already published under this applicability with different text.</small>}
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}
 
 /**
  * V1.8 - the deliberate publish step for ONE code group. It asks the server for a read-only preview of exactly what
@@ -99,6 +125,8 @@ export function GroupPublishDialog({ importId, code, canonicalId, draft: openedW
 
             <strong>What will be written</strong>
             <ul className="maintenance-publish-mutation">{mutationLines(preview).map((line) => <li key={line}>{line}</li>)}</ul>
+
+            <SolutionsPreview solutions={preview.solutions} />
 
             {isUpdate && (
               <div className="form-error" role="alert">

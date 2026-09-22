@@ -237,7 +237,9 @@ class MaintenanceGroupPublishTest extends TestCase
         $this->assertSame(5, $d['provenance']['supporting_occurrence_count']);
         $this->assertSame(0, $d['provenance']['excluded_rejected_count']);
         $this->assertSame('CREATE', $d['mutation']['error_code']);
-        $this->assertSame('CREATE', $d['mutation']['solution']);
+        $this->assertSame(1, $d['mutation']['solutions_new']);
+        $this->assertSame(0, $d['mutation']['solutions_identical']);
+        $this->assertSame(0, $d['mutation']['solutions_conflict']);
         $this->assertSame(6, $d['mutation']['references_to_create']);
         $this->assertSame('NEW', $d['collision_status']);
         $this->assertFalse($d['requires_update_confirmation']);
@@ -493,25 +495,69 @@ class MaintenanceGroupPublishTest extends TestCase
         $this->assertNull($d['confirmation_token']);
     }
 
-    public function test_a_published_group_is_never_silently_rewritten_by_a_different_request(): void
+    /**
+     * V1.8.1 architecture change: a published group's SHARED fields (title/description/operator
+     * guidance) are no longer frozen forever after first publish. The real Konica document need
+     * (C-1127: one canonical code, two technician-solution variants published incrementally) means
+     * a later publish must be able to legitimately update shared fields OR add a new labelled
+     * solution variant - it is refused only when it silently disagrees with something already
+     * published (see the CONFLICT-specific tests below). A shared-field difference now goes
+     * through the SAME explicit confirm_update gate an EXISTING/POTENTIAL_UPDATE collision already
+     * used pre-publish - it is never silently applied, and never a stale-looking flat 409 either.
+     */
+    public function test_a_published_groups_shared_fields_can_be_updated_later_only_with_explicit_confirmation(): void
     {
         $f = $this->fixture();
         $g = $this->group($f);
         $u = $this->member($f['home']);
         $a = $this->payload($g['high']->id);
+        // Same canonical, same technician solution text (so the only real difference is the shared title).
         $b = $this->payload($g['high']->id, ['title' => 'A different reviewer title']);
-        // Two reviewers preview before either publishes.
-        $tokenA = $this->preview($u, $f['import']->id, $a)->json('data.confirmation_token');
-        $tokenB = $this->preview($u, $f['import']->id, $b)->json('data.confirmation_token');
-        $this->publish($u, $f['import']->id, $a, $tokenA)->assertOk();
+        $this->previewAndPublish($u, $f['import']->id, $a)->assertOk();
 
-        $this->publish($u, $f['import']->id, $b, $tokenB)->assertStatus(409);
+        $preview = $this->preview($u, $f['import']->id, $b)->assertOk()->json('data');
+        $this->assertTrue($preview['published']);
+        $this->assertTrue($preview['can_publish']);
+        $this->assertNull($preview['blocked_reason']);
+        $this->assertTrue($preview['requires_update_confirmation']);
+        $this->assertSame('UPDATE_SHARED', $preview['group_outcome']);
+        $this->assertNotEmpty($preview['confirmation_token']);
 
-        $this->assertSame('Fuser temperature sensor abnormal', MachineErrorCode::first()->title);
+        $this->publish($u, $f['import']->id, $b, $preview['confirmation_token'])->assertStatus(422)->assertJsonValidationErrors('confirm_update');
+        $this->assertSame('Fuser temperature sensor abnormal', MachineErrorCode::first()->title, 'nothing was overwritten without confirmation');
+
+        $r = $this->publish($u, $f['import']->id, $b, $preview['confirmation_token'], ['confirm_update' => true])->assertOk()->json('data');
+
+        $this->assertSame('A different reviewer title', MachineErrorCode::first()->title);
+        $this->assertSame(1, MachineErrorCode::count(), 'updated in place, never duplicated');
+        $this->assertSame('updated', $r['mode']);
+        $this->assertSame(1, MaintenanceErrorSolution::count(), 'the identical technician solution text was not duplicated');
+    }
+
+    /**
+     * The counterpart to the above: an UNLABELLED solution that genuinely disagrees with the
+     * already-published unlabelled solution is a CONFLICT (Section 6), and is refused outright -
+     * confirm_update never overrides a solution conflict, because confirm_update is specifically
+     * about the shared canonical fields, not about which technician text is correct.
+     */
+    public function test_a_published_groups_unlabelled_solution_cannot_be_silently_replaced_by_different_text(): void
+    {
+        $f = $this->fixture();
+        $g = $this->group($f);
+        $u = $this->member($f['home']);
+        $a = $this->payload($g['high']->id);
+        $b = $this->payload($g['high']->id, ['technician_solution' => 'A materially different unlabelled technician procedure.']);
+        $this->previewAndPublish($u, $f['import']->id, $a)->assertOk();
+
+        $preview = $this->preview($u, $f['import']->id, $b)->assertOk()->json('data');
+        $this->assertFalse($preview['can_publish']);
+        $this->assertSame('SOLUTION_CONFLICT', $preview['blocked_reason']);
+        $this->assertSame('CONFLICT', $preview['group_outcome']);
+        $this->assertSame('CONFLICT', $preview['solutions'][0]['status']);
+        $this->assertNull($preview['confirmation_token']);
+
+        $this->assertSame(1, MaintenanceErrorSolution::count());
         $this->assertSame(1, MachineErrorCode::count());
-        $d = $this->preview($u, $f['import']->id, $b)->assertOk()->json('data');
-        $this->assertSame('DIFFERENT', $d['already_published']);
-        $this->assertSame('ALREADY_PUBLISHED_DIFFERENT', $d['blocked_reason']);
     }
 
     // --- 21/22/23. stale preview, tampered token, mismatched code ---
@@ -621,7 +667,9 @@ class MaintenanceGroupPublishTest extends TestCase
         $u = $this->member($f['home']);
         $existing = MachineErrorCode::create(['account_id' => $f['home']->id, 'code' => self::CODE, 'title' => 'Hand-written title', 'manufacturer_description' => 'Hand-written cause', 'operator_description' => 'Hand-written guidance']);
         MaintenanceErrorSolution::create(['machine_error_code_id' => $existing->id, 'step_number' => 1, 'instruction' => 'Existing step one', 'requires_technician' => true]);
-        $payload = $this->payload($g['high']->id);
+        // A NEW, distinctly-labelled variant alongside the shared-field update - proves the two are
+        // planned and applied together (Section 7), not that a new anonymous step silently appears.
+        $payload = $this->payload($g['high']->id, ['technician_solution' => null, 'technician_solutions' => [['applicability_label' => 'Accessory A/B', 'instruction' => 'A brand new labelled technician procedure.']]]);
 
         $preview = $this->preview($u, $f['import']->id, $payload)->assertOk()->json('data');
         $this->assertSame('EXISTING', $preview['collision_status']);
@@ -629,6 +677,7 @@ class MaintenanceGroupPublishTest extends TestCase
         $this->assertSame('UPDATE', $preview['mutation']['error_code']);
         $this->assertSame(['title', 'manufacturer_description', 'operator_description'], $preview['existing']['changed_fields']);
         $this->assertSame('Hand-written title', $preview['existing']['title']);
+        $this->assertSame('NEW_VARIANT', $preview['solutions'][0]['status']);
 
         $this->publish($u, $f['import']->id, $payload, $preview['confirmation_token'])->assertStatus(422)->assertJsonValidationErrors('confirm_update');
         $this->assertSame('Hand-written title', $existing->fresh()->title, 'nothing was overwritten');
@@ -639,8 +688,9 @@ class MaintenanceGroupPublishTest extends TestCase
         $this->assertSame('updated', $r['mode']);
         $this->assertSame(1, MachineErrorCode::count(), 'updated in place, never duplicated');
         $this->assertSame('Fuser temperature sensor abnormal', $existing->fresh()->title);
-        $this->assertSame(2, MaintenanceErrorSolution::count(), 'a new technician step is appended, the existing step is preserved');
-        $this->assertSame(1, MaintenanceErrorSolution::where('instruction', 'Existing step one')->count());
+        $this->assertSame(2, MaintenanceErrorSolution::count(), 'a new labelled variant is appended, the existing unlabelled step is preserved untouched');
+        $this->assertSame(1, MaintenanceErrorSolution::where('instruction', 'Existing step one')->whereNull('applicability_label')->count());
+        $this->assertSame(1, MaintenanceErrorSolution::where('applicability_label', 'Accessory A/B')->count());
         $this->assertSame(2, MaintenanceErrorSolution::where('machine_error_code_id', $existing->id)->max('step_number'));
     }
 
@@ -673,7 +723,8 @@ class MaintenanceGroupPublishTest extends TestCase
         MaintenanceDocumentReference::create(['document_id' => $f['import']->document_id, 'machine_error_code_id' => $existing->id, 'reference_type' => 'error_code', 'page_number' => 100]);
 
         $d = $this->preview($u, $f['import']->id, $this->payload($g['high']->id))->assertOk()->json('data');
-        $this->assertSame('SKIP_EXISTS', $d['mutation']['solution']);
+        $this->assertSame(0, $d['mutation']['solutions_new']);
+        $this->assertSame(1, $d['mutation']['solutions_identical']);
         $this->assertSame(5, $d['mutation']['references_to_create']);
         $this->assertSame(1, $d['mutation']['references_existing']);
 

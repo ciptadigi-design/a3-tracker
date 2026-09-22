@@ -6,9 +6,30 @@ import { ErrorCodeManagementDialog } from './ErrorCodeManagementDialog.jsx'
 import { useMachineErrorCodes } from './useMachineErrorCodes.js'
 import { errorCodeSeverityLabels } from './maintenanceUtils.js'
 
+/**
+ * V1.8.1 - solution steps may carry an applicability_label (e.g. "PK-512/513"); NULL means
+ * generally applicable ("General"). Grouped in first-seen order (already step_number-ordered by
+ * the API), never alphabetically re-sorted, so an unlabelled/general procedure stays first when
+ * that is how it was published.
+ */
+function groupSolutionsByApplicability(steps) {
+  const groups = []
+  const byLabel = new Map()
+  for (const step of steps) {
+    const label = step.applicability_label ?? null
+    if (!byLabel.has(label)) {
+      const group = { label, steps: [] }
+      byLabel.set(label, group)
+      groups.push(group)
+    }
+    byLabel.get(label).steps.push(step)
+  }
+  return groups
+}
+
 function ErrorCodeRow({ code, canManage, canManageThisRow, onEdit }) {
   const [expanded, setExpanded] = useState(false)
-  const steps = code.solutions ?? []
+  const solutionGroups = groupSolutionsByApplicability(code.solutions ?? [])
   const documentReferences = code.document_references ?? []
 
   return (
@@ -25,10 +46,15 @@ function ErrorCodeRow({ code, canManage, canManageThisRow, onEdit }) {
         <div className="maintenance-error-code-detail">
           {code.solution_summary && <p><strong>Recommended fix:</strong> {code.solution_summary}</p>}
           {code.operator_description && <p>{code.operator_description}</p>}
-          {steps.length > 0 ? (
-            <ol>
-              {steps.map((step) => <li key={step.id}>{step.instruction}{step.requires_technician && <small> · Requires a technician</small>}</li>)}
-            </ol>
+          {solutionGroups.length > 0 ? (
+            solutionGroups.map((group) => (
+              <div key={group.label ?? '\u0000general'} className="maintenance-solution-group">
+                {solutionGroups.length > 1 && <strong>[{group.label ?? 'General'}]</strong>}
+                <ol>
+                  {group.steps.map((step) => <li key={step.id}>{step.instruction}{step.requires_technician && <small> · Requires a technician</small>}</li>)}
+                </ol>
+              </div>
+            ))
           ) : <small>No step-by-step procedure recorded yet.</small>}
           {documentReferences.length > 0 && (
             <>

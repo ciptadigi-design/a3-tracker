@@ -40,12 +40,29 @@ test('the canonical occurrence is chosen explicitly with "Use as canonical"; not
 
 // 4/5. editable canonical fields, placeholder validation visible
 
-test('the canonical editor exposes title, description/cause, operator guidance and technician solution, with a fixed code', () => {
+test('the canonical editor exposes title, description/cause, operator guidance and a repeatable technician-solution list, with a fixed code', () => {
   assert.match(detail, /aria-label="Code \(fixed by the group\)"/)
   assert.match(detail, /readOnly aria-readonly="true"/)
-  for (const label of ['Canonical title', 'Canonical description or cause', 'Canonical operator guidance', 'Canonical technician solution']) assert.match(detail, new RegExp(`aria-label="${label}"`))
+  for (const label of ['Canonical title', 'Canonical description or cause', 'Canonical operator guidance']) assert.match(detail, new RegExp(`aria-label="${label}"`))
+  assert.match(detail, /<SolutionEditor solutions=\{draft\.solutions\}/)
   assert.match(detail, /You are writing the published knowledge for \{code\}; the source PDF and its excerpts are never changed\./)
   assert.match(detail, /Based on the occurrence from/)
+})
+
+// V1.8.1 - the repeatable solution list itself
+
+test('the solution editor lets a reviewer add, label and remove multiple technician solutions, with a generic placeholder', () => {
+  assert.match(detail, /function SolutionEditor\(/)
+  assert.match(detail, /Add another solution/)
+  assert.match(detail, /onClick=\{\(\) => removeRow\(index\)\}/)
+  assert.match(detail, /placeholder="e\.g\. Accessory A\/B"/, 'the example label is generic, not a real Konica accessory model')
+  assert.doesNotMatch(code(detail), /PK-512|PK-513|PK-522/, 'real accessory labels never appear in product code, only in reviewer-entered data')
+  assert.match(detail, /Applicability <small>\(optional\)<\/small>/)
+})
+
+test('applicability is optional: a solution can be added with no label at all', () => {
+  assert.match(detail, /aria-label=\{`Applicability for technician solution \$\{index \+ 1\}`\}/)
+  assert.doesNotMatch(code(detail), /\brequired\b.*applicabilityLabel/)
 })
 
 test('the placeholder-title validation is visible as the reviewer types, using the shared message', () => {
@@ -96,6 +113,21 @@ test('an existing catalog record shows an explicit update warning and needs an a
   assert.match(publishDialog, /Existing solution steps are kept\./)
   assert.match(publishDialog, /aria-label="I understand this updates an existing record"/)
   assert.match(publishDialog, /preview\.can_publish && isUpdate && \(/)
+})
+
+// V1.8.1 - preview groups technician solutions by applicability with a per-item status
+
+test('the preview lists technician solutions grouped by applicability, each with its own status', () => {
+  assert.match(publishDialog, /function SolutionsPreview\(/)
+  assert.match(publishDialog, /<SolutionsPreview solutions=\{preview\.solutions\} \/>/)
+  assert.match(publishDialog, /applicabilityDisplayLabel\(s\.applicability_label\)/)
+  assert.match(publishDialog, /SOLUTION_STATUS_LABELS\[s\.status\]/)
+})
+
+test('a solution conflict is shown explicitly and is never merely a passive label', () => {
+  assert.match(publishDialog, /s\.status === 'CONFLICT'/)
+  assert.match(publishDialog, /Already published under this applicability with different text\./)
+  assert.match(publishDialog, /blockedMessage\(preview\.blocked_reason, preview\.already_published\)/)
 })
 
 // 9. publish requires confirmation
@@ -153,10 +185,11 @@ test('no bulk or publish-all action exists anywhere in the review UI or API surf
 
 // 13. responsive
 
-test('the canonical editor, publish facts and published banner collapse cleanly on narrow screens', () => {
+test('the canonical editor, publish facts, solution rows and published banner collapse cleanly on narrow screens', () => {
   assert.match(css, /\.maintenance-canonical-editor textarea, \.maintenance-canonical-editor input \{ width: 100%; min-width: 0; box-sizing: border-box; \}/)
   assert.match(css, /@media \(max-width: 680px\) \{\s*\.maintenance-publish-facts \{ grid-template-columns: 1fr; \}/)
   assert.match(css, /\.maintenance-publish-facts dd \{[^}]*overflow-wrap: anywhere/)
+  assert.match(css, /\.maintenance-solution-row \{ grid-template-columns: minmax\(0, 1fr\); \}/, 'the solution editor row collapses to one column on narrow screens')
 })
 
 // 14/15. V1.7 triage and the ID-selection path remain
