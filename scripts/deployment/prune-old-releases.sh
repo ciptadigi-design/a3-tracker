@@ -69,26 +69,39 @@ kept=()
 removed=()
 count=0
 active_kept=false
-while IFS= read -r name; do
-  [ -n "$name" ] || continue
-  full="$releases_root/$name"
-  if [ -L "$full" ] || [ ! -d "$full" ]; then
-    echo "PRUNE_SKIP_MALFORMED: $name" >&2
-    continue
-  fi
-  if [ "$name" = "$active_name" ]; then
-    kept+=("$name")
-    active_kept=true
-    count=$((count + 1))
-    continue
-  fi
-  if [ "$count" -lt "$keep_count" ]; then
-    kept+=("$name")
-    count=$((count + 1))
-  else
-    removed+=("$name")
-  fi
-done < <(cd "$releases_root" && ls -1dt -- */ 2>/dev/null | sed 's#/$##')
+# Plain command substitution + IFS-based splitting, deliberately NOT `< <(process substitution)`:
+# some restricted shell/hosting environments (confirmed on the real Hostinger host) have no
+# /dev/fd, which process substitution depends on. This form also keeps the loop in the CURRENT
+# shell (never a `| while` pipe into a subshell), which matters here because the loop body
+# mutates the kept/removed arrays - a subshell would silently discard those mutations.
+old_ifs="$IFS"
+IFS=$'\n'
+# shellcheck disable=SC2207
+listed_entries=($(cd "$releases_root" && ls -1dt -- */ 2>/dev/null | sed 's#/$##'))
+IFS="$old_ifs"
+
+if [ "${#listed_entries[@]}" -gt 0 ]; then
+  for name in "${listed_entries[@]}"; do
+    [ -n "$name" ] || continue
+    full="$releases_root/$name"
+    if [ -L "$full" ] || [ ! -d "$full" ]; then
+      echo "PRUNE_SKIP_MALFORMED: $name" >&2
+      continue
+    fi
+    if [ "$name" = "$active_name" ]; then
+      kept+=("$name")
+      active_kept=true
+      count=$((count + 1))
+      continue
+    fi
+    if [ "$count" -lt "$keep_count" ]; then
+      kept+=("$name")
+      count=$((count + 1))
+    else
+      removed+=("$name")
+    fi
+  done
+fi
 
 if [ "$active_kept" = false ]; then
   # The active release was not found among the listed directories at all - this should never
