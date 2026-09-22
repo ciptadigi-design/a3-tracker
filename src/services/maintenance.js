@@ -76,3 +76,10 @@ export const createDocumentImport = async (payload) => unwrapData(await laravelM
 export const addKnowledgeEntry = async (importId, payload) => unwrapData(await laravelMaintenance.addKnowledgeEntry(importId, payload))
 export const updateKnowledgeEntry = async (id, payload) => unwrapData(await laravelMaintenance.updateKnowledgeEntry(id, payload))
 export const publishKnowledgeEntry = async (id) => unwrapData(await laravelMaintenance.publishKnowledgeEntry(id))
+
+// V1.11 - review-session telemetry. Deliberately thin: reviewSessionTracker.js owns the local
+// aggregation/flush policy, these just wrap the three endpoints it calls.
+export const startReviewSession = async (importId, code) => unwrapData(await laravelMaintenance.startReviewSession(importId, code))
+export const heartbeatReviewSession = async (sessionId, payload) => unwrapData(await laravelMaintenance.heartbeatReviewSession(sessionId, payload))
+export const abandonReviewSession = async (sessionId) => unwrapData(await laravelMaintenance.abandonReviewSession(sessionId))
+export const loadReviewBenchmark = async (importId, { cohort } = {}) => unwrapData(await laravelMaintenance.reviewBenchmark(importId, toQueryString({ cohort })))

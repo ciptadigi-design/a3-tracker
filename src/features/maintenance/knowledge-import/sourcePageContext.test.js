@@ -37,7 +37,8 @@ test('a multi-page group offers a page selector and switches the active page on 
   assert.match(context, /directPages\.length > 1 &&/)
   assert.match(context, /role="tablist"/)
   assert.match(context, /directPages\.map\(\(p\) => \(/)
-  assert.match(context, /onClick=\{\(\) => setActivePage\(p\.page_number\)\}/)
+  // V1.11: the click handler also reports a review-session source-view interaction - see reviewSessionTelemetry.test.js.
+  assert.match(context, /onClick=\{\(\) => \{ setActivePage\(p\.page_number\); onSourceView\?\.\(\) \}\}/)
   assert.match(context, /aria-selected=\{activePage === p\.page_number\}/)
 })
 

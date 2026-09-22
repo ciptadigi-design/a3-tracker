@@ -57,4 +57,11 @@ export const laravelMaintenance = {
   addKnowledgeEntry: (importId, payload) => apiClient.post(`/maintenance/document-imports/${importId}/entries`, payload),
   updateKnowledgeEntry: (id, payload) => apiClient.patch(`/maintenance/knowledge-entries/${id}`, payload),
   publishKnowledgeEntry: (id) => apiClient.post(`/maintenance/knowledge-entries/${id}/publish`),
+
+  // V1.11 - Review Workflow Benchmark telemetry. Read-only-adjacent: none of these can
+  // approve/reject/restore/publish - see MaintenanceReviewSessionController.
+  startReviewSession: (importId, code) => apiClient.post(`/maintenance/document-imports/${importId}/code-groups/${encodeURIComponent(code)}/review-session/start`),
+  heartbeatReviewSession: (sessionId, payload) => apiClient.patch(`/maintenance/review-sessions/${sessionId}/heartbeat`, payload),
+  abandonReviewSession: (sessionId) => apiClient.post(`/maintenance/review-sessions/${sessionId}/abandon`),
+  reviewBenchmark: (importId, params = '') => apiClient.get(`/maintenance/document-imports/${importId}/review-benchmark${params ? `?${params}` : ''}`),
 }

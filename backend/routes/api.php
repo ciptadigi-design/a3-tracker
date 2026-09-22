@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\MaintenanceKnowledgeBaseController;
 use App\Http\Controllers\Api\MaintenanceKnowledgeController;
 use App\Http\Controllers\Api\MaintenanceKnowledgeImportController;
 use App\Http\Controllers\Api\MaintenanceKnowledgeReviewController;
+use App\Http\Controllers\Api\MaintenanceReviewSessionController;
 use App\Http\Controllers\Api\MaintenanceTicketsController;
 use App\Http\Controllers\Api\OperationsController;
 use App\Http\Controllers\Api\ReportsController;
@@ -177,6 +178,12 @@ Route::prefix('v1')->middleware('request.id')->group(function () {
             Route::post('maintenance/document-imports/{id}/entries/bulk-review/apply', [MaintenanceKnowledgeReviewController::class, 'bulkFilterApply']);
             Route::patch('maintenance/knowledge-entries/{id}', [MaintenanceKnowledgeImportController::class, 'updateEntry']);
             Route::post('maintenance/knowledge-entries/{id}/publish', [MaintenanceKnowledgeImportController::class, 'publishEntry']);
+            // V1.11 - Review Workflow Benchmark telemetry. Never able to approve/reject/publish -
+            // see MaintenanceReviewSessionController's class docblock.
+            Route::post('maintenance/document-imports/{id}/code-groups/{code}/review-session/start', [MaintenanceReviewSessionController::class, 'start']);
+            Route::patch('maintenance/review-sessions/{sessionId}/heartbeat', [MaintenanceReviewSessionController::class, 'heartbeat']);
+            Route::post('maintenance/review-sessions/{sessionId}/abandon', [MaintenanceReviewSessionController::class, 'abandon']);
+            Route::get('maintenance/document-imports/{id}/review-benchmark', [MaintenanceReviewSessionController::class, 'benchmark']);
         });
     });
 });

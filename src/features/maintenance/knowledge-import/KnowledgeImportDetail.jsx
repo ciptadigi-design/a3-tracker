@@ -10,6 +10,7 @@ import { BulkReviewDialog } from './BulkReviewDialog.jsx'
 import { CodeGroupsPanel } from './CodeGroupsPanel.jsx'
 import { KnowledgeEntryForm } from './KnowledgeEntryForm.jsx'
 import { PublishDialog } from './PublishDialog.jsx'
+import { ReviewBenchmarkPanel } from './ReviewBenchmarkPanel.jsx'
 import { useKnowledgeEntries } from './useKnowledgeEntries.js'
 import { useKnowledgeImport } from './useKnowledgeImport.js'
 
@@ -244,7 +245,10 @@ export function KnowledgeImportDetail({ importId, canManage, onClose }) {
                 {(state.documentImport.candidate_count ?? 0) === 0 && !hasAnyFilter ? (
                   <small>{isProcessing ? 'No candidates detected yet.' : 'No knowledge entries recorded yet.'}</small>
                 ) : activeView === 'groups' && isPdfImport ? (
-                  <CodeGroupsPanel importId={importId} canManage={canManage} documentImport={state.documentImport} version={groupsVersion} onChanged={handleGroupsChanged} />
+                  <>
+                    {canManage && <ReviewBenchmarkPanel importId={importId} />}
+                    <CodeGroupsPanel importId={importId} canManage={canManage} documentImport={state.documentImport} version={groupsVersion} onChanged={handleGroupsChanged} />
+                  </>
                 ) : (
                   <>
                     <EntryFilters statusFilter={statusFilter} onStatusFilter={setStatusFilter} collisionFilter={collisionFilter} onCollisionFilter={setCollisionFilter} evidenceFilter={evidenceFilter} onEvidenceFilter={setEvidenceFilter} codeSearch={codeSearch} onCodeSearch={setCodeSearch} />

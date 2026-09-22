@@ -96,7 +96,7 @@ test('the header shows evidence, collision, supporting page count, review and pu
 
 test('"Review Publish" opens the preview dialog and does not publish', () => {
   assert.match(detail, /<Rocket size=\{16\} \/> Review Publish/)
-  assert.match(detail, /if \(!canRequestPreview\(\{ published, canonicalId, draft \}\)\) \{ setShowErrors\(true\); return \}\s*setShowPublish\(true\)/)
+  assert.match(detail, /if \(!canRequestPreview\(\{ published, canonicalId, draft \}\)\) \{ setShowErrors\(true\); session\.recordValidationFailure\(\); return \}\s*setShowPublish\(true\)/)
   assert.match(detail, /Opens a read-only preview first\. Nothing is published until you confirm there\./)
   assert.match(publishDialog, /previewGroupPublish\(importId, code, buildPublishPayload\(canonicalId, draft\)\)/)
 })
@@ -156,7 +156,7 @@ test('a stale or invalid confirmation says nothing changed and offers "Preview a
 })
 
 test('editing the canonical content or choosing another occurrence invalidates the on-screen preview', () => {
-  assert.match(detail, /onChange=\{\(next\) => \{ setDraft\(next\); setLastPreview\(null\) \}\}/)
+  assert.match(detail, /setDraft\(next\)\s*setLastPreview\(null\)/)
   assert.match(detail, /previewIsCurrent\(lastPreview, canonicalId, draft\) && Boolean\(lastPreview\?\.can_publish\)/)
 })
 
@@ -209,6 +209,6 @@ test('legacy per-entry Publish stays for manual entries and is replaced by a poi
 })
 
 test('a group publish refreshes the groups, the flat list and the import header', () => {
-  assert.match(detail, /function handlePublished\(\) \{\s*detail\.refresh\(\)\s*onChanged\?\.\(\)/)
+  assert.match(detail, /function handlePublished\(\) \{\s*session\.markPublished\(\)\s*detail\.refresh\(\)\s*onChanged\?\.\(\)/)
   assert.match(panel, /onChanged=\{onChanged\}/)
 })

@@ -26,7 +26,7 @@ function PageBody({ text, code }) {
   return <p className="maintenance-source-page-text">{highlightCode(text, code)}</p>
 }
 
-export function SourcePageContext({ importId, code, sourcePages, truncated }) {
+export function SourcePageContext({ importId, code, sourcePages, truncated, onSourceView }) {
   const directPages = useMemo(() => [...(sourcePages ?? [])].sort((a, b) => a.page_number - b.page_number), [sourcePages])
   const [activePage, setActivePage] = useState(directPages[0]?.page_number ?? null)
   const [adjacent, setAdjacent] = useState({}) // page_number -> { raw_text, is_direct_source, loading, error }
@@ -54,6 +54,7 @@ export function SourcePageContext({ importId, code, sourcePages, truncated }) {
 
   async function goToAdjacent(pageNumber) {
     setActivePage(pageNumber)
+    onSourceView?.()
     if (directPages.some((p) => p.page_number === pageNumber) || adjacent[pageNumber]) return
     setAdjacent((prev) => ({ ...prev, [pageNumber]: { loading: true, error: null, raw_text: null, is_direct_source: false } }))
     try {
@@ -71,7 +72,7 @@ export function SourcePageContext({ importId, code, sourcePages, truncated }) {
       {directPages.length > 1 && (
         <div className="maintenance-source-page-selector" role="tablist" aria-label="Source pages">
           {directPages.map((p) => (
-            <button key={p.page_number} type="button" role="tab" aria-selected={activePage === p.page_number} className={`incident-status-pill${activePage === p.page_number ? ' resolved' : ''}`} onClick={() => setActivePage(p.page_number)}>
+            <button key={p.page_number} type="button" role="tab" aria-selected={activePage === p.page_number} className={`incident-status-pill${activePage === p.page_number ? ' resolved' : ''}`} onClick={() => { setActivePage(p.page_number); onSourceView?.() }}>
               Page {p.page_number}
             </button>
           ))}

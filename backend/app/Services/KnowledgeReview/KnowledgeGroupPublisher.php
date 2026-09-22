@@ -192,7 +192,7 @@ final class KnowledgeGroupPublisher
 
         $accountId = $import->document->account_id;
 
-        return DB::transaction(function () use ($actor, $import, $code, $proposed, $claims, $confirmUpdate, $accountId) {
+        $result = DB::transaction(function () use ($actor, $import, $code, $proposed, $claims, $confirmUpdate, $accountId) {
             $ctx = $this->context($import, $code, true);
             $canonical = $this->canonical($ctx, $proposed['canonical_candidate_id']);
             $plan = $this->plan($ctx, $proposed);
@@ -304,6 +304,13 @@ final class KnowledgeGroupPublisher
 
             return $this->result($ctx, $canonical->fresh(), true, $mode, $solutionsAdded, $solutionsSkipped, $refsCreated, $errorCode);
         });
+
+        // V1.11 - best-effort only, after commit: a REAL governed publish just happened, so any
+        // matching in-progress review session (this reviewer, this import, this code) is marked
+        // PUBLISHED. See ReviewSessionTracker::completeForPublish() - it never throws.
+        app(ReviewSessionTracker::class)->completeForPublish($actor, $import->id, $code);
+
+        return $result;
     }
 
     // ---------------------------------------------------------------- shared evaluation

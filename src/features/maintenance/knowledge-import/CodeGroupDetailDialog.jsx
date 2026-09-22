@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { BookOpenCheck, CheckCircle2, ClipboardList, LoaderCircle, Plus, RotateCcw, Rocket, Trash2, X, XCircle } from 'lucide-react'
 import { BlockingDialog } from '../../../components/ui/BlockingDialog.jsx'
 import { ErrorState } from '../../../components/ui/ErrorState.jsx'
@@ -12,6 +12,7 @@ import {
   DRAFT_LIMITS, EMPTY_DRAFT, EMPTY_SOLUTION, PLACEHOLDER_TITLE_MESSAGE, WORKFLOW_LABELS, canRequestPreview, collisionLabel, isPlaceholderTitle, previewIsCurrent, supportingPagesLabel, validateDraft, workflowState,
 } from './groupPublishUtils.js'
 import { useCodeGroupDetail } from './useCodeGroupDetail.js'
+import { useReviewSession } from './useReviewSession.js'
 
 const statusPillClass = { DRAFT: '', APPROVED: 'resolved', REJECTED: 'voided' }
 const evidencePillClass = { HIGH: 'resolved', MEDIUM: '', LOW: 'voided' }
@@ -137,6 +138,8 @@ function CanonicalEditor({ code, draft, onChange, canonicalOccurrence, publicati
  */
 export function CodeGroupDetailDialog({ importId, code, canManage, version, onClose, onChanged }) {
   const detail = useCodeGroupDetail({ importId, code, version })
+  const session = useReviewSession({ importId, code })
+  const authoringStartedRef = useRef(false)
   const [busyId, setBusyId] = useState(null)
   const [actionError, setActionError] = useState(null)
   const [canonicalId, setCanonicalId] = useState(null)
@@ -167,11 +170,17 @@ export function CodeGroupDetailDialog({ importId, code, canManage, version, onCl
   }
 
   function requestPublishReview() {
-    if (!canRequestPreview({ published, canonicalId, draft })) { setShowErrors(true); return }
+    if (!canRequestPreview({ published, canonicalId, draft })) { setShowErrors(true); session.recordValidationFailure(); return }
     setShowPublish(true)
   }
 
+  function handlePreviewed(previewData) {
+    setLastPreview(previewData)
+    if (previewData?.can_publish) session.setStage('AUTHORING_SAVED')
+  }
+
   function handlePublished() {
+    session.markPublished()
     detail.refresh()
     onChanged?.()
   }
@@ -243,11 +252,16 @@ export function CodeGroupDetailDialog({ importId, code, canManage, version, onCl
                 <small>Each unique page becomes a page reference when this code is published. Reject noise (for example table-of-contents lines) first if it should not be cited.</small>
               </section>
 
-              <SourcePageContext importId={importId} code={code} sourcePages={group.source_pages} truncated={group.source_pages_truncated} />
+              <SourcePageContext importId={importId} code={code} sourcePages={group.source_pages} truncated={group.source_pages_truncated} onSourceView={session.recordSourceView} />
 
               {canManage && !published && (
                 <>
-                  <CanonicalEditor code={code} draft={draft} onChange={(next) => { setDraft(next); setLastPreview(null) }} canonicalOccurrence={canonicalOccurrence} publication={publication} errors={errors} showErrors={showErrors} />
+                  <CanonicalEditor code={code} draft={draft} onChange={(next) => {
+                    setDraft(next)
+                    setLastPreview(null)
+                    session.recordAuthoringEdit()
+                    if (!authoringStartedRef.current) { authoringStartedRef.current = true; session.setStage('AUTHORING_STARTED') }
+                  }} canonicalOccurrence={canonicalOccurrence} publication={publication} errors={errors} showErrors={showErrors} />
                   {showErrors && errors.canonical && <div className="form-error" role="alert"><span>{errors.canonical}</span></div>}
                   <div className="dialog-actions">
                     <button className="primary-button" type="button" onClick={requestPublishReview}><Rocket size={16} /> Review Publish</button>
@@ -260,7 +274,7 @@ export function CodeGroupDetailDialog({ importId, code, canManage, version, onCl
           )}
       </div>
       {showPublish && (
-        <GroupPublishDialog importId={importId} code={code} canonicalId={canonicalId} draft={draft} onClose={() => setShowPublish(false)} onPreviewed={setLastPreview} onPublished={handlePublished} />
+        <GroupPublishDialog importId={importId} code={code} canonicalId={canonicalId} draft={draft} onClose={() => setShowPublish(false)} onPreviewed={handlePreviewed} onPublished={handlePublished} />
       )}
     </BlockingDialog>
   )
