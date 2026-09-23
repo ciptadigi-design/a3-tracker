@@ -1,0 +1,196 @@
+{
+  "schema_version": 1,
+  "mode": "FULL_SOURCE_ANALYSIS_DRY_RUN_ONLY",
+  "baseline": {
+    "branch": "develop",
+    "start_sha": "e12150e9476090ac5b9ea6eb13b09aad88de5439",
+    "origin_develop_sha": "e12150e9476090ac5b9ea6eb13b09aad88de5439",
+    "preexisting_m2_12e_m2_12f_work_preserved": true
+  },
+  "source": {
+    "filename": "bizhub_PRESS_C1070_C1070P_C1060_PRO_C1060L_E_SM_v1.5.pdf",
+    "sha256": "ae679f5bcd31a49826f9b2587ad4b9483be93950f246c1ea014a7dd0ddcb6ee4",
+    "physical_pages": 2639,
+    "extractor": "pypdf 6.14.2 layout mode",
+    "extracted_page_text_digest": "f84c08a2bb28a459d95287a73696d38c2ca80defbf02d6b6ab8d731b104063b2",
+    "temporary_cache_outside_repository": true
+  },
+  "discovery": {
+    "semantic_entries": 628,
+    "distinct_normalized_codes": 617,
+    "identity_collisions": 0,
+    "duplicated_code_strings": 11,
+    "extra_semantic_variants": 11,
+    "verified_next_heading_boundaries": 606,
+    "verified_structural_terminal_boundaries": 21,
+    "verified_chapter_terminal_boundaries": 1,
+    "unverified_or_truncated_boundaries": 0
+  },
+  "applicability": {
+    "resolved": 628,
+    "ambiguous": 0,
+    "unresolved": 0,
+    "variant_key_distribution": {
+      "MAIN_BODY": 288,
+      "DF": 9,
+      "FD": 20,
+      "FS": 15,
+      "FS-531_FS-612": 9,
+      "FS-532": 22,
+      "FS-612": 8,
+      "GP": 3,
+      "LS": 2,
+      "LS_1ST_TANDEM": 11,
+      "LS_2ND_TANDEM": 11,
+      "LU": 13,
+      "PB": 73,
+      "PF": 54,
+      "PF-707": 3,
+      "PI": 3,
+      "PK-512_PK-513": 2,
+      "PK-522": 2,
+      "RU": 39,
+      "SD": 40,
+      "SD-506": 1
+    }
+  },
+  "code_families": {
+    "semantic_entry_counts": {
+      "C-NUMERIC": 563,
+      "C-Cxxx": 28,
+      "C-Dxxx": 21,
+      "C-Exxx": 15,
+      "OTHER": 1
+    },
+    "distinct_code_counts": {
+      "C-NUMERIC": 552,
+      "C-Cxxx": 28,
+      "C-Dxxx": 21,
+      "C-Exxx": 15,
+      "OTHER": 1
+    },
+    "other_real_codes": ["C-6F01"]
+  },
+  "initial": {
+    "pass": 621,
+    "warn": 5,
+    "fail": 2,
+    "diagnostics": {
+      "AMBIGUOUS_APPLICABILITY": 4,
+      "UNKNOWN_FIELD_HEADING": 2,
+      "MISSING_CLASSIFICATION": 2,
+      "NO_SOLUTION_STEPS": 3,
+      "MALFORMED_STEP_SEQUENCE": 2
+    }
+  },
+  "parser_hardening": {
+    "unindented_first_classification_value": 2,
+    "unpunctuated_explicit_accessory_scope": 2,
+    "solution_family_structural_boundary": 21,
+    "code_page_or_section_special_cases": 0
+  },
+  "final": {
+    "pass": 625,
+    "warn": 1,
+    "fail": 2,
+    "diagnostics": {
+      "NO_SOLUTION_STEPS": 3,
+      "MALFORMED_STEP_SEQUENCE": 2
+    },
+    "non_pass": [
+      {"section": "2.14.8", "code": "C-1547", "outcome": "WARN", "classification": "MANUFACTURER_SPARSE_SAFETY_ONLY"},
+      {"section": "2.25.17", "code": "C-C131", "outcome": "FAIL", "classification": "MANUFACTURER_SPARSE_EMPTY_STEP_1"},
+      {"section": "2.26.21", "code": "C-D0F8", "outcome": "FAIL", "classification": "MANUFACTURER_SPARSE_EMPTY_STEP_1"}
+    ]
+  },
+  "duplicate_variants": {
+    "C-1102": {"2.8.11": "FS-531_FS-612", "2.8.12": "FS-532"},
+    "C-1103": {"2.8.13": "FS-531_FS-612", "2.8.14": "FS-532"},
+    "C-1105": {"2.8.16": "FS-531_FS-612", "2.8.17": "FS-532"},
+    "C-1106": {"2.8.18": "FS-531_FS-612", "2.8.19": "FS-532"},
+    "C-1109": {"2.8.22": "FS-531_FS-612", "2.8.23": "FS-532"},
+    "C-1113": {"2.8.27": "FS-612", "2.8.28": "FS-532"},
+    "C-1114": {"2.8.29": "FS-612", "2.8.30": "FS-532"},
+    "C-1115": {"2.8.31": "FS-612", "2.8.32": "FS"},
+    "C-1127": {"2.9.1": "PK-512_PK-513", "2.9.2": "PK-522"},
+    "C-1132": {"2.9.3": "PK-512_PK-513", "2.9.4": "PK-522"},
+    "C-1137": {"2.9.5": "FS-531_FS-612", "2.9.6": "FS-532"}
+  },
+  "safety": {
+    "warning_entries": 54,
+    "dipsw_entries": 243,
+    "detached_control_entries": 205,
+    "pass_warning_entries": 53,
+    "pass_dipsw_entries": 242,
+    "pass_detached_control_entries": 204,
+    "programmatic_silent_losses": 0,
+    "warning_sample": ["2.14.1 C-1540", "2.14.7 C-1546", "2.14.13 C-1552", "2.14.19 C-1558", "2.20.2 C-3502", "2.20.7 C-3510", "2.20.13 C-3518", "2.20.19 C-3901", "2.20.25 C-3907", "2.20.29 C-3911"],
+    "dipsw_sample": ["2.5.4 C-0102", "2.8.34 C-1124", "2.9.27 C-1181", "2.10.8 C-1243", "2.11.1 C-1271", "2.13.2 C-1502", "2.13.29 C-1531", "2.14.23 C-1562", "2.20.27 C-3909", "2.26.34 C-E015"],
+    "detached_control_sample": ["2.5.4 C-0102", "2.8.30 C-1114", "2.9.17 C-1170", "2.9.41 C-1222", "2.10.18 C-1253", "2.11.12 C-1295", "2.13.4 C-1505", "2.13.27 C-1528", "2.14.16 C-1555", "2.26.17 C-D0F0"]
+  },
+  "boundary_audit": {
+    "single_page": 410,
+    "multi_page": 218,
+    "cross_page": 218,
+    "maximum_page_span": 2,
+    "neighbor_leaks": 0,
+    "missing_continuations": 0,
+    "duplicate_page_content": 0,
+    "running_header_footer_contamination": 0,
+    "manual_sample": ["2.5.2 C-0002", "2.7.11 C-0411", "2.8.13 C-1103 FS-531_FS-612", "2.10.27 C-1262", "2.12.23 C-1455", "2.14.19 C-1558", "2.18.18 C-2841", "2.21.2 C-4102", "2.22.20 C-5403", "2.26.30 C-E009"]
+  },
+  "solution_parts_references": {
+    "steps": {"zero": 3, "one": 21, "2-5": 260, "6-10": 303, ">10": 41, "maximum": 16},
+    "parts": {"total": 2018, "empty_sections": 13, "one": 37, "2-5": 519, "6-10": 57, ">10": 2, "maximum": 13},
+    "references": {"total": 1540, "WIRING_DIAGRAM": 598, "IO_CHECK": 580, "SERVICE_SECTION": 82, "DIPSW": 280, "OTHER": 0}
+  },
+  "determinism": {
+    "run_1_digest": "2240175affdfdbf49ad485e1698201b76c33db49035bc69e2f65a69fdc18eba1",
+    "run_2_digest": "2240175affdfdbf49ad485e1698201b76c33db49035bc69e2f65a69fdc18eba1",
+    "match": true
+  },
+  "manual_accuracy_sample": {
+    "selection": "deterministic coverage set fixed before visual comparison",
+    "match": 25,
+    "partial": 0,
+    "fail": 0,
+    "cases": [
+      "2.5.1 C-0001 MAIN_BODY", "2.5.4 C-0102 LU", "2.5.5 C-0103 PF", "2.8.1 C-1005 FS", "2.8.2 C-1006 FD",
+      "2.8.3 C-1007 SD", "2.8.4 C-1009 PB", "2.8.7 C-1012 GP", "2.8.8 C-1013 RU", "2.8.13 C-1103 FS-531_FS-612",
+      "2.8.14 C-1103 FS-532", "2.8.34 C-1124 PI", "2.9.1 C-1127 PK-512_PK-513", "2.9.28 C-1201 LS_1ST_TANDEM", "2.9.34 C-1211 LS_2ND_TANDEM",
+      "2.14.8 C-1547 PB", "2.20.6 C-3509 MAIN_BODY", "2.20.29 C-3911 MAIN_BODY", "2.21.9 C-4505 MAIN_BODY", "2.23.15 C-6F01 MAIN_BODY",
+      "2.24.2 C-8001 DF", "2.25.5 C-C111 LS", "2.25.26 C-C152 MAIN_BODY", "2.26.1 C-D010 MAIN_BODY", "2.26.31 C-E012 MAIN_BODY"
+    ]
+  },
+  "legacy_comparison": {
+    "legacy_candidate_occurrences": 2680,
+    "legacy_distinct_groups": 705,
+    "v2_semantic_entries": 628,
+    "v2_distinct_codes": 617,
+    "v2_distinct_minus_legacy_groups": -88,
+    "v2_semantic_minus_legacy_groups": -77,
+    "forced_equivalence": false
+  },
+  "mutation_proof": {
+    "official_v2_writes": 0,
+    "legacy_writes": 0,
+    "production_access": 0,
+    "deployments": 0,
+    "regression_database_scope": "in-memory SQLite and disposable local MySQL only; no source-manual ingestion"
+  },
+  "regression": {
+    "focused_v2": "PASS: 32 tests, 395 assertions",
+    "semantic_parser": "PASS: 30 tests, 145 assertions",
+    "full_backend_sqlite": "PASS: 805 tests, 4011 assertions (83 normal, 722 deprecation-reported)",
+    "full_backend_mysql": "PASS on local MySQL 9.7.1 disposable database",
+    "node_repository_tests": "PASS: 732 passed, 2 skipped",
+    "node_maintenance_safety": "PASS: 41 tests",
+    "vite_build": "PASS",
+    "changed_file_pint": "PASS",
+    "git_diff_check": "PASS",
+    "eslint": "BASELINE_FAIL: repository-wide command includes vendor and protected preexisting production bundles; 1118 unrelated findings"
+  },
+  "recommendation": "READY_FOR_FULL_MANUAL_INGESTION_DESIGN",
+  "gate": "V2_1_FULL_MANUAL_DRY_RUN=PASS",
+  "ready_for_full_manual_ingestion_design": "YES"
+}

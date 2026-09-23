@@ -140,6 +140,12 @@ final class OfficialErrorFieldParser
 
             $unknownHeading = $this->unknownHeading($line);
             if ($unknownHeading !== null) {
+                if ($currentField === 'classification' && ! $this->hasSubstantiveFieldContent($blocks[$currentField])) {
+                    $blocks[$currentField][] = rtrim($line);
+
+                    continue;
+                }
+
                 $diagnostics[] = new ParserDiagnostic(
                     ParserDiagnosticCode::UNKNOWN_FIELD_HEADING,
                     ParserDiagnosticSeverity::WARNING,
@@ -157,6 +163,18 @@ final class OfficialErrorFieldParser
         }
 
         return $blocks;
+    }
+
+    /** @param list<string> $lines */
+    private function hasSubstantiveFieldContent(array $lines): bool
+    {
+        foreach ($lines as $line) {
+            if (trim($line) !== '') {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /** @return array{string, string|null}|null */
@@ -235,6 +253,12 @@ final class OfficialErrorFieldParser
         }
 
         if ($classification !== null && preg_match('/^(?<scope>[A-Z][A-Z0-9-]*(?:\s*\([^:)]+\))?)\s*:/u', $classification, $match) === 1) {
+            $scope = trim($match['scope']);
+
+            return [[$scope], $this->normalizeVariantKey($scope)];
+        }
+
+        if ($classification !== null && preg_match('/^(?<scope>(?:DF|FD|FS|GP|LS|LU|PB|PF|PI|PK|RU|SD)(?:-\d+[A-Za-z]?)?)(?=\s)/u', $classification, $match) === 1) {
             $scope = trim($match['scope']);
 
             return [[$scope], $this->normalizeVariantKey($scope)];

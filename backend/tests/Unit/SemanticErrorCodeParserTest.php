@@ -146,6 +146,19 @@ class SemanticErrorCodeParserTest extends TestCase
         $this->assertStringNotContainsString('C-A101', $first->rawSourceText);
     }
 
+    public function test_solution_family_heading_terminates_previous_semantic_section(): void
+    {
+        $result = $this->parser->parseChunks([
+            new SourceTextChunk("2.16.21 C-2470\nClassification: Main body: Synthetic.\nSolution:\n1. First.\nControl while detached\n2.17 Solution 13 (C-2701_2800)\n2.17.1 C-2701\nClassification: Main body: Synthetic.\nSolution:\n1. Second.", 1571, true),
+        ]);
+
+        $this->assertCount(2, $result->entries);
+        $this->assertNull($result->entries[0]->detachedControl);
+        $this->assertStringNotContainsString('Solution 13', $result->entries[0]->rawSourceText);
+        $this->assertSame(ParserOutcome::PASS, $result->entries[0]->outcome);
+        $this->assertSame(ParserOutcome::PASS, $result->entries[1]->outcome);
+    }
+
     public function test_unknown_heading_warns_without_losing_raw_or_known_fields(): void
     {
         $raw = $this->fixture('unknown-content.txt');
@@ -219,6 +232,39 @@ class SemanticErrorCodeParserTest extends TestCase
 
         $this->assertSame(['PB'], $entry->applicabilities);
         $this->assertSame('PB', $entry->variantKey);
+    }
+
+    public function test_unindented_first_classification_value_is_not_mistaken_for_unknown_field_heading(): void
+    {
+        $entry = $this->singleEntry($this->parseVerified(
+            "2.11.33 C-1335\nClassification\n\nLS (2nd tandem): LS abnormality\nSolution\n1. Check the sensor.",
+        )->entries);
+
+        $this->assertSame('LS (2nd tandem): LS abnormality', $entry->classification);
+        $this->assertSame(['LS (2nd tandem)'], $entry->applicabilities);
+        $this->assertSame('LS_2ND_TANDEM', $entry->variantKey);
+        $this->assertSame(ParserOutcome::PASS, $entry->outcome);
+    }
+
+    #[DataProvider('unpunctuatedAccessoryClassificationProvider')]
+    public function test_unpunctuated_accessory_classification_prefix_provides_applicability(
+        string $classification,
+        string $applicability,
+    ): void {
+        $entry = $this->singleEntry($this->parseVerified(
+            "2.11.34 C-1336\nClassification\n      {$classification}\nSolution\n1. Check the control board.",
+        )->entries);
+
+        $this->assertSame([$applicability], $entry->applicabilities);
+        $this->assertSame(strtoupper($applicability), $entry->variantKey);
+        $this->assertSame(ParserOutcome::PASS, $entry->outcome);
+    }
+
+    /** @return iterable<string, array{string, string}> */
+    public static function unpunctuatedAccessoryClassificationProvider(): iterable
+    {
+        yield 'accessory acronym' => ['PB control board (PBCB)', 'PB'];
+        yield 'accessory model' => ['SD-506 ISW unwritten', 'SD-506'];
     }
 
     public function test_end_of_input_without_verified_boundary_fails_explicitly(): void

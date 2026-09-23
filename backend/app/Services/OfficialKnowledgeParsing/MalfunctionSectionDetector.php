@@ -7,6 +7,9 @@ final class MalfunctionSectionDetector
     /** A dotted manual section number followed by any four-character manufacturer C-code family. */
     private const HEADING_PATTERN = '/^(?<section>\d+(?:\.\d+)+)[ \t]+(?<code>C-[A-Z0-9]{4})[ \t]*\*?(?:[ \t]*\((?<applicability>[^\r\n)]+)\))?[ \t]*$/imu';
 
+    /** A verified manufacturer solution-family heading between two malfunction sections. */
+    private const SOLUTION_FAMILY_PATTERN = '/^\d+\.\d+[ \t]+Solution[ \t]+\d+[ \t]+\(C-[A-Z0-9]{4}_[A-Z0-9]{4}\)[ \t]*$/imu';
+
     public function detect(string $rawText): SemanticSectionDetectionResult
     {
         return $this->detectChunks([new SourceTextChunk($rawText)]);
@@ -17,6 +20,7 @@ final class MalfunctionSectionDetector
     {
         [$text, $pageRanges] = $this->combineChunks($chunks);
         preg_match_all(self::HEADING_PATTERN, $text, $matches, PREG_SET_ORDER | PREG_OFFSET_CAPTURE);
+        preg_match_all(self::SOLUTION_FAMILY_PATTERN, $text, $familyMatches, PREG_SET_ORDER | PREG_OFFSET_CAPTURE);
 
         if ($matches === []) {
             return new SemanticSectionDetectionResult([], [new ParserDiagnostic(
@@ -29,12 +33,14 @@ final class MalfunctionSectionDetector
         $sections = [];
         foreach ($matches as $index => $match) {
             $start = $match[0][1];
-            $end = $matches[$index + 1][0][1] ?? strlen($text);
+            $nextHeading = $matches[$index + 1][0][1] ?? strlen($text);
+            $familyBoundary = $this->nextFamilyBoundary($start, $nextHeading, $familyMatches);
+            $end = $familyBoundary ?? $nextHeading;
             $rawSection = substr($text, $start, $end - $start);
             $lastContentOffset = $start + max(0, strlen(rtrim($rawSection)) - 1);
 
             $diagnostics = [];
-            if (! isset($matches[$index + 1]) && ! $this->hasVerifiedFinalBoundary($chunks)) {
+            if (! isset($matches[$index + 1]) && $familyBoundary === null && ! $this->hasVerifiedFinalBoundary($chunks)) {
                 $diagnostics[] = new ParserDiagnostic(
                     ParserDiagnosticCode::UNTERMINATED_SECTION,
                     ParserDiagnosticSeverity::ERROR,
@@ -56,6 +62,19 @@ final class MalfunctionSectionDetector
         }
 
         return new SemanticSectionDetectionResult($sections);
+    }
+
+    /** @param list<array<string, array{string, int}>> $familyMatches */
+    private function nextFamilyBoundary(int $start, int $nextHeading, array $familyMatches): ?int
+    {
+        foreach ($familyMatches as $match) {
+            $offset = $match[0][1];
+            if ($offset > $start && $offset < $nextHeading) {
+                return $offset;
+            }
+        }
+
+        return null;
     }
 
     /** @param list<SourceTextChunk> $chunks */
