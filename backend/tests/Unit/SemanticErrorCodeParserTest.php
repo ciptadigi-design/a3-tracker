@@ -242,6 +242,50 @@ class SemanticErrorCodeParserTest extends TestCase
         $this->assertSame('DIPSW49-1.', $entry->references[0]->value);
     }
 
+    public function test_real_heading_whitespace_before_star_still_terminates_previous_section(): void
+    {
+        $raw = implode("\n", [
+            '2.22.1 C-5001',
+            'Code:',
+            'C-5001',
+            'Classification:',
+            '      Main body: Communication abnormality',
+            'Solution:',
+            '1. First section step.',
+            '2.22.2 C-5002 *',
+            'Code:',
+            'C-5002*',
+            'Classification:',
+            '      Main body: Communication abnormality',
+            'Solution:',
+            '1. Second section step.',
+        ]);
+
+        $result = $this->parser->parseChunks([new SourceTextChunk($raw, 1630, true)]);
+
+        $this->assertCount(2, $result->entries);
+        $this->assertSame('C-5001', $result->entries[0]->code);
+        $this->assertSame(['First section step.'], array_column($result->entries[0]->steps, 'instruction'));
+        $this->assertSame(ParserOutcome::PASS, $result->entries[0]->outcome);
+    }
+
+    public function test_parenthesized_classification_scope_produces_stable_distinct_variant(): void
+    {
+        $entry = $this->singleEntry($this->parseVerified(implode("\n", [
+            '2.9.29 C-1202',
+            'Code:',
+            'C-1202',
+            'Classification:',
+            '      LS (1st tandem): LS abnormality',
+            'Solution:',
+            '1. Check the unit.',
+        ]))->entries);
+
+        $this->assertSame(['LS (1st tandem)'], $entry->applicabilities);
+        $this->assertSame('LS_1ST_TANDEM', $entry->variantKey);
+        $this->assertSame(ParserOutcome::PASS, $entry->outcome);
+    }
+
     /** @param list<ParsedOfficialErrorEntry> $entries */
     private function singleEntry(array $entries): ParsedOfficialErrorEntry
     {

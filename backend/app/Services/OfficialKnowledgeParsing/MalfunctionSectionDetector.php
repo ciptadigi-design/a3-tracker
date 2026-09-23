@@ -5,7 +5,7 @@ namespace App\Services\OfficialKnowledgeParsing;
 final class MalfunctionSectionDetector
 {
     /** A dotted manual section number followed by any four-character manufacturer C-code family. */
-    private const HEADING_PATTERN = '/^(?<section>\d+(?:\.\d+)+)[ \t]+(?<code>C-[A-Z0-9]{4})\*?(?:[ \t]*\((?<applicability>[^\r\n)]+)\))?[ \t]*$/imu';
+    private const HEADING_PATTERN = '/^(?<section>\d+(?:\.\d+)+)[ \t]+(?<code>C-[A-Z0-9]{4})[ \t]*\*?(?:[ \t]*\((?<applicability>[^\r\n)]+)\))?[ \t]*$/imu';
 
     public function detect(string $rawText): SemanticSectionDetectionResult
     {

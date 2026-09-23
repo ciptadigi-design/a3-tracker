@@ -101,9 +101,6 @@ final class IngestOfficialKnowledge extends Command
             if ($entry->code !== $selector->code || $entry->variantKey !== $selector->variantKey) {
                 return $this->refuse("Parsed identity differs from requested section {$selector->sectionNumber}.");
             }
-            if ($entry->outcome !== ParserOutcome::PASS) {
-                return $this->refuse("Section {$selector->sectionNumber} has parser outcome {$entry->outcome->value}; PASS_ONLY is required.");
-            }
             $prepared[] = $entry;
         }
 
@@ -112,10 +109,11 @@ final class IngestOfficialKnowledge extends Command
                 fn (ParsedOfficialErrorEntry $entry) => $ingestion->plan($document, $entry, OfficialKnowledgeIngestionPolicy::PASS_ONLY),
                 $prepared,
             );
-            if (collect($results)->contains(fn ($result): bool => $result->action === OfficialKnowledgeIngestionAction::REJECTED)) {
-                return $this->refuse('The prepared dry-run batch was rejected; zero official entries were persisted.');
-            }
         } else {
+            $unsafe = collect($prepared)->first(fn (ParsedOfficialErrorEntry $entry): bool => $entry->outcome !== ParserOutcome::PASS);
+            if ($unsafe !== null) {
+                return $this->refuse("Section {$unsafe->sectionNumber} has parser outcome {$unsafe->outcome->value}; PASS_ONLY is required. Zero official entries were persisted.");
+            }
             $batch = $ingestion->ingestBatch($document, $prepared, OfficialKnowledgeIngestionPolicy::PASS_ONLY);
             if (! $batch->persisted) {
                 return $this->refuse('The prepared batch was rejected; zero official entries were persisted.');
@@ -130,16 +128,27 @@ final class IngestOfficialKnowledge extends Command
                 $entry->variantKey,
                 $entry->outcome->value,
                 $results[$index]->action->value,
+                'pages='.$entry->sourcePageStart.'-'.$entry->sourcePageEnd,
+                'parts='.count($entry->parts),
+                'steps='.count($entry->steps),
+                'references='.count($entry->references),
+                'warning='.($entry->warning === null ? 'NO' : 'YES'),
+                'dipsw='.($entry->isolationDipsw === null ? 'NO' : 'YES'),
+                'detached='.($entry->detachedControl === null ? 'NO' : 'YES'),
+                'diagnostics='.($entry->diagnostics === []
+                    ? 'NONE'
+                    : implode(',', array_map(fn ($diagnostic): string => $diagnostic->code->value, $entry->diagnostics))),
             ]));
         }
 
         $counts = array_count_values(array_map(fn ($result): string => $result->action->value, $results));
+        $outcomes = array_count_values(array_map(fn (ParsedOfficialErrorEntry $entry): string => $entry->outcome->value, $prepared));
         $this->line('OFFICIAL_INGESTION_MODE='.($dryRun ? 'DRY_RUN' : 'APPLY'));
         $this->line('OFFICIAL_INGESTION_MANIFEST='.$manifest->name);
         $this->line('OFFICIAL_INGESTION_SELECTED='.count($prepared));
-        $this->line('OFFICIAL_INGESTION_PASS='.count($prepared));
-        $this->line('OFFICIAL_INGESTION_WARN=0');
-        $this->line('OFFICIAL_INGESTION_FAIL=0');
+        foreach (ParserOutcome::cases() as $outcome) {
+            $this->line('OFFICIAL_INGESTION_'.$outcome->value.'='.($outcomes[$outcome->value] ?? 0));
+        }
         foreach (OfficialKnowledgeIngestionAction::cases() as $action) {
             $this->line('OFFICIAL_INGESTION_'.$action->value.'='.($counts[$action->value] ?? 0));
         }

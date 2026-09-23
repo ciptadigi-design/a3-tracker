@@ -234,8 +234,10 @@ final class OfficialErrorFieldParser
             return [['Main body'], 'MAIN_BODY'];
         }
 
-        if ($classification !== null && preg_match('/^(?<scope>[A-Z][A-Z0-9-]*)\s*:/u', $classification, $match) === 1) {
-            return [[$match['scope']], $this->normalizeVariantKey($match['scope'])];
+        if ($classification !== null && preg_match('/^(?<scope>[A-Z][A-Z0-9-]*(?:\s*\([^:)]+\))?)\s*:/u', $classification, $match) === 1) {
+            $scope = trim($match['scope']);
+
+            return [[$scope], $this->normalizeVariantKey($scope)];
         }
 
         $diagnostics[] = new ParserDiagnostic(

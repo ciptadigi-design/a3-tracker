@@ -49,6 +49,27 @@ class IngestOfficialKnowledgeCommandTest extends TestCase
         $this->assertDatabaseCount('maintenance_official_error_entries', 1);
     }
 
+    public function test_dry_run_reports_warn_as_rejected_without_mutation_but_apply_refuses_batch(): void
+    {
+        [$document, $pdf, $hash] = $this->commandFixture();
+        $this->bindControlledSource($hash, includeUnknownHeading: true);
+        $dryRun = $this->commandOptions($document, $pdf, $hash, dryRun: true);
+
+        $this->artisan('maintenance:v2-ingest-official', $dryRun)
+            ->assertSuccessful()
+            ->expectsOutputToContain('WARN | REJECTED')
+            ->expectsOutputToContain('OFFICIAL_INGESTION_PASS=0')
+            ->expectsOutputToContain('OFFICIAL_INGESTION_WARN=1')
+            ->expectsOutputToContain('OFFICIAL_INGESTION_TRANSACTION=NOT_STARTED');
+
+        $apply = $this->commandOptions($document, $pdf, $hash, apply: true);
+        $this->artisan('maintenance:v2-ingest-official', $apply)
+            ->assertFailed()
+            ->expectsOutputToContain('PASS_ONLY is required. Zero official entries were persisted.');
+
+        $this->assertDatabaseCount('maintenance_official_error_entries', 0);
+    }
+
     public function test_production_environment_is_refused_before_any_source_or_database_work(): void
     {
         $this->app->detectEnvironment(fn (): string => 'production');
@@ -134,8 +155,12 @@ class IngestOfficialKnowledgeCommandTest extends TestCase
         return [$document, $pdf, hash_file('sha256', $pdf)];
     }
 
-    private function bindControlledSource(string $hash, string $expectedCode = 'C-3913'): void
-    {
+    private function bindControlledSource(
+        string $hash,
+        string $expectedCode = 'C-3913',
+        ?string $classification = 'Main body: Fixture classification',
+        bool $includeUnknownHeading = false,
+    ): void {
         $manifest = new OfficialKnowledgeManifest('test-one', $hash, [
             new OfficialKnowledgeSelector('2.20.31', $expectedCode, 'MAIN_BODY', [1]),
         ]);
@@ -148,16 +173,27 @@ class IngestOfficialKnowledgeCommandTest extends TestCase
                 return $name === $this->manifest->name ? $this->manifest : null;
             }
         });
-        $this->app->instance(OfficialPdfTextAcquirer::class, new class implements OfficialPdfTextAcquirer
+        $this->app->instance(OfficialPdfTextAcquirer::class, new class($classification, $includeUnknownHeading) implements OfficialPdfTextAcquirer
         {
+            public function __construct(
+                private readonly ?string $classification,
+                private readonly bool $includeUnknownHeading,
+            ) {}
+
             public function acquire(string $pdfPath, array $pageNumbers): array
             {
-                return [1 => implode("\n", [
+                $lines = [
                     '2.20.31 C-3913*',
                     'Code:',
                     'C-3913*',
-                    'Classification:',
-                    '      Main body: Fixture classification',
+                ];
+                if ($this->classification !== null) {
+                    array_push($lines, 'Classification:', '      '.$this->classification);
+                }
+                if ($this->includeUnknownHeading) {
+                    array_push($lines, 'Novel field: preserved in raw source');
+                }
+                array_push($lines,
                     'Cause:',
                     'Fixture cause.',
                     'Estimated abnormal parts:',
@@ -165,7 +201,9 @@ class IngestOfficialKnowledgeCommandTest extends TestCase
                     'Solution:',
                     '1. Fixture step.',
                     '2.20.32 C-3917*',
-                ])];
+                );
+
+                return [1 => implode("\n", $lines)];
             }
         });
     }
