@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\MachineCostController;
 use App\Http\Controllers\Api\MaintenanceDocumentController;
 use App\Http\Controllers\Api\MaintenanceKnowledgeBaseController;
 use App\Http\Controllers\Api\MaintenanceKnowledgeController;
+use App\Http\Controllers\Api\MaintenanceOfficialErrorEntryController;
 use App\Http\Controllers\Api\MaintenanceTicketsController;
 use App\Http\Controllers\Api\OperationsController;
 use App\Http\Controllers\Api\ReportsController;
@@ -138,6 +139,8 @@ Route::prefix('v1')->middleware('request.id')->group(function () {
             Route::post('maintenance/documents/{id}/upload', [MaintenanceDocumentController::class, 'upload']);
             Route::get('maintenance/documents/{id}/download', [MaintenanceDocumentController::class, 'download']);
             Route::delete('maintenance/documents/{id}/file', [MaintenanceDocumentController::class, 'deleteFile']);
+            Route::get('maintenance/official-error-entries', [MaintenanceOfficialErrorEntryController::class, 'index']);
+            Route::get('maintenance/official-error-entries/{id}', [MaintenanceOfficialErrorEntryController::class, 'show']);
             Route::get('maintenance/error-codes', [MaintenanceKnowledgeBaseController::class, 'errorCodes']);
             Route::post('maintenance/error-codes', [MaintenanceKnowledgeBaseController::class, 'storeErrorCode']);
             Route::put('maintenance/error-codes/{id}', [MaintenanceKnowledgeBaseController::class, 'updateErrorCode']);

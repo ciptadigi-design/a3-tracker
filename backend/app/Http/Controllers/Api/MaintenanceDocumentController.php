@@ -8,6 +8,7 @@ use App\Models\MachineModel;
 use App\Models\MaintenanceDocument;
 use App\Models\MaintenanceDocumentImport;
 use App\Models\MaintenanceDocumentReference;
+use App\Models\MaintenanceOfficialErrorEntry;
 use App\Models\Manufacturer;
 use App\Services\AccountAccessResolver;
 use App\Services\DocumentStorageService;
@@ -167,6 +168,9 @@ class MaintenanceDocumentController extends Controller
         }
         if (MaintenanceDocumentImport::where('document_id', $doc->id)->exists()) {
             return '[DOCUMENT_HAS_LEGACY_IMPORTS] This document has legacy knowledge-processing history and cannot be deleted. Archive it instead.';
+        }
+        if (MaintenanceOfficialErrorEntry::where('document_id', $doc->id)->exists()) {
+            return '[DOCUMENT_HAS_OFFICIAL_KNOWLEDGE] This document is the authoritative source for official maintenance knowledge and cannot be deleted. Archive it instead.';
         }
 
         return null;

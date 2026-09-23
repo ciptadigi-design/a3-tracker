@@ -50,4 +50,9 @@ class MaintenanceDocument extends Model
     {
         return $this->hasMany(MaintenanceDocumentPage::class, 'document_id');
     }
+
+    public function officialErrorEntries()
+    {
+        return $this->hasMany(MaintenanceOfficialErrorEntry::class, 'document_id');
+    }
 }
