@@ -13,9 +13,6 @@ export const laravelMaintenance = {
   deleteDocumentReference: (documentId, referenceId) => apiClient.delete(`/maintenance/documents/${documentId}/references/${referenceId}`),
   uploadDocumentFile: (documentId, formData) => apiClient.upload(`/maintenance/documents/${documentId}/upload`, formData),
   deleteDocumentFile: (documentId) => apiClient.delete(`/maintenance/documents/${documentId}/file`),
-  startDocumentExtraction: (documentId) => apiClient.post(`/maintenance/documents/${documentId}/extract`),
-  documentExtraction: (documentId) => apiClient.get(`/maintenance/documents/${documentId}/extraction`),
-  documentPages: (documentId, params = '') => apiClient.get(`/maintenance/documents/${documentId}/pages${params ? `?${params}` : ''}`),
 
   errorCodes: (params = '') => apiClient.get(`/maintenance/error-codes${params ? `?${params}` : ''}`),
   createErrorCode: (payload) => apiClient.post('/maintenance/error-codes', payload),
@@ -36,32 +33,4 @@ export const laravelMaintenance = {
   knowledge: (params = '') => apiClient.get(`/maintenance/knowledge${params ? `?${params}` : ''}`),
   submitKnowledge: (payload) => apiClient.post('/maintenance/knowledge', payload),
   reviewKnowledge: (id, approvalStatus) => apiClient.patch(`/maintenance/knowledge/${id}/review`, { approval_status: approvalStatus }),
-
-  processDocumentKnowledge: (documentId, payload = {}) => apiClient.post(`/maintenance/documents/${documentId}/process-knowledge`, payload),
-  documentImports: (params = '') => apiClient.get(`/maintenance/document-imports${params ? `?${params}` : ''}`),
-  documentImport: (id) => apiClient.get(`/maintenance/document-imports/${id}`),
-  documentImportEntries: (importId, params = '') => apiClient.get(`/maintenance/document-imports/${importId}/entries${params ? `?${params}` : ''}`),
-  bulkReviewEntries: (importId, payload) => apiClient.post(`/maintenance/document-imports/${importId}/entries/bulk-review`, payload),
-  // V1.7.2 - consolidated code-group review + filter-based bulk triage (preview -> confirm -> apply).
-  codeGroups: (importId, params = '') => apiClient.get(`/maintenance/document-imports/${importId}/code-groups${params ? `?${params}` : ''}`),
-  codeGroup: (importId, code) => apiClient.get(`/maintenance/document-imports/${importId}/code-groups/${encodeURIComponent(code)}`),
-  // V1.9 - one adjacent context page beyond the group's own source pages (e.g. a procedure that
-  // continues across a page break). Read-only; refused (404) if too far from the group's own evidence.
-  codeGroupPage: (importId, code, pageNumber) => apiClient.get(`/maintenance/document-imports/${importId}/code-groups/${encodeURIComponent(code)}/pages/${encodeURIComponent(pageNumber)}`),
-  previewFilterBulkReview: (importId, payload) => apiClient.post(`/maintenance/document-imports/${importId}/entries/bulk-review/preview`, payload),
-  applyFilterBulkReview: (importId, payload) => apiClient.post(`/maintenance/document-imports/${importId}/entries/bulk-review/apply`, payload),
-  // V1.8 - single-code group publish (preview -> confirm -> publish). There is deliberately no bulk variant.
-  previewGroupPublish: (importId, code, payload) => apiClient.post(`/maintenance/document-imports/${importId}/code-groups/${encodeURIComponent(code)}/publish-preview`, payload),
-  publishGroup: (importId, code, payload) => apiClient.post(`/maintenance/document-imports/${importId}/code-groups/${encodeURIComponent(code)}/publish`, payload),
-  createDocumentImport: (payload) => apiClient.post('/maintenance/document-imports', payload),
-  addKnowledgeEntry: (importId, payload) => apiClient.post(`/maintenance/document-imports/${importId}/entries`, payload),
-  updateKnowledgeEntry: (id, payload) => apiClient.patch(`/maintenance/knowledge-entries/${id}`, payload),
-  publishKnowledgeEntry: (id) => apiClient.post(`/maintenance/knowledge-entries/${id}/publish`),
-
-  // V1.11 - Review Workflow Benchmark telemetry. Read-only-adjacent: none of these can
-  // approve/reject/restore/publish - see MaintenanceReviewSessionController.
-  startReviewSession: (importId, code) => apiClient.post(`/maintenance/document-imports/${importId}/code-groups/${encodeURIComponent(code)}/review-session/start`),
-  heartbeatReviewSession: (sessionId, payload) => apiClient.patch(`/maintenance/review-sessions/${sessionId}/heartbeat`, payload),
-  abandonReviewSession: (sessionId) => apiClient.post(`/maintenance/review-sessions/${sessionId}/abandon`),
-  reviewBenchmark: (importId, params = '') => apiClient.get(`/maintenance/document-imports/${importId}/review-benchmark${params ? `?${params}` : ''}`),
 }

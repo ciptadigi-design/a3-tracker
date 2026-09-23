@@ -10,12 +10,8 @@ use App\Http\Controllers\Api\IncidentsController;
 use App\Http\Controllers\Api\InventoryController;
 use App\Http\Controllers\Api\MachineCostController;
 use App\Http\Controllers\Api\MaintenanceDocumentController;
-use App\Http\Controllers\Api\MaintenanceDocumentExtractionController;
 use App\Http\Controllers\Api\MaintenanceKnowledgeBaseController;
 use App\Http\Controllers\Api\MaintenanceKnowledgeController;
-use App\Http\Controllers\Api\MaintenanceKnowledgeImportController;
-use App\Http\Controllers\Api\MaintenanceKnowledgeReviewController;
-use App\Http\Controllers\Api\MaintenanceReviewSessionController;
 use App\Http\Controllers\Api\MaintenanceTicketsController;
 use App\Http\Controllers\Api\OperationsController;
 use App\Http\Controllers\Api\ReportsController;
@@ -142,9 +138,6 @@ Route::prefix('v1')->middleware('request.id')->group(function () {
             Route::post('maintenance/documents/{id}/upload', [MaintenanceDocumentController::class, 'upload']);
             Route::get('maintenance/documents/{id}/download', [MaintenanceDocumentController::class, 'download']);
             Route::delete('maintenance/documents/{id}/file', [MaintenanceDocumentController::class, 'deleteFile']);
-            Route::post('maintenance/documents/{document}/extract', [MaintenanceDocumentExtractionController::class, 'store']);
-            Route::get('maintenance/documents/{document}/extraction', [MaintenanceDocumentExtractionController::class, 'show']);
-            Route::get('maintenance/documents/{document}/pages', [MaintenanceDocumentExtractionController::class, 'pages']);
             Route::get('maintenance/error-codes', [MaintenanceKnowledgeBaseController::class, 'errorCodes']);
             Route::post('maintenance/error-codes', [MaintenanceKnowledgeBaseController::class, 'storeErrorCode']);
             Route::put('maintenance/error-codes/{id}', [MaintenanceKnowledgeBaseController::class, 'updateErrorCode']);
@@ -162,28 +155,13 @@ Route::prefix('v1')->middleware('request.id')->group(function () {
             Route::get('maintenance/knowledge', [MaintenanceKnowledgeController::class, 'index']);
             Route::post('maintenance/knowledge', [MaintenanceKnowledgeController::class, 'store']);
             Route::patch('maintenance/knowledge/{id}/review', [MaintenanceKnowledgeController::class, 'review']);
-            Route::post('maintenance/documents/{document}/process-knowledge', [MaintenanceKnowledgeImportController::class, 'processKnowledge']);
-            Route::get('maintenance/document-imports', [MaintenanceKnowledgeImportController::class, 'index']);
-            Route::post('maintenance/document-imports', [MaintenanceKnowledgeImportController::class, 'store']);
-            Route::get('maintenance/document-imports/{id}', [MaintenanceKnowledgeImportController::class, 'show']);
-            Route::get('maintenance/document-imports/{id}/entries', [MaintenanceKnowledgeImportController::class, 'listEntries']);
-            Route::post('maintenance/document-imports/{id}/entries', [MaintenanceKnowledgeImportController::class, 'storeEntry']);
-            Route::post('maintenance/document-imports/{id}/entries/bulk-review', [MaintenanceKnowledgeImportController::class, 'bulkReview']);
-            Route::get('maintenance/document-imports/{id}/code-groups', [MaintenanceKnowledgeReviewController::class, 'codeGroups']);
-            Route::get('maintenance/document-imports/{id}/code-groups/{code}', [MaintenanceKnowledgeReviewController::class, 'codeGroup']);
-            Route::get('maintenance/document-imports/{id}/code-groups/{code}/pages/{pageNumber}', [MaintenanceKnowledgeReviewController::class, 'codeGroupPage']);
-            Route::post('maintenance/document-imports/{id}/code-groups/{code}/publish-preview', [MaintenanceKnowledgeReviewController::class, 'publishPreview']);
-            Route::post('maintenance/document-imports/{id}/code-groups/{code}/publish', [MaintenanceKnowledgeReviewController::class, 'publishGroup']);
-            Route::post('maintenance/document-imports/{id}/entries/bulk-review/preview', [MaintenanceKnowledgeReviewController::class, 'bulkFilterPreview']);
-            Route::post('maintenance/document-imports/{id}/entries/bulk-review/apply', [MaintenanceKnowledgeReviewController::class, 'bulkFilterApply']);
-            Route::patch('maintenance/knowledge-entries/{id}', [MaintenanceKnowledgeImportController::class, 'updateEntry']);
-            Route::post('maintenance/knowledge-entries/{id}/publish', [MaintenanceKnowledgeImportController::class, 'publishEntry']);
-            // V1.11 - Review Workflow Benchmark telemetry. Never able to approve/reject/publish -
-            // see MaintenanceReviewSessionController's class docblock.
-            Route::post('maintenance/document-imports/{id}/code-groups/{code}/review-session/start', [MaintenanceReviewSessionController::class, 'start']);
-            Route::patch('maintenance/review-sessions/{sessionId}/heartbeat', [MaintenanceReviewSessionController::class, 'heartbeat']);
-            Route::post('maintenance/review-sessions/{sessionId}/abandon', [MaintenanceReviewSessionController::class, 'abandon']);
-            Route::get('maintenance/document-imports/{id}/review-benchmark', [MaintenanceReviewSessionController::class, 'benchmark']);
+            // Maintenance Clean Slate Phase 1: the legacy extraction/knowledge-processing/
+            // review/publish/benchmark API surface (MaintenanceDocumentExtractionController,
+            // MaintenanceKnowledgeImportController, MaintenanceKnowledgeReviewController,
+            // MaintenanceReviewSessionController) has been retired from routing - it is no
+            // longer reachable, even though the controllers/services/models/tables/data still
+            // exist untouched (see docs/M2 Maintenance Clean Slate audit + Phase 1 report).
+            // The target lifecycle is upload -> store original -> STOP.
         });
     });
 });

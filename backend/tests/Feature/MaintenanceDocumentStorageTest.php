@@ -11,6 +11,7 @@ use App\Models\User;
 use App\Services\DocumentStorageService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
@@ -109,6 +110,20 @@ class MaintenanceDocumentStorageTest extends TestCase
         $this->assertDatabaseHas('governance_audit_logs', ['action' => 'maintenance_document.replaced', 'target_id' => $f['document']->id]);
         // Only one physical file exists for this document - the old one was overwritten, not left behind.
         Storage::disk(DocumentStorageService::DISK)->assertExists("maintenance-documents/{$f['document']->id}.pdf");
+    }
+
+    // Maintenance Clean Slate Phase 1: upload/store is a complete, standalone
+    // operation. Nothing dispatches ExtractMaintenanceDocumentJob (or any other job)
+    // as a side effect of an upload.
+    public function test_uploading_a_pdf_does_not_dispatch_any_extraction_job(): void
+    {
+        Queue::fake();
+        $f = $this->fixture();
+        $owner = $this->member($f['home'], 'owner', $f['branch']);
+
+        $this->actingAs($owner)->postJson("/api/v1/maintenance/documents/{$f['document']->id}/upload", ['file' => $this->pdf()])->assertCreated();
+
+        Queue::assertNothingPushed();
     }
 
     // --- Invalid PDF rejection ---

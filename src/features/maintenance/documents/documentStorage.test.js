@@ -101,11 +101,10 @@ test('DocumentDetail exposes View/Download links in the document header straight
   assert.match(detail, /href=\{maintenanceDocumentFileUrl\(state\.document\.id\)\}/)
 })
 
-// Extract Knowledge is no longer a disabled "Coming soon" placeholder - see
-// documentExtraction.test.js (V1.5) for the real extraction flow it was
-// replaced with.
-test('DocumentDetail wires the extraction section in, not the old placeholder', () => {
-  assert.match(detail, /<ExtractionSection document=\{state\.document\} canManage=\{canManage\} \{\.\.\.extractionState\} \/>/)
+// Maintenance Clean Slate Phase 1: the extraction section was retired from
+// DocumentDetail entirely - see documentRepository.test.js for the corresponding
+// "no longer exposes extraction..." regression coverage.
+test('DocumentDetail never shows the old "Coming soon" placeholder', () => {
   assert.doesNotMatch(detail, /Coming soon/)
 })
 

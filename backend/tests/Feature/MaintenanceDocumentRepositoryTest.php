@@ -9,10 +9,14 @@ use App\Models\Branch;
 use App\Models\MachineErrorCode;
 use App\Models\MachineModel;
 use App\Models\MaintenanceDocument;
+use App\Models\MaintenanceDocumentImport;
 use App\Models\Manufacturer;
 use App\Models\PlatformUserPrivilege;
 use App\Models\User;
+use App\Services\DocumentStorageService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 /**
@@ -256,5 +260,42 @@ class MaintenanceDocumentRepositoryTest extends TestCase
         $this->actingAs($owner)->postJson("/api/v1/maintenance/documents/{$doc->id}/references", ['machine_error_code_id' => $f['errorCode']->id])->assertCreated();
 
         $this->actingAs($owner)->deleteJson("/api/v1/maintenance/documents/{$doc->id}")->assertStatus(409);
+    }
+
+    // Clean Slate audit finding: maintenance_document_imports.document_id is
+    // restrictOnDelete at the DB level, but destroy() never checked for it before this
+    // fix. The global exception renderer (bootstrap/app.php) already downgrades a raw FK
+    // QueryException to a 409 "Conflict." (same as every other 409 in this app - the
+    // message body is intentionally generic), so the client-visible symptom was
+    // survivable; the REAL bug this fix closes is ordering: destroy() called
+    // DocumentStorageService::deleteFile() BEFORE $doc->delete() - so on the old code
+    // path, a document with a legacy import would have its physical PDF deleted even
+    // though the DB row (and thus the FK) survived, permanently orphaning the file.
+    public function test_document_with_a_legacy_knowledge_import_cannot_be_deleted_and_its_physical_file_is_not_orphaned(): void
+    {
+        Storage::fake(DocumentStorageService::DISK);
+        $f = $this->fixture();
+        $owner = $this->member($f['home'], 'owner', $f['branch']);
+        $doc = MaintenanceDocument::create(['account_id' => $f['home']->id, 'title' => 'Processed manual', 'file_reference' => 'x', 'status' => 'PUBLISHED', 'is_active' => true]);
+        $this->actingAs($owner)->postJson("/api/v1/maintenance/documents/{$doc->id}/upload", [
+            'file' => UploadedFile::fake()->create('manual.pdf', 10, 'application/pdf'),
+        ])->assertCreated();
+        MaintenanceDocumentImport::create(['document_id' => $doc->id, 'status' => 'DRAFT', 'import_type' => 'MANUAL_ENTRY']);
+
+        $this->actingAs($owner)->deleteJson("/api/v1/maintenance/documents/{$doc->id}")->assertStatus(409);
+
+        $this->assertDatabaseHas('maintenance_documents', ['id' => $doc->id]);
+        Storage::disk(DocumentStorageService::DISK)->assertExists("maintenance-documents/{$doc->id}.pdf");
+    }
+
+    public function test_document_with_no_dependencies_deletes_normally(): void
+    {
+        $f = $this->fixture();
+        $owner = $this->member($f['home'], 'owner', $f['branch']);
+        $doc = MaintenanceDocument::create(['account_id' => $f['home']->id, 'title' => 'Clean manual', 'file_reference' => 'x', 'status' => 'PUBLISHED', 'is_active' => true]);
+
+        $this->actingAs($owner)->deleteJson("/api/v1/maintenance/documents/{$doc->id}")->assertNoContent();
+
+        $this->assertDatabaseMissing('maintenance_documents', ['id' => $doc->id]);
     }
 }

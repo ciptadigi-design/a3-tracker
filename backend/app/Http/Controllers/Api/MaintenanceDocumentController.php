@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\MachineErrorCode;
 use App\Models\MachineModel;
 use App\Models\MaintenanceDocument;
+use App\Models\MaintenanceDocumentImport;
 use App\Models\MaintenanceDocumentReference;
 use App\Models\Manufacturer;
 use App\Services\AccountAccessResolver;
@@ -148,12 +149,35 @@ class MaintenanceDocumentController extends Controller
         return response()->json(['data' => $doc]);
     }
 
+    // Every FK that currently uses restrictOnDelete against maintenance_documents.id must be
+    // checked here before $doc->delete() - otherwise the delete falls through to a raw DB FK
+    // QueryException instead of a clean, domain-safe 409. (cascadeOnDelete children -
+    // maintenance_document_extractions/maintenance_document_pages - never block deletion and
+    // are intentionally not checked here; machine_error_codes.source_document_id is
+    // nullOnDelete, also never blocking.) A document that was ever run through legacy
+    // "Process Knowledge" now has a maintenance_document_imports row and, before this fix,
+    // could not be deleted at all - see docs/M2 Maintenance Clean Slate audit.
+    private function blockingDependencyReason(MaintenanceDocument $doc): ?string
+    {
+        if (MaintenanceDocumentReference::where('document_id', $doc->id)->exists()) {
+            return '[DOCUMENT_REFERENCED] This document is linked to error codes or knowledge references and cannot be deleted. Archive it instead.';
+        }
+        if (MachineErrorCode::where('source_document_id', $doc->id)->exists()) {
+            return '[DOCUMENT_REFERENCED] This document is linked to error codes or knowledge references and cannot be deleted. Archive it instead.';
+        }
+        if (MaintenanceDocumentImport::where('document_id', $doc->id)->exists()) {
+            return '[DOCUMENT_HAS_LEGACY_IMPORTS] This document has legacy knowledge-processing history and cannot be deleted. Archive it instead.';
+        }
+
+        return null;
+    }
+
     public function destroy(Request $r, string $id)
     {
         $doc = MaintenanceDocument::findOrFail($id);
         $this->authorizeCatalogScope($r, $doc->account_id);
-        if (MaintenanceDocumentReference::where('document_id', $doc->id)->exists() || MachineErrorCode::where('source_document_id', $doc->id)->exists()) {
-            throw new ConflictHttpException('[DOCUMENT_REFERENCED] This document is linked to error codes or knowledge references and cannot be deleted. Archive it instead.');
+        if (($reason = $this->blockingDependencyReason($doc)) !== null) {
+            throw new ConflictHttpException($reason);
         }
         $before = app(GovernanceAudit::class)->snapshot($doc);
         app(DocumentStorageService::class)->deleteFile($doc);

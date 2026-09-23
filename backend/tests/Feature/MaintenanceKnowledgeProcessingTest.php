@@ -407,29 +407,11 @@ class MaintenanceKnowledgeProcessingTest extends TestCase
         $this->assertSame(7, $result['reference']->page_number, 'published reference must retain the candidate\'s real source page, not a default');
     }
 
-    // --- 20. tenant isolation ---
-
-    public function test_a_foreign_account_member_cannot_start_processing_for_another_accounts_document(): void
-    {
-        $f = $this->fixture();
-        $foreignUser = $this->member($f['foreign']);
-        $this->completedExtraction($f['document'], [1 => 'no code']);
-
-        $this->actingAs($foreignUser)->postJson("/api/v1/maintenance/documents/{$f['document']->id}/process-knowledge")
-            ->assertStatus(403);
-    }
-
-    // --- 21. unauthorized mutation rejected (operator without management capability) ---
-
-    public function test_a_member_without_management_capability_cannot_start_processing(): void
-    {
-        $f = $this->fixture();
-        $viewer = $this->member($f['home'], 'viewer');
-        $this->completedExtraction($f['document'], [1 => 'no code']);
-
-        $this->actingAs($viewer)->postJson("/api/v1/maintenance/documents/{$f['document']->id}/process-knowledge")
-            ->assertStatus(403);
-    }
+    // Maintenance Clean Slate Phase 1: POST .../process-knowledge was retired from
+    // routing - see routes/api.php. The two authorization tests that used to live here
+    // (foreign-account / no-management-capability) tested that HTTP route specifically
+    // and were removed with it; MaintenanceKnowledgeProcessingService itself remains in
+    // the codebase, unreachable, and stays covered below at the service level.
 
     // --- 22/23. audit lifecycle, and no raw page text ever reaches the audit log ---
 
@@ -545,110 +527,10 @@ class MaintenanceKnowledgeProcessingTest extends TestCase
         return $import->fresh();
     }
 
-    public function test_evidence_high_filter_returns_only_high_rows(): void
-    {
-        $f = $this->fixture();
-        $user = $this->member($f['home']);
-        $import = $this->importWithMixedEvidence($f, $user);
-
-        $response = $this->actingAs($user)->getJson("/api/v1/maintenance/document-imports/{$import->id}/entries?evidence=HIGH")->assertOk();
-        $rows = $response->json('data.data');
-        $this->assertCount(1, $rows);
-        $this->assertSame('HIGH', $rows[0]['evidence']);
-        $this->assertSame(1, $response->json('data.total'));
-    }
-
-    public function test_evidence_medium_filter_returns_only_medium_rows(): void
-    {
-        $f = $this->fixture();
-        $user = $this->member($f['home']);
-        $import = $this->importWithMixedEvidence($f, $user);
-
-        $response = $this->actingAs($user)->getJson("/api/v1/maintenance/document-imports/{$import->id}/entries?evidence=MEDIUM")->assertOk();
-        $rows = $response->json('data.data');
-        $this->assertCount(1, $rows);
-        $this->assertSame('MEDIUM', $rows[0]['evidence']);
-    }
-
-    public function test_evidence_low_filter_returns_only_low_rows(): void
-    {
-        $f = $this->fixture();
-        $user = $this->member($f['home']);
-        $import = $this->importWithMixedEvidence($f, $user);
-
-        $response = $this->actingAs($user)->getJson("/api/v1/maintenance/document-imports/{$import->id}/entries?evidence=LOW")->assertOk();
-        $rows = $response->json('data.data');
-        $this->assertCount(1, $rows);
-        $this->assertSame('LOW', $rows[0]['evidence']);
-    }
-
-    public function test_invalid_evidence_filter_value_is_rejected(): void
-    {
-        $f = $this->fixture();
-        $user = $this->member($f['home']);
-        $import = $this->importWithMixedEvidence($f, $user);
-
-        $this->actingAs($user)->getJson("/api/v1/maintenance/document-imports/{$import->id}/entries?evidence=NOT_A_REAL_LEVEL")
-            ->assertStatus(422);
-    }
-
-    public function test_evidence_filter_composes_with_status_filter(): void
-    {
-        $f = $this->fixture();
-        $user = $this->member($f['home']);
-        $import = $this->importWithMixedEvidence($f, $user);
-        MaintenanceKnowledgeEntry::where('import_id', $import->id)->where('evidence', 'HIGH')->update(['status' => 'APPROVED', 'approved_by' => $user->id]);
-
-        $onlyHigh = $this->actingAs($user)->getJson("/api/v1/maintenance/document-imports/{$import->id}/entries?evidence=HIGH&status=APPROVED")->assertOk();
-        $this->assertSame(1, $onlyHigh->json('data.total'));
-
-        $mismatched = $this->actingAs($user)->getJson("/api/v1/maintenance/document-imports/{$import->id}/entries?evidence=LOW&status=APPROVED")->assertOk();
-        $this->assertSame(0, $mismatched->json('data.total'));
-    }
-
-    public function test_evidence_filter_tenant_isolation(): void
-    {
-        $f = $this->fixture();
-        $owner = $this->member($f['home']);
-        $foreignUser = $this->member($f['foreign']);
-        $import = $this->importWithMixedEvidence($f, $owner);
-
-        $this->actingAs($foreignUser)->getJson("/api/v1/maintenance/document-imports/{$import->id}/entries?evidence=HIGH")
-            ->assertStatus(404);
-    }
-
-    public function test_entries_pagination_metadata_reflects_the_filtered_set_not_the_whole_import(): void
-    {
-        $f = $this->fixture();
-        $user = $this->member($f['home']);
-        $import = $this->importWithMixedEvidence($f, $user);
-
-        $response = $this->actingAs($user)->getJson("/api/v1/maintenance/document-imports/{$import->id}/entries?evidence=LOW&per_page=1")->assertOk();
-        $this->assertSame(1, $response->json('data.total'), 'total must reflect the LOW-only filtered count (1), not all 3 entries');
-        $this->assertSame(1, $response->json('data.last_page'));
-    }
-
-    public function test_existing_collision_and_status_filters_still_work_through_the_new_paginated_endpoint(): void
-    {
-        $f = $this->fixture();
-        $user = $this->member($f['home']);
-        $import = $this->importWithMixedEvidence($f, $user);
-
-        $newOnly = $this->actingAs($user)->getJson("/api/v1/maintenance/document-imports/{$import->id}/entries?collision_status=NEW")->assertOk();
-        $this->assertSame(3, $newOnly->json('data.total'), 'all 3 fixture entries have no matching machine_error_codes row, so all are NEW');
-
-        $draftOnly = $this->actingAs($user)->getJson("/api/v1/maintenance/document-imports/{$import->id}/entries?status=DRAFT")->assertOk();
-        $this->assertSame(3, $draftOnly->json('data.total'));
-    }
-
-    public function test_show_exposes_a_real_evidence_summary_aggregate_not_an_embedded_entries_array(): void
-    {
-        $f = $this->fixture();
-        $user = $this->member($f['home']);
-        $import = $this->importWithMixedEvidence($f, $user);
-
-        $response = $this->actingAs($user)->getJson("/api/v1/maintenance/document-imports/{$import->id}")->assertOk();
-        $this->assertSame(['HIGH' => 1, 'MEDIUM' => 1, 'LOW' => 1], $response->json('data.evidence_summary'));
-        $this->assertArrayNotHasKey('entries', $response->json('data'));
-    }
+    // Maintenance Clean Slate Phase 1: GET .../document-imports, .../entries and
+    // .../document-imports/{id} were retired from routing (MaintenanceKnowledgeImportController
+    // is no longer routed - see routes/api.php), so the evidence-filter/pagination/summary
+    // HTTP tests that used to live here were removed with it. importWithMixedEvidence()
+    // stays (still used above) since it exercises MaintenanceKnowledgeProcessingService
+    // directly, not the retired HTTP surface.
 }

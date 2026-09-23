@@ -36,11 +36,36 @@ test('document row edit action is also gated per-row, matching the section-level
   assert.match(list, /canManageRow\(doc\) && <button className="icon-button"/)
 })
 
-test('document detail shows related error-code references and gates linking behind canManage', () => {
-  assert.match(detail, /Related error knowledge/)
-  assert.match(detail, /canManage && \(showReferenceForm/)
-  assert.match(detail, /addDocumentReference/)
-  assert.match(detail, /deleteDocumentReference/)
+// Maintenance Clean Slate Phase 1: document references are UI-retired (the
+// maintenance_document_references table/data and backend routes are untouched -
+// see docs/M2 Maintenance Clean Slate Phase 1 report), so DocumentDetail no longer
+// renders a references section at all.
+test('document detail no longer exposes document references UI', () => {
+  assert.doesNotMatch(detail, /Related error knowledge/)
+  assert.doesNotMatch(detail, /addDocumentReference/)
+  assert.doesNotMatch(detail, /deleteDocumentReference/)
+})
+
+test('document detail no longer exposes extraction, process knowledge, or knowledge imports/review/benchmark UI', () => {
+  assert.doesNotMatch(detail, /ExtractedPagesViewer/)
+  assert.doesNotMatch(detail, /ExtractionModal/)
+  assert.doesNotMatch(detail, /ExtractionProgress/)
+  assert.doesNotMatch(detail, /useDocumentExtraction/)
+  assert.doesNotMatch(detail, /Process Knowledge/)
+  assert.doesNotMatch(detail, /processDocumentKnowledge/)
+  assert.doesNotMatch(detail, /Knowledge imports/)
+  assert.doesNotMatch(detail, /KnowledgeImportList/)
+  assert.doesNotMatch(detail, /KnowledgeImportDetail/)
+  assert.doesNotMatch(detail, /useKnowledgeImports/)
+  assert.doesNotMatch(detail, /createDocumentImport/)
+})
+
+test('maintenance navigation only shows Tickets and Documents - no Knowledge Base or Error Codes tab', () => {
+  assert.match(page, /Tickets<\/button>/)
+  assert.match(page, /Documents<\/button>/)
+  assert.doesNotMatch(page, /Knowledge base<\/button>/)
+  assert.doesNotMatch(page, /Error Codes<\/button>/)
+  assert.doesNotMatch(page, /ErrorCodeKnowledgeSection/)
 })
 
 test('document form dialog offers an upload-PDF mode alongside the external-reference mode (superseded by V1.4 document storage)', () => {

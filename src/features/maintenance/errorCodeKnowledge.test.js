@@ -10,9 +10,15 @@ const ticketDialog = readFileSync(new URL('./CreateTicketDialog.jsx', import.met
 // BEHAVIOR - a docblock explaining why a feature exists (e.g. referencing the real motivating example) is fine.
 const code = (source) => source.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '')
 
-test('Maintenance page exposes an Error Codes tab that renders the knowledge section', () => {
-  assert.match(page, /Error Codes/)
-  assert.match(page, /tab === 'error-codes'[\s\S]*?<ErrorCodeKnowledgeSection \/>/)
+// Maintenance Clean Slate Phase 1: the Error Codes tab is retired from user-facing
+// navigation (see docs/M2 Maintenance Clean Slate Phase 1 report). ErrorCodeKnowledgeSection.jsx
+// and ErrorCodeManagementDialog.jsx themselves are left in place, unreferenced, per the
+// "prefer remove entry points over aggressive one-pass deletion" Phase 1 guidance - the
+// underlying machine_error_codes/maintenance_error_solutions tables are still live (Tickets
+// depends on them), just no longer reachable through this tab.
+test('Maintenance page no longer exposes an Error Codes tab', () => {
+  assert.doesNotMatch(page, /Error Codes<\/button>/)
+  assert.doesNotMatch(page, /ErrorCodeKnowledgeSection/)
 })
 
 test('Error code search is a real input wired to the errorCodes list hook, not a client-side filter', () => {
