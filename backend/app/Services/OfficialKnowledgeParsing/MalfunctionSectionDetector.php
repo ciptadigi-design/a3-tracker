@@ -5,7 +5,7 @@ namespace App\Services\OfficialKnowledgeParsing;
 final class MalfunctionSectionDetector
 {
     /** A dotted manual section number followed by any four-character manufacturer C-code family. */
-    private const HEADING_PATTERN = '/^(?<section>\d+(?:\.\d+)+)[ \t]+(?<code>C-[A-Z0-9]{4})(?:[ \t]*\((?<applicability>[^\r\n)]+)\))?[ \t]*$/imu';
+    private const HEADING_PATTERN = '/^(?<section>\d+(?:\.\d+)+)[ \t]+(?<code>C-[A-Z0-9]{4})\*?(?:[ \t]*\((?<applicability>[^\r\n)]+)\))?[ \t]*$/imu';
 
     public function detect(string $rawText): SemanticSectionDetectionResult
     {
@@ -33,6 +33,15 @@ final class MalfunctionSectionDetector
             $rawSection = substr($text, $start, $end - $start);
             $lastContentOffset = $start + max(0, strlen(rtrim($rawSection)) - 1);
 
+            $diagnostics = [];
+            if (! isset($matches[$index + 1]) && ! $this->hasVerifiedFinalBoundary($chunks)) {
+                $diagnostics[] = new ParserDiagnostic(
+                    ParserDiagnosticCode::UNTERMINATED_SECTION,
+                    ParserDiagnosticSeverity::ERROR,
+                    'The final semantic section reached end-of-input without a verified following boundary.',
+                );
+            }
+
             $sections[] = new SemanticMalfunctionSection(
                 strtoupper(trim($match['code'][0])),
                 trim($match['section'][0]),
@@ -42,10 +51,21 @@ final class MalfunctionSectionDetector
                 $this->pageAt($start, $pageRanges),
                 $this->pageAt($lastContentOffset, $pageRanges),
                 $rawSection,
+                $diagnostics,
             );
         }
 
         return new SemanticSectionDetectionResult($sections);
+    }
+
+    /** @param list<SourceTextChunk> $chunks */
+    private function hasVerifiedFinalBoundary(array $chunks): bool
+    {
+        if ($chunks === []) {
+            return false;
+        }
+
+        return $chunks[array_key_last($chunks)]->endsAtVerifiedSectionBoundary;
     }
 
     /**

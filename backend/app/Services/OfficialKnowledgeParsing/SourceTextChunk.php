@@ -7,5 +7,6 @@ final readonly class SourceTextChunk
     public function __construct(
         public string $text,
         public ?int $pageNumber = null,
+        public bool $endsAtVerifiedSectionBoundary = false,
     ) {}
 }

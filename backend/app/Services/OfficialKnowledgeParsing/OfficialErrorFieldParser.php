@@ -37,7 +37,7 @@ final class OfficialErrorFieldParser
         $blocks = $this->parseFieldBlocks($section->rawSourceText, $diagnostics);
 
         $fieldCode = $this->field($blocks, 'code');
-        if ($fieldCode !== null && strtoupper(trim($fieldCode)) !== $section->code) {
+        if ($fieldCode !== null && $this->normalizeCodeField($fieldCode) !== $section->code) {
             $diagnostics[] = new ParserDiagnostic(
                 ParserDiagnosticCode::CODE_MISMATCH,
                 ParserDiagnosticSeverity::ERROR,
@@ -82,6 +82,11 @@ final class OfficialErrorFieldParser
             $references[] = new ParsedOfficialReference('DIPSW', $isolationDipsw);
         }
 
+        $warning = $this->field($blocks, 'warning');
+        if ($warning !== null && preg_match('/\bDIPSW(?=\s|\d|-)/iu', $warning) === 1) {
+            $references[] = new ParsedOfficialReference('DIPSW', $warning);
+        }
+
         $sourceHash = hash('sha256', $section->rawSourceText);
 
         return new ParsedOfficialErrorEntry(
@@ -92,7 +97,7 @@ final class OfficialErrorFieldParser
             $this->field($blocks, 'cause'),
             $this->field($blocks, 'alert_measure'),
             $this->field($blocks, 'correction'),
-            $this->field($blocks, 'warning'),
+            $warning,
             $this->field($blocks, 'note'),
             $isolationDipsw,
             $this->field($blocks, 'detached_control'),
@@ -169,8 +174,12 @@ final class OfficialErrorFieldParser
 
     private function unknownHeading(string $line): ?string
     {
+        if (preg_match('/^\s/u', $line) === 1) {
+            return null;
+        }
+
         $trimmed = trim($line);
-        if (preg_match('/^(Wiring diagram|I\/O (?:reference|check)|DIPSW\b[^:]*)\s*:/iu', $trimmed) === 1) {
+        if (preg_match('/^(Wiring diagram|I\/O (?:reference|check)|DIPSW(?=\s|\d|-)[^:]*)\s*:/iu', $trimmed) === 1) {
             return null;
         }
 
@@ -179,6 +188,15 @@ final class OfficialErrorFieldParser
         }
 
         return null;
+    }
+
+    private function normalizeCodeField(string $value): string
+    {
+        if (preg_match('/^\s*(C-[A-Z0-9]{4})\*?(?:\s*\([^)]*\))?\s*$/iu', $value, $match) === 1) {
+            return strtoupper($match[1]);
+        }
+
+        return strtoupper(trim($value));
     }
 
     /** @param array<string, list<string>> $blocks */
@@ -205,10 +223,7 @@ final class OfficialErrorFieldParser
     ): array {
         $source = $section->headingApplicability ?? $explicitField;
         if ($source !== null) {
-            $labels = array_values(array_filter(array_map(
-                static fn (string $value): string => trim($value),
-                preg_split('/\s*\/\s*/u', $source) ?: [],
-            ), static fn (string $value): bool => $value !== ''));
+            $labels = $this->splitApplicabilityLabels($source);
 
             if ($labels !== []) {
                 return [$labels, $this->normalizeVariantKey(implode('_', $labels))];
@@ -219,6 +234,10 @@ final class OfficialErrorFieldParser
             return [['Main body'], 'MAIN_BODY'];
         }
 
+        if ($classification !== null && preg_match('/^(?<scope>[A-Z][A-Z0-9-]*)\s*:/u', $classification, $match) === 1) {
+            return [[$match['scope']], $this->normalizeVariantKey($match['scope'])];
+        }
+
         $diagnostics[] = new ParserDiagnostic(
             ParserDiagnosticCode::AMBIGUOUS_APPLICABILITY,
             ParserDiagnosticSeverity::WARNING,
@@ -226,6 +245,33 @@ final class OfficialErrorFieldParser
         );
 
         return [[], 'UNRESOLVED_'.strtoupper(substr(hash('sha256', $section->rawSourceText), 0, 12))];
+    }
+
+    /** @return list<string> */
+    private function splitApplicabilityLabels(string $source): array
+    {
+        $values = preg_split('/\s*(?:\/|\bor\b)\s*/iu', $source) ?: [];
+        $labels = [];
+        $inheritedPrefix = null;
+
+        foreach ($values as $value) {
+            $value = trim($value);
+            if ($value === '') {
+                continue;
+            }
+
+            if ($inheritedPrefix !== null && preg_match('/^\d+[A-Z0-9-]*$/iu', $value) === 1) {
+                $value = $inheritedPrefix.$value;
+            }
+
+            if (preg_match('/^(.*?-)(?=\d)/u', $value, $match) === 1) {
+                $inheritedPrefix = $match[1];
+            }
+
+            $labels[] = $value;
+        }
+
+        return $labels;
     }
 
     private function normalizeVariantKey(string $value): string
@@ -245,7 +291,7 @@ final class OfficialErrorFieldParser
         $parts = preg_split('/(?:\R|\s*;\s*)/u', $value) ?: [];
 
         return array_values(array_filter(array_map(
-            static fn (string $part): string => trim(preg_replace('/^(?:[-•]|\d+[.)])\s*/u', '', $part) ?? $part),
+            static fn (string $part): string => trim(preg_replace('/^\s*(?:[-•·]|\d+[.)])\s*/u', '', $part) ?? $part),
             $parts,
         ), static fn (string $part): bool => $part !== ''));
     }
@@ -315,18 +361,21 @@ final class OfficialErrorFieldParser
     private function extractReferences(string $instruction, int $stepNumber): array
     {
         $references = [];
+        if (preg_match('/Wiring diagram\s*:\s*.+$/isu', $instruction, $match) === 1) {
+            $references[] = new ParsedOfficialReference('WIRING_DIAGRAM', trim($match[0]), $stepNumber);
+        }
+        if (preg_match('/I\/O (?:reference|check)\s*:\s*.+$/isu', $instruction, $match) === 1) {
+            $references[] = new ParsedOfficialReference('IO_CHECK', trim($match[0]), $stepNumber);
+        } elseif (preg_match('/\bI\/O\b/iu', $instruction) === 1) {
+            $references[] = new ParsedOfficialReference('IO_CHECK', $instruction, $stepNumber);
+        }
+
         foreach (preg_split('/\R/u', $instruction) ?: [] as $line) {
             $line = trim($line);
-            if (preg_match('/Wiring diagram\s*:\s*.+$/iu', $line, $match) === 1) {
-                $references[] = new ParsedOfficialReference('WIRING_DIAGRAM', trim($match[0]), $stepNumber);
-            }
-            if (preg_match('/I\/O (?:reference|check)\s*:\s*.+$/iu', $line, $match) === 1) {
-                $references[] = new ParsedOfficialReference('IO_CHECK', trim($match[0]), $stepNumber);
-            }
             if (preg_match('/\b([A-Z]\.\d+(?:\.\d+){2,}\s+.+)$/u', $line, $match) === 1) {
                 $references[] = new ParsedOfficialReference('SERVICE_SECTION', trim($match[1]), $stepNumber, sectionNumber: strtok($match[1], ' '));
             }
-            if (preg_match('/\bDIPSW\b.+$/iu', $line, $match) === 1) {
+            if (preg_match('/\bDIPSW(?=\s|\d|-).+$/iu', $line, $match) === 1) {
                 $references[] = new ParsedOfficialReference('DIPSW', trim($match[0]), $stepNumber);
             }
         }

@@ -1,0 +1,33 @@
+2.8.13   C-1103 (FS-531/612)
+Code
+      C-1103 (FS-531 or FS-612)
+Classification
+      FS: FS-531 or FS-612 abnormality
+Cause
+      The alignment home sensor/Up (PS8) does not become active or inactive within a specified period of time after the alignment motor (M5)
+      becomes active.
+Measures to take when an alert occurs
+      The main body and the option stop immediately to deactivate the main relay.
+Estimated abnormal parts
+        •  Relay board (RB)
+        •  Alignment motor/Up (M5)
+        •  Alignment home sensor/Up (PS8)
+Correction
+      Note
+        •  The message "Please call service" is displayed on the panel.
+
+Solution
+       1.  Check the alignment section, and clean or repair it when there is any abnormality.
+       2.  Check the connector connection and the wiring between RB, and the motor and the sensor, and repair it when there is any
+           abnormality.
+       3.  Check the I/O drive of the motor and the coupling of the gear, and repair or replace it when there is any abnormality. (Wiring diagram:
+           FS-612: 7-I)
+       4.  Check I/O and the operation of the sensor, and repair or replace it when there is any abnormality. (Wiring diagram:
+           FS-612: 3-B)
+       5.  Replace PS8.
+       6.  Replace M5.
+       7.  Replace RB.
+Faulty part isolation DIPSW
+      K-141
+bizhub PRESS C1070/C1070P/C1060/PRO C1060L   K TROUBLESHOOTING > 2. MALFUNCTION CODE
+Control while detached
