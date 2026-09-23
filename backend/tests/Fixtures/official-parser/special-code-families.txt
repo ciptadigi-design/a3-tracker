@@ -1,0 +1,16 @@
+2.21.1 c-c152 (SYNTHETIC)
+Classification: Synthetic fixture C-C152.
+Solution:
+1. Synthetic step.
+2.21.2 C-C170 (SYNTHETIC)
+Classification: Synthetic fixture C-C170.
+Solution:
+1. Synthetic step.
+2.21.3 C-D010 (SYNTHETIC)
+Classification: Synthetic fixture C-D010.
+Solution:
+1. Synthetic step.
+2.21.4 c-e012 (SYNTHETIC)
+Classification: Synthetic fixture C-E012.
+Solution:
+1. Synthetic step.

@@ -1,0 +1,34 @@
+2.20.99 C-3911 (SYNTHETIC-FIXTURE)
+Code: C-3911
+Classification: Synthetic complex parser structure; not C-3911 manufacturer content.
+Causes:
+Synthetic cause line one.
+Synthetic cause line two.
+WARNING:
+SYNTHETIC SAFETY TEXT — disconnect fixture power before step 10.
+Faulty part isolation DIPSW:
+DIPSW 99-1: synthetic isolation setting only.
+Control during separation:
+Synthetic detached-control content.
+Estimated abnormal parts:
+Synthetic part A
+Synthetic board (SYNB)
+Procedure:
+1. Perform synthetic check 01.
+2. Perform synthetic check 02.
+Continue the same instruction on this wrapped line.
+3. Inspect the synthetic connector.
+Wiring diagram: Main body (1/4): 3-C, 3-D
+4. Perform synthetic check 04.
+5. Perform synthetic check 05.
+6. Perform synthetic check 06.
+7. Check the synthetic signal.
+I/O reference: IO-TEST-07
+8. Perform synthetic check 08.
+9. Perform synthetic check 09 and see G.3.2.8 Overall control board (OACB).
+10. Perform synthetic check 10.
+11. Confirm DIPSW 99-1 synthetic reference.
+12. Perform synthetic check 12.
+13. Perform synthetic check 13.
+This is another wrapped continuation, not a new step.
+14. Perform synthetic check 14.

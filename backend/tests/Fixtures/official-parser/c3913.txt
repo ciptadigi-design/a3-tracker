@@ -1,0 +1,13 @@
+2.20.31 C-3913
+Code: C-3913
+Classification: Main body: Fusing unit placement abnormality
+Cause: The fusing unit is not installed.
+Estimated abnormal parts:
+Fusing unit
+Printer control board (PRCB)
+Solution:
+1. Check that the fusing unit is properly installed, and repair it when there is any abnormality.
+2. Check the connection between the rear side connector of the fusing unit and the main body side connector, and repair it when there is any abnormality.
+3. Check the connector connection and the wiring on PRCB, and repair it when there is any abnormality.
+4. Replace PRCB.
+5. Replace the fusing unit.

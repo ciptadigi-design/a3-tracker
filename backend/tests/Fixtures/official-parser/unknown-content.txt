@@ -1,0 +1,7 @@
+2.22.1 C-A001 (SYNTHETIC)
+Classification: Synthetic known classification.
+Calibration Matrix:
+Opaque content that the parser must not map speculatively.
+Cause: Synthetic known cause.
+Solution:
+1. Synthetic known step.

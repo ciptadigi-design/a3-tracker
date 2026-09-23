@@ -1,0 +1,6 @@
+2.20.32 C-1103 (FS-531 / FS-612)
+Code: C-1103
+Classification: Synthetic structural classification for parser testing only.
+Cause: Synthetic cause; not manufacturer procedure content.
+Solution:
+1. Synthetic structural step for this fixture only.
