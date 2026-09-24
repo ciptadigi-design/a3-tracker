@@ -175,7 +175,7 @@ class OfficialDocumentSourceResolverTest extends TestCase
         $base = sys_get_temp_dir().'/official-resolver-'.bin2hex(random_bytes(8));
         $root = $base.'/disk';
         mkdir($root, 0700, true);
-        $disk = 'resolver_'.bin2hex(random_bytes(6));
+        $disk = 'r_'.bin2hex(random_bytes(6));
         config(["filesystems.disks.{$disk}" => ['driver' => 'local', 'root' => $root, 'throw' => true]]);
         Storage::forgetDisk($disk);
 
