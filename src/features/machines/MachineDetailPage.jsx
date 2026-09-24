@@ -1,5 +1,5 @@
 import { createElement, useState } from 'react'
-import { ArrowLeft, CalendarDays, CheckCircle2, Clock3, Edit3, FileText, Gauge, MapPin, Printer, ShieldAlert, Tag, Wrench } from 'lucide-react'
+import { ArrowLeft, CalendarDays, CheckCircle2, Clock3, Edit3, FileText, Gauge, History, MapPin, Printer, ShieldAlert, Tag, Wrench } from 'lucide-react'
 import { ErrorState } from '../../components/ui/ErrorState.jsx'
 import { LoadingScreen } from '../../components/ui/LoadingScreen.jsx'
 import { PageHeader } from '../../components/ui/PageHeader.jsx'
@@ -11,6 +11,9 @@ import { RetireMachineDialog } from './RetireMachineDialog.jsx'
 import { useMachine } from './useMachine.js'
 import { useMachineWorkflowState } from './useMachineWorkflowState.js'
 import { userErrorMessage } from '../../lib/appErrors.js'
+import { CreateTicketDialog } from '../maintenance/CreateTicketDialog.jsx'
+import { MachineMaintenanceHistory } from '../maintenance/MachineMaintenanceHistory.jsx'
+import { createMaintenanceTicket } from '../../services/maintenance.js'
 
 function DetailItem({ icon, label, value, hint }) {
   return <div className="detail-item"><span className="detail-item-icon">{createElement(icon, { size: 18 })}</span><div><span>{label}</span><strong>{value || '—'}</strong>{hint && <small>{hint}</small>}</div></div>
@@ -32,6 +35,7 @@ export function MachineDetailPage({ machineId, navigate }) {
   const { account, branch: activeBranch, branches, setSelectedBranchId, can } = useTenant()
   const { machine, isLoading, error, refresh, setMachine } = useMachine(account?.id, activeBranch?.id, machineId)
   const [showRetire, setShowRetire] = useState(false)
+  const [showCreateTicket, setShowCreateTicket] = useState(false)
   const [success, setSuccess] = useState(null)
   const canManage = can('machines.manage')
   const machineWorkflow = useMachineWorkflowState({ userId: user.id, accountId: account.id, branchId: machine?.branch_id ?? activeBranch?.id })
@@ -58,7 +62,12 @@ export function MachineDetailPage({ machineId, navigate }) {
     setSuccess('Machine retired. Its historical record remains preserved.')
   }
 
-  const actions = <div className="detail-actions">{can('maintenance.view') && <button className="primary-button" type="button" onClick={() => navigate(`/maintenance/troubleshooting?machine=${encodeURIComponent(machine.id)}`)}><Wrench size={17} /> Troubleshooting</button>}{canManage && machine.is_active && <><button className="secondary-button" type="button" onClick={() => machineWorkflow.openEdit(machine.id)}><Edit3 size={17} /> Edit machine</button><button className="danger-outline-button" type="button" onClick={() => setShowRetire(true)}>Retire machine</button></>}</div>
+  async function handleCreateTicket(values) {
+    const ticket = await createMaintenanceTicket(values)
+    navigate(`/maintenance/tickets/${ticket.id}`)
+  }
+
+  const actions = <div className="detail-actions">{can('maintenance.view') && <><button className="primary-button" type="button" onClick={() => navigate(`/maintenance/troubleshooting?machine=${encodeURIComponent(machine.id)}`)}><Wrench size={17} /> Troubleshooting</button><button className="secondary-button" type="button" onClick={() => document.getElementById('maintenance-history')?.scrollIntoView({ behavior: 'smooth' })}><History size={17} /> Maintenance History</button></>}{canManage && machine.is_active && <><button className="secondary-button" type="button" onClick={() => machineWorkflow.openEdit(machine.id)}><Edit3 size={17} /> Edit machine</button><button className="danger-outline-button" type="button" onClick={() => setShowRetire(true)}>Retire machine</button></>}</div>
 
   return (
     <div className="page-stack machine-detail-page">
@@ -81,10 +90,13 @@ export function MachineDetailPage({ machineId, navigate }) {
         <DetailItem icon={FileText} label="Notes" value={machine.notes || 'No notes recorded'} />
       </section>
 
-      <section className="future-module-section"><div><span className="card-kicker">Operational modules</span><h2>Connected workflows will arrive later.</h2><p>No counter, health, component, error, or maintenance data is fabricated here.</p></div><div className="future-module-grid">{futureModules.map((module) => <article className="future-module-card glass-surface" key={module[0]}>{createElement(module[1], { size: 20 })}<strong>{module[0]}</strong><span>Coming later</span></article>)}</div></section>
+      {can('maintenance.view') && <MachineMaintenanceHistory machine={machine} timezone={effectiveTimezone === 'Not configured' ? 'UTC' : effectiveTimezone} canCreateTicket={can('maintenance.ticket.create')} navigate={navigate} onCreateTicket={() => setShowCreateTicket(true)} />}
+
+      <section className="future-module-section"><div><span className="card-kicker">Operational modules</span><h2>Connected workflows will arrive later.</h2><p>No counter, health, component, or error data is fabricated here.</p></div><div className="future-module-grid">{futureModules.map((module) => <article className="future-module-card glass-surface" key={module[0]}>{createElement(module[1], { size: 20 })}<strong>{module[0]}</strong><span>Coming later</span></article>)}</div></section>
 
       {canManage && machineWorkflow.isContextActive && machineWorkflow.workflow.type === 'edit' && machineWorkflow.workflow.machineId === machine.id && <MachineFormDialog mode="edit" machine={machine} account={account} branches={branches} branchId={branch?.id} onClose={machineWorkflow.clearWorkflow} onSave={handleUpdate} />}
       {showRetire && <RetireMachineDialog machine={machine} onClose={() => setShowRetire(false)} onConfirm={handleRetire} />}
+      {showCreateTicket && <CreateTicketDialog machines={[machine]} defaultMachineId={machine.id} onClose={() => setShowCreateTicket(false)} onSave={handleCreateTicket} />}
     </div>
   )
 }

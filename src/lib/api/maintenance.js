@@ -26,6 +26,7 @@ export const laravelMaintenance = {
   deleteErrorCodeSolution: (errorCodeId, solutionId) => apiClient.delete(`/maintenance/error-codes/${errorCodeId}/solutions/${solutionId}`),
 
   tickets: (params = '') => apiClient.get(`/maintenance/tickets${params ? `?${params}` : ''}`),
+  machineHistory: (machineId, params = '') => apiClient.get(`/maintenance/machines/${machineId}/history${params ? `?${params}` : ''}`),
   ticket: (id) => apiClient.get(`/maintenance/tickets/${id}`),
   createTicket: (payload) => apiClient.post('/maintenance/tickets', payload),
   updateTicket: (id, payload) => apiClient.patch(`/maintenance/tickets/${id}`, payload),

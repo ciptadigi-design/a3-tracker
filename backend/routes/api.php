@@ -148,6 +148,7 @@ Route::prefix('v1')->middleware('request.id')->group(function () {
             Route::post('maintenance/error-codes/{errorCode}/solutions', [MaintenanceKnowledgeBaseController::class, 'storeSolution']);
             Route::put('maintenance/error-codes/{errorCode}/solutions/{solution}', [MaintenanceKnowledgeBaseController::class, 'updateSolution']);
             Route::delete('maintenance/error-codes/{errorCode}/solutions/{solution}', [MaintenanceKnowledgeBaseController::class, 'deleteSolution']);
+            Route::get('maintenance/machines/{machine}/history', [MaintenanceTicketsController::class, 'machineHistory']);
             Route::get('maintenance/tickets', [MaintenanceTicketsController::class, 'index']);
             Route::post('maintenance/tickets', [MaintenanceTicketsController::class, 'store']);
             Route::get('maintenance/tickets/{id}', [MaintenanceTicketsController::class, 'show']);

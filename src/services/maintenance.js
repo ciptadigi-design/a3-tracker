@@ -40,6 +40,7 @@ export const deleteMaintenanceDocumentFile = async (documentId) => unwrapData(aw
 export const maintenanceDocumentFileUrl = (documentId, { inline = false } = {}) => `${apiBaseUrl}/maintenance/documents/${documentId}/download${inline ? '?inline=1' : ''}`
 
 export const loadMaintenanceTickets = async ({ machineId, status, perPage } = {}) => unwrapData(await laravelMaintenance.tickets(toQueryString({ machine_id: machineId, status, per_page: perPage })))
+export const loadMachineMaintenanceHistory = async ({ machineId, status, page, perPage } = {}) => unwrapData(await laravelMaintenance.machineHistory(machineId, toQueryString({ status, page, per_page: perPage })))
 export const loadMaintenanceTicket = async (id) => unwrapData(await laravelMaintenance.ticket(id))
 export const createMaintenanceTicket = async (payload) => unwrapData(await laravelMaintenance.createTicket(payload))
 export const updateMaintenanceTicket = async (id, payload) => unwrapData(await laravelMaintenance.updateTicket(id, payload))

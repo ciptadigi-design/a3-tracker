@@ -18,6 +18,75 @@ use Illuminate\Validation\ValidationException;
 
 class MaintenanceTicketsController extends Controller
 {
+    public function machineHistory(Request $r, Machine $machine)
+    {
+        $machine->loadMissing(['account', 'branch']);
+        abort_unless(app(MachineAccessResolver::class)->canAccess($r->user(), $machine), 403);
+
+        $d = $r->validate([
+            'status' => 'nullable|in:OPEN,IN_PROGRESS,DONE,CANCELLED',
+            'page' => 'nullable|integer|min:1',
+            'per_page' => 'nullable|integer|in:10,25,50',
+        ]);
+
+        $history = MaintenanceTicket::query()
+            ->where('machine_id', $machine->id)
+            ->where('account_id', $machine->account_id);
+        $statusCounts = (clone $history)
+            ->selectRaw('status, COUNT(*) as aggregate')
+            ->groupBy('status')
+            ->pluck('aggregate', 'status');
+
+        if (! empty($d['status'])) {
+            $history->where('status', $d['status']);
+        }
+
+        $tickets = $history
+            ->with([
+                'errorCode:id,code,title',
+                'assignee:id,name',
+                'officialErrorEntry' => fn ($entries) => $entries
+                    ->select(['id', 'document_id', 'code', 'variant_key', 'classification'])
+                    ->visibleTo($r->user())
+                    ->whereHas('document', fn ($documents) => $documents
+                        ->where(fn ($scope) => $scope
+                            ->whereNull('account_id')
+                            ->orWhere('account_id', $machine->account_id)))
+                    ->with('document:id,title'),
+            ])
+            ->orderByDesc('opened_at')
+            ->orderByDesc('id')
+            ->paginate((int) ($d['per_page'] ?? 10))
+            ->through(fn (MaintenanceTicket $ticket) => [
+                'id' => $ticket->id,
+                'title' => $ticket->title,
+                'description' => $ticket->description,
+                'priority' => $ticket->priority,
+                'status' => $ticket->status,
+                'opened_at' => $ticket->opened_at,
+                'started_at' => $ticket->started_at,
+                'resolved_at' => $ticket->resolved_at,
+                'assignee' => $ticket->assignee?->only(['id', 'name']),
+                'error_code' => $ticket->errorCode?->only(['id', 'code', 'title']),
+                'official_error_entry' => $ticket->officialErrorEntry ? [
+                    'id' => $ticket->officialErrorEntry->id,
+                    'code' => $ticket->officialErrorEntry->code,
+                    'variant_key' => $ticket->officialErrorEntry->variant_key,
+                    'classification' => $ticket->officialErrorEntry->classification,
+                    'document_title' => $ticket->officialErrorEntry->document?->title,
+                ] : null,
+            ]);
+
+        return response()->json(['data' => [
+            'summary' => [
+                'total' => (int) $statusCounts->sum(),
+                'active' => (int) (($statusCounts['OPEN'] ?? 0) + ($statusCounts['IN_PROGRESS'] ?? 0)),
+                'completed' => (int) ($statusCounts['DONE'] ?? 0),
+            ],
+            'tickets' => $tickets,
+        ]]);
+    }
+
     public function index(Request $r)
     {
         $ids = $r->user()->memberships()->where('status', 'active')->pluck('account_id');
@@ -36,10 +105,18 @@ class MaintenanceTicketsController extends Controller
     {
         $ticket = MaintenanceTicket::with([
             'machine.branch', 'errorCode', 'actions.performer', 'reporter', 'assignee',
-            'officialErrorEntry:id,document_id,code,variant_key,classification',
-            'officialErrorEntry.document:id,title',
         ])->findOrFail($id);
         abort_unless(app(MachineAccessResolver::class)->canAccess($r->user(), $ticket->machine), 403);
+        $ticket->load([
+            'officialErrorEntry' => fn ($entries) => $entries
+                ->select(['id', 'document_id', 'code', 'variant_key', 'classification'])
+                ->visibleTo($r->user())
+                ->whereHas('document', fn ($documents) => $documents
+                    ->where(fn ($scope) => $scope
+                        ->whereNull('account_id')
+                        ->orWhere('account_id', $ticket->account_id)))
+                ->with('document:id,title'),
+        ]);
 
         return response()->json(['data' => $ticket]);
     }
