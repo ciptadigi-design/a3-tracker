@@ -38,15 +38,23 @@ test('search has keyboard/mobile submit, bounded API loading, and clear loading/
 test('detail is stable-ID routed and renders technician content in operational order', () => {
   assert.match(routes, /maintenance\\\/troubleshooting\\\//)
   assert.match(shell, /TroubleshootingDetailPage/)
-  const handling = detail.indexOf('title="Penanganan"')
-  const cause = detail.indexOf('title="Penyebab"')
-  const parts = detail.indexOf('title="Part Terkait"')
-  const warning = detail.indexOf('<SafetyNotice')
-  const references = detail.indexOf('<TechnicalReferences')
-  const source = detail.indexOf('<SourceProvenance')
-  assert.ok(handling > -1 && handling < cause && cause < parts && parts < warning && warning < references && references < source)
+  const originalStart = detail.indexOf('function AuthoritativeSections')
+  const original = detail.slice(originalStart, detail.indexOf('function AssistedSections'))
+  assert.ok(original.indexOf('title="Penanganan"') < original.indexOf('title="Penyebab"'))
+  assert.match(detail, /function SharedOfficialSections[\s\S]*?Part Terkait[\s\S]*?<SafetyNotice[\s\S]*?<TechnicalReferences[\s\S]*?<SourceProvenance/)
   assert.match(detail, /entry\.steps\.map/)
   assert.doesNotMatch(detail, /\.sort\(/)
+})
+
+test('valid assisted content defaults to easy Indonesian and keeps Original one tap away', () => {
+  assert.match(detail, /entry\.assisted &&/)
+  assert.match(detail, /selectedMode !== 'original'/)
+  assert.match(detail, />Mudah Dipahami</)
+  assert.match(detail, />Original</)
+  assert.match(detail, /entry\.assisted\.notice/)
+  assert.match(detail, /assisted\.steps\.map/)
+  assert.match(detail, /official_step_id/)
+  assert.match(detail, /SharedOfficialSections entry=\{entry\}/)
 })
 
 test('optional detail sections are conditional and normal UI omits internal provenance', () => {
@@ -64,4 +72,5 @@ test('technical reference labels remain explicit and mobile layout avoids horizo
   assert.match(styles, /@media \(max-width: 520px\)[\s\S]*?\.troubleshooting-search/)
   assert.match(styles, /\.troubleshooting-result-card \{ grid-template-columns: minmax\(0,1fr\); \}/)
   assert.match(styles, /\.manufacturer-copy[^}]*white-space: pre-wrap/)
+  assert.match(styles, /@media \(max-width: 520px\)[\s\S]*?\.assisted-mode-switch/)
 })

@@ -96,4 +96,10 @@ class MaintenanceOfficialErrorEntry extends Model
             ->orderBy('reference_value')
             ->orderBy('id');
     }
+
+    public function assistedVersions()
+    {
+        return $this->hasMany(MaintenanceAssistedErrorEntry::class, 'official_error_entry_id')
+            ->orderByDesc('content_version');
+    }
 }

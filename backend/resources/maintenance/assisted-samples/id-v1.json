@@ -1,0 +1,177 @@
+{
+  "language": "id",
+  "content_version": 1,
+  "generator": {
+    "provider": "controlled-reviewed-sample",
+    "model": "codex-assisted-language",
+    "revision": "v2.3-id-v1",
+    "generated_at": "2026-09-24T00:00:00+07:00"
+  },
+  "records": [
+    {
+      "official_entry_id": "7acedcec-efc5-4e82-8f63-edc15b1d7d4e",
+      "language": "id",
+      "source_normalized_digest": "62229974c593754ff2de6ef7c8d3a8d05a5ecf471aa4fc9e80322397bdd5c484",
+      "error_code": "C-3913",
+      "classification_translation": "Unit utama: posisi unit fusing tidak normal",
+      "classification_simplified": "Unit fusing belum terpasang dengan benar",
+      "cause_translation": "Unit fusing tidak terpasang.",
+      "cause_simplified": "Unit fusing belum terpasang.",
+      "warning_translation": null,
+      "warning_simplified": null,
+      "solution_steps": [
+        {"official_step_id":"66468369-0c31-4f18-b1b3-f994a1daa5ef","official_order":1,"translation":"Periksa apakah unit fusing terpasang dengan benar, lalu perbaiki jika ada kondisi tidak normal.","simplified":"Pastikan unit fusing terpasang dengan benar. Perbaiki bila ada kondisi tidak normal."},
+        {"official_step_id":"29ed6aad-2e1d-4d23-8de8-6f80f5171dd1","official_order":2,"translation":"Periksa sambungan antara konektor sisi belakang unit fusing dan konektor sisi unit utama, lalu perbaiki jika ada kondisi tidak normal.","simplified":"Periksa konektor belakang unit fusing ke unit utama. Perbaiki bila sambungannya tidak normal."},
+        {"official_step_id":"0bed5444-27b3-457c-b6fd-2ccbcc13ef33","official_order":3,"translation":"Periksa sambungan konektor dan pengawatan pada PRCB, lalu perbaiki jika ada kondisi tidak normal.","simplified":"Periksa konektor dan kabel pada PRCB. Perbaiki bila ada kondisi tidak normal."},
+        {"official_step_id":"65719b0b-7389-4a35-8a37-c88a67cf2cbd","official_order":4,"translation":"Ganti PRCB.","simplified":"Ganti PRCB."},
+        {"official_step_id":"75edca0f-7763-4b2a-8e3b-85c8a9d06a20","official_order":5,"translation":"Ganti unit fusing.","simplified":"Ganti unit fusing."}
+      ]
+    },
+    {
+      "official_entry_id": "5044043e-0753-43d9-a28e-a3e0c891ffb1",
+      "language": "id",
+      "source_normalized_digest": "e606d5f92671a80bb97cbebe3e6804005aef847084fe022a988e6705e5cffe15",
+      "error_code": "C-1103",
+      "classification_translation": "FS: ketidaknormalan FS-531 atau FS-612",
+      "classification_simplified": "Gangguan pada FS-531 atau FS-612",
+      "cause_translation": "Alignment home sensor/Up (PS8) tidak aktif atau tidak nonaktif dalam waktu yang ditentukan setelah alignment motor (M5) aktif.",
+      "cause_simplified": "PS8 tidak berubah status tepat waktu setelah M5 aktif.",
+      "warning_translation": null,
+      "warning_simplified": null,
+      "solution_steps": [
+        {"official_step_id":"4fd7efca-48af-4df6-a348-d05cefbef6e1","official_order":1,"translation":"Periksa bagian alignment, lalu bersihkan atau perbaiki jika ada kondisi tidak normal.","simplified":"Periksa dan bersihkan bagian alignment. Perbaiki bila ada kondisi tidak normal."},
+        {"official_step_id":"ab7eaf5f-79d0-45e9-b81e-1c7f14dbb3c4","official_order":2,"translation":"Periksa sambungan konektor dan pengawatan antara RB, motor, dan sensor, lalu perbaiki jika ada kondisi tidak normal.","simplified":"Periksa konektor dan kabel antara RB, motor, dan sensor. Perbaiki bila tidak normal."},
+        {"official_step_id":"4520ed18-f312-4938-9b56-a407ae63f794","official_order":3,"translation":"Periksa drive I/O motor dan kopling roda gigi, lalu perbaiki atau ganti jika ada kondisi tidak normal. Diagram pengawatan: FS-612: 7-I.","simplified":"Periksa drive I/O motor dan kopling gear. Perbaiki atau ganti bila tidak normal. Diagram: FS-612: 7-I."},
+        {"official_step_id":"31b887a1-6ddf-4b0d-ac06-10b76932e577","official_order":4,"translation":"Periksa I/O dan operasi sensor, lalu perbaiki atau ganti jika ada kondisi tidak normal. Diagram pengawatan: FS-612: 3-B.","simplified":"Periksa I/O dan kerja sensor. Perbaiki atau ganti bila tidak normal. Diagram: FS-612: 3-B."},
+        {"official_step_id":"d17d0511-75c9-4291-8b25-d023da7d699d","official_order":5,"translation":"Ganti PS8.","simplified":"Ganti PS8."},
+        {"official_step_id":"0938cc63-2c6a-4610-9808-50008f4ac0ea","official_order":6,"translation":"Ganti M5.","simplified":"Ganti M5."},
+        {"official_step_id":"defe7350-1f3e-472f-81c6-5e2fed865fbc","official_order":7,"translation":"Ganti RB.","simplified":"Ganti RB."}
+      ]
+    },
+    {
+      "official_entry_id": "04d46365-a84f-412a-9ada-80fc29f0c715",
+      "language": "id",
+      "source_normalized_digest": "ac00f81d5b2c4f0dbde3dca3a8cf87966cde20d51f4da56c0aa9056f252346f7",
+      "error_code": "C-1103",
+      "classification_translation": "FS: ketidaknormalan FS-532",
+      "classification_simplified": "Gangguan pada FS-532",
+      "cause_translation": "Stacker alignment home sensor (PS12) tidak aktif dalam waktu yang ditentukan setelah pencarian posisi awal oleh stacker alignment motor (M9) dimulai.",
+      "cause_simplified": "PS12 tidak aktif tepat waktu setelah M9 mulai mencari posisi awal.",
+      "warning_translation": null,
+      "warning_simplified": null,
+      "solution_steps": [
+        {"official_step_id":"0301e50b-b62a-4ca6-88d0-3e332d7b60e0","official_order":1,"translation":"Periksa bagian alignment, lalu bersihkan atau perbaiki jika ada kondisi tidak normal.","simplified":"Periksa dan bersihkan bagian alignment. Perbaiki bila ada kondisi tidak normal."},
+        {"official_step_id":"b23bc5d0-2d29-4d21-82c8-6ba8d33f1488","official_order":2,"translation":"Periksa sambungan konektor dan pengawatan antara FNSCB, motor, dan sensor, lalu perbaiki jika ada kondisi tidak normal.","simplified":"Periksa konektor dan kabel antara FNSCB, motor, dan sensor. Perbaiki bila tidak normal."},
+        {"official_step_id":"862298ad-e895-46f3-9b17-111f42f5e9ca","official_order":3,"translation":"Periksa drive I/O motor dan kopling roda gigi, lalu perbaiki atau ganti jika ada kondisi tidak normal. Diagram pengawatan: FS-532: 5-F.","simplified":"Periksa drive I/O motor dan kopling gear. Perbaiki atau ganti bila tidak normal. Diagram: FS-532: 5-F."},
+        {"official_step_id":"48c9b950-f198-497a-828f-d802c2e19582","official_order":4,"translation":"Periksa I/O dan operasi sensor, lalu perbaiki atau ganti jika ada kondisi tidak normal. Diagram pengawatan: FS-532: 10-B.","simplified":"Periksa I/O dan kerja sensor. Perbaiki atau ganti bila tidak normal. Diagram: FS-532: 10-B."},
+        {"official_step_id":"fd9fbbbf-1bed-4eea-b9f7-2c6c67cabe24","official_order":5,"translation":"Ganti PS12.","simplified":"Ganti PS12."},
+        {"official_step_id":"31a04756-d885-46ae-b33c-7058622e99d1","official_order":6,"translation":"Ganti M9.","simplified":"Ganti M9."},
+        {"official_step_id":"67432426-773f-44e3-921a-30ed6eef5b29","official_order":7,"translation":"Ganti FNSCB.","simplified":"Ganti FNSCB."}
+      ]
+    },
+    {
+      "official_entry_id": "8e8a7467-0ace-4cfe-929f-0bc91e683956",
+      "language": "id",
+      "source_normalized_digest": "6af55dc0c7c150dc49d5ee9d9c8b826e30afbef0e4c64a061bef46ec23dfec9e",
+      "error_code": "C-C152",
+      "classification_translation": "Unit utama: kesalahan firmware (Scanner)",
+      "classification_simplified": "Firmware scanner bermasalah",
+      "cause_translation": "Saat mesin dinyalakan, terdeteksi ketidaknormalan firmware scanner.",
+      "cause_simplified": "Mesin mendeteksi firmware scanner yang tidak normal saat dinyalakan.",
+      "warning_translation": null,
+      "warning_simplified": null,
+      "solution_steps": [
+        {"official_step_id":"924b8d7e-100d-4cb4-93a3-45873b483416","official_order":1,"translation":"Periksa sambungan konektor dan pengawatan antara SCIPB dan OACB, lalu perbaiki jika ada kondisi tidak normal.","simplified":"Periksa konektor dan kabel antara SCIPB dan OACB. Perbaiki bila tidak normal."},
+        {"official_step_id":"743b90d9-b9f5-40b3-95b9-e5e361abc2ed","official_order":2,"translation":"Instal ulang firmware SCIPB.","simplified":"Instal ulang firmware SCIPB."},
+        {"official_step_id":"31d8fd7d-13a6-4369-9b32-a5c4837a45b2","official_order":3,"translation":"Ganti SCIPB.","simplified":"Ganti SCIPB."},
+        {"official_step_id":"4b42d30f-768b-4851-bcc9-ecf8aa83056c","official_order":4,"translation":"Ganti OACB (lihat G.3.2.8 Overall control board (OACB)).","simplified":"Ganti OACB sesuai referensi G.3.2.8 Overall control board (OACB)."}
+      ]
+    },
+    {
+      "official_entry_id": "7a252e56-5630-4694-8179-0555f0b8d118",
+      "language": "id",
+      "source_normalized_digest": "92b9533c32ea78ad0a242715c70634349a54ecad7c009860cbe5618686fcb8c9",
+      "error_code": "C-3515",
+      "classification_translation": "Unit utama: ketidaknormalan putusnya pengawatan fusing",
+      "classification_simplified": "Pengawatan fusing terdeteksi terputus",
+      "cause_translation": "Dalam waktu yang ditentukan setelah pemanasan dimulai, nilai AD pada fusing temperature sensor/2 (TH2) berubah tidak normal dan pengawatan terdeteksi putus.",
+      "cause_simplified": "Nilai AD dari TH2 berubah tidak normal saat pemanasan sehingga sistem mendeteksi pengawatan terputus.",
+      "warning_translation": "Pastikan DIPSW3-1 diatur ke 0 setelah komponen yang rusak diganti. Jika DIPSW3-1 diatur ke 0 sebelum komponen yang rusak diperbaiki, kondisi tersebut dapat menyebabkan kebakaran.",
+      "warning_simplified": "WAJIB: atur DIPSW3-1 ke 0 hanya setelah komponen yang rusak selesai diganti. Mengaturnya ke 0 sebelum perbaikan selesai dapat menyebabkan kebakaran.",
+      "solution_steps": [
+        {"official_step_id":"b6e567c0-c400-4694-a84b-70031c454c1d","official_order":1,"translation":"Periksa sambungan antara konektor sisi belakang unit fusing dan konektor sisi unit utama, lalu perbaiki jika ada kondisi tidak normal.","simplified":"Periksa konektor belakang unit fusing ke unit utama. Perbaiki bila sambungannya tidak normal."},
+        {"official_step_id":"b2eab2cc-a304-445f-9fbb-d090af0d52cb","official_order":2,"translation":"Periksa sambungan konektor dan pengawatan antara sensor suhu fusing dan PRCB, lalu perbaiki jika ada kondisi tidak normal.","simplified":"Periksa konektor dan kabel sensor suhu fusing ke PRCB. Perbaiki bila tidak normal."},
+        {"official_step_id":"46f5b248-b18e-4dfe-8bad-25fb3c92b559","official_order":3,"translation":"Periksa sambungan konektor dan pengawatan antara lampu pemanas fusing dan DCPS1. Perbaiki jika ada kondisi tidak normal. Diagram pengawatan: Main body (1/4): 10-B.","simplified":"Periksa konektor dan kabel lampu pemanas fusing ke DCPS1. Perbaiki bila tidak normal. Diagram: Main body (1/4): 10-B."},
+        {"official_step_id":"83a3a78c-b565-49cd-bdab-2a22c5ab1b44","official_order":4,"translation":"Periksa sambungan konektor dan pengawatan antara lampu pemanas fusing, FUSCB2, FUSCB3, dan DCPS1. Perbaiki jika ada kondisi tidak normal. Diagram pengawatan: Main body (4/4): 10-A, 10-C, 10-D. Hanya untuk Europe.","simplified":"Periksa konektor dan kabel lampu pemanas fusing, FUSCB2, FUSCB3, dan DCPS1. Perbaiki bila tidak normal. Diagram: Main body (4/4): 10-A, 10-C, 10-D. Hanya untuk Europe."},
+        {"official_step_id":"005a610a-d482-44f8-a4df-6fd37ed11fc1","official_order":5,"translation":"Periksa kontinuitas TS2, lalu perbaiki jika ada kondisi tidak normal.","simplified":"Periksa kontinuitas TS2. Perbaiki bila tidak normal."},
+        {"official_step_id":"b4048534-47a4-48f9-a0d8-08f1d0b7c0b0","official_order":6,"translation":"Periksa kondisi pemasangan lampu pemanas fusing dan status ON atau OFF melalui I/O, lalu perbaiki jika ada kondisi tidak normal. Diagram pengawatan: Main body (1/4): 3-C, 3-D.","simplified":"Periksa pemasangan lampu pemanas fusing serta status ON/OFF melalui I/O. Perbaiki bila tidak normal. Diagram: Main body (1/4): 3-C, 3-D."},
+        {"official_step_id":"4825fe4a-eecd-41d9-b137-8ea1c7444ac0","official_order":7,"translation":"Periksa kondisi pemasangan TH2 dan suhu pada I/O, lalu sesuaikan jika ada kondisi tidak normal. Diagram pengawatan: Main body (1/4): 1-E.","simplified":"Periksa pemasangan TH2 dan pembacaan suhu pada I/O. Sesuaikan bila tidak normal. Diagram: Main body (1/4): 1-E."},
+        {"official_step_id":"345a6635-815d-452a-9004-392095b24d35","official_order":8,"translation":"Ganti TH2.","simplified":"Ganti TH2."},
+        {"official_step_id":"30b5fd78-05b4-4cdb-893a-f1961d0be55a","official_order":9,"translation":"Ganti TS2.","simplified":"Ganti TS2."},
+        {"official_step_id":"550629c4-6bd5-4f2d-9f83-0db6938821e2","official_order":10,"translation":"Ganti fusing heater lamp assy/Up.","simplified":"Ganti fusing heater lamp assy/Up."},
+        {"official_step_id":"b3d543f7-ebca-4b7f-a778-f0bb3932a070","official_order":11,"translation":"Ganti FUSCB2 dan FUSCB3. Hanya untuk Europe.","simplified":"Ganti FUSCB2 dan FUSCB3. Hanya untuk Europe."},
+        {"official_step_id":"d090f0a6-97ea-4d3d-89a9-0aa0c0bbc6c8","official_order":12,"translation":"Ganti DCPS1.","simplified":"Ganti DCPS1."},
+        {"official_step_id":"008528dd-c9c8-4244-857c-abf40bacbd8c","official_order":13,"translation":"Ganti PRCB.","simplified":"Ganti PRCB."}
+      ]
+    },
+    {
+      "official_entry_id": "0fdfd6c5-730a-459f-9f98-b7a9baa1f173",
+      "language": "id",
+      "source_normalized_digest": "ee091e3682812d72f08cd695a1e0a7e7f287e05eb3f0c30acf285412733c13df",
+      "error_code": "C-D050",
+      "classification_translation": "Unit utama: ketidaknormalan akses RAID",
+      "classification_simplified": "Terjadi gangguan saat mengakses RAID",
+      "cause_translation": "Terjadi kesalahan saat RAID diakses.",
+      "cause_simplified": "Sistem mengalami kesalahan ketika mengakses RAID.",
+      "warning_translation": null,
+      "warning_simplified": null,
+      "solution_steps": [
+        {"official_step_id":"0c3ebaa8-5c8d-4302-b75a-79fcb3dff9b2","official_order":1,"translation":"Periksa firmware overall control (I) dan controller (P), lalu instal ulang firmware jika versinya berbeda.","simplified":"Periksa versi firmware overall control (I) dan controller (P). Instal ulang bila versinya berbeda."},
+        {"official_step_id":"dcbb70fd-c504-4446-aba8-ebb134cd6379","official_order":2,"translation":"Jalankan pemeriksaan dan pemulihan bad sector melalui output check I/O 99-03.","simplified":"Jalankan bad sector check dan recovery pada output check I/O 99-03."},
+        {"official_step_id":"6653334c-b07a-439f-86e6-fa394a523a9d","official_order":3,"translation":"Periksa sambungan setiap HDD, lalu perbaiki jika ada kondisi tidak normal.","simplified":"Periksa semua sambungan HDD. Perbaiki bila tidak normal."},
+        {"official_step_id":"36f9936e-e0b1-452e-a28a-59913200bdbf","official_order":4,"translation":"Format HDD (lihat I.4.17.2 Format HDD All Data).","simplified":"Format HDD sesuai I.4.17.2 Format HDD All Data."},
+        {"official_step_id":"4fa49c05-cc41-4c19-b3db-8adca40b5520","official_order":5,"translation":"Jika UK-104 tidak terpasang, ganti HDD1, HDD2, dan HDD3 sesuai I.4.7.12 Hard disk replacing procedure. Jika UK-104 terpasang, lakukan langkah 6 sampai 9.","simplified":"Tanpa UK-104: ganti HDD1, HDD2, dan HDD3 sesuai I.4.7.12. Dengan UK-104: lanjutkan langkah 6–9."},
+        {"official_step_id":"1102fada-1556-4696-8b3a-1c4c76629f6d","official_order":6,"translation":"Ubah DIPSW40-7 ke 0.","simplified":"Setel DIPSW40-7 ke 0."},
+        {"official_step_id":"2ff0286c-f7e8-4f64-afc5-76b704881927","official_order":7,"translation":"Nonaktifkan lalu aktifkan sub power switch (SW2) pada unit utama.","simplified":"Matikan lalu hidupkan kembali sub power switch (SW2) unit utama."},
+        {"official_step_id":"4cd91cce-8ea6-486f-b667-af7d4ddb0f10","official_order":8,"translation":"Periksa apakah C-D0E1 muncul saat start. Jika C-D0E1 muncul dan HDD1, HDD2, atau HDD3 tampil pada panel sentuh, ganti HDD1, HDD2, dan HDD3 sesuai I.4.7.12. Jika HDD4 tampil, ganti HDD4. Jika C-D0E1 tidak muncul, ganti HDD4 sesuai I.4.7.12.","simplified":"Saat start, periksa C-D0E1. Jika muncul: ganti HDD1, HDD2, dan HDD3 bila salah satunya tampil; atau ganti HDD4 bila HDD4 tampil. Jika tidak muncul, ganti HDD4. Ikuti I.4.7.12."},
+        {"official_step_id":"bd2194da-e7ea-4a83-b8f9-67cd501cada5","official_order":9,"translation":"Ubah DIPSW40-7 ke 1.","simplified":"Setel DIPSW40-7 ke 1."},
+        {"official_step_id":"173a7713-c8b5-4bab-8c50-0250ddffcbee","official_order":10,"translation":"Ganti HDD lain yang belum diganti sesuai I.4.7.12 Hard disk replacing procedure.","simplified":"Ganti HDD lain yang belum diganti. Ikuti I.4.7.12."},
+        {"official_step_id":"0077e6f6-7aa2-4a37-9e11-f6d2b8540792","official_order":11,"translation":"Ganti OACB sesuai G.3.2.8 Overall control board (OACB).","simplified":"Ganti OACB dengan mengikuti G.3.2.8 Overall control board (OACB)."}
+      ]
+    },
+    {
+      "official_entry_id": "60e566a7-d914-47e4-97df-f016069cf6c8",
+      "language": "id",
+      "source_normalized_digest": "71474bc990eafb0174a9b1d31449d111370cd0edfe2a7b78152ed122c0bb12f4",
+      "error_code": "C-0209",
+      "classification_translation": "PF: ketidaknormalan motor pengangkat kertas PF-602m atau PF-707",
+      "classification_simplified": "Motor pengangkat kertas PF-602m atau PF-707 bermasalah",
+      "cause_translation": "Sekring jalur daya untuk paper lift motor/1 (M2: PF-602m, M7: PF-707) putus.",
+      "cause_simplified": "Sekring suplai daya motor pengangkat kertas M2 pada PF-602m atau M7 pada PF-707 putus.",
+      "warning_translation": null,
+      "warning_simplified": null,
+      "solution_steps": [
+        {"official_step_id":"6f0da50d-664d-44a4-837b-a98d027337fd","official_order":1,"translation":"Periksa sambungan konektor dan pengawatan antara PFDB dan motor, lalu perbaiki jika ada kondisi tidak normal.","simplified":"Periksa konektor dan kabel antara PFDB dan motor. Perbaiki bila tidak normal."},
+        {"official_step_id":"85a67795-2419-44d3-904e-7bdf1e1854c3","official_order":2,"translation":"Periksa drive I/O motor dan kopling roda gigi, lalu perbaiki atau ganti jika ada kondisi tidak normal. Diagram pengawatan: PF-602m: 11-U, PF-707 (1/2): 2-J.","simplified":"Periksa drive I/O motor dan kopling gear. Perbaiki atau ganti bila tidak normal. Diagram: PF-602m: 11-U, PF-707 (1/2): 2-J."},
+        {"official_step_id":"e381874b-10f1-4abd-a5a9-6cc718b6e12a","official_order":3,"translation":"Ganti M2 atau FM7 dan PFDB secara bersamaan.","simplified":"Ganti M2 atau FM7 bersama dengan PFDB."}
+      ]
+    },
+    {
+      "official_entry_id": "9669f519-1219-43a4-b222-ed7ef13f2804",
+      "language": "id",
+      "source_normalized_digest": "f8d16b19a4a11f4aa65819cbe39dac282e2adf9b1ea7017f1c09d0ca8cf3a22f",
+      "error_code": "C-0306",
+      "classification_translation": "LU: ketidaknormalan kipas LU",
+      "classification_simplified": "Kipas LU bermasalah",
+      "cause_translation": "Sinyal deteksi kesalahan FM1 terdeteksi terus-menerus selama waktu yang ditentukan ketika paper feed assist fan/Fr (FM1) aktif.",
+      "cause_simplified": "Sinyal kesalahan FM1 terus terdeteksi saat paper feed assist fan/Fr (FM1) aktif.",
+      "warning_translation": null,
+      "warning_simplified": null,
+      "solution_steps": [
+        {"official_step_id":"9fceec37-d6f2-437f-b760-a0e73e25651b","official_order":1,"translation":"Periksa sambungan konektor dan pengawatan antara LUDB dan kipas, lalu perbaiki jika ada kondisi tidak normal.","simplified":"Periksa konektor dan kabel antara LUDB dan kipas. Perbaiki bila tidak normal."},
+        {"official_step_id":"3b8b0b88-41fc-45f2-ab2b-b75acb4dd857","official_order":2,"translation":"Putar kipas melalui I/O atau dengan tangan, lalu perbaiki jika ada kondisi tidak normal. Diagram pengawatan: LU: 6-H.","simplified":"Putar kipas melalui I/O atau secara manual. Perbaiki bila tidak normal. Diagram: LU: 6-H."},
+        {"official_step_id":"2e2d9717-3990-482e-b46c-9607d43a8b21","official_order":3,"translation":"Ganti FM1 dan LUDB secara bersamaan.","simplified":"Ganti FM1 bersama dengan LUDB."}
+      ]
+    }
+  ]
+}

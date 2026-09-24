@@ -1,4 +1,4 @@
-import { createElement } from 'react'
+import { createElement, useState } from 'react'
 import { AlertTriangle, ArrowLeft, BookOpenText, Boxes, FileText, Info, ListChecks, ShieldAlert, Wrench } from 'lucide-react'
 import { ErrorState } from '../../../components/ui/ErrorState.jsx'
 import { LoadingScreen } from '../../../components/ui/LoadingScreen.jsx'
@@ -61,8 +61,36 @@ function SourceProvenance({ provenance }) {
   )
 }
 
+function SharedOfficialSections({ entry, warning }) {
+  return <>
+    {entry.parts?.length > 0 && <DetailSection icon={Boxes} eyebrow="Service parts" title="Part Terkait"><ul className="related-parts">{entry.parts.map((part) => <li key={part.id}><div><strong>{part.part_name}</strong>{part.part_code && <span>{part.part_code}</span>}</div>{part.applicability_label && <small>{part.applicability_label}</small>}</li>)}</ul></DetailSection>}
+    <SafetyNotice warning={warning} alertMeasure={entry.alert_measure} />
+    {entry.note && <DetailSection icon={AlertTriangle} eyebrow="Manufacturer note" title="Catatan"><p className="manufacturer-copy">{entry.note}</p></DetailSection>}
+    <TechnicalReferences entry={entry} />
+    <SourceProvenance provenance={entry.provenance} />
+  </>
+}
+
+function AuthoritativeSections({ entry }) {
+  return <>
+    {(entry.steps?.length > 0 || entry.correction) && <DetailSection icon={ListChecks} eyebrow="Apa yang harus dilakukan" title="Penanganan">{entry.steps?.length > 0 ? <ol className="solution-steps">{entry.steps.map((step) => <li key={step.id} value={step.step_number}><p>{step.instruction}</p>{step.applicability_label && <small>{step.applicability_label}</small>}{step.requires_technician && <span>Teknisi diperlukan</span>}</li>)}</ol> : <p className="manufacturer-copy">{entry.correction}</p>}</DetailSection>}
+    {entry.cause && <DetailSection icon={Info} eyebrow="Manufacturer explanation" title="Penyebab"><p className="manufacturer-copy">{entry.cause}</p></DetailSection>}
+    <SharedOfficialSections entry={entry} warning={entry.warning} />
+  </>
+}
+
+function AssistedSections({ entry }) {
+  const assisted = entry.assisted
+  return <>
+    {assisted.cause && <DetailSection icon={Info} eyebrow="Penjelasan teknisi" title="Penjelasan"><p className="manufacturer-copy">{assisted.cause.simplified || assisted.cause.translation}</p></DetailSection>}
+    <DetailSection icon={ListChecks} eyebrow="Apa yang perlu dilakukan" title="Yang Perlu Dilakukan"><ol className="solution-steps">{assisted.steps.map((step) => { const official = entry.steps?.find((item) => item.id === step.official_step_id); return <li key={step.official_step_id} value={step.official_order}><p>{step.simplified || step.translation}</p>{official?.applicability_label && <small>{official.applicability_label}</small>}{official?.requires_technician && <span>Teknisi diperlukan</span>}</li> })}</ol></DetailSection>
+    <SharedOfficialSections entry={entry} warning={assisted.warning?.simplified || assisted.warning?.translation || entry.warning} />
+  </>
+}
+
 export function TroubleshootingDetailPage({ entryId, navigate }) {
   const state = useOfficialErrorEntry(entryId)
+  const [modeSelection, setModeSelection] = useState(null)
   if (state.isLoading) return <LoadingScreen label="Memuat penanganan resmi" />
   if (state.error) return <ErrorState title="Penanganan tidak dapat dimuat" detail={userErrorMessage(state.error, 'Prosedur ini sementara tidak tersedia.')} onRetry={state.refresh} />
   if (!state.entry) return <ErrorState title="Penanganan tidak ditemukan" detail="Data mungkin tidak tersedia untuk akun aktif." />
@@ -70,35 +98,20 @@ export function TroubleshootingDetailPage({ entryId, navigate }) {
   const entry = state.entry
   const backTarget = `/maintenance/troubleshooting?q=${encodeURIComponent(entry.code)}`
   const labels = applicabilityLabels(entry)
+  const selectedMode = modeSelection?.entryId === entry.id ? modeSelection.mode : null
+  const assistedMode = Boolean(entry.assisted && selectedMode !== 'original')
+  const heading = assistedMode ? entry.assisted.classification.simplified || entry.assisted.classification.translation : entry.classification || 'Official troubleshooting procedure'
 
   return (
     <div className="page-stack troubleshooting-detail-page">
       <button className="back-button" type="button" onClick={() => navigate(backTarget)}><ArrowLeft size={17} /> Kembali ke pencarian</button>
       <section className="troubleshooting-detail-hero glass-surface">
-        <div><span className="troubleshooting-code">{entry.code}</span><h1>{entry.classification || 'Official troubleshooting procedure'}</h1><div className="troubleshooting-applicabilities">{labels.map((label) => <span className="troubleshooting-applicability" key={label}>{label}</span>)}</div></div>
+        <div><span className="troubleshooting-code">{entry.code}</span><h1>{heading}</h1><div className="troubleshooting-applicabilities">{labels.map((label) => <span className="troubleshooting-applicability" key={label}>{label}</span>)}</div></div>
         <span className="troubleshooting-official-mark"><Wrench size={18} /> Official manufacturer knowledge</span>
       </section>
 
-      {(entry.steps?.length > 0 || entry.correction) && (
-        <DetailSection icon={ListChecks} eyebrow="Apa yang harus dilakukan" title="Penanganan">
-          {entry.steps?.length > 0
-            ? <ol className="solution-steps">{entry.steps.map((step) => <li key={step.id} value={step.step_number}><p>{step.instruction}</p>{step.applicability_label && <small>{step.applicability_label}</small>}{step.requires_technician && <span>Teknisi diperlukan</span>}</li>)}</ol>
-            : <p className="manufacturer-copy">{entry.correction}</p>}
-        </DetailSection>
-      )}
-
-      {entry.cause && <DetailSection icon={Info} eyebrow="Manufacturer explanation" title="Penyebab"><p className="manufacturer-copy">{entry.cause}</p></DetailSection>}
-
-      {entry.parts?.length > 0 && (
-        <DetailSection icon={Boxes} eyebrow="Service parts" title="Part Terkait">
-          <ul className="related-parts">{entry.parts.map((part) => <li key={part.id}><div><strong>{part.part_name}</strong>{part.part_code && <span>{part.part_code}</span>}</div>{part.applicability_label && <small>{part.applicability_label}</small>}</li>)}</ul>
-        </DetailSection>
-      )}
-
-      <SafetyNotice warning={entry.warning} alertMeasure={entry.alert_measure} />
-      {entry.note && <DetailSection icon={AlertTriangle} eyebrow="Manufacturer note" title="Catatan"><p className="manufacturer-copy">{entry.note}</p></DetailSection>}
-      <TechnicalReferences entry={entry} />
-      <SourceProvenance provenance={entry.provenance} />
+      {entry.assisted && <div className="assisted-mode-bar glass-surface"><div className="assisted-mode-switch" role="group" aria-label="Mode penjelasan"><button type="button" className={assistedMode ? 'active' : ''} aria-pressed={assistedMode} onClick={() => setModeSelection({ entryId: entry.id, mode: 'assisted' })}>Mudah Dipahami</button><button type="button" className={!assistedMode ? 'active' : ''} aria-pressed={!assistedMode} onClick={() => setModeSelection({ entryId: entry.id, mode: 'original' })}>Original</button></div>{assistedMode && <p>{entry.assisted.notice}</p>}</div>}
+      {assistedMode ? <AssistedSections entry={entry} /> : <AuthoritativeSections entry={entry} />}
     </div>
   )
 }

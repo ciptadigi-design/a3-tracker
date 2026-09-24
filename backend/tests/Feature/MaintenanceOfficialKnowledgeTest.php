@@ -83,14 +83,18 @@ class MaintenanceOfficialKnowledgeTest extends TestCase
 
     public function test_migration_rollback_drops_only_new_tables_and_can_be_reapplied(): void
     {
+        $assistedMigration = require database_path('migrations/2026_09_24_000200_create_maintenance_assisted_error_knowledge.php');
         $migration = require database_path('migrations/2026_09_23_000200_create_maintenance_official_error_knowledge.php');
+        $assistedMigration->down();
         $migration->down();
         $this->assertFalse(Schema::hasTable('maintenance_official_error_entries'));
         $this->assertTrue(Schema::hasTable('machine_error_codes'));
         $this->assertTrue(Schema::hasTable('maintenance_error_solutions'));
         $this->assertTrue(Schema::hasTable('maintenance_tickets'));
         $migration->up();
+        $assistedMigration->up();
         $this->assertTrue(Schema::hasTable('maintenance_official_error_entries'));
+        $this->assertTrue(Schema::hasTable('maintenance_assisted_error_entries'));
     }
 
     public function test_c3913_preserves_provenance_raw_source_parts_and_exact_step_order(): void

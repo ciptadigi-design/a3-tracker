@@ -9,6 +9,12 @@ class MaintenanceOfficialErrorEntryResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
+        $assisted = $this->assistedVersions
+            ->first(fn ($version) => $version->language === 'id'
+                && $version->status === 'valid'
+                && $this->normalized_digest !== null
+                && hash_equals((string) $this->normalized_digest, (string) $version->source_normalized_digest));
+
         return [
             'id' => $this->id,
             'code' => $this->code,
@@ -50,6 +56,30 @@ class MaintenanceOfficialErrorEntryResource extends JsonResource
                 'page_number' => $reference->page_number,
                 'section_number' => $reference->section_number,
             ])->values(),
+            'assisted' => $assisted === null ? null : [
+                'language' => $assisted->language,
+                'content_version' => $assisted->content_version,
+                'generated_at' => $assisted->generated_at,
+                'classification' => [
+                    'translation' => $assisted->classification_translation,
+                    'simplified' => $assisted->classification_simplified,
+                ],
+                'cause' => $assisted->cause_translation === null ? null : [
+                    'translation' => $assisted->cause_translation,
+                    'simplified' => $assisted->cause_simplified,
+                ],
+                'warning' => $assisted->warning_translation === null ? null : [
+                    'translation' => $assisted->warning_translation,
+                    'simplified' => $assisted->warning_simplified,
+                ],
+                'steps' => $assisted->steps->map(fn ($step) => [
+                    'official_step_id' => $step->official_step_id,
+                    'official_order' => $step->official_order,
+                    'translation' => $step->translation,
+                    'simplified' => $step->simplified,
+                ])->values(),
+                'notice' => 'Penjelasan Indonesia dibantu AI berdasarkan manual resmi.',
+            ],
             'provenance' => [
                 'document' => [
                     'id' => $this->document->id,

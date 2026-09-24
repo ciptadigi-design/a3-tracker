@@ -2,8 +2,10 @@
 
 namespace App\Providers;
 
+use App\Contracts\AssistedKnowledgeProvider;
 use App\Models\Account;
 use App\Models\User;
+use App\Services\AssistedKnowledge\ConfiguredJsonAssistedKnowledgeProvider;
 use App\Services\EffectiveCapabilityResolver;
 use App\Services\PdfExtraction\PdfTextExtractor;
 use App\Services\PdfExtraction\ProfileAwarePdfTextExtractor;
@@ -25,6 +27,7 @@ class AppServiceProvider extends ServiceProvider
         // UNSUPPORTED_PDF_SECURITY exactly as before. See
         // docs/maintenance/V1.5.5_AESV2_EXTRACTION.md.
         $this->app->bind(PdfTextExtractor::class, ProfileAwarePdfTextExtractor::class);
+        $this->app->bind(AssistedKnowledgeProvider::class, ConfiguredJsonAssistedKnowledgeProvider::class);
     }
 
     /**
