@@ -4,9 +4,12 @@ namespace App\Services\OfficialKnowledgeIngestion;
 
 use App\Models\MaintenanceDocument;
 use App\Models\MaintenanceOfficialErrorEntry;
+use App\Models\MaintenanceOfficialErrorReference;
 use App\Services\OfficialKnowledgeParsing\ParsedOfficialErrorEntry;
 use App\Services\OfficialKnowledgeParsing\ParserOutcome;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
+use InvalidArgumentException;
 
 /**
  * Persists one current normalized snapshot per document/code/variant identity.
@@ -14,6 +17,10 @@ use Illuminate\Support\Facades\DB;
  */
 final class OfficialKnowledgeIngestionService
 {
+    public function __construct(
+        private readonly OfficialKnowledgeCanonicalizer $canonicalizer = new OfficialKnowledgeCanonicalizer,
+    ) {}
+
     public function plan(
         MaintenanceDocument $document,
         ParsedOfficialErrorEntry $parsed,
@@ -29,10 +36,34 @@ final class OfficialKnowledgeIngestionService
             return new OfficialKnowledgeIngestionResult(OfficialKnowledgeIngestionAction::CREATED);
         }
 
+        $digest = $this->canonicalizer->entryDigest($parsed);
+
         return new OfficialKnowledgeIngestionResult(
-            hash_equals((string) $existing->source_hash, $parsed->sourceHash)
+            ($existing->normalized_digest !== null
+                ? hash_equals((string) $existing->normalized_digest, $digest)
+                : hash_equals((string) $existing->source_hash, $parsed->sourceHash))
                 ? OfficialKnowledgeIngestionAction::UNCHANGED
                 : OfficialKnowledgeIngestionAction::UPDATED,
+            $existing,
+        );
+    }
+
+    public function planReviewed(MaintenanceDocument $document, ParsedOfficialErrorEntry $parsed): OfficialKnowledgeIngestionResult
+    {
+        $rejection = $this->rejectionReason($document, $parsed, OfficialKnowledgeIngestionPolicy::PASS_ONLY);
+        if ($rejection !== null) {
+            return new OfficialKnowledgeIngestionResult(OfficialKnowledgeIngestionAction::REJECTED, reason: $rejection);
+        }
+        $existing = $this->findExisting($document, $parsed);
+        if ($existing === null) {
+            return new OfficialKnowledgeIngestionResult(OfficialKnowledgeIngestionAction::CREATED);
+        }
+
+        return new OfficialKnowledgeIngestionResult(
+            $existing->normalized_digest !== null
+                && hash_equals((string) $existing->normalized_digest, $this->canonicalizer->entryDigest($parsed))
+                    ? OfficialKnowledgeIngestionAction::UNCHANGED
+                    : OfficialKnowledgeIngestionAction::UPDATED,
             $existing,
         );
     }
@@ -94,6 +125,39 @@ final class OfficialKnowledgeIngestionService
         return new OfficialKnowledgeBatchIngestionResult(true, $results);
     }
 
+    /**
+     * The caller owns the run-level transaction and document lock.
+     *
+     * @param  list<ParsedOfficialErrorEntry>  $entries
+     * @return list<OfficialKnowledgeIngestionResult>
+     */
+    public function persistReviewedBatch(MaintenanceDocument $document, array $entries, string $ingestionRunId, ?callable $afterEntry = null): array
+    {
+        if (DB::connection()->transactionLevel() < 1) {
+            throw new \LogicException('Reviewed full-manual persistence requires an existing transaction.');
+        }
+
+        $results = [];
+        $pendingChildren = [];
+        $total = count($entries);
+        foreach ($entries as $index => $parsed) {
+            $result = $this->persist($document, $parsed, $ingestionRunId, false);
+            $results[] = $result;
+            if ($result->action !== OfficialKnowledgeIngestionAction::UNCHANGED) {
+                $pendingChildren[] = [$result->entry, $parsed];
+            }
+            if ($afterEntry !== null && $index + 1 < $total) {
+                $afterEntry($index + 1, $total);
+            }
+        }
+        $this->persistReviewedChildren($document, $pendingChildren);
+        if ($afterEntry !== null && $total > 0) {
+            $afterEntry($total, $total);
+        }
+
+        return $results;
+    }
+
     private function rejectionReason(
         MaintenanceDocument $document,
         ParsedOfficialErrorEntry $parsed,
@@ -129,10 +193,14 @@ final class OfficialKnowledgeIngestionService
         return $query->first();
     }
 
-    private function persist(MaintenanceDocument $document, ParsedOfficialErrorEntry $parsed): OfficialKnowledgeIngestionResult
+    private function persist(MaintenanceDocument $document, ParsedOfficialErrorEntry $parsed, ?string $ingestionRunId = null, bool $persistChildren = true): OfficialKnowledgeIngestionResult
     {
         $entry = $this->findExisting($document, $parsed, true);
-        if ($entry !== null && hash_equals((string) $entry->source_hash, $parsed->sourceHash)) {
+        $normalizedDigest = $this->canonicalizer->entryDigest($parsed);
+        $unchanged = $entry !== null && ($entry->normalized_digest !== null
+            ? hash_equals((string) $entry->normalized_digest, $normalizedDigest)
+            : hash_equals((string) $entry->source_hash, $parsed->sourceHash));
+        if ($unchanged) {
             return new OfficialKnowledgeIngestionResult(OfficialKnowledgeIngestionAction::UNCHANGED, $entry);
         }
 
@@ -140,8 +208,12 @@ final class OfficialKnowledgeIngestionService
             ? OfficialKnowledgeIngestionAction::CREATED
             : OfficialKnowledgeIngestionAction::UPDATED;
 
+        if ($action === OfficialKnowledgeIngestionAction::UPDATED && $ingestionRunId === null && $entry->ingestion_run_id !== null) {
+            throw new \LogicException('Controlled ingestion cannot overwrite a reviewed full-manual entry.');
+        }
+
         $entry ??= new MaintenanceOfficialErrorEntry;
-        $entry->fill([
+        $attributes = [
             'document_id' => $document->getKey(),
             'code' => $parsed->code,
             'variant_key' => $parsed->variantKey,
@@ -158,7 +230,12 @@ final class OfficialKnowledgeIngestionService
             'source_page_end' => $parsed->sourcePageEnd,
             'raw_source_text' => $parsed->rawSourceText,
             'source_hash' => $parsed->sourceHash,
-        ]);
+            'normalized_digest' => $normalizedDigest,
+        ];
+        if ($ingestionRunId !== null) {
+            $attributes['ingestion_run_id'] = $ingestionRunId;
+        }
+        $entry->fill($attributes);
         $entry->save();
 
         if ($action === OfficialKnowledgeIngestionAction::UPDATED) {
@@ -168,9 +245,72 @@ final class OfficialKnowledgeIngestionService
             $entry->applicabilities()->delete();
         }
 
-        $this->persistChildren($document, $entry, $parsed);
+        if ($persistChildren) {
+            $this->persistChildren($document, $entry, $parsed);
+        }
 
         return new OfficialKnowledgeIngestionResult($action, $entry->fresh());
+    }
+
+    /** @param list<array{0: MaintenanceOfficialErrorEntry, 1: ParsedOfficialErrorEntry}> $pending */
+    private function persistReviewedChildren(MaintenanceDocument $document, array $pending): void
+    {
+        $timestamp = now();
+        $applicabilities = [];
+        $parts = [];
+        $steps = [];
+        $references = [];
+        foreach ($pending as [$entry, $parsed]) {
+            $stepNumbers = array_column($parsed->steps, 'number');
+            foreach ($parsed->applicabilities as $index => $label) {
+                $mainBody = strcasecmp($label, 'Main body') === 0;
+                $applicabilities[] = [
+                    'id' => (string) Str::uuid(), 'error_entry_id' => $entry->id, 'sequence' => $index + 1,
+                    'scope_type' => $mainBody ? 'MAIN_BODY' : 'ACCESSORY', 'scope_label' => trim($label),
+                    'machine_model_id' => $mainBody ? $document->machine_model_id : null,
+                    'created_at' => $timestamp, 'updated_at' => $timestamp,
+                ];
+            }
+            foreach ($parsed->parts as $index => $part) {
+                $parts[] = [
+                    'id' => (string) Str::uuid(), 'error_entry_id' => $entry->id, 'sequence' => $index + 1,
+                    'part_name' => trim($part), 'part_code' => null, 'applicability_label' => null,
+                    'created_at' => $timestamp, 'updated_at' => $timestamp,
+                ];
+            }
+            foreach ($parsed->steps as $step) {
+                $steps[] = [
+                    'id' => (string) Str::uuid(), 'error_entry_id' => $entry->id, 'step_number' => $step->number,
+                    'instruction' => trim($step->instruction), 'applicability_label' => null, 'requires_technician' => false,
+                    'created_at' => $timestamp, 'updated_at' => $timestamp,
+                ];
+            }
+            foreach ($parsed->references as $reference) {
+                $type = strtoupper(trim($reference->type));
+                if (! in_array($type, MaintenanceOfficialErrorReference::TYPES, true)
+                    || ($reference->stepNumber !== null && ! in_array($reference->stepNumber, $stepNumbers, true))) {
+                    throw new InvalidArgumentException('Invalid reviewed official error reference.');
+                }
+                $references[] = [
+                    'id' => (string) Str::uuid(), 'error_entry_id' => $entry->id,
+                    'step_number' => $reference->stepNumber, 'reference_type' => $type,
+                    'reference_value' => trim($reference->value), 'page_number' => $reference->pageNumber,
+                    'section_number' => $reference->sectionNumber,
+                    'created_at' => $timestamp, 'updated_at' => $timestamp,
+                ];
+            }
+        }
+
+        foreach ([
+            'maintenance_official_error_applicabilities' => $applicabilities,
+            'maintenance_official_error_parts' => $parts,
+            'maintenance_official_error_steps' => $steps,
+            'maintenance_official_error_references' => $references,
+        ] as $table => $rows) {
+            foreach (array_chunk($rows, 100) as $chunk) {
+                DB::table($table)->insert($chunk);
+            }
+        }
     }
 
     private function persistChildren(

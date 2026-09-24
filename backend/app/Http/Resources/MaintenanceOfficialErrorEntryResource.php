@@ -62,6 +62,18 @@ class MaintenanceOfficialErrorEntryResource extends JsonResource
                 'source_page_start' => $this->source_page_start,
                 'source_page_end' => $this->source_page_end,
                 'source_hash' => $this->source_hash,
+                'normalized_digest' => $this->normalized_digest,
+                'ingestion_run' => $this->ingestionRun === null ? null : [
+                    'id' => $this->ingestionRun->id,
+                    'source_pdf_sha256' => $this->ingestionRun->source_pdf_sha256,
+                    'parser_revision' => $this->ingestionRun->parser_revision,
+                    'release_git_sha' => $this->ingestionRun->release_git_sha,
+                    'contract_name' => $this->ingestionRun->contract_name,
+                    'contract_version' => $this->ingestionRun->contract_version,
+                    'dataset_digest' => $this->ingestionRun->dataset_digest,
+                    'status' => $this->ingestionRun->status,
+                    'completed_at' => $this->ingestionRun->completed_at,
+                ],
             ],
             'raw_source_text' => $this->raw_source_text,
         ];

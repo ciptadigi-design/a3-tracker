@@ -1,0 +1,87 @@
+{
+  "schema_version": "maintenance-v2.1-full-manual-ingestion-implementation/v1",
+  "mode": "LOCAL_DISPOSABLE_ONLY",
+  "source": {
+    "filename": "bizhub_PRESS_C1070_C1070P_C1060_PRO_C1060L_E_SM_v1.5.pdf",
+    "canonical_path_verified": true,
+    "sha256": "ae679f5bcd31a49826f9b2587ad4b9483be93950f246c1ea014a7dd0ddcb6ee4",
+    "size_bytes": 121833361,
+    "inode_before_after_equal": true,
+    "mtime_before_after_equal": true,
+    "mode_before_after_equal": true,
+    "temporary_snapshots_remaining": 0,
+    "mutated": false
+  },
+  "reviewed_contract": {
+    "name": "konica-c1070-v1.5-full-reviewed",
+    "version": "v1",
+    "parser_revision": "semantic-error-parser/v2.1-full-manual-1",
+    "extractor_revision": "pypdf/6.14.2-layout",
+    "dataset_digest": "e6ef17a74c8b9c92a26d03c9b856e1244d4f215c3db806adfb4fdaed52e05775",
+    "fixture_sha256": "4253d6c2b46c2c47acae811ae868e29f16ad9c53f6e571394835c032ac1e5ba1",
+    "discovered": 628,
+    "pass": 625,
+    "warn": 1,
+    "fail": 2,
+    "eligible": 625,
+    "distinct_discovered_codes": 617,
+    "distinct_eligible_codes": 614,
+    "identity_collisions": 0,
+    "unresolved_applicability": 0,
+    "unverified_boundaries": 0,
+    "excluded": ["C-1547/PB", "C-C131/MAIN_BODY", "C-D0F8/MAIN_BODY"]
+  },
+  "sqlite": {
+    "real_pdf_rehearsal": "PASS",
+    "assertions": 36,
+    "failure_injection_checkpoints": ["early", "middle", "final_child", "reconciliation", "run_completion"],
+    "all_injected_failures_rolled_back_to_zero": true
+  },
+  "mysql": {
+    "version": "9.7.1",
+    "database_disposable": true,
+    "database_dropped": true,
+    "focused_tests": "PASS",
+    "focused_assertions": 59,
+    "preview": {"created": 625, "unchanged": 0, "updated": 0, "rejected": 3, "mutation_performed": false},
+    "first_apply": {"status": "PASS", "transaction": "COMMITTED", "seconds": 5.01},
+    "idempotent_rerun": {"status": "PASS", "created": 0, "unchanged": 625, "updated": 0, "rejected": 3, "mutation_performed": false, "transaction": "NO_OP", "seconds": 3.90},
+    "verification": {
+      "status": "PASS",
+      "completed_runs": 1,
+      "parents": 625,
+      "distinct_codes": 614,
+      "identities": 625,
+      "applicabilities": 636,
+      "parts": 2011,
+      "steps": 3877,
+      "references": 1538,
+      "duplicates": 0,
+      "orphans": 0,
+      "invalid_step_sequences": 0,
+      "missing_normalized_digests": 0,
+      "missing_run_links": 0
+    },
+    "concurrency": {"attempts": 2, "successful": 1, "refused": 1, "completed_runs": 1, "parents": 625}
+  },
+  "legacy_isolation": "PASS",
+  "api_provenance": "PASS",
+  "regression": {
+    "laravel_sqlite": "PASS: 83 passed, 4040 assertions",
+    "maintenance_ui": "PASS: 41 tests",
+    "node_repository": "PASS: 732 passed, 2 skipped",
+    "vite_build": "PASS",
+    "focused_pint": "PASS",
+    "git_diff_check": "PASS"
+  },
+  "production_activity": {
+    "access": false,
+    "database_access": false,
+    "migration": false,
+    "preview": false,
+    "ingestion": false,
+    "deployment": false
+  },
+  "gate": "V2_1_FULL_MANUAL_INGESTION_IMPLEMENTATION=PASS",
+  "ready_for_production_schema_deploy_and_preview": "YES"
+}

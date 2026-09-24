@@ -103,6 +103,30 @@ class OfficialKnowledgeIngestionServiceTest extends TestCase
         $this->assertDatabaseMissing('maintenance_official_error_steps', ['instruction' => 'Old step.']);
     }
 
+    public function test_normalized_change_with_identical_raw_hash_is_not_mislabeled_unchanged(): void
+    {
+        $document = $this->document();
+        $original = $this->parsed($this->raw());
+        $created = $this->service->ingest($document, $original);
+        $changed = new ParsedOfficialErrorEntry(
+            $original->code, $original->variantKey, $original->sectionNumber,
+            $original->classification.' normalized revision', $original->cause,
+            $original->alertMeasure, $original->correction, $original->warning,
+            $original->note, $original->isolationDipsw, $original->detachedControl,
+            $original->applicabilities, $original->parts, $original->steps,
+            $original->references, $original->sourcePageStart, $original->sourcePageEnd,
+            $original->rawSourceText, $original->sourceHash, $original->diagnostics, $original->outcome,
+        );
+
+        $plan = $this->service->plan($document, $changed);
+        $this->assertSame(OfficialKnowledgeIngestionAction::UPDATED, $plan->action);
+        $updated = $this->service->ingest($document, $changed);
+        $this->assertSame(OfficialKnowledgeIngestionAction::UPDATED, $updated->action);
+        $this->assertSame($created->entry->id, $updated->entry->id);
+        $this->assertSame($original->sourceHash, $updated->entry->source_hash);
+        $this->assertNotSame($created->entry->normalized_digest, $updated->entry->normalized_digest);
+    }
+
     public function test_child_failure_rolls_back_parent_and_all_children(): void
     {
         $document = $this->document();

@@ -13,10 +13,10 @@ class MaintenanceOfficialErrorEntry extends Model
     protected $keyType = 'string';
 
     protected $fillable = [
-        'document_id', 'code', 'variant_key', 'section_number', 'classification',
+        'document_id', 'ingestion_run_id', 'code', 'variant_key', 'section_number', 'classification',
         'cause', 'alert_measure', 'correction', 'warning', 'note', 'isolation_dipsw',
         'detached_control', 'source_page_start', 'source_page_end', 'raw_source_text',
-        'source_hash',
+        'source_hash', 'normalized_digest',
     ];
 
     protected $casts = [
@@ -65,6 +65,11 @@ class MaintenanceOfficialErrorEntry extends Model
     public function document()
     {
         return $this->belongsTo(MaintenanceDocument::class, 'document_id');
+    }
+
+    public function ingestionRun()
+    {
+        return $this->belongsTo(MaintenanceOfficialIngestionRun::class, 'ingestion_run_id');
     }
 
     public function applicabilities()

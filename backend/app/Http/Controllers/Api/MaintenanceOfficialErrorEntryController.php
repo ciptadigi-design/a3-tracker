@@ -43,7 +43,7 @@ class MaintenanceOfficialErrorEntryController extends Controller
     {
         $entry = MaintenanceOfficialErrorEntry::query()
             ->visibleTo($request->user())
-            ->with(['document:id,title,document_type,manufacturer_id,machine_model_id', 'applicabilities', 'parts', 'steps', 'references'])
+            ->with(['document:id,title,document_type,manufacturer_id,machine_model_id', 'ingestionRun', 'applicabilities', 'parts', 'steps', 'references'])
             ->findOrFail($id);
 
         return new MaintenanceOfficialErrorEntryResource($entry);

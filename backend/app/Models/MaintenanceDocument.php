@@ -55,4 +55,9 @@ class MaintenanceDocument extends Model
     {
         return $this->hasMany(MaintenanceOfficialErrorEntry::class, 'document_id');
     }
+
+    public function officialIngestionRuns()
+    {
+        return $this->hasMany(MaintenanceOfficialIngestionRun::class, 'document_id');
+    }
 }
