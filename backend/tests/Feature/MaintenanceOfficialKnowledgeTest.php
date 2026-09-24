@@ -150,6 +150,52 @@ class MaintenanceOfficialKnowledgeTest extends TestCase
         $this->assertSame(['Fixture reference B'], array_column($detailB['references'], 'reference_value'));
     }
 
+    public function test_technician_search_normalizes_safe_code_formats_and_keeps_variants_distinct(): void
+    {
+        $f = $this->fixture();
+        $user = $this->member($f['home']);
+        MaintenanceOfficialKnowledgeFixture::c3913($f['document']);
+        MaintenanceOfficialKnowledgeFixture::c1103Variants($f['document']);
+        MaintenanceOfficialKnowledgeFixture::specialCodeFamilies($f['document']);
+
+        foreach (['3913', 'C3913', 'C-3913', 'c3913', 'c-3913'] as $input) {
+            $this->actingAs($user)->getJson('/api/v1/maintenance/official-error-entries?search='.$input)
+                ->assertOk()
+                ->assertJsonCount(1, 'data')
+                ->assertJsonPath('data.0.code', 'C-3913');
+        }
+
+        $variants = $this->actingAs($user)->getJson('/api/v1/maintenance/official-error-entries?search=C1103')
+            ->assertOk()->assertJsonCount(2, 'data')->json('data');
+        $this->assertSame(['FS-531_FS-612', 'FS-532'], array_column($variants, 'variant_key'));
+
+        $this->actingAs($user)->getJson('/api/v1/maintenance/official-error-entries?search=cc152')
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.code', 'C-C152');
+    }
+
+    public function test_partial_search_is_bounded_paginated_and_does_not_guess_unknown_codes(): void
+    {
+        $f = $this->fixture();
+        $user = $this->member($f['home']);
+        MaintenanceOfficialKnowledgeFixture::c3913($f['document']);
+        MaintenanceOfficialKnowledgeFixture::c1103Variants($f['document']);
+
+        $this->actingAs($user)->getJson('/api/v1/maintenance/official-error-entries?search=110&per_page=1')
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('meta.per_page', 1)
+            ->assertJsonPath('meta.total', 2);
+
+        $this->actingAs($user)->getJson('/api/v1/maintenance/official-error-entries?search=C9999')
+            ->assertOk()
+            ->assertJsonCount(0, 'data');
+
+        $this->actingAs($user)->getJson('/api/v1/maintenance/official-error-entries?search=C%2F3913')
+            ->assertUnprocessable();
+    }
+
     public function test_exact_document_code_and_normalized_variant_identity_cannot_be_duplicated(): void
     {
         $f = $this->fixture();

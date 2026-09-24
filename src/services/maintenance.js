@@ -9,6 +9,9 @@ function toQueryString(params = {}) {
   return search.toString()
 }
 
+export const searchOfficialErrorEntries = async (search, perPage = 20) => unwrapCollection(await laravelMaintenance.officialErrorEntries(toQueryString({ search, per_page: perPage })))
+export const loadOfficialErrorEntry = async (id) => unwrapData(await laravelMaintenance.officialErrorEntry(id))
+
 export const loadMachineErrorCodes = async ({ machineModelId, search } = {}) => unwrapCollection(await laravelMaintenance.errorCodes(toQueryString({ machine_model_id: machineModelId, search })))
 export const createMachineErrorCode = async (payload) => unwrapData(await laravelMaintenance.createErrorCode(payload))
 export const updateMachineErrorCode = async (id, payload) => unwrapData(await laravelMaintenance.updateErrorCode(id, payload))

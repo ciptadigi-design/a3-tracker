@@ -752,6 +752,87 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   .maintenance-solution-row { grid-template-columns: minmax(0, 1fr); }
 }
 
+/* Maintenance V2.2 — technician-first official troubleshooting */
+.maintenance-tabs { margin-top: 0; }
+.maintenance-ticket-actions { display: flex; align-items: center; gap: 8px; }
+.troubleshooting-shell { display: grid; gap: 24px; padding: clamp(20px, 4vw, 36px); border-radius: 28px; }
+.troubleshooting-intro { display: flex; align-items: center; gap: 16px; }
+.troubleshooting-icon { width: 50px; height: 50px; flex: 0 0 50px; display: grid; place-items: center; color: var(--blue); background: var(--blue-soft); border-radius: 16px; }
+.troubleshooting-intro h2 { margin: 6px 0 4px; font-size: clamp(24px, 3vw, 34px); letter-spacing: -0.045em; }
+.troubleshooting-intro p,.troubleshooting-format-hint { margin: 0; color: var(--text-soft); font-size: 14px; }
+.troubleshooting-search { min-height: 68px; display: grid; grid-template-columns: auto minmax(0,1fr) auto; align-items: center; gap: 12px; padding: 8px 8px 8px 20px; background: var(--surface-solid); border: 1px solid var(--border-subtle); border-radius: 20px; box-shadow: 0 12px 34px rgba(34,51,84,.08); }
+.troubleshooting-search:focus-within { border-color: var(--blue); box-shadow: 0 0 0 3px var(--blue-soft),0 12px 34px rgba(34,51,84,.08); }
+.troubleshooting-search > svg { color: var(--text-soft); }
+.troubleshooting-search input { width: 100%; min-width: 0; height: 48px; border: 0; outline: 0; color: var(--text); background: transparent; font-size: 20px; font-weight: 750; letter-spacing: .025em; text-transform: uppercase; }
+.troubleshooting-search input::placeholder { color: var(--text-muted); font-weight: 550; text-transform: none; letter-spacing: 0; }
+.troubleshooting-search button { min-height: 48px; }
+.troubleshooting-state { min-height: 260px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 28px; text-align: center; color: var(--text-soft); background: var(--surface-muted); border: 1px dashed var(--border-subtle); border-radius: 20px; }
+.troubleshooting-state strong { color: var(--text); font-size: 18px; }
+.troubleshooting-state p { max-width: 520px; margin: 0 0 6px; line-height: 1.6; }
+.troubleshooting-error > svg { color: var(--danger); }
+.troubleshooting-results { display: grid; gap: 16px; padding-top: 8px; border-top: 1px solid var(--border-subtle); }
+.troubleshooting-results > header h2 { margin: 5px 0 0; font-size: 22px; }
+.troubleshooting-variant-note { display: flex; flex-direction: column; gap: 5px; padding: 15px 17px; background: var(--blue-soft); border: 1px solid color-mix(in srgb,var(--blue) 24%,transparent); border-radius: 16px; }
+.troubleshooting-variant-note span { color: var(--text-soft); font-size: 13px; }
+.troubleshooting-result-list { display: grid; gap: 12px; }
+.troubleshooting-result-card { display: grid; grid-template-columns: minmax(0,1fr) minmax(180px,.55fr) auto; align-items: center; gap: 18px; padding: 18px; background: var(--surface-solid); border: 1px solid var(--border-subtle); border-radius: 18px; }
+.troubleshooting-result-identity { min-width: 0; }
+.troubleshooting-result-identity h3 { margin: 7px 0 0; overflow-wrap: anywhere; font-size: 17px; line-height: 1.35; }
+.troubleshooting-code { display: inline-flex; color: var(--blue); font-size: clamp(18px,2.3vw,25px); font-weight: 850; letter-spacing: .03em; }
+.troubleshooting-applicabilities { display: flex; flex-wrap: wrap; gap: 7px; }
+.troubleshooting-applicability { display: inline-flex; min-height: 28px; align-items: center; padding: 4px 10px; color: var(--text-soft); background: var(--surface-muted); border: 1px solid var(--border-subtle); border-radius: 99px; font-size: 11px; font-weight: 750; }
+.troubleshooting-detail-page { max-width: 980px; margin: 0 auto; }
+.troubleshooting-detail-hero { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; padding: clamp(22px,4vw,38px); border-radius: 28px; }
+.troubleshooting-detail-hero h1 { max-width: 760px; margin: 12px 0 18px; overflow-wrap: anywhere; font-size: clamp(28px,4vw,44px); line-height: 1.1; letter-spacing: -.045em; }
+.troubleshooting-official-mark { display: inline-flex; align-items: center; gap: 8px; flex: 0 0 auto; padding: 8px 11px; color: var(--blue); background: var(--blue-soft); border-radius: 99px; font-size: 11px; font-weight: 750; }
+.troubleshooting-detail-section { overflow: hidden; border-radius: 22px; }
+.troubleshooting-detail-section > header { display: flex; align-items: center; gap: 12px; padding: 18px 22px; border-bottom: 1px solid var(--border-subtle); }
+.troubleshooting-detail-section > header > span { width: 38px; height: 38px; flex: 0 0 38px; display: grid; place-items: center; color: var(--blue); background: var(--blue-soft); border-radius: 12px; }
+.troubleshooting-detail-section h2 { margin: 4px 0 0; font-size: 22px; letter-spacing: -.035em; }
+.troubleshooting-detail-content { padding: clamp(18px,3vw,28px); }
+.manufacturer-copy,.troubleshooting-detail-content p { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.72; }
+.solution-steps { display: grid; gap: 16px; margin: 0; padding-left: 30px; }
+.solution-steps li { padding-left: 8px; color: var(--blue); font-weight: 800; }
+.solution-steps li p { color: var(--text); font-weight: 500; }
+.solution-steps li small,.solution-steps li span { display: inline-flex; margin: 8px 8px 0 0; padding: 3px 8px; color: var(--text-soft); background: var(--surface-muted); border-radius: 99px; font-size: 10px; font-weight: 700; }
+.related-parts { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.related-parts li { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 13px 15px; background: var(--surface-muted); border-radius: 13px; }
+.related-parts li div { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.related-parts li span,.related-parts li small { color: var(--text-soft); overflow-wrap: anywhere; font-size: 11px; }
+.troubleshooting-safety { border-color: color-mix(in srgb,var(--warning) 42%,var(--border-subtle)); }
+.troubleshooting-safety > header,.troubleshooting-safety .troubleshooting-detail-content { background: color-mix(in srgb,var(--warning) 8%,var(--surface-solid)); }
+.troubleshooting-safety > header > span { color: var(--warning); background: color-mix(in srgb,var(--warning) 15%,transparent); }
+.troubleshooting-safety .troubleshooting-detail-content { display: grid; gap: 18px; }
+.troubleshooting-safety strong { display: block; margin-bottom: 6px; }
+.technical-reference-list { display: grid; gap: 10px; }
+.technical-reference-list article { padding: 14px 16px; background: var(--surface-muted); border-radius: 13px; }
+.technical-reference-list article p { margin: 5px 0; }
+.technical-reference-list article small { color: var(--text-soft); }
+.source-provenance { display: flex; flex-direction: column; gap: 6px; }
+.source-provenance span { color: var(--text-soft); font-size: 13px; }
+
+@media (max-width: 760px) {
+  .maintenance-tabs { width: 100%; overflow-x: auto; }
+  .maintenance-tabs button { min-height: 42px; flex: 1 0 auto; }
+  .troubleshooting-result-card { grid-template-columns: minmax(0,1fr); }
+  .troubleshooting-result-card .secondary-button { width: 100%; justify-content: center; }
+  .troubleshooting-detail-hero { flex-direction: column; }
+  .troubleshooting-official-mark { align-self: flex-start; }
+}
+
+@media (max-width: 520px) {
+  .troubleshooting-shell { padding: 17px; border-radius: 22px; }
+  .troubleshooting-intro { align-items: flex-start; }
+  .troubleshooting-icon { width: 42px; height: 42px; flex-basis: 42px; }
+  .troubleshooting-search { grid-template-columns: auto minmax(0,1fr); padding: 8px 12px; }
+  .troubleshooting-search button { grid-column: 1 / -1; width: 100%; justify-content: center; }
+  .troubleshooting-search input { font-size: 18px; }
+  .troubleshooting-format-hint { line-height: 1.55; }
+  .troubleshooting-detail-section > header { padding: 15px 17px; }
+  .related-parts li { align-items: flex-start; flex-direction: column; }
+  .maintenance-ticket-actions .primary-button { min-width: 40px; padding-inline: 10px; }
+}
+
 .extraction-card { min-width: 0; display: flex; align-items: flex-start; gap: 14px; margin-top: 10px; padding: 18px; border-radius: 20px; background: var(--surface-muted); border: 1px solid var(--border-subtle); }
 .extraction-card-icon { width: 36px; height: 36px; display: grid; place-items: center; flex: 0 0 auto; border-radius: 12px; color: var(--text-soft); background: var(--surface-solid); }
 .extraction-card-none .extraction-card-icon { color: var(--blue); background: var(--blue-soft); }

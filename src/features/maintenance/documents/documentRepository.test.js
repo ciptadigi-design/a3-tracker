@@ -60,7 +60,8 @@ test('document detail no longer exposes extraction, process knowledge, or knowle
   assert.doesNotMatch(detail, /createDocumentImport/)
 })
 
-test('maintenance navigation only shows Tickets and Documents - no Knowledge Base or Error Codes tab', () => {
+test('maintenance navigation shows Troubleshooting, Tickets, and Documents - no Knowledge Base or Error Codes tab', () => {
+  assert.match(page, /Troubleshooting<\/button>/)
   assert.match(page, /Tickets<\/button>/)
   assert.match(page, /Documents<\/button>/)
   assert.doesNotMatch(page, /Knowledge base<\/button>/)

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { CheckCircle2, ClipboardPlus, FileText, ListChecks, Plus, RefreshCcw, Wrench } from 'lucide-react'
+import { CheckCircle2, ClipboardPlus, FileText, ListChecks, Plus, RefreshCcw, Search, Wrench } from 'lucide-react'
 import { PageHeader } from '../components/ui/PageHeader.jsx'
 import { useTenant } from '../features/account/useTenant.js'
 import { CreateTicketDialog } from '../features/maintenance/CreateTicketDialog.jsx'
@@ -9,6 +9,7 @@ import { formatMaintenanceDate, ticketPriorityLabels, ticketStatusLabels } from 
 import { useMachines } from '../features/machines/useMachines.js'
 import { createMaintenanceTicket } from '../services/maintenance.js'
 import { userErrorMessage } from '../lib/appErrors.js'
+import { TroubleshootingSection } from '../features/maintenance/troubleshooting/TroubleshootingSection.jsx'
 
 const statusTabs = ['OPEN', 'IN_PROGRESS', 'DONE', 'CANCELLED']
 
@@ -35,9 +36,7 @@ function TicketRow({ ticket, timezone, onOpen }) {
   )
 }
 
-export function MaintenancePage({ navigate }) {
-  const { account, branch, can } = useTenant()
-  const [tab, setTab] = useState('tickets')
+function TicketsSection({ account, branch, can, navigate }) {
   const [statusFilter, setStatusFilter] = useState('OPEN')
   const [showCreate, setShowCreate] = useState(false)
   const [success, setSuccess] = useState(null)
@@ -52,23 +51,11 @@ export function MaintenancePage({ navigate }) {
     setSuccess('Maintenance ticket opened.')
   }
 
-  const addAction = canCreateTicket ? <button className="primary-button" type="button" onClick={() => setShowCreate(true)}><Plus size={18} /> Open ticket</button> : null
-
   return (
-    <div className="page-stack">
-      <PageHeader eyebrow={`${account?.name} · ${branch?.name ?? 'No branch'}`} title="Maintenance" description="Machine problem history, tickets, and the original document repository." action={addAction} />
+    <>
       {success && <div className="success-banner" role="status"><CheckCircle2 size={18} /><span>{success}</span><button type="button" onClick={() => setSuccess(null)}>Dismiss</button></div>}
-
-      <nav className="machine-view-tabs" role="tablist" aria-label="Maintenance sections">
-        <button type="button" role="tab" aria-selected={tab === 'tickets'} className={tab === 'tickets' ? 'selected' : ''} onClick={() => setTab('tickets')}><ListChecks size={16} /> Tickets</button>
-        <button type="button" role="tab" aria-selected={tab === 'documents'} className={tab === 'documents' ? 'selected' : ''} onClick={() => setTab('documents')}><FileText size={16} /> Documents</button>
-      </nav>
-
-      {tab === 'documents' ? (
-        <DocumentRepositorySection />
-      ) : (
-        <section className="machine-list-card glass-surface">
-          <div className="list-toolbar"><div><span className="card-kicker">Maintenance tickets</span><h2>{ticketsState.isLoading ? 'Loading tickets…' : `${ticketsState.tickets.length} ${ticketStatusLabels[statusFilter].toLowerCase()}`}</h2></div><button className="icon-button" type="button" onClick={ticketsState.refresh} aria-label="Refresh tickets" disabled={ticketsState.isLoading}><RefreshCcw size={17} className={ticketsState.isLoading ? 'spin' : ''} /></button></div>
+      <section className="machine-list-card glass-surface">
+          <div className="list-toolbar"><div><span className="card-kicker">Maintenance tickets</span><h2>{ticketsState.isLoading ? 'Loading tickets…' : `${ticketsState.tickets.length} ${ticketStatusLabels[statusFilter].toLowerCase()}`}</h2></div><div className="maintenance-ticket-actions">{canCreateTicket && <button className="primary-button" type="button" onClick={() => setShowCreate(true)}><Plus size={17} /> Open ticket</button>}<button className="icon-button" type="button" onClick={ticketsState.refresh} aria-label="Refresh tickets" disabled={ticketsState.isLoading}><RefreshCcw size={17} className={ticketsState.isLoading ? 'spin' : ''} /></button></div></div>
           <div className="machine-view-tabs" role="tablist" aria-label="Ticket status filter">
             {statusTabs.map((status) => <button key={status} type="button" role="tab" aria-selected={statusFilter === status} className={statusFilter === status ? 'selected' : ''} onClick={() => setStatusFilter(status)}>{ticketStatusLabels[status]}</button>)}
           </div>
@@ -77,10 +64,31 @@ export function MaintenancePage({ navigate }) {
             : ticketsState.error ? <div className="embedded-error" role="alert"><strong>Tickets could not be loaded.</strong><span>{userErrorMessage(ticketsState.error, 'Tickets are temporarily unavailable.')}</span><button className="secondary-button" type="button" onClick={ticketsState.refresh}>Try again</button></div>
             : ticketsState.tickets.length === 0 ? <div className="machine-empty-state"><Wrench size={38} strokeWidth={1.35} /><h3>No {ticketStatusLabels[statusFilter].toLowerCase()} tickets.</h3><p>Machine problems logged here will track through to resolution.</p>{canCreateTicket && <button className="secondary-button" type="button" onClick={() => setShowCreate(true)}><ClipboardPlus size={17} /> Open ticket</button>}</div>
               : <div className="machine-grid">{ticketsState.tickets.map((ticket) => <TicketRow key={ticket.id} ticket={ticket} timezone={timezone} onOpen={() => navigate(`/maintenance/tickets/${ticket.id}`)} />)}</div>}
-        </section>
-      )}
+      </section>
 
       {showCreate && <CreateTicketDialog machines={machinesState.machines} onClose={() => setShowCreate(false)} onSave={handleCreate} />}
+    </>
+  )
+}
+
+export function MaintenancePage({ path, search, navigate }) {
+  const { account, branch, can } = useTenant()
+  const tab = path === '/maintenance/tickets' ? 'tickets' : path === '/maintenance/documents' ? 'documents' : 'troubleshooting'
+  const initialQuery = new URLSearchParams(search).get('q') || ''
+
+  return (
+    <div className="page-stack maintenance-page">
+      <PageHeader eyebrow={`${account?.name} · ${branch?.name ?? 'No branch'}`} title="Maintenance" description="Cari penanganan resmi, kelola tiket, dan akses dokumen mesin." />
+
+      <nav className="machine-view-tabs maintenance-tabs" role="tablist" aria-label="Maintenance sections">
+        <button type="button" role="tab" aria-selected={tab === 'troubleshooting'} className={tab === 'troubleshooting' ? 'selected' : ''} onClick={() => navigate('/maintenance/troubleshooting')}><Search size={16} /> Troubleshooting</button>
+        <button type="button" role="tab" aria-selected={tab === 'tickets'} className={tab === 'tickets' ? 'selected' : ''} onClick={() => navigate('/maintenance/tickets')}><ListChecks size={16} /> Tickets</button>
+        <button type="button" role="tab" aria-selected={tab === 'documents'} className={tab === 'documents' ? 'selected' : ''} onClick={() => navigate('/maintenance/documents')}><FileText size={16} /> Documents</button>
+      </nav>
+
+      {tab === 'troubleshooting' && <TroubleshootingSection key={initialQuery || 'empty'} initialQuery={initialQuery} navigate={navigate} />}
+      {tab === 'tickets' && <TicketsSection account={account} branch={branch} can={can} navigate={navigate} />}
+      {tab === 'documents' && <DocumentRepositorySection />}
     </div>
   )
 }

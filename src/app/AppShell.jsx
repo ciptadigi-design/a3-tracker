@@ -3,7 +3,7 @@ import { Sidebar } from '../components/layout/Sidebar.jsx'
 import { TopBar } from '../components/layout/TopBar.jsx'
 import { useAuth } from '../features/auth/useAuth.js'
 import { useTenant } from '../features/account/useTenant.js'
-import { getIncidentIdFromPath, getMachineIdFromPath, getMaintenanceTicketIdFromPath, useAppRoute } from '../hooks/useAppRoute.js'
+import { getIncidentIdFromPath, getMachineIdFromPath, getMaintenanceTicketIdFromPath, getTroubleshootingEntryIdFromPath, useAppRoute } from '../hooks/useAppRoute.js'
 import { useTheme } from '../hooks/useTheme.js'
 import { OverviewPage } from '../pages/OverviewPage.jsx'
 import { MachinesPage } from '../pages/MachinesPage.jsx'
@@ -15,6 +15,7 @@ import { IncidentDetailPage } from '../features/incidents/IncidentDetailPage.jsx
 import { ComponentsPage } from '../pages/ComponentsPage.jsx'
 import { MaintenancePage } from '../pages/MaintenancePage.jsx'
 import { MaintenanceTicketDetailPage } from '../features/maintenance/MaintenanceTicketDetailPage.jsx'
+import { TroubleshootingDetailPage } from '../features/maintenance/troubleshooting/TroubleshootingDetailPage.jsx'
 import { SettingsPage } from '../pages/SettingsPage.jsx'
 import { ClickTargetSettingsPage } from '../pages/ClickTargetSettingsPage.jsx'
 import { InventoryPage } from '../pages/InventoryPage.jsx'
@@ -28,7 +29,7 @@ const comingSoonPages = {}
 export function AppShell() {
   const { signOut } = useAuth()
   const tenant = useTenant()
-  const { path, navigate } = useAppRoute()
+  const { path, search, navigate } = useAppRoute()
   const { theme, toggleTheme } = useTheme()
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
   const [logoutError, setLogoutError] = useState(null)
@@ -38,7 +39,7 @@ export function AppShell() {
     try { await signOut() } catch (error) { setLogoutError(userErrorMessage(error, 'Sign out could not be completed. Please try again.')) }
   }
 
-  function handleNavigate(nextPath) { navigate(nextPath); setMobileNavOpen(false) }
+  function handleNavigate(nextPath) { const changed = navigate(nextPath); setMobileNavOpen(false); return changed }
 
   let page
   if (path === '/') page = <OverviewPage navigate={handleNavigate} />
@@ -55,8 +56,10 @@ export function AppShell() {
   else if (path === '/settings' || path === '/settings/machine-models') page = <ComingSoonPage title="Access denied" description="Your current workspace capabilities do not include Settings." />
   else if (path === '/settings/click-targets') page = <ClickTargetSettingsPage />
   else if (getIncidentIdFromPath(path)) page = <IncidentDetailPage incidentId={getIncidentIdFromPath(path)} navigate={handleNavigate} />
-  else if (path === '/maintenance' && tenant.can('maintenance.view')) page = <MaintenancePage navigate={handleNavigate} />
-  else if (path === '/maintenance') page = <ComingSoonPage title="Access denied" description="Your current workspace capabilities do not include Maintenance." />
+  else if (['/maintenance', '/maintenance/troubleshooting', '/maintenance/tickets', '/maintenance/documents'].includes(path) && tenant.can('maintenance.view')) page = <MaintenancePage path={path} search={search} navigate={handleNavigate} />
+  else if (['/maintenance', '/maintenance/troubleshooting', '/maintenance/tickets', '/maintenance/documents'].includes(path)) page = <ComingSoonPage title="Access denied" description="Your current workspace capabilities do not include Maintenance." />
+  else if (getTroubleshootingEntryIdFromPath(path) && tenant.can('maintenance.view')) page = <TroubleshootingDetailPage entryId={getTroubleshootingEntryIdFromPath(path)} navigate={handleNavigate} />
+  else if (getTroubleshootingEntryIdFromPath(path)) page = <ComingSoonPage title="Access denied" description="Your current workspace capabilities do not include Maintenance." />
   else if (getMaintenanceTicketIdFromPath(path) && tenant.can('maintenance.view')) page = <MaintenanceTicketDetailPage ticketId={getMaintenanceTicketIdFromPath(path)} navigate={handleNavigate} />
   else if (getMaintenanceTicketIdFromPath(path)) page = <ComingSoonPage title="Access denied" description="Your current workspace capabilities do not include Maintenance." />
   else {

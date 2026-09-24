@@ -4,6 +4,9 @@ import { apiClient } from './apiClient.js'
 // Laravel directly rather than going through the dual-backend dispatcher
 // (services/dataBackend.js) that older domains still use for Supabase parity.
 export const laravelMaintenance = {
+  officialErrorEntries: (params = '') => apiClient.get(`/maintenance/official-error-entries${params ? `?${params}` : ''}`),
+  officialErrorEntry: (id) => apiClient.get(`/maintenance/official-error-entries/${id}`),
+
   documents: (params = '') => apiClient.get(`/maintenance/documents${params ? `?${params}` : ''}`),
   document: (id) => apiClient.get(`/maintenance/documents/${id}`),
   createDocument: (payload) => apiClient.post('/maintenance/documents', payload),
