@@ -1,26 +1,29 @@
 import { useMemo, useState } from 'react'
-import { AlertCircle, ClipboardPlus, LoaderCircle, X } from 'lucide-react'
+import { AlertCircle, AlertTriangle, BookOpenText, ClipboardPlus, LoaderCircle, X } from 'lucide-react'
 import { BlockingDialog } from '../../components/ui/BlockingDialog.jsx'
 import { useMachineErrorCodes } from './useMachineErrorCodes.js'
 import { buildTicketPrefillFromErrorCode, mapMaintenanceError, ticketPriorityLabels, ticketTypeLabels } from './maintenanceUtils.js'
+import { machineApplicability } from './troubleshooting/troubleshootingModel.js'
 
 function FieldError({ message }) {
   return message ? <small className="field-error"><AlertCircle size={13} />{message}</small> : null
 }
 
-export function CreateTicketDialog({ machines, defaultMachineId, onClose, onSave }) {
+export function CreateTicketDialog({ machines, defaultMachineId, officialKnowledge = null, onClose, onSave }) {
   const [machineId, setMachineId] = useState(defaultMachineId || '')
   const [errorCodeId, setErrorCodeId] = useState('')
   const [type, setType] = useState('breakdown')
-  const [title, setTitle] = useState('')
+  const [title, setTitle] = useState(() => officialKnowledge ? [officialKnowledge.code, officialKnowledge.classification].filter(Boolean).join(' · ').slice(0, 200) : '')
   const [description, setDescription] = useState('')
   const [priority, setPriority] = useState('normal')
   const [errors, setErrors] = useState({})
   const [formError, setFormError] = useState(null)
   const [isSaving, setIsSaving] = useState(false)
+  const [confirmNotApplicable, setConfirmNotApplicable] = useState(false)
 
   const selectedMachine = useMemo(() => machines.find((machine) => machine.id === machineId), [machines, machineId])
   const errorCodesState = useMachineErrorCodes(selectedMachine?.machine_model_id)
+  const knowledgeMatch = machineApplicability(officialKnowledge, selectedMachine)
 
   // Autofill title/description from the chosen error code, but never overwrite
   // text the reporter already typed themselves - it only fills empty fields.
@@ -37,6 +40,7 @@ export function CreateTicketDialog({ machines, defaultMachineId, onClose, onSave
     const next = {}
     if (!machineId) next.machineId = 'Select a machine.'
     if (!title.trim()) next.title = 'Title is required.'
+    if (knowledgeMatch === 'not_applicable' && !confirmNotApplicable) next.officialKnowledge = 'Confirm this model mismatch before using the reference.'
     return next
   }
 
@@ -55,6 +59,8 @@ export function CreateTicketDialog({ machines, defaultMachineId, onClose, onSave
       await onSave({
         machine_id: machineId,
         error_code_id: errorCodeId || null,
+        official_error_entry_id: officialKnowledge?.id || null,
+        confirm_not_applicable: knowledgeMatch === 'not_applicable' ? confirmNotApplicable : false,
         type,
         title: title.trim(),
         description: description.trim() || null,
@@ -77,6 +83,8 @@ export function CreateTicketDialog({ machines, defaultMachineId, onClose, onSave
       </header>
       <form className="machine-form" onSubmit={handleSubmit} noValidate>
         <div className="machine-form-body">
+          {officialKnowledge && <section className="ticket-reference-preview" aria-labelledby="ticket-reference-heading"><header><BookOpenText size={18} /><div><span className="card-kicker">Informasi referensi</span><strong id="ticket-reference-heading">Troubleshooting resmi</strong></div></header><div className="ticket-reference-grid"><div><span>Error</span><strong>{officialKnowledge.code}</strong><small>{officialKnowledge.classification || 'Official troubleshooting procedure'}</small></div><div><span>Sumber</span><strong>{officialKnowledge.provenance?.document?.title || 'Manufacturer service manual'}</strong><small>Konten manual tidak disalin ke deskripsi ticket.</small></div></div>{knowledgeMatch === 'possible' && <div className="ticket-applicability-note"><AlertTriangle size={17} /><span>Kesesuaian aksesori belum dapat dipastikan. Referensi disimpan sebagai bantuan, bukan sebagai kecocokan aksesori yang terbukti.</span></div>}{knowledgeMatch === 'not_applicable' && <label className="ticket-applicability-warning"><AlertTriangle size={18} /><span><strong>Model mesin tidak sesuai dengan applicability referensi ini.</strong><small>Ticket manual tetap dapat dibuat. Centang untuk menyimpan referensi ini dengan sadar.</small><input type="checkbox" checked={confirmNotApplicable} onChange={(event) => setConfirmNotApplicable(event.target.checked)} /> Saya memahami ketidaksesuaian model</span></label>}<FieldError message={errors.officialKnowledge} /></section>}
+          <div className="form-section-heading"><strong>Informasi insiden</strong><span>Jelaskan kondisi nyata yang terjadi pada mesin.</span></div>
           <div className="form-grid">
             <label className="form-field"><span>Machine <b className="required-mark">*</b></span>
               <select value={machineId} onChange={(event) => { setMachineId(event.target.value); setErrorCodeId('') }} aria-invalid={Boolean(errors.machineId)}>
@@ -91,19 +99,19 @@ export function CreateTicketDialog({ machines, defaultMachineId, onClose, onSave
             <label className="form-field"><span>Priority</span>
               <select value={priority} onChange={(event) => setPriority(event.target.value)}>{Object.entries(ticketPriorityLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select>
             </label>
-            <label className="form-field"><span>Known error code <small>Optional</small></span>
+            {!officialKnowledge && <label className="form-field"><span>Known error code <small>Optional</small></span>
               <select value={errorCodeId} onChange={(event) => changeErrorCode(event.target.value)} disabled={!selectedMachine || errorCodesState.isLoading}>
                 <option value="">No specific code</option>
                 {errorCodesState.errorCodes.map((code) => <option key={code.id} value={code.id}>{code.code} · {code.title}</option>)}
               </select>
               <small>Selecting a code fills in the title/description below if they're still empty.</small>
-            </label>
+            </label>}
             <label className="form-field form-field-wide"><span>Title <b className="required-mark">*</b></span>
               <input value={title} onChange={(event) => setTitle(event.target.value)} placeholder="e.g. Fuser overheating" aria-invalid={Boolean(errors.title)} />
               <FieldError message={errors.title} />
             </label>
             <label className="form-field form-field-wide"><span>Description <small>Optional</small></span>
-              <textarea value={description} onChange={(event) => setDescription(event.target.value)} rows="3" placeholder="Symptoms, when it started, anything the operator noticed" />
+              <textarea value={description} onChange={(event) => setDescription(event.target.value)} rows="3" placeholder="Gejala, kondisi cetak, apakah error berulang, dan tindakan yang sudah dicoba" />
             </label>
           </div>
           {formError && <div className="form-error" role="alert"><AlertCircle size={16} /><span>{formError}</span></div>}

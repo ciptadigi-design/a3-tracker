@@ -7,6 +7,7 @@ use App\Models\AccountMembership;
 use App\Models\Machine;
 use App\Models\MachineComponent;
 use App\Models\MachineErrorCode;
+use App\Models\MaintenanceOfficialErrorEntry;
 use App\Models\MaintenanceTicket;
 use App\Services\EffectiveCapabilityResolver;
 use App\Services\GovernanceAudit;
@@ -33,7 +34,11 @@ class MaintenanceTicketsController extends Controller
 
     public function show(Request $r, string $id)
     {
-        $ticket = MaintenanceTicket::with(['machine.branch', 'errorCode', 'actions.performer', 'reporter', 'assignee'])->findOrFail($id);
+        $ticket = MaintenanceTicket::with([
+            'machine.branch', 'errorCode', 'actions.performer', 'reporter', 'assignee',
+            'officialErrorEntry:id,document_id,code,variant_key,classification',
+            'officialErrorEntry.document:id,title',
+        ])->findOrFail($id);
         abort_unless(app(MachineAccessResolver::class)->canAccess($r->user(), $ticket->machine), 403);
 
         return response()->json(['data' => $ticket]);
@@ -45,6 +50,8 @@ class MaintenanceTicketsController extends Controller
             'machine_id' => 'required|uuid',
             'machine_component_id' => 'nullable|uuid',
             'error_code_id' => 'nullable|uuid',
+            'official_error_entry_id' => 'nullable|uuid',
+            'confirm_not_applicable' => 'nullable|boolean',
             'type' => 'nullable|in:breakdown,preventive,inspection',
             'title' => 'required|string|max:200',
             'description' => 'nullable|string',
@@ -67,6 +74,21 @@ class MaintenanceTicketsController extends Controller
                 throw ValidationException::withMessages(['error_code_id' => 'Error code is not available in this scope.']);
             }
         }
+        if (! empty($d['official_error_entry_id'])) {
+            $official = MaintenanceOfficialErrorEntry::query()
+                ->visibleTo($r->user())
+                ->whereHas('document', fn ($documents) => $documents
+                    ->whereNull('account_id')
+                    ->orWhere('account_id', $machine->account_id))
+                ->with('applicabilities')
+                ->findOrFail($d['official_error_entry_id']);
+            if ($this->officialApplicability($official, $machine) === 'not_applicable' && ! ($d['confirm_not_applicable'] ?? false)) {
+                throw ValidationException::withMessages([
+                    'official_error_entry_id' => 'Official knowledge is not applicable to this machine model without explicit acknowledgement.',
+                ]);
+            }
+        }
+        unset($d['confirm_not_applicable']);
 
         $ticket = app(MaintenanceTicketService::class)->create($d + [
             'account_id' => $machine->account_id,
@@ -76,7 +98,11 @@ class MaintenanceTicketsController extends Controller
 
         app(GovernanceAudit::class)->changed($r->user(), 'maintenance_ticket.created', 'maintenance_ticket', $ticket->id, $ticket->account_id, [], app(GovernanceAudit::class)->snapshot($ticket));
 
-        return response()->json(['data' => $ticket], 201);
+        return response()->json(['data' => $ticket->load([
+            'machine',
+            'officialErrorEntry:id,document_id,code,variant_key,classification',
+            'officialErrorEntry.document:id,title',
+        ])], 201);
     }
 
     public function update(Request $r, string $id)
@@ -138,5 +164,17 @@ class MaintenanceTicketsController extends Controller
         app(GovernanceAudit::class)->changed($r->user(), 'maintenance_action.recorded', 'maintenance_action', $action->id, $ticket->account_id, [], app(GovernanceAudit::class)->snapshot($action));
 
         return response()->json(['data' => $action], 201);
+    }
+
+    private function officialApplicability(MaintenanceOfficialErrorEntry $entry, Machine $machine): string
+    {
+        if ($entry->applicabilities->contains(fn ($scope) => $scope->machine_model_id === $machine->machine_model_id)) {
+            return 'match';
+        }
+
+        return $entry->applicabilities->isNotEmpty()
+            && $entry->applicabilities->every(fn ($scope) => $scope->machine_model_id !== null)
+                ? 'not_applicable'
+                : 'possible';
     }
 }

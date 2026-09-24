@@ -1,5 +1,5 @@
 import { createElement, useState } from 'react'
-import { ArrowLeft, ArrowRightCircle, CalendarClock, CheckCircle2, ClipboardList, Gauge, PencilLine, Printer, ShieldAlert, Tag, UserRound, Wrench, XCircle } from 'lucide-react'
+import { ArrowLeft, ArrowRight, ArrowRightCircle, BookOpenText, CalendarClock, CheckCircle2, ClipboardList, Gauge, PencilLine, Printer, ShieldAlert, Tag, UserRound, Wrench, XCircle } from 'lucide-react'
 import { ErrorState } from '../../components/ui/ErrorState.jsx'
 import { LoadingScreen } from '../../components/ui/LoadingScreen.jsx'
 import { PageHeader } from '../../components/ui/PageHeader.jsx'
@@ -10,6 +10,7 @@ import { assignMaintenanceTicket, recordMaintenanceAction, transitionMaintenance
 import { useMaintenanceTicket } from './useMaintenanceTicket.js'
 import { RecordActionDialog } from './RecordActionDialog.jsx'
 import { formatMaintenanceDate, mapMaintenanceError, nextTicketStatuses, ticketPriorityLabels, ticketStatusLabels, ticketTypeLabels } from './maintenanceUtils.js'
+import { troubleshootingDetailUrl } from './troubleshooting/troubleshootingModel.js'
 
 function DetailItem({ icon, label, value, hint }) {
   return <div className="detail-item"><span className="detail-item-icon">{createElement(icon, { size: 18 })}</span><div><span>{label}</span><strong>{value || '—'}</strong>{hint && <small>{hint}</small>}</div></div>
@@ -109,6 +110,8 @@ export function MaintenanceTicketDetailPage({ ticketId, navigate }) {
         <DetailItem icon={CalendarClock} label="Started" value={formatMaintenanceDate(ticket.started_at, timezone)} />
         <DetailItem icon={Gauge} label="Resolved" value={formatMaintenanceDate(ticket.resolved_at, timezone)} />
       </section>
+
+      {ticket.official_error_entry && <section className="ticket-knowledge-reference glass-surface"><span><BookOpenText size={20} /></span><div><span className="card-kicker">Troubleshooting Reference</span><h2>{ticket.official_error_entry.code}</h2><p>{ticket.official_error_entry.classification || 'Official troubleshooting procedure'}</p>{ticket.official_error_entry.document?.title && <small>{ticket.official_error_entry.document.title}</small>}</div><button className="secondary-button" type="button" onClick={() => navigate(troubleshootingDetailUrl(ticket.official_error_entry.id, ticket.machine?.id))}>Lihat Penanganan <ArrowRight size={16} /></button></section>}
 
       {ticket.description && <section className="incident-narrative-card glass-surface"><strong>Description</strong><p>{ticket.description}</p></section>}
 

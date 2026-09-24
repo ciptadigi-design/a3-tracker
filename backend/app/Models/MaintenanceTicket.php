@@ -11,7 +11,7 @@ class MaintenanceTicket extends Model
 
     protected $keyType = 'string';
 
-    protected $fillable = ['account_id', 'branch_id', 'machine_id', 'machine_component_id', 'error_code_id', 'type', 'title', 'description', 'priority', 'status', 'reported_by', 'assigned_to', 'opened_at', 'started_at', 'resolved_at', 'client_request_id'];
+    protected $fillable = ['account_id', 'branch_id', 'machine_id', 'machine_component_id', 'error_code_id', 'official_error_entry_id', 'type', 'title', 'description', 'priority', 'status', 'reported_by', 'assigned_to', 'opened_at', 'started_at', 'resolved_at', 'client_request_id'];
 
     protected $casts = ['opened_at' => 'datetime', 'started_at' => 'datetime', 'resolved_at' => 'datetime'];
 
@@ -46,6 +46,11 @@ class MaintenanceTicket extends Model
     public function errorCode()
     {
         return $this->belongsTo(MachineErrorCode::class, 'error_code_id');
+    }
+
+    public function officialErrorEntry()
+    {
+        return $this->belongsTo(MaintenanceOfficialErrorEntry::class, 'official_error_entry_id');
     }
 
     public function reporter()

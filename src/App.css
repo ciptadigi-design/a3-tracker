@@ -839,6 +839,34 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .technical-reference-list article small { color: var(--text-soft); }
 .source-provenance { display: flex; flex-direction: column; gap: 6px; }
 .source-provenance span { color: var(--text-soft); font-size: 13px; }
+.troubleshooting-ticket-cta { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: clamp(20px,3vw,28px); border-radius: 22px; }
+.troubleshooting-ticket-cta > div { min-width: 0; }
+.troubleshooting-ticket-cta h2 { margin: 5px 0 6px; font-size: 20px; }
+.troubleshooting-ticket-cta p { max-width: 650px; margin: 0; color: var(--text-soft); font-size: 12px; line-height: 1.55; }
+.troubleshooting-ticket-cta .primary-button { flex: 0 0 auto; }
+.ticket-reference-preview { display: grid; gap: 13px; padding: 16px; background: var(--blue-soft); border: 1px solid color-mix(in srgb,var(--blue) 22%,transparent); border-radius: 16px; }
+.ticket-reference-preview > header { display: flex; align-items: center; gap: 10px; color: var(--blue); }
+.ticket-reference-preview > header > div { display: grid; gap: 3px; }
+.ticket-reference-preview > header strong { color: var(--text); font-size: 14px; }
+.ticket-reference-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; }
+.ticket-reference-grid > div { min-width: 0; display: grid; gap: 3px; padding: 12px; background: var(--surface-solid); border-radius: 12px; }
+.ticket-reference-grid span { color: var(--text-muted); font-size: 8px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; }
+.ticket-reference-grid strong,.ticket-reference-grid small { overflow-wrap: anywhere; }
+.ticket-reference-grid strong { font-size: 12px; }
+.ticket-reference-grid small { color: var(--text-soft); font-size: 9px; line-height: 1.45; }
+.ticket-applicability-note,.ticket-applicability-warning { display: flex; align-items: flex-start; gap: 9px; padding: 11px 12px; border-radius: 12px; font-size: 10px; line-height: 1.5; }
+.ticket-applicability-note { color: var(--text-soft); background: var(--surface-solid); }
+.ticket-applicability-warning { color: var(--warning); background: color-mix(in srgb,var(--warning) 10%,var(--surface-solid)); border: 1px solid color-mix(in srgb,var(--warning) 22%,transparent); }
+.ticket-applicability-note svg,.ticket-applicability-warning > svg { flex: 0 0 auto; }
+.ticket-applicability-warning > span { display: grid; gap: 4px; color: var(--text); }
+.ticket-applicability-warning small { color: var(--text-soft); }
+.ticket-applicability-warning input { margin-right: 6px; }
+.ticket-knowledge-reference { display: grid; grid-template-columns: auto minmax(0,1fr) auto; align-items: center; gap: 15px; padding: 19px 21px; border-radius: 20px; }
+.ticket-knowledge-reference > span { width: 42px; height: 42px; display: grid; place-items: center; color: var(--blue); background: var(--blue-soft); border-radius: 13px; }
+.ticket-knowledge-reference > div { min-width: 0; }
+.ticket-knowledge-reference h2 { margin: 4px 0; font-size: 20px; }
+.ticket-knowledge-reference p { margin: 0; overflow-wrap: anywhere; font-size: 12px; }
+.ticket-knowledge-reference small { display: block; margin-top: 5px; color: var(--text-soft); font-size: 10px; }
 
 @media (max-width: 760px) {
   .maintenance-tabs { width: 100%; overflow-x: auto; }
@@ -855,6 +883,11 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   .troubleshooting-machine-picker,.troubleshooting-machine-context,.troubleshooting-machine-error { align-items: stretch; flex-direction: column; }
   .troubleshooting-machine-picker label { min-width: 0; width: 100%; }
   .troubleshooting-machine-context .secondary-button,.troubleshooting-machine-error .secondary-button { width: 100%; justify-content: center; }
+  .troubleshooting-ticket-cta { align-items: stretch; flex-direction: column; }
+  .troubleshooting-ticket-cta .primary-button { width: 100%; justify-content: center; }
+  .ticket-reference-grid { grid-template-columns: minmax(0,1fr); }
+  .ticket-knowledge-reference { grid-template-columns: auto minmax(0,1fr); }
+  .ticket-knowledge-reference .secondary-button { grid-column: 1 / -1; width: 100%; justify-content: center; }
   .troubleshooting-icon { width: 42px; height: 42px; flex-basis: 42px; }
   .troubleshooting-search { grid-template-columns: auto minmax(0,1fr); padding: 8px 12px; }
   .troubleshooting-search button { grid-column: 1 / -1; width: 100%; justify-content: center; }

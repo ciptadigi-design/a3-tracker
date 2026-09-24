@@ -1,5 +1,5 @@
 import { createElement, useState } from 'react'
-import { AlertTriangle, ArrowLeft, BookOpenText, Boxes, FileText, Info, ListChecks, ShieldAlert, Wrench } from 'lucide-react'
+import { AlertTriangle, ArrowLeft, BookOpenText, Boxes, ClipboardPlus, FileText, Info, ListChecks, ShieldAlert, Wrench } from 'lucide-react'
 import { ErrorState } from '../../../components/ui/ErrorState.jsx'
 import { LoadingScreen } from '../../../components/ui/LoadingScreen.jsx'
 import { userErrorMessage } from '../../../lib/appErrors.js'
@@ -8,6 +8,9 @@ import { useOfficialErrorEntry } from './useOfficialErrorEntry.js'
 import { useTenant } from '../../account/useTenant.js'
 import { useMachine } from '../../machines/useMachine.js'
 import { troubleshootingSearchUrl } from './troubleshootingModel.js'
+import { CreateTicketDialog } from '../CreateTicketDialog.jsx'
+import { useMachines } from '../../machines/useMachines.js'
+import { createMaintenanceTicket } from '../../../services/maintenance.js'
 
 function DetailSection({ icon, eyebrow, title, className = '', children }) {
   return (
@@ -93,10 +96,12 @@ function AssistedSections({ entry }) {
 
 export function TroubleshootingDetailPage({ entryId, search = '', navigate }) {
   const state = useOfficialErrorEntry(entryId)
-  const { account, branch } = useTenant()
+  const { account, branch, can } = useTenant()
   const machineId = new URLSearchParams(search).get('machine') || ''
   const machineState = useMachine(account?.id, branch?.id, machineId)
+  const machinesState = useMachines(account?.id, branch?.id)
   const [modeSelection, setModeSelection] = useState(null)
+  const [showCreateTicket, setShowCreateTicket] = useState(false)
   if (state.isLoading) return <LoadingScreen label="Memuat penanganan resmi" />
   if (state.error) return <ErrorState title="Penanganan tidak dapat dimuat" detail={userErrorMessage(state.error, 'Prosedur ini sementara tidak tersedia.')} onRetry={state.refresh} />
   if (!state.entry) return <ErrorState title="Penanganan tidak ditemukan" detail="Data mungkin tidak tersedia untuk akun aktif." />
@@ -108,6 +113,12 @@ export function TroubleshootingDetailPage({ entryId, search = '', navigate }) {
   const selectedMode = modeSelection?.entryId === entry.id ? modeSelection.mode : null
   const assistedMode = Boolean(entry.assisted && selectedMode !== 'original')
   const heading = assistedMode ? entry.assisted.classification.simplified || entry.assisted.classification.translation : entry.classification || 'Official troubleshooting procedure'
+  const ticketMachines = machine && !machinesState.machines.some((item) => item.id === machine.id) ? [machine, ...machinesState.machines] : machinesState.machines
+
+  async function createTicket(values) {
+    const ticket = await createMaintenanceTicket(values)
+    navigate(`/maintenance/tickets/${ticket.id}`)
+  }
 
   return (
     <div className="page-stack troubleshooting-detail-page">
@@ -121,6 +132,8 @@ export function TroubleshootingDetailPage({ entryId, search = '', navigate }) {
 
       {entry.assisted && <div className="assisted-mode-bar glass-surface"><div className="assisted-mode-switch" role="group" aria-label="Mode penjelasan"><button type="button" className={assistedMode ? 'active' : ''} aria-pressed={assistedMode} onClick={() => setModeSelection({ entryId: entry.id, mode: 'assisted' })}>Mudah Dipahami</button><button type="button" className={!assistedMode ? 'active' : ''} aria-pressed={!assistedMode} onClick={() => setModeSelection({ entryId: entry.id, mode: 'original' })}>Original</button></div>{assistedMode && <p>{entry.assisted.notice}</p>}</div>}
       {assistedMode ? <AssistedSections entry={entry} /> : <AuthoritativeSections entry={entry} />}
+      {can('maintenance.ticket.create') && <section className="troubleshooting-ticket-cta glass-surface"><div><span className="card-kicker">Perlu tindak lanjut?</span><h2>Buat ticket untuk masalah aktual mesin</h2><p>Referensi troubleshooting akan ditautkan. Keterangan insiden tetap Anda isi berdasarkan kondisi nyata.</p></div><button className="primary-button" type="button" onClick={() => setShowCreateTicket(true)} disabled={machinesState.isLoading}><ClipboardPlus size={18} /> Buat Ticket Maintenance</button></section>}
+      {showCreateTicket && <CreateTicketDialog machines={ticketMachines} defaultMachineId={machine?.id} officialKnowledge={entry} onClose={() => setShowCreateTicket(false)} onSave={createTicket} />}
     </div>
   )
 }
