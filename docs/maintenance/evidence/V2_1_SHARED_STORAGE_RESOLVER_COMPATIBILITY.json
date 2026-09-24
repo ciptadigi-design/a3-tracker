@@ -1,0 +1,68 @@
+{
+  "schema_version": "maintenance-v2.1-shared-storage-resolver-compatibility/v1",
+  "baseline_sha": "96ad6eb28b6c593fed2c28e7c2c0c7ba42a82f66",
+  "production_baseline": {
+    "release_sha": "96ad6eb28b6c593fed2c28e7c2c0c7ba42a82f66",
+    "schema_batch": 19,
+    "official_parents": 0,
+    "official_applicabilities": 0,
+    "official_parts": 0,
+    "official_steps": 0,
+    "official_references": 0,
+    "ingestion_runs": 0
+  },
+  "failure": {
+    "message": "The authoritative stored PDF resolves outside its storage root.",
+    "stage": "authoritative source resolution before parsing",
+    "production_mutation": false
+  },
+  "production_topology": {
+    "disk": "local",
+    "configured_root": "<release>/backend/storage/app/private",
+    "stored_path_prefix": "maintenance-documents/",
+    "deployment_managed_link": "<release>/backend/storage/app/private/maintenance-documents -> <app>/shared/storage/app/private/maintenance-documents",
+    "authority": "canonical local-disk root or canonical target of the exact application-owned maintenance-documents directory"
+  },
+  "security_rule": {
+    "lexical_path": "relative forward-slash disk path with no empty, dot, dot-dot, NUL, backslash, Unix absolute, or Windows drive-absolute form",
+    "ordinary_file": "canonical file must remain beneath canonical disk root",
+    "shared_maintenance_file": "stored path must be beneath maintenance-documents and canonical file must remain beneath that exact directory's canonical target",
+    "operator_path": "must canonicalize to the exact document-selected file",
+    "identity": "readable regular PDF, recorded size, and reviewed SHA-256 remain mandatory",
+    "escape_protection": "unrelated sibling links and nested links escaping the maintenance authority are rejected"
+  },
+  "security_cases": {
+    "ordinary_in_root": "PASS",
+    "production_shape_shared_symlink": "PASS",
+    "parent_traversal": "PASS",
+    "absolute_unix_path": "PASS",
+    "absolute_windows_path": "PASS",
+    "sibling_symlink_escape": "PASS",
+    "nested_symlink_escape": "PASS",
+    "missing_file": "PASS",
+    "directory_source": "PASS",
+    "wrong_sha256": "PASS",
+    "wrong_recorded_size": "PASS",
+    "authoritative_cleanup_immutability": "PASS"
+  },
+  "regression": {
+    "focused_resolver_full_manual_parser_contract": "PASS: 30 passed plus database-backed cases, 184 assertions",
+    "full_backend_sqlite": "PASS: 83 passed, 739 dependency-deprecated, 4056 assertions",
+    "maintenance_node": "PASS: 41 tests",
+    "frontend_production_build": "PASS",
+    "frontend_backend_gate": "PASS: laravel /api/v1",
+    "changed_file_pint": "PASS",
+    "git_diff_check": "PASS",
+    "mysql_ci": "PENDING_AT_COMMIT"
+  },
+  "contract_unchanged": {
+    "contract": "konica-c1070-v1.5-full-reviewed",
+    "dataset_digest": "e6ef17a74c8b9c92a26d03c9b856e1244d4f215c3db806adfb4fdaed52e05775",
+    "discovered": 628,
+    "pass": 625,
+    "warn": 1,
+    "fail": 2,
+    "eligible": 625
+  },
+  "production_apply_authorized": false
+}

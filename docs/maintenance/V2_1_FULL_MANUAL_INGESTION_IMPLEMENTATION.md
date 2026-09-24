@@ -1,6 +1,6 @@
 # Maintenance V2.1 Full Manual Ingestion Safety Implementation
 
-Status: implementation and disposable rehearsal complete. This work does not authorize or perform Production access, deployment, migration, preview, or ingestion.
+Status: implementation, disposable rehearsal, Production schema deployment, and the shared-storage resolver compatibility patch are complete. Production ingestion remains separately authorization-gated.
 
 ## Authoritative contracts
 
@@ -18,6 +18,14 @@ The canonical parser reproduced the reviewed contract twice from the real PDF: 6
 `maintenance:v2-ingest-full-manual` has three mutually exclusive modes: read-only preview, atomic apply/no-op rerun, and read-only verification. Apply requires the exact document UUID, canonical stored PDF path, source SHA, dataset digest, discovered/eligible counts, contract, and runtime environment. Production additionally requires the contract-specific confirmation token and separate external authorization.
 
 The resolver accepts only an active published PDF backed by a local storage disk, resolves it inside that disk root, requires `--pdf` to resolve to that exact canonical file, validates stored size metadata, copies it to a distinct mode-0600 snapshot, and verifies the snapshot hash. Cleanup compares snapshot and source realpaths before unlinking. It cannot delete the authoritative path if the paths alias. Apply re-resolves storage metadata and re-hashes the authoritative file under the document-row lock and again before commit.
+
+### Production shared-storage compatibility
+
+The first Production preview stopped safely before parsing because the canonical deployment keeps `<release>/backend/storage/app/private` release-local while `maintenance-documents` beneath it is a deployment-managed symlink to `<app>/shared/storage/app/private/maintenance-documents`. The original resolver canonicalized the parent disk root and the PDF; the latter correctly resolved into shared storage and consequently failed the parent-root containment comparison.
+
+The resolver now validates the document path lexically before any disk access and rejects absolute paths, backslashes, empty/dot segments, and `..` traversal. Ordinary files must remain under the canonical Laravel local-disk root. A file that leaves that root is accepted only when its stored path is beneath the application-owned `DocumentStorageService::DIRECTORY` and its canonical path remains beneath the canonical target of that exact directory. This is the narrow deployment storage authority already created by `link-shared-storage.sh`; it does not authorize sibling symlinks or nested symlinks that escape the maintenance-document authority. The operator `--pdf` path must still resolve to the exact document-selected file, which must be a readable regular PDF with matching recorded size and reviewed SHA-256. Snapshot cleanup remains unable to delete the authoritative source.
+
+Disposable tests reproduce the exact Production topology and cover an ordinary in-root file, the approved `maintenance-documents` symlink, Unix/Windows absolute paths, traversal, an unrelated sibling symlink, a nested malicious symlink escape, missing files, directories, wrong SHA, wrong size, and authoritative-file immutability after cleanup.
 
 Preview validates the pinned metadata inventory and dataset digest, plans all actions, captures protected legacy/Documents/Tickets counts and canonical fingerprints, and performs no database mutation. Apply repeats the plan after acquiring the document-row lock. Any mixed state or UPDATE is refused. All run, parent, and child writes occur in one transaction; only a matching `COMPLETED` run is authoritative. Child inserts are bounded bulk inserts inside that transaction.
 
@@ -52,7 +60,7 @@ Both task-specific MySQL databases were dropped after verification. The source P
 
 ## Operational boundary
 
-No Production access, database access, migration, preview, ingestion, deployment, or modification occurred. A future Production operation must begin with schema deployment and a fresh read-only preview under separate authorization. It must not infer authorization from this implementation gate.
+The additive Production schema is deployed at batch 19. The initial Production preview wrote no official rows and stopped on the shared-storage resolver mismatch described above. The compatibility patch authorizes only a new exact-SHA release and read-only preview retry. Production `--apply` remains forbidden without separate authorization and must never be inferred from this implementation or preview gate.
 
 ## Gate
 

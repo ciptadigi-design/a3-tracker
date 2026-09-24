@@ -3,6 +3,8 @@
 namespace App\Services\OfficialKnowledgeIngestion;
 
 use App\Models\MaintenanceDocument;
+use App\Services\DocumentStorageService;
+use Illuminate\Filesystem\FilesystemAdapter;
 use Illuminate\Support\Facades\Storage;
 use RuntimeException;
 
@@ -16,6 +18,7 @@ final class OfficialDocumentSourceResolver
         if (! is_string($document->storage_disk) || $document->storage_disk === '' || ! is_string($document->file_path) || $document->file_path === '') {
             throw new RuntimeException('The maintenance document has no authoritative stored file.');
         }
+        $this->assertSafeRelativeStoragePath($document->file_path);
         if ((config("filesystems.disks.{$document->storage_disk}.driver")) !== 'local') {
             throw new RuntimeException('Full-manual ingestion requires a configured private local storage disk.');
         }
@@ -32,12 +35,11 @@ final class OfficialDocumentSourceResolver
         }
         $path = $disk->path($document->file_path);
         $canonical = realpath($path);
-        $root = realpath((string) config("filesystems.disks.{$document->storage_disk}.root"));
+        $root = realpath($disk->path(''));
         if ($canonical === false || $root === false || ! is_file($canonical) || ! is_readable($canonical)) {
             throw new RuntimeException('The authoritative stored PDF is not a readable regular file.');
         }
-        $prefix = rtrim($root, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR;
-        if ($canonical !== $root && ! str_starts_with($canonical, $prefix)) {
+        if (! $this->isWithin($canonical, $root) && ! $this->isWithinTrustedMaintenanceStorage($disk, $document->file_path, $canonical)) {
             throw new RuntimeException('The authoritative stored PDF resolves outside its storage root.');
         }
         $operatorCanonical = $operatorPath === '' ? false : realpath($operatorPath);
@@ -67,6 +69,37 @@ final class OfficialDocumentSourceResolver
             $document->storage_disk,
             $document->file_path,
         );
+    }
+
+    private function assertSafeRelativeStoragePath(string $path): void
+    {
+        if (str_contains($path, "\0") || str_contains($path, '\\') || str_starts_with($path, '/') || preg_match('/^[A-Za-z]:\//', $path) === 1) {
+            throw new RuntimeException('The authoritative stored PDF path must be a safe relative disk path.');
+        }
+
+        $segments = explode('/', $path);
+        if (in_array('', $segments, true) || in_array('.', $segments, true) || in_array('..', $segments, true)) {
+            throw new RuntimeException('The authoritative stored PDF path must be a safe relative disk path.');
+        }
+    }
+
+    private function isWithinTrustedMaintenanceStorage(FilesystemAdapter $disk, string $storagePath, string $canonicalFile): bool
+    {
+        $directory = DocumentStorageService::DIRECTORY;
+        if (! str_starts_with($storagePath, $directory.'/')) {
+            return false;
+        }
+
+        $authorizedRoot = realpath($disk->path($directory));
+
+        return $authorizedRoot !== false
+            && is_dir($authorizedRoot)
+            && $this->isWithin($canonicalFile, $authorizedRoot);
+    }
+
+    private function isWithin(string $path, string $root): bool
+    {
+        return $path === $root || str_starts_with($path, rtrim($root, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR);
     }
 
     public function revalidate(MaintenanceDocument $document, ResolvedOfficialDocumentSource $source, string $expectedSha256): void
