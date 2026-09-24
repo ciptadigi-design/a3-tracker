@@ -205,5 +205,167 @@
       "scheduled_tasks": 0
     },
     "recommendation": "PRODUCTION_PREVIEW_REQUIRES_REVISION"
+  },
+  "pinned_extraction_runtime_continuation": {
+    "recorded_at_utc": "2026-09-24T04:48:31Z",
+    "resume_reconciliation": {
+      "repository_head": "d9930db7a495c21f0a1c0cb06a050f4a68b9ec2e",
+      "origin_develop_before_evidence": "d9930db7a495c21f0a1c0cb06a050f4a68b9ec2e",
+      "implementation_sha": "d9930db7a495c21f0a1c0cb06a050f4a68b9ec2e",
+      "exact_green_deployment_sha": "d9930db7a495c21f0a1c0cb06a050f4a68b9ec2e",
+      "production_sha_before_resume": "a92e9a129c5fa4dfb033cb0f85819a9d739f2fe2",
+      "green_sha_contained_in_origin_develop": true,
+      "detached_worktree": {
+        "head": "d9930db7a495c21f0a1c0cb06a050f4a68b9ec2e",
+        "frontend_build_files_present": true,
+        "canonical_build_manifest_initially_missing": true,
+        "backend_vendor_initially_missing": true,
+        "activation_had_not_occurred": true,
+        "only_incomplete_frontend_artifact_rebuilt": true
+      },
+      "unrelated_m2_12e_m2_12f_work_preserved": true
+    },
+    "ci": {
+      "database_ci": {"run_id": 35955774502, "conclusion": "success"},
+      "laravel_mysql_target_ci": {"run_id": 35955774552, "conclusion": "success"}
+    },
+    "backup": {
+      "result": "PASS",
+      "directory": "/home/u777904340/a3-production-app/backups/maintenance-v2-1-pinned-extraction-runtime-20260924T043209Z",
+      "database_compressed_bytes": 2184359,
+      "database_sql_bytes": 10076965,
+      "database_sha256": "e8e0a0c2e041e480607d71aabb3c63cb37101fe2c57de455305a856b4ad367cb",
+      "database_create_table_count": 67,
+      "frontend_bytes": 257241,
+      "frontend_sha256": "124fd2795ed90ca855c488d627c43f788fe638b9b35d9d4e6d90ad10bf039780",
+      "frontend_file_count": 38
+    },
+    "pinned_runtime": {
+      "base_interpreter": "/opt/alt/python311/bin/python3",
+      "private_runtime_category": "private non-web versioned virtual environment",
+      "private_runtime_path": "/home/u777904340/a3-production-app/runtimes/official-knowledge/python311-pypdf-6.14.2-crypto-50.0.1-v1",
+      "python_version": "3.11.14",
+      "pypdf_version": "6.14.2",
+      "cryptography_version": "50.0.1",
+      "configured_executable_absolute": true,
+      "outside_public_html": true,
+      "ambient_path_dependency": false,
+      "global_install": false
+    },
+    "deployment": {
+      "staged_head_verified": "d9930db7a495c21f0a1c0cb06a050f4a68b9ec2e",
+      "deployed_sha": "d9930db7a495c21f0a1c0cb06a050f4a68b9ec2e",
+      "new_pending_migrations": 0,
+      "schema_batch": 19,
+      "health": "PASS",
+      "opcache_reset": "PASS",
+      "public_html_inode_preserved": true,
+      "public_html_inode": 129621306,
+      "htaccess_sha256": "f985de8b111ac16c529a4e14146799158ad256a22dd6bb61f23d86754d865053",
+      "shared_env_link": "PASS",
+      "shared_sessions_link": "PASS",
+      "shared_maintenance_documents_link": "PASS"
+    },
+    "runtime_preflight": {
+      "configured_executable_absolute": "PASS",
+      "configured_executable_regular": "PASS",
+      "configured_executable_executable": "PASS",
+      "python_start": "PASS",
+      "supported_python_version": "PASS",
+      "pypdf_import": "PASS",
+      "exact_pypdf_version": "PASS",
+      "cryptography_import_and_version": "PASS",
+      "result": "PASS"
+    },
+    "source": {
+      "document_id": "c4587c91-29a7-460c-8ef5-84f2e199c142",
+      "resolver_result": "PASS",
+      "observed_size_bytes": 121833361,
+      "sha256": "ae679f5bcd31a49826f9b2587ad4b9483be93950f246c1ea014a7dd0ddcb6ee4",
+      "unchanged_after_one_page_and_full_preview": true
+    },
+    "one_page_extraction": {
+      "page": 1412,
+      "result": "PASS",
+      "exit_code": 0,
+      "exit_code_text": "OK",
+      "result_bytes": 6128,
+      "stderr_bytes": 0,
+      "elapsed_seconds": 2.036903,
+      "signaled": false,
+      "timed_out": false,
+      "snapshot_cleanup": "PASS",
+      "source_sha256_after": "ae679f5bcd31a49826f9b2587ad4b9483be93950f246c1ea014a7dd0ddcb6ee4"
+    },
+    "full_preview": {
+      "mode": "PREVIEW_ONLY",
+      "result": "PASS",
+      "discovered": 628,
+      "pass": 625,
+      "warn": 1,
+      "fail": 2,
+      "eligible": 625,
+      "created": 625,
+      "unchanged": 0,
+      "updated": 0,
+      "rejected": 3,
+      "distinct_discovered_codes": 617,
+      "distinct_eligible_codes": 614,
+      "identity_collisions": 0,
+      "unresolved_applicability": 0,
+      "unverified_boundaries": 0,
+      "applicabilities": 636,
+      "parts": 2011,
+      "steps": 3877,
+      "references": 1538,
+      "warning_bearing": 53,
+      "dipsw_bearing": 242,
+      "detached_control_bearing": 204,
+      "excluded": [
+        {"code": "C-1547", "outcome": "WARN"},
+        {"code": "C-C131", "outcome": "FAIL"},
+        {"code": "C-D0F8", "outcome": "FAIL"}
+      ],
+      "dataset_digest": "e6ef17a74c8b9c92a26d03c9b856e1244d4f215c3db806adfb4fdaed52e05775",
+      "contract_match": true,
+      "mutation_performed": false,
+      "apply_run": false,
+      "ingestion_write_path_executed": false
+    },
+    "post_preview_mutation_proof": {
+      "maintenance_official_error_entries": 0,
+      "maintenance_official_error_applicabilities": 0,
+      "maintenance_official_error_parts": 0,
+      "maintenance_official_error_steps": 0,
+      "maintenance_official_error_references": 0,
+      "maintenance_official_ingestion_runs": 0,
+      "protected_fingerprints_unchanged": true,
+      "tickets_unchanged": true,
+      "documents_unchanged": true,
+      "pdf_unchanged": true,
+      "snapshot_remainders": 0
+    },
+    "runtime_acceptance": {
+      "health": "PASS",
+      "version": "d9930db7a495c21f0a1c0cb06a050f4a68b9ec2e",
+      "schema_batch": 19,
+      "maintenance_ui": 200,
+      "tickets_unauthenticated": 401,
+      "documents_unauthenticated": 401,
+      "official_read_unauthenticated": 401,
+      "official_write_method": 405,
+      "retired_extraction_import_review_publish_routes": 404,
+      "queue_connection": "database",
+      "scheduled_tasks": 0
+    },
+    "differences_from_reviewed_contract": [],
+    "recommendation": "READY_FOR_SEPARATE_PRODUCTION_APPLY_AUTHORIZATION",
+    "gates": {
+      "V2_1_PINNED_EXTRACTION_RUNTIME": "PASS",
+      "V2_1_PRODUCTION_ONE_PAGE_EXTRACTION": "PASS",
+      "V2_1_PRODUCTION_FULL_PREVIEW": "PASS",
+      "PRODUCTION_OFFICIAL_ROWS_WRITTEN": 0,
+      "READY_FOR_SEPARATE_PRODUCTION_APPLY_AUTHORIZATION": "YES"
+    }
   }
 }
