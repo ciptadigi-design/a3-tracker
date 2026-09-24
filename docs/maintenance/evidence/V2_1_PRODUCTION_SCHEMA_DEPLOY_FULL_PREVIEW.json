@@ -1,0 +1,209 @@
+{
+  "schema_version": "maintenance-v2.1-production-schema-deploy-full-preview/v1",
+  "recorded_at_utc": "2026-09-24T03:23:05Z",
+  "repository": {
+    "branch": "develop",
+    "local_sha": "96ad6eb28b6c593fed2c28e7c2c0c7ba42a82f66",
+    "origin_develop_sha": "96ad6eb28b6c593fed2c28e7c2c0c7ba42a82f66",
+    "production_before_sha": "e011dd114a2b83f17d8cb2d5cb57e2b837b2c3a7",
+    "production_after_sha": "96ad6eb28b6c593fed2c28e7c2c0c7ba42a82f66",
+    "unrelated_worktree_changes_preserved": true
+  },
+  "ci": {
+    "database_ci": {
+      "run_id": 35937481297,
+      "conclusion": "success"
+    },
+    "laravel_mysql_target_ci": {
+      "run_id": 35937481295,
+      "conclusion": "success"
+    }
+  },
+  "backup": {
+    "result": "PASS",
+    "directory": "/home/u777904340/a3-production-app/backups/maintenance-v2-1-pre-schema-preview-20260924T013840Z",
+    "database": {
+      "file": "full-db.sql.gz",
+      "compressed_bytes": 2182379,
+      "sql_bytes": 10062171,
+      "sha256": "ecfe59d9caba0e3390fb7db3a91b16d45f262a3e3d8510bcd711574d83a3cab0",
+      "create_table_count": 61,
+      "validation": "VALID"
+    },
+    "frontend": {
+      "file": "public_html-pre-maintenance-v2-1-pre-schema-preview.tar.gz",
+      "bytes": 302930,
+      "sha256": "008344ea44974f1bbd097f23f7c5dc0e02a991cd15127d6dcc8758f072d03e7e",
+      "file_count": 38,
+      "has_htaccess": true,
+      "validation": "VALID"
+    }
+  },
+  "migration": {
+    "schema_batch_before": 18,
+    "schema_batch_after": 19,
+    "pretend_additive_only": true,
+    "migrations_applied": [
+      "2026_09_23_000200_create_maintenance_official_error_knowledge",
+      "2026_09_24_000100_add_official_ingestion_run_provenance"
+    ],
+    "physical_schema_verified": true,
+    "official_parent_count_after_migration": 0
+  },
+  "runtime": {
+    "health": "PASS",
+    "version": "PASS",
+    "schema_batch": 19,
+    "public_html_inode_preserved": true,
+    "htaccess_sha256": "f985de8b111ac16c529a4e14146799158ad256a22dd6bb61f23d86754d865053",
+    "opcache_reset": "PASS",
+    "queue_connection": "database",
+    "laravel_scheduled_tasks": 0
+  },
+  "source": {
+    "document_id": "c4587c91-29a7-460c-8ef5-84f2e199c142",
+    "storage_disk": "local",
+    "storage_path": "maintenance-documents/c4587c91-29a7-460c-8ef5-84f2e199c142.pdf",
+    "recorded_size_bytes": 121833361,
+    "observed_size_bytes": 121833361,
+    "expected_sha256": "ae679f5bcd31a49826f9b2587ad4b9483be93950f246c1ea014a7dd0ddcb6ee4",
+    "resolver_result": "FAIL",
+    "resolver_error": "The authoritative stored PDF resolves outside its storage root.",
+    "sha256_verified_by_resolver": false,
+    "immutability": "document row fingerprint and observed file size unchanged; resolver stopped before SHA verification"
+  },
+  "reviewed_contract": {
+    "name": "konica-c1070-v1.5-full-reviewed",
+    "version": "v1",
+    "dataset_digest": "e6ef17a74c8b9c92a26d03c9b856e1244d4f215c3db806adfb4fdaed52e05775"
+  },
+  "preview": {
+    "result": "NOT_RUN",
+    "reason": "Production shared Maintenance storage resolves through a symlink outside the release-local disk root and the exact reviewed authoritative resolver rejected it.",
+    "apply_run": false
+  },
+  "post_stop_counts": {
+    "maintenance_official_error_entries": 0,
+    "maintenance_official_error_applicabilities": 0,
+    "maintenance_official_error_parts": 0,
+    "maintenance_official_error_steps": 0,
+    "maintenance_official_error_references": 0,
+    "maintenance_official_ingestion_runs": 0,
+    "completed_ingestion_runs": 0
+  },
+  "protected_fingerprints_unchanged": {
+    "machine_error_codes": {"count": 2, "sha256": "a2390c8a39dff469a07558ba0a20dcd9396e5f21953c8de0f6acdae1b58a423f"},
+    "maintenance_error_solutions": {"count": 2, "sha256": "669836870de5c11a220b76d1dffc2babfb4c7aea71843027a030e6f05aa80f69"},
+    "maintenance_tickets": {"count": 1, "sha256": "3dbc5a7eda528d466b2413bbd1fd08ec245c589770d90867a6a7915c7c8a2314"},
+    "maintenance_documents": {"count": 1, "sha256": "4ad915cfa0f442b74fd50a54576d50b4e45b6fada1f0282f79e03173190d8be3"},
+    "maintenance_document_references": {"count": 10, "sha256": "20c64392bccb8d08b52673e778f9277836655d1344dad3e0a66d54c2c6a6359b"},
+    "maintenance_document_imports": {"count": 2, "sha256": "648254a101008618da46226545d545029f2a8a6939f7627f5a9872af5e64dbc3"},
+    "maintenance_knowledge_entries": {"count": 3965, "sha256": "2c3655b345e2a47b5734dbd862261847c7050edeac35af72a99f897003ce4a81"},
+    "maintenance_document_extractions": {"count": 3, "sha256": "276a757a20f9bfa1b6945e000d5bd12d6185845f9932ee27624dfbcc87e14e0c"},
+    "maintenance_document_pages": {"count": 2639, "sha256": "a8726aea8c91e35b8fa632e88ded23cd6e09c3d6ee3eedc7a2378a431e77329e"},
+    "maintenance_knowledge_review_sessions": {"count": 3, "sha256": "9fbe7d631ac0130c0f635a0319039f46964d5cb50824e4f18447ea8b595df6a6"},
+    "maintenance_knowledge": {"count": 0, "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"}
+  },
+  "api": {
+    "official_list_route": "GET /api/v1/maintenance/official-error-entries",
+    "official_detail_route": "GET /api/v1/maintenance/official-error-entries/{id}",
+    "authenticated": true,
+    "official_write_routes": 0,
+    "unauthenticated_status": 401,
+    "retired_routes_status": 404
+  },
+  "difference_from_disposable_rehearsal": [
+    "Production stores maintenance-documents behind a shared-storage symlink whose canonical target is outside the release-local local-disk root; the disposable rehearsal source was inside its configured disk root."
+  ],
+  "gates": {
+    "V2_1_PRODUCTION_SCHEMA_DEPLOY": "PASS",
+    "V2_1_SHARED_STORAGE_RESOLVER": "PASS",
+    "V2_1_PRODUCTION_FULL_PREVIEW": "FAIL",
+    "PRODUCTION_OFFICIAL_ROWS_WRITTEN": 0,
+    "READY_FOR_SEPARATE_PRODUCTION_APPLY_AUTHORIZATION": "NO"
+  },
+  "shared_storage_resolver_continuation": {
+    "repository": {
+      "resumed_head": "a92e9a129c5fa4dfb033cb0f85819a9d739f2fe2",
+      "resumed_origin_develop": "a92e9a129c5fa4dfb033cb0f85819a9d739f2fe2",
+      "focused_patch_present": true,
+      "focused_patch_on_origin_develop": true,
+      "test_only_ci_correction_sha": "777a7ca723c8edf3d290fd2b4f1ed3c9440510ad",
+      "final_head": "777a7ca723c8edf3d290fd2b4f1ed3c9440510ad",
+      "final_origin_develop": "777a7ca723c8edf3d290fd2b4f1ed3c9440510ad",
+      "unrelated_m2_12e_m2_12f_work_preserved": true
+    },
+    "ci": {
+      "focused_patch_database_ci": {"run_id": 35944881616, "conclusion": "success"},
+      "focused_patch_laravel_mysql_target_ci": {
+        "run_id": 35944881576,
+        "conclusion": "failure",
+        "cause": "test-only generated storage disk name exceeded the existing MySQL varchar(20) column"
+      },
+      "test_only_correction_database_ci": {"run_id": 35950649285, "conclusion": "success"},
+      "test_only_correction_laravel_mysql_target_ci": {"run_id": 35950649351, "conclusion": "success"}
+    },
+    "backup": {
+      "result": "PASS",
+      "database_compressed_bytes": 2184359,
+      "database_sql_bytes": 10076965,
+      "database_sha256": "1e78cf1ba6ab6626706889c86b713375d69e3dec296d904a722813b37c226d64",
+      "database_create_table_count": 67,
+      "frontend_bytes": 257235,
+      "frontend_sha256": "5e40f2787980b6977f4fcd7fb74543865bcf5edf1a5f5020ea0a5d787ec643a2",
+      "frontend_file_count": 38
+    },
+    "deployment": {
+      "before_sha": "96ad6eb28b6c593fed2c28e7c2c0c7ba42a82f66",
+      "staged_sha_verified": "a92e9a129c5fa4dfb033cb0f85819a9d739f2fe2",
+      "after_sha": "a92e9a129c5fa4dfb033cb0f85819a9d739f2fe2",
+      "new_pending_migrations": 0,
+      "schema_batch": 19,
+      "health": "PASS",
+      "opcache_reset": "PASS",
+      "public_html_inode_preserved": true,
+      "htaccess_sha256": "f985de8b111ac16c529a4e14146799158ad256a22dd6bb61f23d86754d865053"
+    },
+    "source": {
+      "document_id": "c4587c91-29a7-460c-8ef5-84f2e199c142",
+      "resolver_result": "PASS",
+      "recorded_size_bytes": 121833361,
+      "observed_size_bytes": 121833361,
+      "sha256": "ae679f5bcd31a49826f9b2587ad4b9483be93950f246c1ea014a7dd0ddcb6ee4",
+      "document_fingerprint_unchanged": true,
+      "file_unchanged": true
+    },
+    "preview": {
+      "mode": "PREVIEW_ONLY",
+      "result": "FAIL",
+      "stage": "local page-scoped PDF extraction after authoritative resolver success",
+      "error": "Local page-scoped PDF extraction failed with empty subprocess stderr",
+      "reviewed_metrics_produced": false,
+      "apply_run": false,
+      "ingestion_write_path_executed": false
+    },
+    "post_preview_mutation_proof": {
+      "maintenance_official_error_entries": 0,
+      "maintenance_official_error_applicabilities": 0,
+      "maintenance_official_error_parts": 0,
+      "maintenance_official_error_steps": 0,
+      "maintenance_official_error_references": 0,
+      "maintenance_official_ingestion_runs": 0,
+      "protected_fingerprints_unchanged": true,
+      "tickets_unchanged": true,
+      "documents_unchanged": true,
+      "pdf_unchanged": true
+    },
+    "runtime_acceptance": {
+      "maintenance_ui": 200,
+      "tickets_unauthenticated": 401,
+      "documents_unauthenticated": 401,
+      "official_read_unauthenticated": 401,
+      "official_write_method": 405,
+      "retired_extraction_import_review_publish_routes": 404,
+      "queue_connection": "database",
+      "scheduled_tasks": 0
+    },
+    "recommendation": "PRODUCTION_PREVIEW_REQUIRES_REVISION"
+  }
+}

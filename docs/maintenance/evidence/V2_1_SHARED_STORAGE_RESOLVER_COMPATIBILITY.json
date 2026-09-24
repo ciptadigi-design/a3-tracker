@@ -1,6 +1,7 @@
 {
   "schema_version": "maintenance-v2.1-shared-storage-resolver-compatibility/v1",
   "baseline_sha": "96ad6eb28b6c593fed2c28e7c2c0c7ba42a82f66",
+  "focused_patch_sha": "a92e9a129c5fa4dfb033cb0f85819a9d739f2fe2",
   "production_baseline": {
     "release_sha": "96ad6eb28b6c593fed2c28e7c2c0c7ba42a82f66",
     "schema_batch": 19,
@@ -53,7 +54,33 @@
     "frontend_backend_gate": "PASS: laravel /api/v1",
     "changed_file_pint": "PASS",
     "git_diff_check": "PASS",
-    "mysql_ci": "PENDING_AT_COMMIT"
+    "mysql_ci": "PASS after isolated test-fixture correction 777a7ca723c8edf3d290fd2b4f1ed3c9440510ad",
+    "initial_mysql_ci": {
+      "run_id": 35944881576,
+      "result": "FAIL",
+      "classification": "focused test fixture exceeded the existing 20-character storage_disk schema width; resolver implementation was not implicated"
+    },
+    "corrective_ci": {
+      "test_only_sha": "777a7ca723c8edf3d290fd2b4f1ed3c9440510ad",
+      "database_ci_run_id": 35950649285,
+      "database_ci": "PASS",
+      "laravel_mysql_target_ci_run_id": 35950649351,
+      "laravel_mysql_target_ci": "PASS"
+    }
+  },
+  "production_acceptance": {
+    "deployed_sha": "a92e9a129c5fa4dfb033cb0f85819a9d739f2fe2",
+    "schema_batch": 19,
+    "health": "PASS",
+    "resolver": "PASS",
+    "source_size_bytes": 121833361,
+    "source_sha256": "ae679f5bcd31a49826f9b2587ad4b9483be93950f246c1ea014a7dd0ddcb6ee4",
+    "source_immutable": true,
+    "shared_storage_topology": "PASS: exact deployment-managed maintenance-documents authority accepted without changing the shared target",
+    "full_preview": "FAIL_AT_LOCAL_PAGE_SCOPED_EXTRACTION",
+    "full_preview_error": "Local page-scoped PDF extraction failed with empty subprocess stderr after resolver success",
+    "production_apply_run": false,
+    "official_rows_written": 0
   },
   "contract_unchanged": {
     "contract": "konica-c1070-v1.5-full-reviewed",
