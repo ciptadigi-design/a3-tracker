@@ -74,7 +74,9 @@ function TicketsSection({ account, branch, can, navigate }) {
 export function MaintenancePage({ path, search, navigate }) {
   const { account, branch, can } = useTenant()
   const tab = path === '/maintenance/tickets' ? 'tickets' : path === '/maintenance/documents' ? 'documents' : 'troubleshooting'
-  const initialQuery = new URLSearchParams(search).get('q') || ''
+  const searchParams = new URLSearchParams(search)
+  const initialQuery = searchParams.get('q') || ''
+  const initialMachineId = searchParams.get('machine') || ''
 
   return (
     <div className="page-stack maintenance-page">
@@ -86,7 +88,7 @@ export function MaintenancePage({ path, search, navigate }) {
         <button type="button" role="tab" aria-selected={tab === 'documents'} className={tab === 'documents' ? 'selected' : ''} onClick={() => navigate('/maintenance/documents')}><FileText size={16} /> Documents</button>
       </nav>
 
-      {tab === 'troubleshooting' && <TroubleshootingSection key={initialQuery || 'empty'} initialQuery={initialQuery} navigate={navigate} />}
+      {tab === 'troubleshooting' && <TroubleshootingSection key={initialQuery || 'empty'} initialQuery={initialQuery} initialMachineId={initialMachineId} accountId={account?.id} branchId={branch?.id} navigate={navigate} />}
       {tab === 'tickets' && <TicketsSection account={account} branch={branch} can={can} navigate={navigate} />}
       {tab === 'documents' && <DocumentRepositorySection />}
     </div>

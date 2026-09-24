@@ -5,6 +5,9 @@ import { LoadingScreen } from '../../../components/ui/LoadingScreen.jsx'
 import { userErrorMessage } from '../../../lib/appErrors.js'
 import { applicabilityLabels, technicalReferenceLabel } from './troubleshootingModel.js'
 import { useOfficialErrorEntry } from './useOfficialErrorEntry.js'
+import { useTenant } from '../../account/useTenant.js'
+import { useMachine } from '../../machines/useMachine.js'
+import { troubleshootingSearchUrl } from './troubleshootingModel.js'
 
 function DetailSection({ icon, eyebrow, title, className = '', children }) {
   return (
@@ -88,15 +91,19 @@ function AssistedSections({ entry }) {
   </>
 }
 
-export function TroubleshootingDetailPage({ entryId, navigate }) {
+export function TroubleshootingDetailPage({ entryId, search = '', navigate }) {
   const state = useOfficialErrorEntry(entryId)
+  const { account, branch } = useTenant()
+  const machineId = new URLSearchParams(search).get('machine') || ''
+  const machineState = useMachine(account?.id, branch?.id, machineId)
   const [modeSelection, setModeSelection] = useState(null)
   if (state.isLoading) return <LoadingScreen label="Memuat penanganan resmi" />
   if (state.error) return <ErrorState title="Penanganan tidak dapat dimuat" detail={userErrorMessage(state.error, 'Prosedur ini sementara tidak tersedia.')} onRetry={state.refresh} />
   if (!state.entry) return <ErrorState title="Penanganan tidak ditemukan" detail="Data mungkin tidak tersedia untuk akun aktif." />
 
   const entry = state.entry
-  const backTarget = `/maintenance/troubleshooting?q=${encodeURIComponent(entry.code)}`
+  const machine = machineId ? machineState.machine : null
+  const backTarget = troubleshootingSearchUrl(entry.code, machine?.id)
   const labels = applicabilityLabels(entry)
   const selectedMode = modeSelection?.entryId === entry.id ? modeSelection.mode : null
   const assistedMode = Boolean(entry.assisted && selectedMode !== 'original')
@@ -105,6 +112,8 @@ export function TroubleshootingDetailPage({ entryId, navigate }) {
   return (
     <div className="page-stack troubleshooting-detail-page">
       <button className="back-button" type="button" onClick={() => navigate(backTarget)}><ArrowLeft size={17} /> Kembali ke pencarian</button>
+      {machine && <div className="troubleshooting-detail-machine"><span>Untuk mesin</span><strong>{machine.machine_models?.manufacturers?.name} {machine.machine_models?.name} · {machine.display_name}</strong><small>{machine.machine_code}</small></div>}
+      {machineId && machineState.error && <div className="troubleshooting-machine-error" role="alert"><strong>Konteks mesin tidak tersedia.</strong><span>Detail resmi tetap dapat dibaca tanpa konteks mesin.</span></div>}
       <section className="troubleshooting-detail-hero glass-surface">
         <div><span className="troubleshooting-code">{entry.code}</span><h1>{heading}</h1><div className="troubleshooting-applicabilities">{labels.map((label) => <span className="troubleshooting-applicability" key={label}>{label}</span>)}</div></div>
         <span className="troubleshooting-official-mark"><Wrench size={18} /> Official manufacturer knowledge</span>

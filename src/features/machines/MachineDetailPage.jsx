@@ -25,7 +25,6 @@ const futureModules = [
   ['Counters', Gauge],
   ['Components', Printer],
   ['Errors', ShieldAlert],
-  ['Maintenance', Wrench],
 ]
 
 export function MachineDetailPage({ machineId, navigate }) {
@@ -59,7 +58,7 @@ export function MachineDetailPage({ machineId, navigate }) {
     setSuccess('Machine retired. Its historical record remains preserved.')
   }
 
-  const actions = canManage && machine.is_active ? <div className="detail-actions"><button className="secondary-button" type="button" onClick={() => machineWorkflow.openEdit(machine.id)}><Edit3 size={17} /> Edit machine</button><button className="danger-outline-button" type="button" onClick={() => setShowRetire(true)}>Retire machine</button></div> : null
+  const actions = <div className="detail-actions">{can('maintenance.view') && <button className="primary-button" type="button" onClick={() => navigate(`/maintenance/troubleshooting?machine=${encodeURIComponent(machine.id)}`)}><Wrench size={17} /> Troubleshooting</button>}{canManage && machine.is_active && <><button className="secondary-button" type="button" onClick={() => machineWorkflow.openEdit(machine.id)}><Edit3 size={17} /> Edit machine</button><button className="danger-outline-button" type="button" onClick={() => setShowRetire(true)}>Retire machine</button></>}</div>
 
   return (
     <div className="page-stack machine-detail-page">

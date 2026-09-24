@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import test from 'node:test'
-import { applicabilityLabels, normalizeErrorCodeInput, technicalReferenceLabel } from './troubleshootingModel.js'
+import { applicabilityLabels, machineApplicability, normalizeErrorCodeInput, prioritizeForMachine, technicalReferenceLabel, troubleshootingDetailUrl, troubleshootingSearchUrl } from './troubleshootingModel.js'
 
 const read = (path) => readFileSync(new URL(path, import.meta.url), 'utf8')
 const section = read('./TroubleshootingSection.jsx')
@@ -9,6 +9,9 @@ const detail = read('./TroubleshootingDetailPage.jsx')
 const shell = read('../../../app/AppShell.jsx')
 const routes = read('../../../hooks/useAppRoute.js')
 const styles = read('../../../App.css')
+const maintenancePage = read('../../../pages/MaintenancePage.jsx')
+const machineDetail = read('../../machines/MachineDetailPage.jsx')
+const machineService = read('../../../services/laravel/machines.js')
 
 test('technician-safe normalization accepts harmless formatting without guessing another code', () => {
   for (const input of ['3913', 'C3913', 'C-3913', 'c3913', 'c-3913']) assert.equal(normalizeErrorCodeInput(input), 'C-3913')
@@ -73,4 +76,44 @@ test('technical reference labels remain explicit and mobile layout avoids horizo
   assert.match(styles, /\.troubleshooting-result-card \{ grid-template-columns: minmax\(0,1fr\); \}/)
   assert.match(styles, /\.manufacturer-copy[^}]*white-space: pre-wrap/)
   assert.match(styles, /@media \(max-width: 520px\)[\s\S]*?\.assisted-mode-switch/)
+})
+
+test('machine applicability is deterministic and insufficient accessory context remains possible', () => {
+  const machine = { machine_model_id: 'model-c1070' }
+  const match = { id: 'match', applicabilities: [{ scope_type: 'MAIN_BODY', machine_model_id: 'model-c1070' }] }
+  const possible = { id: 'possible', applicabilities: [{ scope_type: 'ACCESSORY', scope_label: 'FS-532', machine_model_id: null }] }
+  const mismatch = { id: 'mismatch', applicabilities: [{ scope_type: 'MAIN_BODY', machine_model_id: 'model-xerox' }] }
+
+  assert.equal(machineApplicability(match, machine), 'match')
+  assert.equal(machineApplicability(possible, machine), 'possible')
+  assert.equal(machineApplicability(mismatch, machine), 'not_applicable')
+  assert.deepEqual(prioritizeForMachine([mismatch, possible, match], machine).map((entry) => entry.id), ['match', 'possible', 'mismatch'])
+})
+
+test('machine-aware routes preserve optional machine and search context', () => {
+  assert.equal(troubleshootingSearchUrl('C-3913'), '/maintenance/troubleshooting?q=C-3913')
+  assert.equal(troubleshootingSearchUrl('C-1103', 'machine-1'), '/maintenance/troubleshooting?q=C-1103&machine=machine-1')
+  assert.equal(troubleshootingDetailUrl('entry-1', 'machine-1'), '/maintenance/troubleshooting/entry-1?machine=machine-1')
+  assert.match(maintenancePage, /searchParams\.get\('machine'\)/)
+  assert.match(section, /troubleshootingDetailUrl\(entry\.id, selectedMachine\?\.id\)/)
+  assert.match(detail, /troubleshootingSearchUrl\(entry\.code, machine\?\.id\)/)
+})
+
+test('machine context uses authorized existing machine APIs and never hides possible variants', () => {
+  assert.match(section, /useMachine\(accountId, branchId, initialMachineId\)/)
+  assert.match(section, /useMachines\(accountId, branchId\)/)
+  assert.match(machineService, /apiClient\.get\(`\/machines\/\$\{machineId\}`\)/)
+  assert.match(section, /Semua varian tetap ditampilkan/)
+  assert.match(section, /Konteks mesin tidak tersedia/)
+  assert.match(machineDetail, /maintenance\/troubleshooting\?machine=/)
+})
+
+test('machine-aware UI remains mobile responsive without changing assisted fallback', () => {
+  assert.match(styles, /@media \(max-width: 520px\)[\s\S]*?\.troubleshooting-machine-picker/)
+  assert.match(section, /Tanpa mesin/)
+  assert.match(section, /Sesuai model/)
+  assert.match(section, /Kemungkinan/)
+  assert.match(section, /Tidak sesuai model/)
+  assert.match(detail, /entry\.assisted &&/)
+  assert.match(detail, /selectedMode !== 'original'/)
 })

@@ -58,7 +58,7 @@ export function AppShell() {
   else if (getIncidentIdFromPath(path)) page = <IncidentDetailPage incidentId={getIncidentIdFromPath(path)} navigate={handleNavigate} />
   else if (['/maintenance', '/maintenance/troubleshooting', '/maintenance/tickets', '/maintenance/documents'].includes(path) && tenant.can('maintenance.view')) page = <MaintenancePage path={path} search={search} navigate={handleNavigate} />
   else if (['/maintenance', '/maintenance/troubleshooting', '/maintenance/tickets', '/maintenance/documents'].includes(path)) page = <ComingSoonPage title="Access denied" description="Your current workspace capabilities do not include Maintenance." />
-  else if (getTroubleshootingEntryIdFromPath(path) && tenant.can('maintenance.view')) page = <TroubleshootingDetailPage entryId={getTroubleshootingEntryIdFromPath(path)} navigate={handleNavigate} />
+  else if (getTroubleshootingEntryIdFromPath(path) && tenant.can('maintenance.view')) page = <TroubleshootingDetailPage entryId={getTroubleshootingEntryIdFromPath(path)} search={search} navigate={handleNavigate} />
   else if (getTroubleshootingEntryIdFromPath(path)) page = <ComingSoonPage title="Access denied" description="Your current workspace capabilities do not include Maintenance." />
   else if (getMaintenanceTicketIdFromPath(path) && tenant.can('maintenance.view')) page = <MaintenanceTicketDetailPage ticketId={getMaintenanceTicketIdFromPath(path)} navigate={handleNavigate} />
   else if (getMaintenanceTicketIdFromPath(path)) page = <ComingSoonPage title="Access denied" description="Your current workspace capabilities do not include Maintenance." />

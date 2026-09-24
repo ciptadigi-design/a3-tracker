@@ -760,6 +760,23 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .troubleshooting-icon { width: 50px; height: 50px; flex: 0 0 50px; display: grid; place-items: center; color: var(--blue); background: var(--blue-soft); border-radius: 16px; }
 .troubleshooting-intro h2 { margin: 6px 0 4px; font-size: clamp(24px, 3vw, 34px); letter-spacing: -0.045em; }
 .troubleshooting-intro p,.troubleshooting-format-hint { margin: 0; color: var(--text-soft); font-size: 14px; }
+.troubleshooting-machine-picker { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 14px 16px; background: var(--surface-muted); border: 1px solid var(--border-subtle); border-radius: 16px; }
+.troubleshooting-machine-picker-copy { min-width: 0; display: flex; align-items: center; gap: 11px; color: var(--blue); }
+.troubleshooting-machine-picker-copy > div { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.troubleshooting-machine-picker-copy strong { color: var(--text); font-size: 13px; }
+.troubleshooting-machine-picker-copy span { color: var(--text-soft); font-size: 11px; }
+.troubleshooting-machine-picker label { min-width: min(100%,300px); }
+.troubleshooting-machine-picker select { width: 100%; min-height: 44px; padding: 0 36px 0 12px; color: var(--text); background: var(--surface-solid); border: 1px solid var(--border-subtle); border-radius: 12px; font: inherit; font-size: 12px; font-weight: 700; }
+.troubleshooting-machine-context,.troubleshooting-detail-machine { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 13px 16px; color: var(--text); background: var(--blue-soft); border: 1px solid color-mix(in srgb,var(--blue) 22%,transparent); border-radius: 15px; }
+.troubleshooting-machine-context > div,.troubleshooting-detail-machine { min-width: 0; }
+.troubleshooting-machine-context > div { display: grid; gap: 3px; }
+.troubleshooting-machine-context span,.troubleshooting-detail-machine > span { color: var(--blue); font-size: 9px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; }
+.troubleshooting-machine-context strong,.troubleshooting-detail-machine > strong { overflow-wrap: anywhere; font-size: 13px; }
+.troubleshooting-machine-context small,.troubleshooting-detail-machine > small { color: var(--text-soft); font-size: 10px; }
+.troubleshooting-detail-machine { align-items: flex-start; flex-direction: column; gap: 3px; }
+.troubleshooting-machine-error { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 13px 16px; color: var(--danger); background: color-mix(in srgb,var(--danger) 8%,var(--surface-solid)); border: 1px solid color-mix(in srgb,var(--danger) 20%,transparent); border-radius: 15px; }
+.troubleshooting-machine-error > div { min-width: 0; display: grid; gap: 3px; }
+.troubleshooting-machine-error span { color: var(--text-soft); font-size: 11px; }
 .troubleshooting-search { min-height: 68px; display: grid; grid-template-columns: auto minmax(0,1fr) auto; align-items: center; gap: 12px; padding: 8px 8px 8px 20px; background: var(--surface-solid); border: 1px solid var(--border-subtle); border-radius: 20px; box-shadow: 0 12px 34px rgba(34,51,84,.08); }
 .troubleshooting-search:focus-within { border-color: var(--blue); box-shadow: 0 0 0 3px var(--blue-soft),0 12px 34px rgba(34,51,84,.08); }
 .troubleshooting-search > svg { color: var(--text-soft); }
@@ -777,10 +794,17 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .troubleshooting-result-list { display: grid; gap: 12px; }
 .troubleshooting-result-card { display: grid; grid-template-columns: minmax(0,1fr) minmax(180px,.55fr) auto; align-items: center; gap: 18px; padding: 18px; background: var(--surface-solid); border: 1px solid var(--border-subtle); border-radius: 18px; }
 .troubleshooting-result-identity { min-width: 0; }
+.troubleshooting-result-code { display: flex; flex-wrap: wrap; align-items: center; gap: 9px; }
 .troubleshooting-result-identity h3 { margin: 7px 0 0; overflow-wrap: anywhere; font-size: 17px; line-height: 1.35; }
 .troubleshooting-code { display: inline-flex; color: var(--blue); font-size: clamp(18px,2.3vw,25px); font-weight: 850; letter-spacing: .03em; }
 .troubleshooting-applicabilities { display: flex; flex-wrap: wrap; gap: 7px; }
 .troubleshooting-applicability { display: inline-flex; min-height: 28px; align-items: center; padding: 4px 10px; color: var(--text-soft); background: var(--surface-muted); border: 1px solid var(--border-subtle); border-radius: 99px; font-size: 11px; font-weight: 750; }
+.troubleshooting-match { display: inline-flex; align-items: center; min-height: 24px; padding: 3px 8px; border-radius: 99px; font-size: 9px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; }
+.troubleshooting-match-match { color: var(--green); background: color-mix(in srgb,var(--green) 12%,transparent); }
+.troubleshooting-match-possible { color: var(--text-soft); background: var(--surface-muted); }
+.troubleshooting-match-not_applicable { color: var(--text-muted); background: var(--surface-muted); }
+.troubleshooting-result-match { border-color: color-mix(in srgb,var(--green) 35%,var(--border-subtle)); }
+.troubleshooting-result-not_applicable { opacity: .72; }
 .troubleshooting-detail-page { max-width: 980px; margin: 0 auto; }
 .troubleshooting-detail-hero { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; padding: clamp(22px,4vw,38px); border-radius: 28px; }
 .troubleshooting-detail-hero h1 { max-width: 760px; margin: 12px 0 18px; overflow-wrap: anywhere; font-size: clamp(28px,4vw,44px); line-height: 1.1; letter-spacing: -.045em; }
@@ -828,6 +852,9 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 @media (max-width: 520px) {
   .troubleshooting-shell { padding: 17px; border-radius: 22px; }
   .troubleshooting-intro { align-items: flex-start; }
+  .troubleshooting-machine-picker,.troubleshooting-machine-context,.troubleshooting-machine-error { align-items: stretch; flex-direction: column; }
+  .troubleshooting-machine-picker label { min-width: 0; width: 100%; }
+  .troubleshooting-machine-context .secondary-button,.troubleshooting-machine-error .secondary-button { width: 100%; justify-content: center; }
   .troubleshooting-icon { width: 42px; height: 42px; flex-basis: 42px; }
   .troubleshooting-search { grid-template-columns: auto minmax(0,1fr); padding: 8px 12px; }
   .troubleshooting-search button { grid-column: 1 / -1; width: 100%; justify-content: center; }
