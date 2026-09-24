@@ -80,11 +80,45 @@ here should ever be "remembered" instead of run.
    --classmap-authoritative --no-interaction --no-progress` inside
    `releases/<sha>/backend`.
 
+7a. **Pinned official-extraction runtime.** The reviewed V2.1 full-manual
+    extractor never uses ambient `PATH` or a system-wide Python package. Its
+    immutable runtime identity is
+    `runtimes/official-knowledge/python311-pypdf-6.14.2-crypto-50.0.1-v1`, outside
+    `public_html`. Provision or idempotently verify it with:
+
+    ```bash
+    scripts/deployment/provision-official-python-runtime.sh \
+      /opt/alt/python311/bin/python3 \
+      <app-root>/runtimes/official-knowledge/python311-pypdf-6.14.2-crypto-50.0.1-v1 \
+      <release>/backend/runtime/official-knowledge/requirements.txt
+    ```
+
+    The requirements manifest contains the reviewed `pypdf==6.14.2` universal
+    wheel plus the minimal AES provider closure needed by the verified PDF;
+    every dependency and supported Linux wheel is exact-version/hash pinned.
+    The provisioner creates a private virtual environment in an adjacent
+    temporary directory, verifies Python 3.11.x, pypdf 6.14.2, and
+    cryptography 50.0.1, and atomically installs the versioned directory.
+    It never changes the Hostinger base interpreter or global site-packages.
+    Set the shared environment value
+    `MAINTENANCE_OFFICIAL_PYTHON_EXECUTABLE` to the absolute
+    `<runtime>/bin/python` path before config caching. Never point it at the
+    bare base interpreter, `python3`, an unversioned `latest` link, or any path
+    beneath `public_html`.
+
 8. **Release identity.** `scripts/deployment/set-release-identity.sh
    <shared-env-file> <exact-40-hex-sha>`, then `php artisan config:clear &&
    php artisan config:cache` in the release's `backend/`, then
    `scripts/deployment/verify-release-identity.sh <release-backend-dir>
    <expected-sha>` against the CLI-resolved config.
+
+8a. **Official-extraction runtime preflight.** From the release backend run
+    `php artisan maintenance:v2-extractor-runtime-preflight`. It must print
+    `CONFIGURED_EXECUTABLE_ABSOLUTE=PASS`, Python 3.11.x,
+    `PYPDF_VERSION=6.14.2`, `CRYPTOGRAPHY_VERSION=50.0.1`, and
+    `OFFICIAL_EXTRACTION_RUNTIME_PREFLIGHT=PASS`. This check performs no
+    extraction and writes nothing. A missing/relative/non-executable runtime,
+    wrong Python version, missing module, or version drift stops deployment.
 
 9. **Shared `.env` linkage (M2.18.2 / closes H9).**
    `scripts/deployment/link-shared-env.sh <release_dir> <shared_dir>` -
@@ -208,12 +242,23 @@ here should ever be "remembered" instead of run.
   consolidated `verify-release.sh`) passing first.
 - Exposing secrets - no script here ever reads or prints `.env` contents,
   only paths and existence checks.
+- Installing `pypdf` globally, adding a system Python directory to Production
+  `PATH`, or allowing automatic interpreter discovery/fallback. The extractor
+  must use only the configured absolute private interpreter.
 - Running a rollback's DB restore casually - see
   [ROLLBACK_RUNBOOK.md](ROLLBACK_RUNBOOK.md). `rollback-release.sh` never
   restores the database or runs a migration; it only repoints `current` and
   re-syncs the frontend, and only after an explicit compatibility
   confirmation when it cannot prove the target release's migrations are a
   strict subset of what's already applied.
+
+Application rollback does not mutate or remove a pinned Python runtime. Before
+repointing `current`, verify that the target release's configured extraction
+contract is compatible with the selected versioned runtime. The V2.1 runtime
+directory is immutable and may be shared by releases that require exactly
+Python 3.11.x, pypdf 6.14.2, and cryptography 50.0.1; a future dependency
+revision must use a new versioned sibling directory, never modify this one in
+place.
 
 ## Why frontend backend verification is its own gate, not folded into build
 

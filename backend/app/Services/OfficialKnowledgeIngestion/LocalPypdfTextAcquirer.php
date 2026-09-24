@@ -3,10 +3,11 @@
 namespace App\Services\OfficialKnowledgeIngestion;
 
 use RuntimeException;
-use Symfony\Component\Process\Process;
 
 final class LocalPypdfTextAcquirer implements OfficialPdfTextAcquirer
 {
+    public function __construct(private readonly OfficialKnowledgePythonRuntime $runtime) {}
+
     /** @param list<int> $pageNumbers */
     public function acquire(string $pdfPath, array $pageNumbers): array
     {
@@ -32,14 +33,7 @@ for page_number in requested:
 print(json.dumps(result))
 PYTHON;
 
-        $process = new Process(['python3', '-c', $script, $pdfPath, json_encode($pages, JSON_THROW_ON_ERROR)]);
-        $process->setTimeout(120);
-        $process->run();
-        if (! $process->isSuccessful()) {
-            throw new RuntimeException('Local page-scoped PDF extraction failed: '.trim($process->getErrorOutput()));
-        }
-
-        $decoded = json_decode($process->getOutput(), true, 512, JSON_THROW_ON_ERROR);
+        $decoded = json_decode($this->runtime->extract($script, $pdfPath, $pages), true, 512, JSON_THROW_ON_ERROR);
         $result = [];
         foreach ($pages as $page) {
             if (! array_key_exists((string) $page, $decoded) || ! is_string($decoded[(string) $page])) {
