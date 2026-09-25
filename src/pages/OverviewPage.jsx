@@ -44,6 +44,28 @@ function ComponentConsumptionCard({ summary, periodLabel }) {
   </article>
 }
 
+function PurchaseValueCard({ summary, periodLabel }) {
+  const available = Boolean(summary)
+  const purchaseValue = Number(summary?.purchase_value)
+  const receivedValue = Number(summary?.received_value)
+  const purchaseCount = Number(summary?.purchase_count)
+  const receivedPercentage = Number(summary?.received_percentage)
+  const safeCount = Number.isFinite(purchaseCount) ? purchaseCount : 0
+  const safePercentage = Number.isFinite(receivedPercentage) && purchaseValue > 0 ? receivedPercentage : 0
+
+  return <article className="overview-period-card overview-purchase-card glass-surface">
+    <span className="card-kicker">Purchase Value</span>
+    <strong>{available ? formatIdrTotal(purchaseValue) : '—'}</strong>
+    <span className="overview-period-target">Branch purchasing</span>
+    <dl className="overview-purchase-details">
+      <div><dt>Purchases</dt><dd>{available ? safeCount.toLocaleString('id-ID') : '—'}</dd></div>
+      <div><dt>Received</dt><dd>{available ? formatIdrTotal(receivedValue) : '—'}</dd></div>
+      <div><dt>Received value</dt><dd>{available ? `${safePercentage.toLocaleString('id-ID', { maximumFractionDigits: 1 })}%` : '—'}</dd></div>
+    </dl>
+    <small>{periodLabel}</small>
+  </article>
+}
+
 function PeriodComparisonRow({ comparison }) {
   if (!comparison) return null
   if (!comparison.available) return <p className="overview-period-comparison tone-neutral"><span>{comparison.unavailableText}</span></p>
@@ -182,6 +204,7 @@ function OverviewWorkspace({ navigate }) {
               <section className="overview-period-grid" aria-label="Selected period cost and click progress">
                 <CostPerClickCard summary={costSummary} periodLabel={rangeLabel} />
                 <PeriodCard label={selectedCardLabel} card={projection.selected} />
+                <PurchaseValueCard summary={costSummary?.purchase_summary} periodLabel={rangeLabel} />
                 <ComponentConsumptionCard summary={costSummary} periodLabel={rangeLabel} />
               </section>
               <DailyClickPerformanceChart rows={dailyRows} todayContext={todayContext} />

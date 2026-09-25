@@ -247,10 +247,14 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .overview-target-metrics dt { color: var(--text-muted); font-size: 10px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; }
 .overview-target-metrics dd { margin: 6px 0 0; font-size: 17px; font-weight: 720; letter-spacing: -0.02em; }
 .overview-target-metrics dd small { display: block; margin-top: 2px; font-size: 9px; font-weight: 600; color: var(--text-muted); text-transform: none; letter-spacing: 0; }
-.overview-period-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.overview-period-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
 .overview-period-card { display: flex; flex-direction: column; gap: 4px; padding: 18px 20px; border-radius: 22px; }
 .overview-period-card strong { font-size: 22px; letter-spacing: -0.02em; }
 .overview-period-target { color: var(--text-muted); font-size: 11px; }
+.overview-purchase-details { display: grid; gap: 5px; margin: 8px 0 4px; padding-top: 8px; border-top: 1px solid var(--border-subtle); }
+.overview-purchase-details div { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.overview-purchase-details dt { color: var(--text-muted); font-size: 10px; }
+.overview-purchase-details dd { margin: 0; color: var(--text-soft); font-size: 11px; font-weight: 700; text-align: right; }
 .overview-period-card em { font-style: normal; font-size: 13px; font-weight: 720; }
 .overview-period-card small { color: var(--text-muted); font-size: 10px; }
 .overview-period-card.tone-green em { color: var(--green); }
@@ -264,13 +268,20 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .overview-period-comparison.tone-blue span { color: var(--blue); }
 .overview-period-comparison.tone-neutral { color: var(--text-muted); font-weight: 600; }
 
+@media (max-width: 1100px) {
+  .overview-period-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
 @media (max-width: 860px) {
   .overview-target-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .overview-period-grid { grid-template-columns: minmax(0, 1fr); }
   .daily-click-performance-header-meta { align-items: flex-start; width: 100%; }
   /* Keep the percentage + comparison period visible; drop the secondary
      "Previous: X" value on very narrow widths so the card never grows tall. */
   .overview-period-comparison b { display: none; }
+}
+
+@media (max-width: 680px) {
+  .overview-period-grid { grid-template-columns: minmax(0, 1fr); }
 }
 .list-toolbar { min-width: 0; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 4px 4px 22px; border-bottom: 1px solid var(--border-subtle); }
 .list-toolbar > div { min-width: 0; }

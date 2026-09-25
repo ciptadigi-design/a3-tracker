@@ -9,6 +9,7 @@ use App\Services\MachineAccessResolver;
 use App\Services\MachineCostService;
 use App\Services\OperationalPeriodRange;
 use App\Services\OperationalPersonEligibilityService;
+use App\Services\OverviewPurchaseSummaryService;
 use App\Services\ReplayFields;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -19,7 +20,7 @@ use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 
 class MachineCostController extends Controller
 {
-    public function __construct(private MachineCostService $service, private MachineAccessResolver $access) {}
+    public function __construct(private MachineCostService $service, private MachineAccessResolver $access, private OverviewPurchaseSummaryService $purchases) {}
 
     public function show(Request $r, Machine $machine)
     {
@@ -29,6 +30,13 @@ class MachineCostController extends Controller
         app(EffectiveCapabilityResolver::class)->authorize($r->user(), $machine->account, 'machine_cost.view');
         $result = $this->service->period($machine, $v['period_start'], $v['period_end'], ! $r->boolean('summary_only'));
         if ($r->boolean('summary_only')) {
+            $result['purchase_summary'] = $this->purchases->forBranchPeriod(
+                $machine->account_id,
+                $machine->branch_id,
+                $v['period_start'],
+                $v['period_end'],
+            );
+
             return response()->json($result);
         }
         $result['operating_costs'] = DB::table('machine_operating_costs')->where('machine_id', $machine->id)->orderByDesc('created_at')->get();

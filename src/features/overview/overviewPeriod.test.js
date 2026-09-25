@@ -72,6 +72,9 @@ test('O10–O20 Overview wiring shares period controls, bounded inputs and synch
   assert.match(page, /Promise\.all/)
   assert.match(page, /periodStart: period\.start, periodEnd: period\.end/)
   assert.match(page, /summaryOnly: true/)
+  assert.match(page, /Purchase Value/)
+  assert.match(page, /Branch purchasing/)
+  assert.match(page, /costSummary\?\.purchase_summary/)
   assert.doesNotMatch(page, /projection\.(week|month|actual_month_to_date)/)
   for (const name of ['MachineCostPage', 'ReportsPage']) {
     const source = readFileSync(new URL(`../../pages/${name}.jsx`, import.meta.url), 'utf8')
@@ -80,4 +83,14 @@ test('O10–O20 Overview wiring shares period controls, bounded inputs and synch
   }
   const css = readFileSync(new URL('../../App.css', import.meta.url), 'utf8')
   assert.match(css, /\.machine-cost-filters \{ grid-template-columns: minmax\(0,1fr\)/)
+  assert.match(css, /\.overview-period-grid \{ display: grid; grid-template-columns: repeat\(4, minmax\(0, 1fr\)\)/)
+  assert.match(css, /@media \(max-width: 1100px\)[\s\S]+\.overview-period-grid \{ grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/)
+  assert.match(css, /@media \(max-width: 680px\)[\s\S]+\.overview-period-grid \{ grid-template-columns: minmax\(0, 1fr\)/)
+})
+
+test('Purchase KPI formats Rupiah and protects the zero-value percentage state', () => {
+  assert.match(page, /formatIdrTotal\(purchaseValue\)/)
+  assert.match(page, /formatIdrTotal\(receivedValue\)/)
+  assert.match(page, /Number\.isFinite\(receivedPercentage\) && purchaseValue > 0 \? receivedPercentage : 0/)
+  assert.match(page, /maximumFractionDigits: 1/)
 })
