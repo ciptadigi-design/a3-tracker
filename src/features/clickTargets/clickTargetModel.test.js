@@ -10,6 +10,7 @@ import {
   formatCompactSignedClicks,
   formatPercentage,
   formatSignedClicks,
+  formatTargetHistoryTimestamp,
   hasAnyPlannedOrActual,
   normalizeDailyPerformance,
   periodCardPresentation,
@@ -35,6 +36,11 @@ test('formatSignedClicks prefixes a plus sign only for positive values', () => {
 test('formatPercentage never leaks NaN', () => {
   assert.equal(formatPercentage(49.14), '49.1%')
   assert.equal(formatPercentage(null), 'Unavailable')
+})
+
+test('formatTargetHistoryTimestamp keeps the date readable and omits seconds', () => {
+  assert.equal(formatTargetHistoryTimestamp(new Date(2026, 8, 9, 19, 17)), '9 Sep 2026 · 7:17 PM')
+  assert.equal(formatTargetHistoryTimestamp('not-a-date'), 'Time unavailable')
 })
 
 test('targetStatusPresentation covers every backend status', () => {

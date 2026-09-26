@@ -1,5 +1,7 @@
 const clicksFormatter = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 })
 const percentFormatter = new Intl.NumberFormat('en-US', { maximumFractionDigits: 1 })
+const targetHistoryDateFormatter = new Intl.DateTimeFormat('en-US', { day: 'numeric', month: 'short', year: 'numeric' })
+const targetHistoryTimeFormatter = new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })
 
 export function formatClicks(value) {
   return value == null ? 'Unavailable' : clicksFormatter.format(Number(value))
@@ -14,6 +16,13 @@ export function formatSignedClicks(value) {
 
 export function formatPercentage(value) {
   return value == null ? 'Unavailable' : `${percentFormatter.format(Number(value))}%`
+}
+
+export function formatTargetHistoryTimestamp(value) {
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return 'Time unavailable'
+  const dateParts = Object.fromEntries(targetHistoryDateFormatter.formatToParts(date).map((part) => [part.type, part.value]))
+  return `${dateParts.day} ${dateParts.month} ${dateParts.year} · ${targetHistoryTimeFormatter.format(date)}`
 }
 
 const compactUnits = [[1_000_000_000, 'B'], [1_000_000, 'M'], [1_000, 'K']]

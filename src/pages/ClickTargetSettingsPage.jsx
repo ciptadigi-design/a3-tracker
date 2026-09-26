@@ -4,7 +4,7 @@ import { PageHeader } from '../components/ui/PageHeader.jsx'
 import { useAuth } from '../features/auth/useAuth.js'
 import { useTenant } from '../features/account/useTenant.js'
 import { useMachines } from '../features/machines/useMachines.js'
-import { exceptionTypes, formatClicks } from '../features/clickTargets/clickTargetModel.js'
+import { exceptionTypes, formatClicks, formatTargetHistoryTimestamp } from '../features/clickTargets/clickTargetModel.js'
 import { CalendarExceptionDialog } from '../features/clickTargets/CalendarExceptionDialog.jsx'
 import { SetTargetDialog } from '../features/clickTargets/SetTargetDialog.jsx'
 import { createCalendarException, loadCalendarExceptions, loadClickTargetHistory, loadClickTargetProjection, removeCalendarException, saveMachineClickTarget } from '../services/clickTargets.js'
@@ -104,7 +104,7 @@ export function ClickTargetSettingsPage() {
 
       <section className="settings-card glass-surface">
         <header><div><span className="card-kicker">Audit evidence</span><h2>Target history</h2></div><History size={18} /></header>
-        {history.length === 0 ? <div className="machine-cost-empty compact"><Gauge size={20} /><strong>No revisions yet.</strong></div> : <div className="settings-audit-list">{history.map((row) => <div key={row.id}><strong>{row.previous_target == null ? 'Set' : 'Revised'} to {formatClicks(row.new_target)}</strong><span>{row.previous_target != null ? `from ${formatClicks(row.previous_target)} · ` : ''}{new Date(row.created_at).toLocaleString()}</span>{row.reason && <small>{row.reason}</small>}</div>)}</div>}
+        {history.length === 0 ? <div className="machine-cost-empty compact"><Gauge size={20} /><strong>No revisions yet.</strong></div> : <div className="target-history-list">{history.map((row) => <article className="target-history-item" key={row.id}><span className="target-history-icon" aria-hidden="true"><History size={16} /></span><div className="target-history-copy"><strong>Target {row.previous_target == null ? 'set' : 'revised'} to {formatClicks(row.new_target)}</strong><time dateTime={row.created_at}>{formatTargetHistoryTimestamp(row.created_at)}</time>{row.previous_target != null && <small>Previous target: {formatClicks(row.previous_target)}</small>}{row.reason && <small>Reason: {row.reason}</small>}</div></article>)}</div>}
       </section>
 
       {targetDialog && <SetTargetDialog machine={selectedMachine} monthLabel={`${monthLabel} ${filters.year}`} currentTarget={projection.monthly_target} onClose={() => setTargetDialog(false)} onSave={saveTarget} />}
