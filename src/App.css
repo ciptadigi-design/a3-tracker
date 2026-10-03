@@ -1935,3 +1935,110 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   .model-profile-settings-card { grid-template-columns: minmax(0,1fr); }.model-profile-settings-icon { display: none; }.model-profile-manage { grid-column: 1; }
   .settings-audit-list { padding: 10px; }.settings-audit-row { padding: 12px; }.settings-audit-pagination { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 9px; padding: 12px; }.settings-audit-pagination > span { grid-column: 1 / -1; grid-row: 1; }.settings-audit-pagination button { width: 100%; justify-content: center; }
 }
+
+/* Live production TV display (/display/live/:machineId). Forces a dark,
+   high-contrast surface by redefining the same --page/--surface/--text
+   tokens *locally* on .live-display-root - this never touches
+   :root[data-theme] or localStorage, so it cannot leak into or mutate the
+   signed-in user's own light/dark preference elsewhere in the app. */
+.live-display-root {
+  --page: #05070b;
+  --surface: rgba(20, 25, 35, 0.6);
+  --surface-solid: #10141d;
+  --surface-muted: rgba(26, 32, 44, 0.7);
+  --border: rgba(255, 255, 255, 0.09);
+  --border-subtle: rgba(255, 255, 255, 0.07);
+  --text: #f5f7fb;
+  --text-soft: #aab3c4;
+  --text-muted: #6d7689;
+  --blue: #4d9dff;
+  --green: #3ddc8a;
+  --warning: #ffb44d;
+  --danger: #ff6a6a;
+  --target-red: #ff6b5e;
+  width: 100vw;
+  height: 100vh;
+  min-height: 100vh;
+  background: var(--page);
+  color: var(--text);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 28px 40px;
+  font-family: inherit;
+  overflow: hidden;
+}
+
+.live-display-header { display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+.live-display-brand { display: flex; flex-direction: column; gap: 2px; }
+.live-display-brand-name { font-size: 20px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; }
+.live-display-brand-sub { font-size: 13px; font-weight: 600; letter-spacing: 0.12em; color: var(--text-muted); text-transform: uppercase; }
+.live-display-clock { font-size: 28px; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: 0.02em; }
+.live-display-machine { text-align: right; display: flex; flex-direction: column; gap: 2px; }
+.live-display-machine strong { font-size: 20px; letter-spacing: 0.03em; }
+.live-display-machine span { font-size: 13px; color: var(--text-soft); }
+
+.live-display-grid { flex: 1; display: grid; grid-template-columns: 1.1fr 1fr; gap: 20px; min-height: 0; }
+.live-panel { background: var(--surface); border: 1px solid var(--border-subtle); border-radius: 20px; padding: 28px 32px; display: flex; flex-direction: column; min-height: 0; }
+.live-panel-label { font-size: 15px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 14px; }
+
+.live-current-counter-panel { justify-content: center; }
+.live-current-counter-value { font-size: clamp(64px, 11vw, 148px); font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+.live-current-counter-today { display: flex; align-items: baseline; gap: 10px; margin-top: 14px; font-size: 28px; font-weight: 700; color: var(--green); }
+.live-current-counter-today span { font-size: 14px; font-weight: 700; letter-spacing: 0.08em; color: var(--text-muted); }
+.live-current-counter-meta { margin-top: 20px; display: flex; flex-direction: column; gap: 4px; font-size: 16px; color: var(--text-soft); }
+.live-current-counter-usage { color: var(--text-muted); font-size: 14px; }
+
+.live-target-panel { gap: 2px; }
+.live-target-actual { font-size: clamp(40px, 6vw, 72px); font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; }
+.live-target-of { font-size: 20px; color: var(--text-soft); margin-top: 2px; }
+.live-target-progress-track { margin-top: 18px; height: 16px; border-radius: 999px; background: var(--surface-muted); overflow: hidden; }
+.live-target-progress-fill { height: 100%; border-radius: 999px; background: var(--blue); }
+.live-target-percentage { margin-top: 8px; font-size: 18px; font-weight: 700; color: var(--text-soft); }
+.live-target-status { margin-top: 18px; display: flex; align-items: center; gap: 12px; font-size: 22px; font-weight: 800; letter-spacing: 0.04em; }
+.live-target-status.tone-green { color: var(--green); }
+.live-target-status.tone-warning { color: var(--warning); }
+.live-target-status.tone-blue { color: var(--blue); }
+.live-target-status.tone-neutral { color: var(--text-soft); }
+.live-target-metrics { margin-top: 22px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.live-target-metrics dt { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted); }
+.live-target-metrics dd { margin: 4px 0 0; font-size: 20px; font-weight: 700; }
+.live-target-empty { color: var(--text-soft); font-size: 18px; }
+
+.live-activity-panel { flex: 0 0 auto; max-height: 240px; }
+.live-activity-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; overflow: hidden; }
+.live-activity-row { display: grid; grid-template-columns: 100px 1fr 120px 160px; align-items: center; gap: 16px; padding: 10px 4px; border-bottom: 1px solid var(--border-subtle); font-size: 18px; font-variant-numeric: tabular-nums; }
+.live-activity-time { color: var(--text-soft); font-weight: 700; }
+.live-activity-who { color: var(--text-soft); }
+.live-activity-usage { font-weight: 700; color: var(--green); text-align: right; }
+.live-activity-counter { font-weight: 800; text-align: right; }
+.live-activity-empty { color: var(--text-soft); font-size: 16px; }
+
+.live-display-footer { display: flex; align-items: center; gap: 24px; font-size: 14px; color: var(--text-soft); flex: 0 0 auto; }
+.live-display-footer-status { font-weight: 800; letter-spacing: 0.05em; }
+.live-display-footer.tone-fresh .live-display-footer-status, .live-display-footer.tone-empty .live-display-footer-status { color: var(--green); }
+.live-display-footer.tone-stale .live-display-footer-status { color: var(--warning); }
+.live-display-footer.tone-offline .live-display-footer-status { color: var(--danger); }
+.live-display-footer-countdown { margin-left: auto; }
+
+.live-display-loading, .live-display-empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; font-size: 20px; color: var(--text-soft); }
+
+.live-display-message-root { align-items: center; justify-content: center; }
+.live-display-message { display: flex; flex-direction: column; align-items: center; gap: 14px; text-align: center; color: var(--text-soft); max-width: 640px; }
+.live-display-message h1 { font-size: 26px; color: var(--text); margin: 0; }
+.live-display-message p { margin: 0; font-size: 16px; }
+.live-display-sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+
+@media (max-width: 1500px) {
+  .live-current-counter-value { font-size: clamp(56px, 10vw, 110px); }
+  .live-target-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 900px) {
+  .live-display-root { padding: 20px; }
+  .live-display-header { flex-wrap: wrap; }
+  .live-display-machine { text-align: left; }
+  .live-display-grid { grid-template-columns: minmax(0, 1fr); }
+  .live-activity-row { grid-template-columns: 70px 1fr auto; }
+  .live-activity-who { display: none; }
+}
