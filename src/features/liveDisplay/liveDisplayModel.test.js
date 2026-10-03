@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 import {
   deriveStatusOnFailure,
   deriveStatusOnSuccess,
+  formatActivityTimestamp,
   isCounterHistoryEmpty,
   latestEffectiveReading,
   recentActivityRows,
@@ -36,6 +37,45 @@ test('latestEffectiveReading skips corrected/voided rows ahead of the latest eff
   assert.equal(latestEffectiveReading(history).reading_id, 'latest')
   assert.equal(latestEffectiveReading([]), null)
   assert.equal(latestEffectiveReading([{ status: 'voided' }]), null)
+})
+
+// V1.1 regression: a Production acceptance run saw Recent Activity rows
+// that looked chronologically incoherent (16:49 displayed between two
+// 20:0x rows, against a ~17:13 header clock). The SQL order is already
+// `observed_at DESC` and the value round-trips as an unambiguous UTC `Z`
+// instant, so nothing here assumes the API itself was ever wrong - these
+// tests instead prove the two things this fix actually changed: the
+// frontend no longer blindly trusts input array position for either the
+// hero reading or the activity list, and every displayed timestamp carries
+// its date so same-clock-time entries from different days can never look
+// "out of order" with no way to tell why.
+test('recentActivityRows re-sorts by observed_at even if the input array is not already ordered', () => {
+  const history = [
+    effective({ reading_id: 'mid', reading_value: 200, observed_at: '2026-10-02T16:49:00Z' }),
+    effective({ reading_id: 'newest', reading_value: 300, observed_at: '2026-10-03T13:06:00Z' }),
+    effective({ reading_id: 'oldest', reading_value: 100, observed_at: '2026-10-02T13:02:00Z' }),
+  ]
+  const rows = recentActivityRows(history)
+  assert.deepEqual(rows.map((row) => row.id), ['newest', 'mid', 'oldest'])
+})
+
+test('latestEffectiveReading picks the true maximum observed_at, not array position 0', () => {
+  const history = [
+    effective({ reading_id: 'earlier', observed_at: '2026-10-02T09:00:00Z' }),
+    effective({ reading_id: 'actually-latest', observed_at: '2026-10-03T09:00:00Z' }),
+  ]
+  assert.equal(latestEffectiveReading(history).reading_id, 'actually-latest')
+})
+
+test('formatActivityTimestamp always includes the date, not just a bare HH:mm', () => {
+  const formatted = formatActivityTimestamp('2026-10-03T09:49:00Z', 'UTC')
+  assert.match(formatted, /^3 Oct, 09:49$/)
+})
+
+test('formatActivityTimestamp disambiguates two different calendar days sharing a clock time', () => {
+  const dayOne = formatActivityTimestamp('2026-10-02T13:02:00Z', 'UTC')
+  const dayTwo = formatActivityTimestamp('2026-10-03T13:02:00Z', 'UTC')
+  assert.notEqual(dayOne, dayTwo)
 })
 
 test('isCounterHistoryEmpty is true only when no effective reading exists', () => {

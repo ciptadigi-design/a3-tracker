@@ -1,5 +1,5 @@
 import { createElement, useState } from 'react'
-import { ArrowLeft, CalendarDays, CheckCircle2, Clock3, Edit3, FileText, Gauge, History, MapPin, Printer, ShieldAlert, Tag, Wrench } from 'lucide-react'
+import { ArrowLeft, CalendarDays, CheckCircle2, Clock3, Edit3, FileText, Gauge, History, MapPin, Printer, ShieldAlert, Tag, Tv, Wrench } from 'lucide-react'
 import { ErrorState } from '../../components/ui/ErrorState.jsx'
 import { LoadingScreen } from '../../components/ui/LoadingScreen.jsx'
 import { PageHeader } from '../../components/ui/PageHeader.jsx'
@@ -67,7 +67,7 @@ export function MachineDetailPage({ machineId, navigate }) {
     navigate(`/maintenance/tickets/${ticket.id}`)
   }
 
-  const actions = <div className="detail-actions">{can('maintenance.view') && <><button className="primary-button" type="button" onClick={() => navigate(`/maintenance/troubleshooting?machine=${encodeURIComponent(machine.id)}`)}><Wrench size={17} /> Troubleshooting</button><button className="secondary-button" type="button" onClick={() => document.getElementById('maintenance-history')?.scrollIntoView({ behavior: 'smooth' })}><History size={17} /> Maintenance History</button></>}{canManage && machine.is_active && <><button className="secondary-button" type="button" onClick={() => machineWorkflow.openEdit(machine.id)}><Edit3 size={17} /> Edit machine</button><button className="danger-outline-button" type="button" onClick={() => setShowRetire(true)}>Retire machine</button></>}</div>
+  const actions = <div className="detail-actions"><a className="secondary-button" href={`/display/live/${machine.id}`} target="_blank" rel="noopener noreferrer"><Tv size={17} /> Live Display</a>{can('maintenance.view') && <><button className="primary-button" type="button" onClick={() => navigate(`/maintenance/troubleshooting?machine=${encodeURIComponent(machine.id)}`)}><Wrench size={17} /> Troubleshooting</button><button className="secondary-button" type="button" onClick={() => document.getElementById('maintenance-history')?.scrollIntoView({ behavior: 'smooth' })}><History size={17} /> Maintenance History</button></>}{canManage && machine.is_active && <><button className="secondary-button" type="button" onClick={() => machineWorkflow.openEdit(machine.id)}><Edit3 size={17} /> Edit machine</button><button className="danger-outline-button" type="button" onClick={() => setShowRetire(true)}>Retire machine</button></>}</div>
 
   return (
     <div className="page-stack machine-detail-page">

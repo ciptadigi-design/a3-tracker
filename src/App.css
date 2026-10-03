@@ -110,7 +110,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .password-field input { padding-right: 52px; }
 .password-toggle { position: absolute; right: 7px; top: 6px; box-shadow: none; background: transparent; }
 .auth-error, .inline-error { color: var(--danger); background: rgba(217, 71, 71, 0.1); border: 1px solid rgba(217, 71, 71, 0.16); border-radius: 14px; padding: 12px 14px; font-size: 13px; line-height: 1.45; }
-.primary-button, .secondary-button { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; gap: 9px; padding: 0 18px; border-radius: 14px; font-weight: 700; cursor: pointer; transition: transform 160ms, box-shadow 160ms, background 160ms; }
+.primary-button, .secondary-button { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; gap: 9px; padding: 0 18px; border-radius: 14px; font-weight: 700; cursor: pointer; text-decoration: none; transition: transform 160ms, box-shadow 160ms, background 160ms; }
 .primary-button { color: white; background: linear-gradient(145deg, var(--blue), var(--blue-deep)); box-shadow: 0 11px 24px rgba(20, 120, 242, 0.22); }
 .secondary-button { color: var(--text); background: var(--surface-solid); border: 1px solid var(--border-subtle); }
 .primary-button:not(:disabled):hover, .secondary-button:not(:disabled):hover { transform: translateY(-1px); }
@@ -1941,6 +1941,16 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
    tokens *locally* on .live-display-root - this never touches
    :root[data-theme] or localStorage, so it cannot leak into or mutate the
    signed-in user's own light/dark preference elsewhere in the app. */
+/* V1.1: every vertical dimension below is clamp()/vh-driven rather than a
+   fixed px value, because the overflow defect (Monthly Target content
+   escaping its card at 1366x768/1280x720, and tolerating browser chrome
+   eating further usable height) was a layout-MODEL problem - fixed margins
+   and fixed font sizes do not shrink when the viewport does, no matter how
+   generous .live-panel's own min-height:0/flex rules already were. Each
+   clamp() floor was sized so the Monthly Target panel's full content
+   (actual, target, progress, percentage, status, 3 metrics) provably fits
+   within a worst-case ~300px panel height, well under any realistic
+   720p-minus-browser-chrome allocation. */
 .live-display-root {
   --page: #05070b;
   --surface: rgba(20, 25, 35, 0.6);
@@ -1958,70 +1968,74 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   --target-red: #ff6b5e;
   width: 100vw;
   height: 100vh;
-  min-height: 100vh;
+  max-height: 100vh;
   background: var(--page);
   color: var(--text);
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  padding: 28px 40px;
+  gap: clamp(10px, 1.6vh, 20px);
+  padding: clamp(14px, 2.4vh, 28px) clamp(20px, 3vw, 40px);
   font-family: inherit;
   overflow: hidden;
 }
 
-.live-display-header { display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+.live-display-header { display: flex; align-items: center; justify-content: space-between; gap: 24px; flex: 0 0 auto; }
 .live-display-brand { display: flex; flex-direction: column; gap: 2px; }
-.live-display-brand-name { font-size: 20px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; }
-.live-display-brand-sub { font-size: 13px; font-weight: 600; letter-spacing: 0.12em; color: var(--text-muted); text-transform: uppercase; }
-.live-display-clock { font-size: 28px; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: 0.02em; }
+.live-display-brand-name { font-size: clamp(16px, 1.8vh, 20px); font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; }
+.live-display-brand-sub { font-size: clamp(11px, 1.2vh, 13px); font-weight: 600; letter-spacing: 0.12em; color: var(--text-muted); text-transform: uppercase; }
+.live-display-clock { font-size: clamp(20px, 2.4vh, 28px); font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: 0.02em; }
 .live-display-machine { text-align: right; display: flex; flex-direction: column; gap: 2px; }
-.live-display-machine strong { font-size: 20px; letter-spacing: 0.03em; }
-.live-display-machine span { font-size: 13px; color: var(--text-soft); }
+.live-display-machine strong { font-size: clamp(16px, 1.8vh, 20px); letter-spacing: 0.03em; }
+.live-display-machine span { font-size: clamp(11px, 1.2vh, 13px); color: var(--text-soft); }
 
-.live-display-grid { flex: 1; display: grid; grid-template-columns: 1.1fr 1fr; gap: 20px; min-height: 0; }
-.live-panel { background: var(--surface); border: 1px solid var(--border-subtle); border-radius: 20px; padding: 28px 32px; display: flex; flex-direction: column; min-height: 0; }
-.live-panel-label { font-size: 15px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 14px; }
+.live-display-grid { flex: 1; display: grid; grid-template-columns: 1.1fr 1fr; gap: clamp(12px, 1.6vh, 20px); min-height: 0; }
+.live-panel { background: var(--surface); border: 1px solid var(--border-subtle); border-radius: 20px; padding: clamp(16px, 2.2vh, 28px) clamp(18px, 2.4vw, 32px); display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+.live-panel-label { font-size: clamp(12px, 1.3vh, 15px); font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); margin-bottom: clamp(6px, 1vh, 14px); flex: 0 0 auto; }
 
 .live-current-counter-panel { justify-content: center; }
-.live-current-counter-value { font-size: clamp(64px, 11vw, 148px); font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
-.live-current-counter-today { display: flex; align-items: baseline; gap: 10px; margin-top: 14px; font-size: 28px; font-weight: 700; color: var(--green); }
-.live-current-counter-today span { font-size: 14px; font-weight: 700; letter-spacing: 0.08em; color: var(--text-muted); }
-.live-current-counter-meta { margin-top: 20px; display: flex; flex-direction: column; gap: 4px; font-size: 16px; color: var(--text-soft); }
-.live-current-counter-usage { color: var(--text-muted); font-size: 14px; }
+.live-current-counter-value { font-size: clamp(44px, min(11vw, 15vh), 148px); font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+.live-current-counter-today { display: flex; align-items: baseline; gap: 10px; margin-top: clamp(6px, 1.2vh, 14px); font-size: clamp(18px, 2.6vh, 28px); font-weight: 700; color: var(--green); }
+.live-current-counter-today span { font-size: clamp(11px, 1.2vh, 14px); font-weight: 700; letter-spacing: 0.08em; color: var(--text-muted); }
+.live-current-counter-meta { margin-top: clamp(8px, 1.6vh, 20px); display: flex; flex-direction: column; gap: 3px; font-size: clamp(12px, 1.4vh, 16px); color: var(--text-soft); }
+.live-current-counter-usage { color: var(--text-muted); font-size: clamp(11px, 1.1vh, 14px); }
 
-.live-target-panel { gap: 2px; }
-.live-target-actual { font-size: clamp(40px, 6vw, 72px); font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; }
-.live-target-of { font-size: 20px; color: var(--text-soft); margin-top: 2px; }
-.live-target-progress-track { margin-top: 18px; height: 16px; border-radius: 999px; background: var(--surface-muted); overflow: hidden; }
+.live-target-panel { gap: 0; }
+.live-target-actual { font-size: clamp(28px, min(5vw, 7vh), 72px); font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; flex: 0 0 auto; }
+.live-target-of { font-size: clamp(13px, 1.4vh, 20px); color: var(--text-soft); margin-top: 2px; flex: 0 0 auto; }
+.live-target-progress-track { margin-top: clamp(8px, 1.4vh, 18px); height: clamp(8px, 1.2vh, 16px); border-radius: 999px; background: var(--surface-muted); overflow: hidden; flex: 0 0 auto; }
 .live-target-progress-fill { height: 100%; border-radius: 999px; background: var(--blue); }
-.live-target-percentage { margin-top: 8px; font-size: 18px; font-weight: 700; color: var(--text-soft); }
-.live-target-status { margin-top: 18px; display: flex; align-items: center; gap: 12px; font-size: 22px; font-weight: 800; letter-spacing: 0.04em; }
+.live-target-percentage { margin-top: clamp(4px, 0.8vh, 8px); font-size: clamp(12px, 1.3vh, 18px); font-weight: 700; color: var(--text-soft); flex: 0 0 auto; }
+.live-target-status { margin-top: clamp(8px, 1.4vh, 18px); display: flex; align-items: center; gap: 10px; font-size: clamp(15px, 1.8vh, 22px); font-weight: 800; letter-spacing: 0.04em; flex: 0 0 auto; }
 .live-target-status.tone-green { color: var(--green); }
 .live-target-status.tone-warning { color: var(--warning); }
 .live-target-status.tone-blue { color: var(--blue); }
 .live-target-status.tone-neutral { color: var(--text-soft); }
-.live-target-metrics { margin-top: 22px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
-.live-target-metrics dt { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted); }
-.live-target-metrics dd { margin: 4px 0 0; font-size: 20px; font-weight: 700; }
-.live-target-empty { color: var(--text-soft); font-size: 18px; }
+.live-target-metrics { margin-top: clamp(8px, 1.6vh, 22px); display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(6px, 1vh, 14px); flex: 0 0 auto; }
+.live-target-metrics dt { font-size: clamp(9px, 1vh, 12px); letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted); }
+.live-target-metrics dd { margin: 3px 0 0; font-size: clamp(13px, 1.6vh, 20px); font-weight: 700; }
+.live-target-empty { color: var(--text-soft); font-size: clamp(14px, 1.6vh, 18px); }
 
-.live-activity-panel { flex: 0 0 auto; max-height: 240px; }
-.live-activity-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; overflow: hidden; }
-.live-activity-row { display: grid; grid-template-columns: 100px 1fr 120px 160px; align-items: center; gap: 16px; padding: 10px 4px; border-bottom: 1px solid var(--border-subtle); font-size: 18px; font-variant-numeric: tabular-nums; }
+/* flex: 0 0 auto (not a fixed max-height) lets the panel size itself from its
+   own (now clamp()-shrunk) row heights instead of clipping a fixed box - the
+   @media height breakpoints below additionally drop to fewer rendered rows
+   before the remaining rows would ever need to shrink unreadably small. */
+.live-activity-panel { flex: 0 0 auto; }
+.live-activity-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: clamp(4px, 0.8vh, 10px); }
+.live-activity-row { display: grid; grid-template-columns: minmax(96px, 150px) 1fr minmax(90px, 120px) minmax(120px, 160px); align-items: center; gap: clamp(8px, 1.2vw, 16px); padding: clamp(6px, 0.9vh, 10px) 4px; border-bottom: 1px solid var(--border-subtle); font-size: clamp(13px, 1.6vh, 18px); font-variant-numeric: tabular-nums; }
 .live-activity-time { color: var(--text-soft); font-weight: 700; }
-.live-activity-who { color: var(--text-soft); }
+.live-activity-who { color: var(--text-soft); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .live-activity-usage { font-weight: 700; color: var(--green); text-align: right; }
 .live-activity-counter { font-weight: 800; text-align: right; }
-.live-activity-empty { color: var(--text-soft); font-size: 16px; }
+.live-activity-empty { color: var(--text-soft); font-size: clamp(13px, 1.5vh, 16px); }
 
-.live-display-footer { display: flex; align-items: center; gap: 24px; font-size: 14px; color: var(--text-soft); flex: 0 0 auto; }
+.live-display-footer { display: flex; align-items: center; gap: 24px; font-size: clamp(12px, 1.3vh, 14px); color: var(--text-soft); flex: 0 0 auto; }
 .live-display-footer-status { font-weight: 800; letter-spacing: 0.05em; }
 .live-display-footer.tone-fresh .live-display-footer-status, .live-display-footer.tone-empty .live-display-footer-status { color: var(--green); }
 .live-display-footer.tone-stale .live-display-footer-status { color: var(--warning); }
 .live-display-footer.tone-offline .live-display-footer-status { color: var(--danger); }
 .live-display-footer-countdown { margin-left: auto; }
 
-.live-display-loading, .live-display-empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; font-size: 20px; color: var(--text-soft); }
+.live-display-loading, .live-display-empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; font-size: clamp(16px, 2vh, 20px); color: var(--text-soft); min-height: 0; }
 
 .live-display-message-root { align-items: center; justify-content: center; }
 .live-display-message { display: flex; flex-direction: column; align-items: center; gap: 14px; text-align: center; color: var(--text-soft); max-width: 640px; }
@@ -2029,16 +2043,22 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .live-display-message p { margin: 0; font-size: 16px; }
 .live-display-sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
 
+/* Row 4/5 are still rendered (recentActivityRows already returns up to 5),
+   but hidden below the heights where the task accepts a 3-row floor instead
+   of shrinking every row to an unreadable size. */
+@media (max-height: 760px) {
+  .live-activity-row:nth-child(n+4) { display: none; }
+}
+
 @media (max-width: 1500px) {
-  .live-current-counter-value { font-size: clamp(56px, 10vw, 110px); }
   .live-target-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 @media (max-width: 900px) {
-  .live-display-root { padding: 20px; }
+  .live-display-root { padding: 16px; }
   .live-display-header { flex-wrap: wrap; }
   .live-display-machine { text-align: left; }
-  .live-display-grid { grid-template-columns: minmax(0, 1fr); }
-  .live-activity-row { grid-template-columns: 70px 1fr auto; }
+  .live-display-grid { grid-template-columns: minmax(0, 1fr); overflow-y: auto; }
+  .live-activity-row { grid-template-columns: 90px 1fr auto; }
   .live-activity-who { display: none; }
 }

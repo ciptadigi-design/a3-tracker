@@ -1,9 +1,6 @@
 import { AnimatePresence, motion as Motion, useReducedMotion } from 'motion/react'
 import { formatClicks, formatSignedClicks } from '../clickTargets/clickTargetModel.js'
-
-function formatRowTime(value, timezone) {
-  return new Intl.DateTimeFormat('en-GB', { timeZone: timezone, hour: '2-digit', minute: '2-digit' }).format(new Date(value))
-}
+import { formatActivityTimestamp } from './liveDisplayModel.js'
 
 /**
  * Fixed list, no pagination, no scrolling. Rows carry a stable identity
@@ -32,7 +29,7 @@ export function RecentActivityStrip({ rows, timezone }) {
                 transition={{ duration: reducedMotion ? 0 : 0.4, ease: 'easeOut' }}
                 className="live-activity-row"
               >
-                <span className="live-activity-time">{formatRowTime(row.observedAt, timezone)}</span>
+                <span className="live-activity-time">{formatActivityTimestamp(row.observedAt, timezone)}</span>
                 <span className="live-activity-who">{[row.shiftCode, row.operatorName].filter(Boolean).join(' · ') || 'Operator not recorded'}</span>
                 <span className="live-activity-usage">{row.usage != null ? formatSignedClicks(row.usage) : '—'}</span>
                 <span className="live-activity-counter">{formatClicks(row.counter)}</span>
