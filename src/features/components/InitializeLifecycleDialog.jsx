@@ -32,12 +32,16 @@ export function InitializeLifecycleDialog({ account, machine, lifecycle, onClose
   async function submit(event) {
     event.preventDefault()
     const historical = value.mode === 'manual_historical'
-    const installedCounter = historical ? Number(value.installedCounter) : null
+    const currentCounter = lifecycle.latest_effective_counter
+    const installedCounter = historical ? Number(value.installedCounter) : (currentCounter == null ? null : Number(currentCounter))
     if (historical && (value.installedCounter.trim() === '' || !Number.isFinite(installedCounter) || installedCounter < 0)) {
       return setError('Enter a valid known replacement counter.')
     }
     if (historical && installedCounter > Number(lifecycle.latest_effective_counter)) {
       return setError('The replacement counter cannot exceed the current recorded counter.')
+    }
+    if (!historical && (currentCounter == null || !Number.isFinite(installedCounter))) {
+      return setError('No authoritative current counter is available yet for this machine. Record a counter reading before initializing.')
     }
 
     setSaving(true)
@@ -45,7 +49,7 @@ export function InitializeLifecycleDialog({ account, machine, lifecycle, onClose
     try {
       await onInitialize({
         installedCounter,
-        installedAt: historical && value.installedDate ? `${value.installedDate}T00:00:00+07:00` : null,
+        installedAt: historical && value.installedDate ? `${value.installedDate}T00:00:00+07:00` : new Date().toISOString(),
         notes: value.notes,
         clientRequestId: crypto.randomUUID(),
       })

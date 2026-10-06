@@ -308,7 +308,7 @@ class ComponentsController extends Controller
         $mc = MachineComponent::with('machine')->findOrFail($component);
         abort_unless(app(MachineAccessResolver::class)->canAccess($r->user(), $mc->machine, true), 403);
         app(EffectiveCapabilityResolver::class)->authorize($r->user(), $mc->machine->account, 'components.lifecycle.initialize');
-        $d = $r->validate(['started_at' => 'nullable|date', 'evidence_level' => 'nullable|string|size:1', 'source' => 'nullable|string|max:40', 'notes' => 'nullable|string', 'client_request_id' => 'nullable|uuid']);
+        $d = $r->validate(['started_at' => 'nullable|date', 'installed_counter' => 'nullable|numeric|min:0', 'evidence_level' => 'nullable|string|size:1', 'source' => 'nullable|string|max:40', 'notes' => 'nullable|string', 'client_request_id' => 'nullable|uuid']);
 
         return response()->json(['data' => app(ComponentConfigurationService::class)->initialize($mc, $d)], 201);
     }
