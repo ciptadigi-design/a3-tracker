@@ -235,18 +235,34 @@ class InventoryComponentCompatibilityEnforcementTest extends TestCase
         if (DB::getDriverName() !== 'mysql') {
             $this->markTestSkipped('The row-lock race is an explicit MySQL/InnoDB acceptance gate, matching InventoryMysqlConcurrencyTest.');
         }
-        $f = $this->fixture();
-        app(InventoryComponentCompatibilityService::class)->link($f['generic'], $f['components']['K']->id);
-        $mc = $f['machineComponents']['K'];
-        // The fixture already posted a 2-unit opening balance; consume 1 so
-        // exactly 1 unit remains contested between the two racing processes.
-        app(InventoryLedgerService::class)->outbound($f['generic'], $f['loc'], 1, 'adjustment_out', (string) Str::uuid(), null, 'pre-race trim');
-        $this->assertSame(1.0, app(InventoryLedgerService::class)->balance($f['generic']->id, $f['loc']->id));
+        // This test commits the wrapping RefreshDatabase transaction (required so
+        // the two subprocess connections can see the data) - exactly like
+        // InventoryMysqlConcurrencyTest already does. That permanently leaks
+        // every row created below into the real CI database for the rest of
+        // the suite run, so every identifier here is uniquely suffixed (unlike
+        // the shared fixture()'s fixed 'CG'/'KM' codes) to guarantee it can
+        // never collide with any other test file's fixtures.
+        $suffix = (string) Str::uuid();
+        $account = Account::create(['code' => 'RACE-'.$suffix, 'name' => 'Race']);
+        $branch = Branch::create(['account_id' => $account->id, 'code' => 'MAIN', 'name' => 'Main']);
+        $loc = InventoryLocation::create(['account_id' => $account->id, 'branch_id' => $branch->id, 'code' => 'WH', 'name' => 'Warehouse']);
+        $manufacturer = Manufacturer::create(['code' => 'KM-'.$suffix, 'name' => 'KM']);
+        $model = MachineModel::create(['manufacturer_id' => $manufacturer->id, 'model_code' => 'C-'.$suffix, 'name' => 'C']);
+        $profile = ModelProfile::create(['machine_model_id' => $model->id, 'name' => 'P']);
+        $component = ComponentCatalog::create(['account_id' => $account->id, 'code' => 'corona-k-'.$suffix, 'name' => 'Charging Corona K Def', 'is_active' => true]);
+        $slot = ModelProfileSlot::create(['profile_id' => $profile->id, 'component_id' => $component->id, 'slot_code' => 'K']);
+        $machine = Machine::create(['account_id' => $account->id, 'branch_id' => $branch->id, 'machine_model_id' => $model->id, 'machine_code' => 'M-'.$suffix, 'display_name' => 'M', 'status' => 'active']);
+        $mc = MachineComponent::create(['account_id' => $account->id, 'machine_id' => $machine->id, 'component_id' => $component->id, 'profile_slot_id' => $slot->id, 'slot_code' => 'K', 'source_type' => 'inherited', 'status' => 'configured', 'active_key' => 'active']);
+        ComponentLifecycle::create(['machine_component_id' => $mc->id, 'started_at' => now()->subDays(10), 'status' => 'active', 'active_key' => 'active', 'source' => 'manual']);
+        $generic = InventoryItem::create(['account_id' => $account->id, 'component_id' => null, 'sku' => 'GEN-CORONA-'.$suffix, 'name' => 'Charging Corona', 'is_active' => true]);
+        app(InventoryComponentCompatibilityService::class)->link($generic, $component->id);
+        // Exactly 1 unit of stock, contested between the two racing processes.
+        app(InventoryLedgerService::class)->inbound($generic, $loc, 1, 1000, 'opening_balance', (string) Str::uuid(), 'opening');
         DB::connection()->commit();
 
         $processes = [];
         foreach ([1, 2] as $n) {
-            $processes[$n] = new Process([PHP_BINARY, base_path('tests/Support/replace_machine_component_concurrent.php'), (string) $mc->id, (string) $f['generic']->id, (string) $f['loc']->id, (string) Str::uuid()], base_path());
+            $processes[$n] = new Process([PHP_BINARY, base_path('tests/Support/replace_machine_component_concurrent.php'), (string) $mc->id, (string) $generic->id, (string) $loc->id, (string) Str::uuid()], base_path());
             $processes[$n]->start();
         }
         foreach ($processes as $process) {
@@ -258,7 +274,7 @@ class InventoryComponentCompatibilityEnforcementTest extends TestCase
         DB::connection()->beginTransaction();
         $successes = count(array_filter($results, fn ($r) => $r['ok'] ?? false));
         $this->assertSame(1, $successes, json_encode($diagnostic, JSON_PRETTY_PRINT));
-        $this->assertSame(0.0, app(InventoryLedgerService::class)->balance($f['generic']->id, $f['loc']->id));
+        $this->assertSame(0.0, app(InventoryLedgerService::class)->balance($generic->id, $loc->id));
         $this->assertSame(1, ComponentLifecycle::where('machine_component_id', $mc->id)->where('status', 'active')->count(), 'exactly one active lifecycle must exist, never two or zero');
         $this->assertSame(1, ComponentReplacement::where('machine_component_id', $mc->id)->count());
     }
