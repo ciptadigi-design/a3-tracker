@@ -41,7 +41,12 @@ return Application::configure(basePath: dirname(__DIR__))
             Log::error('API request failed', ['request_id' => $id, 'exception' => $e]);
             $status = $e instanceof ValidationException ? 422 : ($e instanceof AuthenticationException ? 401 : ($e instanceof AuthorizationException ? 403 : ($e instanceof ModelNotFoundException ? 404 : ($e instanceof ConflictHttpException ? 409 : ($e instanceof QueryException && in_array($e->getCode(), ['23000', '23505'], true) ? 409 : ($e instanceof HttpExceptionInterface ? $e->getStatusCode() : ($e instanceof HttpResponseException ? $e->getResponse()->getStatusCode() : 500)))))));
             $errors = $status === 422 ? $e->errors() : (object) [];
-            $message = $status === 500 ? 'An unexpected error occurred.' : ($status === 403 ? 'Forbidden.' : ($status === 404 ? 'Not found.' : ($status === 401 ? 'Unauthenticated.' : ($status === 409 ? 'Conflict.' : $e->getMessage()))));
+            // A 409 from ConflictHttpException always carries a fixed, developer-authored
+            // literal (never raw user/DB content) describing exactly which domain guard
+            // fired - e.g. "insufficient stock" vs a duplicate/stale-request conflict - so
+            // it is safe to pass through verbatim. A 409 from QueryException (a unique-
+            // constraint race) carries raw SQL/column text and must stay generic.
+            $message = $status === 500 ? 'An unexpected error occurred.' : ($status === 403 ? 'Forbidden.' : ($status === 404 ? 'Not found.' : ($status === 401 ? 'Unauthenticated.' : ($status === 409 ? ($e instanceof ConflictHttpException ? $e->getMessage() : 'Conflict.') : $e->getMessage()))));
 
             return response()->json(['message' => $message, 'errors' => $errors, 'request_id' => $id], $status);
         });

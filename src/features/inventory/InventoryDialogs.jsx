@@ -4,7 +4,7 @@ import { BlockingDialog } from '../../components/ui/BlockingDialog.jsx'
 import { useAuth } from '../auth/useAuth.js'
 import { createDraftKey } from '../drafts/draftKeys.js'
 import { usePersistentDraft } from '../drafts/usePersistentDraft.js'
-import { isReferenceConflict } from '../../lib/api/apiClient.js'
+import { describeInventoryConflict, isReferenceConflict } from '../../lib/api/apiClient.js'
 import { inventoryItemLabel } from './inventoryItemPresentation.js'
 import { localDateTimeInZone } from '../machineCost/sellingPriceModel.js'
 
@@ -126,7 +126,7 @@ export function InventoryMovementDialog({ kind, account, branchId, timezone, ite
     if ((kind === 'opening' || (kind === 'adjustment' && value.direction === 'in')) && value.costState === 'known' && (value.unitCost === '' || Number(value.unitCost) < 0)) return setError('Enter a valid nonnegative unit cost, or mark the cost basis unknown.')
     setBusy(true)
     try { await onSubmit(value, requestId.current); draft.clearDraft(); onClose() }
-    catch (submitError) { setError(submitError.message || 'The inventory movement could not be posted.') }
+    catch (submitError) { setError(describeInventoryConflict(submitError) || 'The inventory movement could not be posted.') }
     finally { setBusy(false) }
   }
   return <DialogFrame icon={config.icon} kicker={config.kicker} title={config.title} description={config.description} titleId="inventory-movement-title" busy={busy} onClose={onClose}>

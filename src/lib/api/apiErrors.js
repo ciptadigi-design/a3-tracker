@@ -15,3 +15,24 @@ export function describeApiError(error) {
 export function isReferenceConflict(error) {
   return error?.status === 409 || error?.code === '23503' || error?.code === '23505'
 }
+
+// The inventory ledger (InventoryLedgerService) raises a 409 with one of a small, fixed
+// set of developer-authored reason strings - the Laravel exception renderer now passes
+// these through verbatim (see bootstrap/app.php) instead of collapsing every 409 to the
+// bare word "Conflict.". This maps each known reason to operator-facing guidance; an
+// unrecognized reason (a future guard, or a non-ledger 409) falls back to the raw message
+// so nothing is silently swallowed.
+const inventoryConflictReasons = {
+  'insufficient stock': 'Stock changed since this form was opened. Refresh the balance and try again.',
+  'incomplete FIFO cost basis': 'This item’s cost history is incomplete at this location, so the adjustment could not be completed. Contact support with the item and location.',
+  'active item and location in same account required': 'This item or location is no longer active. Refresh and choose an active one.',
+  'locations must differ': 'Choose two different locations for the transfer.',
+  'Request key belongs to another movement kind.': 'This action was already submitted as a different kind of movement. Refresh the movement history before retrying.',
+  'Incomplete transfer retry.': 'An earlier attempt at this transfer only partially completed. Refresh the movement history before retrying.',
+  'quantity must be positive': 'Enter a quantity greater than zero.',
+}
+
+export function describeInventoryConflict(error) {
+  if (error?.status !== 409) return describeApiError(error)
+  return inventoryConflictReasons[error?.message] ?? describeApiError(error)
+}

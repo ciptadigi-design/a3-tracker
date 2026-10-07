@@ -4,7 +4,7 @@
  * unless a caller explicitly opts into the Laravel backend.
  */
 import { dataBackend } from '../../services/dataBackend.js'
-export { describeApiError, isReferenceConflict } from './apiErrors.js'
+export { describeApiError, describeInventoryConflict, isReferenceConflict } from './apiErrors.js'
 
 export function resolveApiBaseUrl(value) {
   return (value || '/api/v1').replace(/\/$/, '')
