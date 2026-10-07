@@ -135,6 +135,8 @@ class M2_20FTenantOperationalTimeTest extends TestCase
         $machineComponent = MachineComponent::create(['account_id' => $account->id, 'machine_id' => $machine->id, 'component_id' => $component->id, 'profile_slot_id' => $slot->id, 'slot_code' => 'DRUM', 'source_type' => 'inherited', 'status' => 'configured', 'active_key' => 'active']);
         ComponentLifecycle::create(['machine_component_id' => $machineComponent->id, 'started_at' => '2026-09-01T00:00:00Z', 'status' => 'active', 'active_key' => 'active']);
         $item = InventoryItem::create(['account_id' => $account->id, 'component_id' => $component->id, 'sku' => 'DRUM-1', 'name' => 'Drum', 'unit' => 'pcs']);
+        // Phase 2: compatibility enforcement requires an explicit active row.
+        \App\Models\InventoryComponentCompatibility::create(['account_id' => $account->id, 'inventory_item_id' => $item->id, 'component_id' => $component->id, 'is_active' => true]);
         $location = InventoryLocation::create(['account_id' => $account->id, 'branch_id' => $branch->id, 'code' => 'WH', 'name' => 'Warehouse']);
 
         return [$account, $branch, $user, $machine, $component, $item, $location, $machineComponent];

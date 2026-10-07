@@ -47,6 +47,8 @@ class InventoryFifoReplacementParityTest extends TestCase
         $slot = ModelProfileSlot::create(['profile_id' => $profile->id, 'component_id' => $c->id, 'slot_code' => 'DRUM-C']);
         $m = Machine::create(['account_id' => $a->id, 'branch_id' => $b->id, 'machine_model_id' => $model->id, 'machine_code' => 'M', 'display_name' => 'M']);
         $mc = MachineComponent::create(['account_id' => $a->id, 'machine_id' => $m->id, 'component_id' => $c->id, 'profile_slot_id' => $slot->id, 'slot_code' => 'DRUM-C', 'source_type' => 'inherited', 'status' => 'configured', 'active_key' => 'active']);
+        // Phase 2: compatibility enforcement requires an explicit active row.
+        \App\Models\InventoryComponentCompatibility::create(['account_id' => $a->id, 'inventory_item_id' => $item->id, 'component_id' => $c->id, 'is_active' => true]);
 
         return compact('a', 'b', 'loc', 'item', 'generic', 'mc', 'm');
     }

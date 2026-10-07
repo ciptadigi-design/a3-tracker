@@ -24,9 +24,9 @@ class InventoryItem extends Model
         return new GlobalOrOwnedBelongsTo($this->newRelatedInstance(ComponentCatalog::class)->newQuery(), $this, 'component_id', 'component');
     }
 
-    // Phase 1 (additive foundation, feature-dark): the many-to-many compatibility
-    // path alongside the existing single `component_id` link above. Nothing yet
-    // reads this to change Replace behavior.
+    // The many-to-many compatibility path alongside the existing single
+    // `component_id` link above (kept untouched - see ReplaceMachineComponent,
+    // which now enforces compatibility through this relation instead).
     public function compatibilities()
     {
         return $this->hasMany(InventoryComponentCompatibility::class, 'inventory_item_id');

@@ -49,6 +49,8 @@ class M2_20BIsolationTest extends TestCase
             $component = $this->g[$key.'component'] = ComponentCatalog::create(['account_id' => $a->id, 'code' => strtoupper($key), 'name' => 'Private component '.$key, 'is_active' => true]);
             $this->g[$key.'profile'] = ModelProfile::create(['account_id' => $a->id, 'machine_model_id' => $model->id, 'name' => 'Profile', 'is_active' => true]);
             $this->g[$key.'item'] = InventoryItem::create(['account_id' => $a->id, 'sku' => strtoupper($key), 'name' => 'Item '.$key, 'unit' => 'pcs', 'is_active' => true]);
+            // Phase 2: compatibility enforcement requires an explicit active row.
+            \App\Models\InventoryComponentCompatibility::create(['account_id' => $a->id, 'inventory_item_id' => $this->g[$key.'item']->id, 'component_id' => $component->id, 'is_active' => true]);
             $this->g[$key.'supplier'] = InventorySupplier::create(['account_id' => $a->id, 'code' => strtoupper($key), 'name' => 'Private supplier '.$key, 'is_active' => true]);
             $this->g[$key.'person'] = OperationalPerson::create(['account_id' => $a->id, 'name' => 'Private person '.$key, 'is_active' => true]);
             foreach ($key === 'a' ? [1, 2] : [1] as $n) {

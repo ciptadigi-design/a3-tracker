@@ -60,6 +60,8 @@ class M2_15_InventoryComponentPicLinkageTest extends TestCase
         $slot = ModelProfileSlot::create(['profile_id' => $profile->id, 'component_id' => $tonerYCatalog->id, 'slot_code' => 'TONER_Y']);
         $machine = Machine::create(['account_id' => $a->id, 'branch_id' => $b->id, 'machine_model_id' => $model->id, 'machine_code' => 'M1', 'display_name' => 'M1']);
         $mc = MachineComponent::create(['account_id' => $a->id, 'machine_id' => $machine->id, 'component_id' => $tonerYCatalog->id, 'profile_slot_id' => $slot->id, 'slot_code' => 'TONER_Y', 'source_type' => 'inherited', 'status' => 'configured', 'active_key' => 'active']);
+        // Phase 2: compatibility enforcement requires an explicit active row.
+        \App\Models\InventoryComponentCompatibility::create(['account_id' => $a->id, 'inventory_item_id' => $tonerYItem->id, 'component_id' => $tonerYCatalog->id, 'is_active' => true]);
 
         $user = User::factory()->create(['status' => 'active']);
         $membership = AccountMembership::create(['account_id' => $a->id, 'user_id' => $user->id, 'role' => 'admin', 'status' => 'active']);

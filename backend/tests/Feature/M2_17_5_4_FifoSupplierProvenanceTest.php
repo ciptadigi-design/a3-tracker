@@ -60,6 +60,8 @@ class M2_17_5_4_FifoSupplierProvenanceTest extends TestCase
         $slot = ModelProfileSlot::create(['profile_id' => $profile->id, 'component_id' => $c->id, 'slot_code' => 'TONER_M', 'baseline_expected_clicks' => 14000]);
         $m = Machine::create(['account_id' => $a->id, 'branch_id' => $b->id, 'machine_model_id' => $model->id, 'machine_code' => 'M1', 'display_name' => 'M1']);
         $mc = MachineComponent::create(['account_id' => $a->id, 'machine_id' => $m->id, 'component_id' => $c->id, 'profile_slot_id' => $slot->id, 'slot_code' => 'TONER_M', 'source_type' => 'inherited', 'status' => 'configured', 'active_key' => 'active', 'baseline_expected_clicks' => 14000]);
+        // Phase 2: compatibility enforcement requires an explicit active row.
+        \App\Models\InventoryComponentCompatibility::create(['account_id' => $a->id, 'inventory_item_id' => $item->id, 'component_id' => $c->id, 'is_active' => true]);
 
         return compact('a', 'b', 'loc', 'item', 'supplierA', 'supplierB', 'mc');
     }

@@ -74,6 +74,8 @@ class M2_20GControlledPilotAcceptanceTest extends TestCase
         ComponentLifecycle::create(['machine_component_id' => $machineComponent->id, 'started_at' => '2026-09-01T00:00:00Z', 'status' => 'active', 'source' => 'manual', 'active_key' => 'active']);
         $this->g[$key.'Supplier'] = InventorySupplier::create(['account_id' => $account->id, 'code' => strtoupper($key).'_SUP', 'name' => $name.' private supplier']);
         $this->g[$key.'Item'] = InventoryItem::create(['account_id' => $account->id, 'component_id' => $component->id, 'sku' => strtoupper($key).'_ITEM', 'name' => $name.' private item', 'unit' => 'pcs']);
+        // Phase 2: compatibility enforcement requires an explicit active row.
+        \App\Models\InventoryComponentCompatibility::create(['account_id' => $account->id, 'inventory_item_id' => $this->g[$key.'Item']->id, 'component_id' => $component->id, 'is_active' => true]);
         $this->g[$key.'Location'] = InventoryLocation::create(['account_id' => $account->id, 'branch_id' => $branch1->id, 'code' => 'WH1', 'name' => $name.' warehouse']);
         $person = $this->g[$key.'Person'] = OperationalPerson::create(['account_id' => $account->id, 'code' => strtoupper($key).'_PIC', 'name' => $name.' operator', 'is_active' => true]);
         OperationalPersonBranch::create(['account_id' => $account->id, 'person_id' => $person->id, 'branch_id' => $branch1->id, 'can_record_counter' => true, 'is_active' => true]);

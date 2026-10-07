@@ -5,7 +5,7 @@ import { useAuth } from '../auth/useAuth.js'
 import { createDraftKey } from '../drafts/draftKeys.js'
 import { usePersistentDraft } from '../drafts/usePersistentDraft.js'
 import { learningDefault, removalConditions, replacementReasons } from './componentReplacement.js'
-import { resolveReplacementInventorySource } from './lifecycleActions.js'
+import { eligibleCompatibleInventoryItems, resolveReplacementInventorySource } from './lifecycleActions.js'
 import { formatCounterInput, normalizeCounterInput, resolveReplacementPic } from './replacementForm.js'
 import { inventoryItemLabel } from '../inventory/inventoryItemPresentation.js'
 import { counterOperatorsForBranch } from '../operationalPeople/eligibility.js'
@@ -36,7 +36,7 @@ const validDraft = (value) => value
   && (value.inventoryQuantity == null || typeof value.inventoryQuantity === 'string')
   && (value.externalInventoryReason == null || typeof value.externalInventoryReason === 'string')
 
-export function ReplaceComponentDialog({ account, branch, machine, lifecycle, operationalPeople, inventoryItems, inventoryLocations, inventoryBalances, onClose, onReplace }) {
+export function ReplaceComponentDialog({ account, branch, machine, lifecycle, operationalPeople, inventoryItems, inventoryLocations, inventoryBalances, compatibilities = [], onClose, onReplace }) {
   const { user } = useAuth()
   const timezone = machine.timezone || branch?.timezone || account.default_timezone || 'UTC'
   const initialValue = useMemo(() => ({
@@ -61,7 +61,7 @@ export function ReplaceComponentDialog({ account, branch, machine, lifecycle, op
   const activePeople = counterOperatorsForBranch(operationalPeople, machine.branch_id)
   const performerName = pic.mode === 'manual' ? value.manualPic.trim() : pic.person?.name ?? ''
   const inventorySource = resolveReplacementInventorySource(value.inventorySource)
-  const eligibleItems = inventoryItems.filter((item) => item.component_id === lifecycle.component_id)
+  const eligibleItems = eligibleCompatibleInventoryItems(inventoryItems, compatibilities, lifecycle.component_id)
   const selectedInventoryItem = eligibleItems.find((item) => item.id === (value.inventoryItemId ?? '')) ?? null
   const selectedInventoryLocation = inventoryLocations.find((location) => location.id === (value.inventoryLocationId ?? '')) ?? null
   const availableQuantity = selectedInventoryItem && selectedInventoryLocation
@@ -138,7 +138,7 @@ export function ReplaceComponentDialog({ account, branch, machine, lifecycle, op
           </div>
           {inventorySource === 'inventory' && <>
             <div className="form-grid replacement-inventory-fields">
-              <label className="form-field"><span>Inventory Item *</span><select value={value.inventoryItemId ?? ''} onChange={(event) => updateDraft((current) => ({ ...current, inventoryItemId: event.target.value, inventoryLocationId: '' }))}><option value="">Select matching item</option>{eligibleItems.map((item) => <option key={item.id} value={item.id}>{inventoryItemLabel(item)}</option>)}</select><small>{eligibleItems.length ? `Only items explicitly linked to ${lifecycle.component_name}.` : `No active Inventory Item is linked to ${lifecycle.component_name}.`}</small></label>
+              <label className="form-field"><span>Inventory Item *</span><select value={value.inventoryItemId ?? ''} onChange={(event) => updateDraft((current) => ({ ...current, inventoryItemId: event.target.value, inventoryLocationId: '' }))}><option value="">Select matching item</option>{eligibleItems.map((item) => <option key={item.id} value={item.id}>{inventoryItemLabel(item)}</option>)}</select><small>{eligibleItems.length ? `Compatible with ${lifecycle.component_name}.` : 'No compatible Inventory Item is configured for this component.'}</small></label>
               <label className="form-field"><span>Stock Location *</span><select value={value.inventoryLocationId ?? ''} onChange={(event) => change('inventoryLocationId', event.target.value)}><option value="">Select physical location</option>{inventoryLocations.map((location) => { const stock = selectedInventoryItem ? Number(inventoryBalances.find((balance) => balance.inventory_item_id === selectedInventoryItem.id && balance.location_id === location.id)?.quantity ?? 0) : 0; return <option key={location.id} value={location.id}>{location.name} · {number(stock)} {selectedInventoryItem?.unit ?? ''}</option> })}</select></label>
               <label className="form-field replacement-quantity-field"><span>Quantity Used *</span><input type="number" min="0.0001" step="0.0001" value={value.inventoryQuantity ?? '1'} onChange={(event) => change('inventoryQuantity', event.target.value)} /><small>{selectedInventoryItem?.unit ?? 'Select an item first'}</small></label>
             </div>

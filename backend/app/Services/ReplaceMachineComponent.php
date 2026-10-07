@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\ComponentLifecycle;
 use App\Models\ComponentReplacement;
 use App\Models\CounterReading;
+use App\Models\InventoryComponentCompatibility;
 use App\Models\InventoryItem;
 use App\Models\InventoryLocation;
 use App\Models\MachineComponent;
@@ -60,8 +61,21 @@ class ReplaceMachineComponent
                 if ($item->account_id !== $mc->account_id || $loc->account_id !== $mc->account_id) {
                     throw new ConflictHttpException('inventory scope does not match component account');
                 }
-                if ($item->component_id !== null && $item->component_id !== $mc->component_id) {
-                    throw new ConflictHttpException('inventory item component mismatch');
+                // Phase 2: inventory-backed replacement compatibility is now decided
+                // exclusively by an explicit, active inventory_component_compatibilities
+                // row - never by inventory_items.component_id directly, and never by a
+                // NULL component_id implicit wildcard (Phase 1's discovery: that wildcard
+                // had zero historical usage in Production, confirmed again immediately
+                // before this phase deployed). This also generalizes the old single-FK
+                // equality check: a physical part can now be compatible with several
+                // distinct component_catalogs rows (e.g. one generic item valid for all
+                // four CMYK component positions) with no per-color code here at all.
+                $compatible = InventoryComponentCompatibility::where('inventory_item_id', $item->id)
+                    ->where('component_id', $mc->component_id)
+                    ->where('is_active', true)
+                    ->exists();
+                if (! $compatible) {
+                    throw new ConflictHttpException('[NO_COMPATIBLE_INVENTORY_MAPPING] Selected inventory item is not configured as compatible with this component.');
                 }$movement = app(InventoryLedgerService::class)->outbound($item, $loc, (float) ($d['quantity'] ?? 1), 'replacement_consumption', $d['client_request_id'], null, $d['notes'] ?? null, null, $d['performed_by_person_id'] ?? null, $d['performed_by_name'] ?? null, $d['entered_by'] ?? null, $when);
                 $cost = FifoAllocationCost::forMovement($movement->id);
             } else {

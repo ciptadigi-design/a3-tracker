@@ -9,3 +9,12 @@ export function lifecycleActionFor({ lifecycleStatus, canInitialize, canReplace 
 export function resolveReplacementInventorySource(value) {
   return value === 'external_untracked' ? 'external_untracked' : 'inventory'
 }
+
+// Compatibility is explicit domain data (inventory_component_compatibilities),
+// never display-name matching and never a component_id equality fallback - a
+// single physical part can be compatible with several distinct component
+// definitions at once (e.g. one generic item valid for all four CMYK
+// positions).
+export function eligibleCompatibleInventoryItems(inventoryItems, compatibilities, componentId) {
+  return inventoryItems.filter((item) => compatibilities.some((c) => c.inventory_item_id === item.id && c.component_id === componentId))
+}

@@ -2,7 +2,7 @@ import { apiClient, unwrapCollection, unwrapData } from '../../lib/api/apiClient
 import { optional, optionalEmail } from './supplierFields.js'
 
 export async function loadInventory({ accountId, branchId }) {
-  if (!accountId || !branchId) return { branchId, items: [], locations: [], suppliers: [], purchases: [], movements: [], balances: [], totals: [], components: [], people: [], purchaseLines: [], receipts: [], lastPrices: [], costHistory: [], costPositions: [] }
+  if (!accountId || !branchId) return { branchId, items: [], locations: [], suppliers: [], purchases: [], movements: [], balances: [], totals: [], components: [], compatibilities: [], people: [], purchaseLines: [], receipts: [], lastPrices: [], costHistory: [], costPositions: [] }
   return unwrapData(await apiClient.get(`/accounts/${accountId}/branches/${branchId}/inventory`))
 }
 

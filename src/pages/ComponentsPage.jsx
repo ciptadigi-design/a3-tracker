@@ -114,7 +114,7 @@ export function ComponentsPage() {
   const canInitialize = can('components.lifecycle.initialize')
   const canReplace = can('components.replace.inventory') && can('components.replace.external')
   const [data, setData] = useState({ manufacturers: [], models: [], components: [], profiles: [], intelligence: [], intelligenceSamples: [] })
-  const [operational, setOperational] = useState({ branchId: null, machines: [], lifecycles: [], exclusions: [], replacementHistory: [], operationalPeople: [], inventoryItems: [], inventoryLocations: [], inventoryBalances: [] })
+  const [operational, setOperational] = useState({ branchId: null, machines: [], lifecycles: [], exclusions: [], replacementHistory: [], operationalPeople: [], inventoryItems: [], inventoryLocations: [], inventoryBalances: [], compatibilities: [] })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [notice, setNotice] = useState(null)
@@ -158,7 +158,7 @@ export function ComponentsPage() {
   useEffect(() => {
     if (!view.modelId && data.models[0]) setView((current) => ({ ...current, modelId: data.models[0].id }))
   }, [data.models, setView, view.modelId])
-  const scopedOperational = operational.branchId === branch?.id ? operational : { ...operational, machines: [], lifecycles: [], exclusions: [], replacementHistory: [], operationalPeople: [], inventoryLocations: [], inventoryBalances: [] }
+  const scopedOperational = operational.branchId === branch?.id ? operational : { ...operational, machines: [], lifecycles: [], exclusions: [], replacementHistory: [], operationalPeople: [], inventoryLocations: [], inventoryBalances: [], compatibilities: [] }
   const selectedMachine = scopedOperational.machines.find((machine) => machine.id === view.machineId) ?? null
   useEffect(() => {
     const machineIdIsValid = scopedOperational.machines.some((machine) => machine.id === view.machineId)
@@ -380,7 +380,7 @@ export function ComponentsPage() {
     {canManage && selectedModel && (workflow.type === 'profile-create' || (workflow.type === 'profile-edit' && editingProfile) || (workflow.type === 'profile-assign' && assigningComponent)) && <ProfileDialog account={account} model={profileModel} models={data.models.filter(canManageCatalog)} profile={editingProfile} components={data.components} initialComponent={workflow.type === 'profile-assign' ? assigningComponent : null} draftEntityId={workflow.type === 'profile-assign' ? `assign-${assigningComponent.id}` : undefined} onClose={close} onSave={savedProfile} />}
     {canManage && workflow.type === 'machine-component-add' && selectedMachine && <MachineComponentDialog machine={selectedMachine} components={data.components} profiles={data.profiles} existingAssignments={scopedOperational.lifecycles.filter((row) => row.machine_id === selectedMachine.id)} exclusions={scopedOperational.exclusions.filter((row) => row.machine_id === selectedMachine.id)} initialValue={machineDraft} onCreateNewComponent={(draft) => { setMachineDraft(draft); close(); open('component-create') }} onClose={() => { setMachineDraft(null); close() }} onSave={async (values) => { await savedMachineComponent(values); setMachineDraft(null) }} />}
     {canInitialize && workflow.type === 'lifecycle-initialize' && initializingLifecycle && lifecycleMachine && <InitializeLifecycleDialog account={account} machine={lifecycleMachine} lifecycle={initializingLifecycle} onClose={close} onInitialize={initializeLifecycle} />}
-    {canReplace && workflow.type === 'lifecycle-replace' && initializingLifecycle?.lifecycle_status === 'active' && lifecycleMachine && <ReplaceComponentDialog account={account} branch={branch} machine={lifecycleMachine} lifecycle={initializingLifecycle} operationalPeople={scopedOperational.operationalPeople} inventoryItems={scopedOperational.inventoryItems} inventoryLocations={scopedOperational.inventoryLocations} inventoryBalances={scopedOperational.inventoryBalances} onClose={close} onReplace={replaceLifecycle} />}
+    {canReplace && workflow.type === 'lifecycle-replace' && initializingLifecycle?.lifecycle_status === 'active' && lifecycleMachine && <ReplaceComponentDialog account={account} branch={branch} machine={lifecycleMachine} lifecycle={initializingLifecycle} operationalPeople={scopedOperational.operationalPeople} inventoryItems={scopedOperational.inventoryItems} inventoryLocations={scopedOperational.inventoryLocations} inventoryBalances={scopedOperational.inventoryBalances} compatibilities={scopedOperational.compatibilities} onClose={close} onReplace={replaceLifecycle} />}
     {workflow.type === 'intelligence-view' && activeIntelligence && <ComponentIntelligenceDialog intelligence={activeIntelligence} samples={data.intelligenceSamples} canManage={canManage} onClose={close} onAdopt={adoptRecommendation} />}
     {confirm && <ConfirmDialog
       title={confirm.kind === 'component' ? 'Archive Component Catalog Entry' : confirm.kind === 'profile' ? 'Archive Model Profile' : 'Remove from Machine'}

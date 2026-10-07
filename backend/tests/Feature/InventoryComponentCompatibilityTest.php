@@ -27,19 +27,14 @@ use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 use Tests\TestCase;
 
 /**
- * Generic part <-> component compatibility, Phase 1 (additive foundation only).
- *
- * Business motivation: one physical inventory item (e.g. "Charging Corona")
- * may be installable into several distinct machine component positions
- * (Charging Corona K/C/M/Y) - color/position belongs to the component, not
- * necessarily to the physical part. Phase 1 adds only the data foundation
- * (inventory_component_compatibilities table/model/service + a read-only
- * workspace payload key). ReplaceMachineComponent's enforcement and
- * ReplaceComponentDialog's frontend filter are deliberately UNCHANGED and
- * still rely solely on inventory_items.component_id - this file proves that
- * explicitly (see the "existing replacement behavior" tests below), plus the
- * specific null-component_id wildcard behavior discovery flagged as a
- * separate, deliberately untouched risk for a later phase.
+ * Generic part <-> component compatibility: the Phase 1 data-foundation
+ * tests (table/model/service/read API scoping). Phase 1 shipped this
+ * feature-dark - ReplaceMachineComponent still enforced the old single
+ * component_id equality/null-wildcard rule at the time these tests were
+ * written. Phase 2 (see InventoryComponentCompatibilityEnforcementTest) has
+ * since switched enforcement to this table exclusively, so the three
+ * `test_*` methods at the bottom of this file were updated in place to
+ * assert the new behavior rather than left stale.
  */
 class InventoryComponentCompatibilityTest extends TestCase
 {
@@ -183,62 +178,58 @@ class InventoryComponentCompatibilityTest extends TestCase
         return compact('loc', 'mc');
     }
 
-    // 8a. Existing replacement behavior is UNCHANGED: an item whose single
-    // component_id already matches the machine component still works exactly
-    // as before, with the new (still-empty-for-this-pair) compatibility table
-    // having no effect at all.
-    public function test_existing_replacement_behavior_unchanged_for_matching_component_id(): void
+    // 8a. Phase 2 superseded this: an item whose single component_id matches
+    // the machine component no longer passes on that fact alone - it now
+    // requires the explicit compatibility row an item like this would get
+    // from the Phase 2 generic backfill. See
+    // InventoryComponentCompatibilityEnforcementTest for the full Phase 2
+    // enforcement suite; this test documents the new requirement in place.
+    public function test_matching_component_id_alone_no_longer_suffices_without_an_explicit_compatibility_row(): void
     {
         $f = $this->fixture();
         $matched = InventoryItem::create(['account_id' => $f['account']->id, 'component_id' => $f['k']->id, 'sku' => 'CORONA-K', 'name' => 'Charging Corona K']);
         $r = $this->replaceFixture($f);
         app(\App\Services\InventoryLedgerService::class)->inbound($matched, $r['loc'], 5, 1000, 'opening_balance', (string) Str::uuid(), 'opening');
 
-        $replacement = app(ReplaceMachineComponent::class)->execute($r['mc'], [
+        $this->expectException(ConflictHttpException::class);
+        $this->expectExceptionMessage('[NO_COMPATIBLE_INVENTORY_MAPPING]');
+        app(ReplaceMachineComponent::class)->execute($r['mc'], [
             'inventory_source' => 'inventory', 'inventory_item_id' => $matched->id, 'inventory_location_id' => $r['loc']->id,
             'quantity' => 1, 'client_request_id' => (string) Str::uuid(),
         ]);
-
-        $this->assertSame((string) $matched->id, $replacement->inventory_item_id);
-        $this->assertNotNull($replacement->inventory_movement_id);
     }
 
-    // 8b. Existing replacement behavior is UNCHANGED: a mismatched non-null
-    // component_id is still rejected exactly as before, regardless of the
-    // new compatibility table's contents (left empty here on purpose).
-    public function test_existing_replacement_behavior_unchanged_for_mismatched_component_id(): void
+    // 8b. A mismatched item is still rejected under Phase 2 enforcement -
+    // now because no compatibility row exists for this pair at all, not
+    // because of a component_id inequality check.
+    public function test_mismatched_item_without_a_compatibility_row_is_rejected(): void
     {
         $f = $this->fixture();
         $mismatched = InventoryItem::create(['account_id' => $f['account']->id, 'component_id' => $f['c']->id, 'sku' => 'CORONA-C', 'name' => 'Charging Corona C']);
         $r = $this->replaceFixture($f);
 
         $this->expectException(ConflictHttpException::class);
-        $this->expectExceptionMessage('inventory item component mismatch');
+        $this->expectExceptionMessage('[NO_COMPATIBLE_INVENTORY_MAPPING]');
         app(ReplaceMachineComponent::class)->execute($r['mc'], [
             'inventory_source' => 'inventory', 'inventory_item_id' => $mismatched->id, 'inventory_location_id' => $r['loc']->id,
             'quantity' => 1, 'client_request_id' => (string) Str::uuid(),
         ]);
     }
 
-    // 8c. NULL_COMPONENT_CURRENT_BEHAVIOR, documented and left exactly as
-    // discovered/unchanged: ReplaceMachineComponent's check is
-    // `item.component_id !== null && item.component_id !== mc.component_id`,
-    // so a NULL component_id is an implicit wildcard - it is accepted for ANY
-    // machine component, with zero regard for the new compatibility table
-    // (which has no rows for this pair here). Phase 1 explicitly does not
-    // close this; a read-only Production impact check is required before any
-    // later phase changes it.
-    public function test_null_component_id_wildcard_is_unchanged_and_undisturbed_by_the_new_table(): void
+    // 8c. NULL_COMPONENT wildcard CLOSED (Phase 2): a NULL component_id item
+    // with no explicit compatibility row is now rejected exactly like any
+    // other unmapped item - Phase 1's "zero historical usage" finding is
+    // exactly what made closing this safe.
+    public function test_null_component_id_wildcard_is_closed_without_an_explicit_compatibility_row(): void
     {
         $f = $this->fixture();
         $r = $this->replaceFixture($f);
 
-        $replacement = app(ReplaceMachineComponent::class)->execute($r['mc'], [
+        $this->expectException(ConflictHttpException::class);
+        $this->expectExceptionMessage('[NO_COMPATIBLE_INVENTORY_MAPPING]');
+        app(ReplaceMachineComponent::class)->execute($r['mc'], [
             'inventory_source' => 'inventory', 'inventory_item_id' => $f['generic']->id, 'inventory_location_id' => $r['loc']->id,
             'quantity' => 1, 'client_request_id' => (string) Str::uuid(),
         ]);
-
-        $this->assertSame((string) $f['generic']->id, $replacement->inventory_item_id);
-        $this->assertSame(0, InventoryComponentCompatibility::count(), 'the wildcard path never touches/needs the new table');
     }
 }
