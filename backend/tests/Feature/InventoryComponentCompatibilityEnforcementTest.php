@@ -224,12 +224,20 @@ class InventoryComponentCompatibilityEnforcementTest extends TestCase
         $this->assertSame(1, InventoryMovement::where('movement_type', 'replacement_consumption')->count());
     }
 
-    // 13. Concurrent replacement protection remains - proven in
-    // InventoryMysqlConcurrencyTest::test_two_competing_component_replacements_cannot_double_spend_one_unit
-    // (merged there, not a separate test file, so its real permanently-
-    // committed subprocess writes land in that file's already-proven-safe
-    // position in the whole suite's run order instead of leaking into
-    // unrelated tests' unscoped global counts - see that file's docblock).
+    // 13. Concurrent replacement protection remains: Phase 2 did not touch
+    // ReplaceMachineComponent's transaction boundary or its
+    // `MachineComponent::whereKey($mc->id)->lockForUpdate()->firstOrFail()`
+    // row lock at all - only the one compatibility condition evaluated
+    // *inside* that already-locked section changed (the test above proves
+    // that condition's own atomicity). The underlying MySQL/InnoDB row-lock
+    // guarantee this depends on is already covered by the real OS-process
+    // acceptance gate in InventoryMysqlConcurrencyTest. A second such test
+    // here was tried and reverted: its permanently-committed subprocess
+    // writes (component_lifecycles/machine_components/component_replacements,
+    // none of which the existing ledger-only gate touches) leaked into other
+    // tests' unscoped global-count assertions across the suite (observed
+    // directly in CI) - a cross-file ordering hazard, not a genuine gap in
+    // the locking behavior this requirement cares about.
     // 14. external_untracked replacement remains valid without any inventory
     // mapping at all - compatibility enforcement applies to inventory-backed
     // replacement only.
