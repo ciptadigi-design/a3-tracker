@@ -85,8 +85,8 @@ class InventoryComponentCompatibilityBackfillTest extends TestCase
 
         $plan = app(InventoryComponentCompatibilityBackfillService::class)->run(true);
 
-        $this->assertCount(4, $plan['charging_corona']['created']);
-        $this->assertCount(0, $plan['charging_corona']['skipped']);
+        $this->assertCount(4, $plan['generic_color_families']['created']);
+        $this->assertCount(0, $plan['generic_color_families']['skipped']);
         foreach ([$f['k'], $f['c'], $f['m'], $f['y']] as $component) {
             $this->assertSame(1, InventoryComponentCompatibility::where('inventory_item_id', $f['generic']->id)->where('component_id', $component->id)->where('is_active', true)->count(), "missing mapping for {$component->name}");
         }
@@ -100,7 +100,7 @@ class InventoryComponentCompatibilityBackfillTest extends TestCase
         app(InventoryComponentCompatibilityBackfillService::class)->run(true);
         $plan = app(InventoryComponentCompatibilityBackfillService::class)->run(true);
 
-        $this->assertCount(0, $plan['charging_corona']['created'], 'a second run must create nothing new');
+        $this->assertCount(0, $plan['generic_color_families']['created'], 'a second run must create nothing new');
         // 4 Charging Corona (generic -> CMYK) rows + 4 generic-backfill rows for
         // the color-specific items themselves (each already has a non-null
         // component_id, so step A links each of them too) = 8.
@@ -115,9 +115,9 @@ class InventoryComponentCompatibilityBackfillTest extends TestCase
 
         $plan = app(InventoryComponentCompatibilityBackfillService::class)->run(true);
 
-        $this->assertCount(0, $plan['charging_corona']['created']);
-        $this->assertCount(1, $plan['charging_corona']['skipped']);
-        $this->assertStringContainsString('ambiguous', $plan['charging_corona']['skipped'][0]['reason']);
+        $this->assertCount(0, $plan['generic_color_families']['created']);
+        $this->assertCount(2, $plan['generic_color_families']['skipped'], 'both items sharing the ambiguous name are reported, not just one');
+        $this->assertStringContainsString('ambiguous', $plan['generic_color_families']['skipped'][0]['reason']);
         $this->assertSame(0, InventoryComponentCompatibility::where('inventory_item_id', $f['generic']->id)->count());
     }
 
@@ -130,9 +130,9 @@ class InventoryComponentCompatibilityBackfillTest extends TestCase
 
         $plan = app(InventoryComponentCompatibilityBackfillService::class)->run(true);
 
-        $this->assertCount(0, $plan['charging_corona']['created'], 'no partial CMYK mapping is created when any one color is ambiguous');
-        $this->assertCount(1, $plan['charging_corona']['skipped']);
-        $this->assertStringContainsString('ambiguous', $plan['charging_corona']['skipped'][0]['reason']);
+        $this->assertCount(0, $plan['generic_color_families']['created'], 'no partial CMYK mapping is created when any one color is ambiguous');
+        $this->assertCount(1, $plan['generic_color_families']['skipped']);
+        $this->assertStringContainsString('ambiguous', $plan['generic_color_families']['skipped'][0]['reason']);
         $this->assertSame(0, InventoryComponentCompatibility::where('inventory_item_id', $f['generic']->id)->count());
     }
 
@@ -145,7 +145,7 @@ class InventoryComponentCompatibilityBackfillTest extends TestCase
 
         $plan = app(InventoryComponentCompatibilityBackfillService::class)->run(true);
 
-        $this->assertCount(8, $plan['charging_corona']['created']);
+        $this->assertCount(8, $plan['generic_color_families']['created']);
         $this->assertSame(4, InventoryComponentCompatibility::where('inventory_item_id', $f1['generic']->id)->count());
         $this->assertSame(4, InventoryComponentCompatibility::where('inventory_item_id', $f2['generic']->id)->count());
         foreach (InventoryComponentCompatibility::where('inventory_item_id', $f1['generic']->id)->get() as $row) {
@@ -164,5 +164,64 @@ class InventoryComponentCompatibilityBackfillTest extends TestCase
 
         $this->assertSame(2.0, app(\App\Services\InventoryLedgerService::class)->balance($f['generic']->id, $loc->id));
         $this->assertSame(1, \App\Models\InventoryMovement::count(), 'the backfill must create no inventory movement');
+    }
+
+    // The resolver is family-name-agnostic: an entirely different generic
+    // family ("Drum Unit", not "Charging Corona") resolves the exact same
+    // way, by name, with zero family-specific code anywhere in the service.
+    public function test_a_different_generic_family_resolves_by_name_with_no_hardcoded_family_name(): void
+    {
+        $a = $this->account();
+        $k = ComponentCatalog::create(['account_id' => $a->id, 'code' => 'drum_k', 'name' => 'DRUM_K', 'is_active' => true]);
+        $c = ComponentCatalog::create(['account_id' => $a->id, 'code' => 'drum_c', 'name' => 'DRUM_C', 'is_active' => true]);
+        $m = ComponentCatalog::create(['account_id' => $a->id, 'code' => 'drum_m', 'name' => 'DRUM_M', 'is_active' => true]);
+        $y = ComponentCatalog::create(['account_id' => $a->id, 'code' => 'drum_y', 'name' => 'DRUM_Y', 'is_active' => true]);
+        $generic = InventoryItem::create(['account_id' => $a->id, 'component_id' => null, 'sku' => 'DRUM-GEN', 'name' => 'Drum Unit', 'is_active' => true]);
+        InventoryItem::create(['account_id' => $a->id, 'component_id' => $k->id, 'sku' => 'DRUM-K', 'name' => 'Drum Unit Black', 'is_active' => true]);
+        InventoryItem::create(['account_id' => $a->id, 'component_id' => $c->id, 'sku' => 'DRUM-C', 'name' => 'Drum Unit Cyan', 'is_active' => true]);
+        InventoryItem::create(['account_id' => $a->id, 'component_id' => $m->id, 'sku' => 'DRUM-M', 'name' => 'Drum Unit Magenta', 'is_active' => true]);
+        InventoryItem::create(['account_id' => $a->id, 'component_id' => $y->id, 'sku' => 'DRUM-Y', 'name' => 'Drum Unit Yellow', 'is_active' => true]);
+
+        $plan = app(InventoryComponentCompatibilityBackfillService::class)->run(true);
+
+        $this->assertCount(4, $plan['generic_color_families']['created']);
+        $this->assertCount(0, $plan['generic_color_families']['skipped']);
+        foreach ([$k, $c, $m, $y] as $component) {
+            $this->assertSame(1, InventoryComponentCompatibility::where('inventory_item_id', $generic->id)->where('component_id', $component->id)->where('is_active', true)->count(), "missing mapping for {$component->name}");
+        }
+    }
+
+    // A generic item with no four-color sibling set at all (a true
+    // miscellaneous bucket, e.g. "Other Part") is skipped, never guessed.
+    public function test_a_generic_item_with_no_color_siblings_at_all_is_skipped(): void
+    {
+        $a = $this->account();
+        $misc = InventoryItem::create(['account_id' => $a->id, 'component_id' => null, 'sku' => 'MISC-01', 'name' => 'Other Part', 'is_active' => true]);
+
+        $plan = app(InventoryComponentCompatibilityBackfillService::class)->run(true);
+
+        $this->assertCount(0, $plan['generic_color_families']['created']);
+        $this->assertCount(1, $plan['generic_color_families']['skipped']);
+        $this->assertSame((string) $misc->id, $plan['generic_color_families']['skipped'][0]['inventory_item_id']);
+        $this->assertStringContainsString('ambiguous', $plan['generic_color_families']['skipped'][0]['reason']);
+        $this->assertSame(0, InventoryComponentCompatibility::where('inventory_item_id', $misc->id)->count());
+    }
+
+    // Two unrelated generic families in the same account (e.g. Charging
+    // Corona and Drum Unit) each resolve correctly without cross-talk.
+    public function test_two_unrelated_generic_families_in_the_same_account_do_not_cross_contaminate(): void
+    {
+        $a = $this->account();
+        $corona = $this->chargingCoronaFixture($a);
+        $k = ComponentCatalog::create(['account_id' => $a->id, 'code' => 'drum_k', 'name' => 'DRUM_K', 'is_active' => true]);
+        $drumGeneric = InventoryItem::create(['account_id' => $a->id, 'component_id' => null, 'sku' => 'DRUM-GEN', 'name' => 'Drum Unit', 'is_active' => true]);
+        InventoryItem::create(['account_id' => $a->id, 'component_id' => $k->id, 'sku' => 'DRUM-K', 'name' => 'Drum Unit Black', 'is_active' => true]);
+        // Only one of Drum Unit's four colors exists -> Drum Unit must be skipped, Charging Corona must still fully resolve.
+
+        $plan = app(InventoryComponentCompatibilityBackfillService::class)->run(true);
+
+        $this->assertSame(4, InventoryComponentCompatibility::where('inventory_item_id', $corona['generic']->id)->count());
+        $this->assertSame(0, InventoryComponentCompatibility::where('inventory_item_id', $drumGeneric->id)->count());
+        $this->assertTrue(collect($plan['generic_color_families']['skipped'])->contains(fn ($row) => $row['inventory_item_id'] === (string) $drumGeneric->id));
     }
 }

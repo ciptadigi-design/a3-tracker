@@ -8,8 +8,8 @@ use App\Models\InventoryItem;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Phase 2 transitional data preparation, run once (idempotent/re-runnable) as
- * part of this deploy, before backend enforcement starts requiring an active
+ * Transitional data preparation, run once (idempotent/re-runnable) as part of
+ * a deploy, before backend enforcement starts requiring an active
  * inventory_component_compatibilities row. Two independent steps:
  *
  * 1. Generic backfill: every active inventory item that already has a
@@ -17,14 +17,19 @@ use Illuminate\Support\Facades\DB;
  *    exact pair - this is a straight transcription of the existing 1:1
  *    relationship into the new many-to-many table, never a guess.
  *
- * 2. Charging Corona mapping: resolves the real generic item and its four
- *    real CMYK component_catalog rows BY NAME, per account, from already
- *    existing, unambiguous data - never a hardcoded/guessed UUID. The four
- *    color-specific inventory items (e.g. "Charging Corona Black") already
- *    carry the authoritative component_id for each color; reading theirs is
- *    the one reliable way to resolve the right catalog row without parsing
- *    component_catalogs.name/code conventions that were never guaranteed.
- *    Fails closed (skips, never guesses) per account on any ambiguity.
+ * 2. Generic color-family mapping: resolves a generic physical item (any
+ *    active item with component_id NULL - "Charging Corona", "Drum Unit",
+ *    "Developing Unit", whatever real data contains) to the component
+ *    catalog rows its four real CMYK siblings already carry, BY NAME, per
+ *    account - never a hardcoded family name, never a guessed/hardcoded
+ *    catalog id. A sibling is an active, non-null-component_id item in the
+ *    same account named exactly "<generic name> <color word>"; its
+ *    component_id is the authoritative catalog row for that color (reading
+ *    it is the one reliable way to resolve the right catalog row without
+ *    parsing component_catalogs.name/code conventions that were never
+ *    guaranteed). Fails closed (skips, never guesses) per candidate on any
+ *    ambiguity - including a generic item with no four-color sibling set at
+ *    all (e.g. a true miscellaneous "Other Part" bucket).
  */
 class InventoryComponentCompatibilityBackfillService
 {
@@ -32,7 +37,7 @@ class InventoryComponentCompatibilityBackfillService
 
     public function run(bool $apply): array
     {
-        $plan = ['generic_backfill' => [], 'charging_corona' => []];
+        $plan = ['generic_backfill' => [], 'generic_color_families' => []];
 
         DB::beginTransaction();
         try {
@@ -40,8 +45,8 @@ class InventoryComponentCompatibilityBackfillService
             foreach ($plan['generic_backfill'] as $row) {
                 InventoryComponentCompatibility::create($row);
             }
-            $plan['charging_corona'] = $this->planChargingCoronaMapping();
-            foreach ($plan['charging_corona']['created'] as $row) {
+            $plan['generic_color_families'] = $this->planGenericColorFamilyMappings();
+            foreach ($plan['generic_color_families']['created'] as $row) {
                 InventoryComponentCompatibility::create($row);
             }
 
@@ -75,51 +80,58 @@ class InventoryComponentCompatibilityBackfillService
     }
 
     /**
-     * @return array{created: array<int,array{account_id:string,inventory_item_id:string,component_id:string,is_active:bool}>, skipped: array<int,array{account_id:string,reason:string}>}
+     * Data-driven, family-name-agnostic: every active item with a NULL
+     * component_id is a candidate generic physical part. No family name
+     * (e.g. "Charging Corona", "Drum Unit") is ever hardcoded here - the
+     * candidate's own name, read from existing data, is what's used to look
+     * up its four color siblings.
+     *
+     * @return array{created: array<int,array{account_id:string,inventory_item_id:string,component_id:string,is_active:bool}>, skipped: array<int,array{account_id:string,inventory_item_id:string,name:string,reason:string}>}
      */
-    private function planChargingCoronaMapping(): array
+    private function planGenericColorFamilyMappings(): array
     {
         $created = [];
         $skipped = [];
-        $accountIds = InventoryItem::whereRaw('LOWER(TRIM(name)) = ?', ['charging corona'])->whereNull('component_id')->where('is_active', true)->pluck('account_id')->unique();
+        $candidates = InventoryItem::where('is_active', true)->whereNull('component_id')->get();
+        $byAccountAndName = $candidates->groupBy(fn ($item) => $item->account_id.'::'.strtolower(trim($item->name)));
 
-        foreach ($accountIds as $accountId) {
-            $generics = InventoryItem::where('account_id', $accountId)->where('is_active', true)->where('component_id', null)
-                ->whereRaw('LOWER(TRIM(name)) = ?', ['charging corona'])->get();
-            if ($generics->count() !== 1) {
-                $skipped[] = ['account_id' => (string) $accountId, 'reason' => "generic Charging Corona item is ambiguous or not found ({$generics->count()} candidates)"];
+        foreach ($byAccountAndName as $group) {
+            if ($group->count() > 1) {
+                foreach ($group as $duplicate) {
+                    $skipped[] = ['account_id' => (string) $duplicate->account_id, 'inventory_item_id' => (string) $duplicate->id, 'name' => trim($duplicate->name), 'reason' => "generic item name is ambiguous - {$group->count()} active items share this exact name in this account"];
+                }
 
                 continue;
             }
-            $generic = $generics->first();
-
+            $generic = $group->first();
+            $baseName = trim($generic->name);
             $componentIds = [];
             $ambiguous = null;
             foreach (self::COLOR_WORDS as $letter => $colorWord) {
-                $candidates = InventoryItem::where('account_id', $accountId)->whereNotNull('component_id')
-                    ->whereRaw('LOWER(TRIM(name)) = ?', ['charging corona '.$colorWord])
+                $siblings = InventoryItem::where('account_id', $generic->account_id)->whereNotNull('component_id')
+                    ->whereRaw('LOWER(TRIM(name)) = ?', [strtolower($baseName.' '.$colorWord)])
                     ->get();
-                if ($candidates->count() !== 1) {
-                    $ambiguous = "Charging Corona {$colorWord} ({$letter}) component definition is ambiguous or not found ({$candidates->count()} candidates)";
+                if ($siblings->count() !== 1) {
+                    $ambiguous = "{$baseName} {$colorWord} ({$letter}) sibling item is ambiguous or not found ({$siblings->count()} candidates)";
 
                     break;
                 }
-                $component = ComponentCatalog::whereKey($candidates->first()->component_id)->where('is_active', true)
-                    ->where(fn ($q) => $q->whereNull('account_id')->orWhere('account_id', $accountId))->first();
+                $component = ComponentCatalog::whereKey($siblings->first()->component_id)->where('is_active', true)
+                    ->where(fn ($q) => $q->whereNull('account_id')->orWhere('account_id', $generic->account_id))->first();
                 if (! $component) {
-                    $ambiguous = "Charging Corona {$colorWord} ({$letter}) component definition is not an active catalog entry visible to this account";
+                    $ambiguous = "{$baseName} {$colorWord} ({$letter}) component definition is not an active catalog entry visible to this account";
 
                     break;
                 }
                 $componentIds[$letter] = (string) $component->id;
             }
             if ($ambiguous !== null) {
-                $skipped[] = ['account_id' => (string) $accountId, 'reason' => $ambiguous];
+                $skipped[] = ['account_id' => (string) $generic->account_id, 'inventory_item_id' => (string) $generic->id, 'name' => $baseName, 'reason' => $ambiguous];
 
                 continue;
             }
             if (count(array_unique($componentIds)) !== 4) {
-                $skipped[] = ['account_id' => (string) $accountId, 'reason' => 'the four resolved CMYK component definitions are not four distinct catalog rows'];
+                $skipped[] = ['account_id' => (string) $generic->account_id, 'inventory_item_id' => (string) $generic->id, 'name' => $baseName, 'reason' => 'the four resolved CMYK component definitions are not four distinct catalog rows'];
 
                 continue;
             }
@@ -128,7 +140,7 @@ class InventoryComponentCompatibilityBackfillService
                 if (InventoryComponentCompatibility::where('inventory_item_id', $generic->id)->where('component_id', $componentId)->exists()) {
                     continue;
                 }
-                $created[] = ['account_id' => (string) $accountId, 'inventory_item_id' => (string) $generic->id, 'component_id' => $componentId, 'is_active' => true];
+                $created[] = ['account_id' => (string) $generic->account_id, 'inventory_item_id' => (string) $generic->id, 'component_id' => $componentId, 'is_active' => true];
             }
         }
 

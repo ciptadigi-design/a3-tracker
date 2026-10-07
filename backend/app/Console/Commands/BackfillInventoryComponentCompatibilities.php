@@ -12,7 +12,7 @@ final class BackfillInventoryComponentCompatibilities extends Command
         {--dry-run : Execute the plan in a transaction, print it, then roll it back}
         {--apply : Commit the plan}';
 
-    protected $description = 'Phase 2 transitional backfill: explicit inventory_component_compatibilities rows for existing component_id-linked items, plus the Charging Corona CMYK mapping resolved by name';
+    protected $description = 'Transitional backfill: explicit inventory_component_compatibilities rows for existing component_id-linked items, plus any generic-physical-part CMYK family mapping resolved by name (family-agnostic - no hardcoded product names)';
 
     public function handle(InventoryComponentCompatibilityBackfillService $service): int
     {
@@ -28,12 +28,12 @@ final class BackfillInventoryComponentCompatibilities extends Command
         foreach ($plan['generic_backfill'] as $row) {
             $this->line(json_encode(['inventory_item_id' => $row['inventory_item_id'], 'component_id' => $row['component_id']], JSON_THROW_ON_ERROR));
         }
-        $this->line('CHARGING_CORONA_CREATED='.count($plan['charging_corona']['created']));
-        foreach ($plan['charging_corona']['created'] as $row) {
+        $this->line('GENERIC_COLOR_FAMILY_CREATED='.count($plan['generic_color_families']['created']));
+        foreach ($plan['generic_color_families']['created'] as $row) {
             $this->line(json_encode(['account_id' => $row['account_id'], 'inventory_item_id' => $row['inventory_item_id'], 'component_id' => $row['component_id']], JSON_THROW_ON_ERROR));
         }
-        $this->line('CHARGING_CORONA_SKIPPED='.count($plan['charging_corona']['skipped']));
-        foreach ($plan['charging_corona']['skipped'] as $row) {
+        $this->line('GENERIC_COLOR_FAMILY_SKIPPED='.count($plan['generic_color_families']['skipped']));
+        foreach ($plan['generic_color_families']['skipped'] as $row) {
             $this->line(json_encode($row, JSON_THROW_ON_ERROR));
         }
         $this->line('BACKFILL_'.($dryRun ? 'DRY_RUN' : 'APPLY').'=PASS');
