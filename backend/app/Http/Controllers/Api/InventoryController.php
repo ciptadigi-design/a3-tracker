@@ -90,7 +90,15 @@ class InventoryController extends Controller
                 ];
             })->values();
 
-        return response()->json(['data' => ['branchId' => $branch, 'items' => $items, 'locations' => $locations, 'suppliers' => $suppliers, 'balances' => $balances, 'totals' => $items->map(fn ($i) => ['account_id' => $account, 'inventory_item_id' => $i->id, 'quantity' => $balances->where('inventory_item_id', $i->id)->sum('quantity')])->values(), 'movements' => $movements, 'components' => DB::table('component_catalogs')->where('is_active', true)->where(fn ($q) => $q->whereNull('account_id')->orWhere('account_id', $account))->orderBy('name')->get(), 'people' => OperationalPersonResource::collection($people), 'purchases' => $purchaseSummary['purchases'], 'purchaseLines' => $purchaseSummary['lines'], 'receipts' => $receipts, 'lastPrices' => [], 'costHistory' => [], 'costPositions' => $costPositions]]);
+        // Phase 1 (additive foundation, feature-dark): the smallest read surface for
+        // the future generic-part-compatibility feature, reusing this existing
+        // workspace payload rather than a new endpoint. Nothing in the frontend
+        // reads this key yet - Replace still filters by inventory_items.component_id
+        // exactly as before. Same global-or-owned visibility as the `components` key
+        // above, scoped further to active compatibility rows only.
+        $compatibilities = DB::table('inventory_component_compatibilities')->where('is_active', true)->where(fn ($q) => $q->whereNull('account_id')->orWhere('account_id', $account))->get(['id', 'account_id', 'inventory_item_id', 'component_id']);
+
+        return response()->json(['data' => ['branchId' => $branch, 'items' => $items, 'locations' => $locations, 'suppliers' => $suppliers, 'balances' => $balances, 'totals' => $items->map(fn ($i) => ['account_id' => $account, 'inventory_item_id' => $i->id, 'quantity' => $balances->where('inventory_item_id', $i->id)->sum('quantity')])->values(), 'movements' => $movements, 'components' => DB::table('component_catalogs')->where('is_active', true)->where(fn ($q) => $q->whereNull('account_id')->orWhere('account_id', $account))->orderBy('name')->get(), 'compatibilities' => $compatibilities, 'people' => OperationalPersonResource::collection($people), 'purchases' => $purchaseSummary['purchases'], 'purchaseLines' => $purchaseSummary['lines'], 'receipts' => $receipts, 'lastPrices' => [], 'costHistory' => [], 'costPositions' => $costPositions]]);
     }
 
     // M2.17.4.1: the Supplier Master list previously ignored branch context entirely and

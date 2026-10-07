@@ -25,4 +25,10 @@ class ComponentCatalog extends Model
     {
         return $this->hasMany(ModelProfileSlot::class, 'component_id');
     }
+
+    // Phase 1 (additive foundation, feature-dark): see InventoryItem::compatibilities().
+    public function compatibilities()
+    {
+        return $this->hasMany(InventoryComponentCompatibility::class, 'component_id');
+    }
 }
