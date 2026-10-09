@@ -1,0 +1,424 @@
+name: Deploy Production
+
+# Guarded, manual-only Production release. This workflow NEVER runs on
+# push/pull_request/schedule - the only trigger is an explicit
+# workflow_dispatch naming the exact commit to release. It wraps the
+# existing docs/production/RELEASE_PROCEDURE.md gates and scripts/deployment/*
+# scripts rather than reimplementing release logic; see that document for the
+# authoritative step-by-step description this workflow encodes.
+#
+# Coverage vs. RELEASE_PROCEDURE.md, and the two gates this workflow cannot
+# claim full equivalence on:
+#
+# - Steps 7a/8a (official-extraction Python runtime). Automated: if the
+#   release tree contains backend/runtime/official-knowledge/requirements.txt
+#   this workflow runs provision-official-python-runtime.sh (idempotent - a
+#   no-op verify if already provisioned) and then
+#   maintenance:v2-extractor-runtime-preflight, and fails closed on either.
+#   Both scripts already hard-reject anything that doesn't match the exact
+#   pinned pypdf/cryptography identity, so a future runtime revision that
+#   isn't yet supported by the committed scripts fails this gate rather than
+#   silently proceeding - exactly the fail-closed behavior required. If the
+#   requirements file is absent, the gate reports NOT_APPLICABLE and is
+#   skipped (nothing in this release depends on that runtime).
+#
+# - Step 19 (signed-in acceptance: a real Incognito browser login resolving
+#   through Laravel, workspace loading). This is NOT automated and cannot be
+#   made an applicability gate either, because RELEASE_PROCEDURE.md requires
+#   it for every release, not conditionally - a workflow that failed closed
+#   on it could never complete a deployment. This workflow explicitly does
+#   NOT perform it. The run must be treated as PENDING_MANUAL_ACCEPTANCE
+#   until an operator completes that check by hand; the final Report step
+#   below says so on every run so this is never silently implied as done.
+#
+# Rollback is intentionally NOT automatic on post-activation smoke-test
+# failure: scripts/deployment/rollback-release.sh requires a human judgment
+# call (--confirm-db-compatible) that this workflow will not make on its own.
+# A failure after activation fails the workflow and must be triaged/rolled
+# back by an operator using that script directly.
+
+on:
+  workflow_dispatch:
+    inputs:
+      commit_sha:
+        description: "Exact 40-hex commit SHA to release (never a branch name or 'latest')"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
+env:
+  APP_ROOT: /home/u777904340/a3-production-app
+  PUBLIC_HTML: /home/u777904340/domains/a3.ciptagrafika.com/public_html
+  PROD_DOMAIN: a3.ciptagrafika.com
+
+jobs:
+  validate-input:
+    name: Validate exact SHA and CI status
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      short_sha: ${{ steps.resolve.outputs.short_sha }}
+    steps:
+      - name: Reject anything that is not an exact 40-hex SHA
+        run: |
+          sha='${{ inputs.commit_sha }}'
+          if ! [[ "$sha" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::error::commit_sha must be an exact 40-hex commit SHA, got: $sha"
+            exit 1
+          fi
+
+      - name: Check out full history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Confirm the SHA exists and is reachable from a trusted branch
+        id: resolve
+        run: |
+          set -euo pipefail
+          sha='${{ inputs.commit_sha }}'
+          git cat-file -e "${sha}^{commit}" || { echo "::error::commit $sha does not exist in this repository"; exit 1; }
+
+          trusted=0
+          for ref in origin/main origin/develop; do
+            if git merge-base --is-ancestor "$sha" "$ref" 2>/dev/null; then
+              trusted=1
+              break
+            fi
+          done
+          if [ "$trusted" -ne 1 ]; then
+            echo "::error::commit $sha is not an ancestor of origin/main or origin/develop - refusing to deploy an untrusted/unmerged commit"
+            exit 1
+          fi
+          echo "short_sha=${sha:0:12}" >> "$GITHUB_OUTPUT"
+
+      - name: Require both CI workflows green for this exact SHA
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          sha='${{ inputs.commit_sha }}'
+          for workflow in database-ci.yml laravel-mysql.yml; do
+            conclusion="$(gh api "repos/${{ github.repository }}/actions/workflows/${workflow}/runs?head_sha=${sha}&status=success" \
+              --jq '.workflow_runs | map(select(.head_sha == "'"$sha"'")) | length')"
+            if [ "${conclusion:-0}" -lt 1 ]; then
+              echo "::error::no successful run of $workflow found for exact SHA $sha"
+              exit 1
+            fi
+            echo "CI_GREEN[$workflow]=PASS"
+          done
+
+  build:
+    name: Build and verify frontend artifact
+    needs: validate-input
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out exact commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.commit_sha }}
+          fetch-depth: 1
+
+      - name: Confirm checkout resolved the exact requested SHA
+        run: |
+          actual="$(git rev-parse HEAD)"
+          test "$actual" = "${{ inputs.commit_sha }}" || { echo "::error::checked-out HEAD ($actual) does not match requested commit_sha"; exit 1; }
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Canonical frontend build (sets VITE_DATA_BACKEND=laravel)
+        run: scripts/deployment/build-frontend.sh dist
+
+      - name: Frontend/backend contract gate
+        run: |
+          out="$(scripts/deployment/verify-frontend-backend.sh dist)"
+          echo "$out"
+          echo "$out" | grep -q '^BACKEND_VERIFIED=laravel$' || { echo "::error::verify-frontend-backend.sh did not report BACKEND_VERIFIED=laravel"; exit 1; }
+
+      - name: Package exact-SHA repository tree (fresh, independent of local worktree state)
+        run: git archive --format=tar.gz -o release-source.tar.gz "${{ inputs.commit_sha }}"
+
+      - name: Package verified dist artifact
+        run: tar -czf release-dist.tar.gz -C dist .
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-payload
+          path: |
+            release-source.tar.gz
+            release-dist.tar.gz
+          retention-days: 7
+
+  deploy:
+    name: Release to Hostinger Production
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: production
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-payload
+
+      - name: Check out scripts/deployment at the exact release SHA
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.commit_sha }}
+          fetch-depth: 1
+          sparse-checkout: |
+            scripts/deployment
+
+      - name: Set up SSH (strict host key checking, key never printed)
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.HOSTINGER_SSH_PRIVATE_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.HOSTINGER_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          printf '%s\n' "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+
+      - name: Define remote helpers
+        run: |
+          {
+            echo "SSH_HOST=${{ secrets.HOSTINGER_SSH_HOST }}"
+            echo "SSH_PORT=${{ secrets.HOSTINGER_SSH_PORT }}"
+            echo "SSH_USER=${{ secrets.HOSTINGER_SSH_USER }}"
+          } >> "$GITHUB_ENV"
+
+      - name: Create destination directory (scp cannot mkdir -p)
+        run: |
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" \
+            "mkdir -p '${{ env.APP_ROOT }}/.incoming-${{ inputs.commit_sha }}'"
+
+      - name: Upload exact-SHA payload to Production host
+        run: |
+          set -euo pipefail
+          scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes -P "$SSH_PORT" \
+            release-source.tar.gz release-dist.tar.gz \
+            "$SSH_USER@$SSH_HOST:${{ env.APP_ROOT }}/.incoming-${{ inputs.commit_sha }}/"
+
+      - name: Production backup gate (must print BACKUP_GATE=PASS)
+        run: |
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" bash -s -- \
+            "${{ env.APP_ROOT }}" "${{ env.PUBLIC_HTML }}" "${{ inputs.commit_sha }}" <<'REMOTE'
+          set -euo pipefail
+          APP_ROOT="$1"; PUBLIC_HTML="$2"; SHA="$3"
+          out="$("$APP_ROOT/current/scripts/deployment/production-backup.sh" \
+            "ci-deploy-${SHA:0:12}" "$APP_ROOT/current/backend" "$PUBLIC_HTML" "$APP_ROOT/backups")"
+          echo "$out"
+          echo "$out" | grep -q '^BACKUP_GATE=PASS$'
+          REMOTE
+
+      # Deliberately fails closed if releases/<SHA> already exists - never
+      # overwrites or reuses a prior release directory, including a retry of
+      # this same SHA. This workflow's own first real-world run will target
+      # the commit SHA that adds this file, once that commit has merged and
+      # both database-ci.yml and laravel-mysql.yml report success for it
+      # (validate-input's CI-green gate enforces exactly that); it is not a
+      # distinct SHA carved out for testing, and re-running it against the
+      # same SHA after a first success is expected to fail here, by design.
+      - name: Create fresh release directory from exact-SHA archive
+        run: |
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" bash -s -- \
+            "${{ env.APP_ROOT }}" "${{ inputs.commit_sha }}" <<'REMOTE'
+          set -euo pipefail
+          APP_ROOT="$1"; SHA="$2"
+          RELEASE="$APP_ROOT/releases/$SHA"
+          test ! -e "$RELEASE" || { echo "release directory already exists: $RELEASE"; exit 1; }
+          mkdir -p "$RELEASE" "$RELEASE/dist"
+          tar -xzf "$APP_ROOT/.incoming-$SHA/release-source.tar.gz" -C "$RELEASE"
+          tar -xzf "$APP_ROOT/.incoming-$SHA/release-dist.tar.gz" -C "$RELEASE/dist"
+          rm -rf "$APP_ROOT/.incoming-$SHA"
+          REMOTE
+
+      - name: Composer install (release backend)
+        run: |
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" \
+            "cd '${{ env.APP_ROOT }}/releases/${{ inputs.commit_sha }}/backend' && composer install --no-dev --classmap-authoritative --no-interaction --no-progress"
+
+      # RELEASE_PROCEDURE.md step 7a. NOT_APPLICABLE (and skipped) when this
+      # release has no backend/runtime/official-knowledge/requirements.txt.
+      # When present, provision-official-python-runtime.sh is idempotent
+      # (a no-op verify if the exact pinned identity is already installed)
+      # and hard-rejects any pypdf/cryptography pin it doesn't recognize, so
+      # an unsupported future runtime revision fails this gate rather than
+      # silently installing something unverified.
+      - name: Official-extraction Python runtime provisioning gate (7a)
+        run: |
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" bash -s -- \
+            "${{ env.APP_ROOT }}" "${{ inputs.commit_sha }}" <<'REMOTE'
+          set -euo pipefail
+          APP_ROOT="$1"; SHA="$2"
+          RELEASE="$APP_ROOT/releases/$SHA"
+          REQUIREMENTS="$RELEASE/backend/runtime/official-knowledge/requirements.txt"
+          if [ ! -f "$REQUIREMENTS" ]; then
+            echo "OFFICIAL_EXTRACTION_RUNTIME_GATE=NOT_APPLICABLE"
+            exit 0
+          fi
+          IDENTITY="python311-pypdf-6.14.2-crypto-50.0.1-v1"
+          BASE_PYTHON="/opt/alt/python311/bin/python3"
+          RUNTIME_ROOT="$APP_ROOT/runtimes/official-knowledge/$IDENTITY"
+          out="$("$RELEASE/scripts/deployment/provision-official-python-runtime.sh" "$BASE_PYTHON" "$RUNTIME_ROOT" "$REQUIREMENTS")"
+          echo "$out"
+          echo "$out" | grep -Eq '^OFFICIAL_PYTHON_RUNTIME_(ALREADY_)?PROVISIONED=' || { echo "::error::official python runtime provisioning did not confirm success"; exit 1; }
+          REMOTE
+
+      - name: Link shared .env and shared storage
+        run: |
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" bash -s -- \
+            "${{ env.APP_ROOT }}" "${{ inputs.commit_sha }}" <<'REMOTE'
+          set -euo pipefail
+          APP_ROOT="$1"; SHA="$2"
+          RELEASE="$APP_ROOT/releases/$SHA"
+          "$RELEASE/scripts/deployment/link-shared-env.sh" "$RELEASE" "$APP_ROOT/shared"
+          "$RELEASE/scripts/deployment/link-shared-storage.sh" "$RELEASE" "$APP_ROOT/shared"
+          REMOTE
+
+      - name: Stamp release identity and cache config
+        run: |
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" bash -s -- \
+            "${{ env.APP_ROOT }}" "${{ inputs.commit_sha }}" <<'REMOTE'
+          set -euo pipefail
+          APP_ROOT="$1"; SHA="$2"
+          RELEASE="$APP_ROOT/releases/$SHA"
+          "$RELEASE/scripts/deployment/set-release-identity.sh" "$APP_ROOT/shared/.env" "$SHA"
+          (cd "$RELEASE/backend" && php artisan config:clear && php artisan config:cache)
+          out="$("$RELEASE/scripts/deployment/verify-release-identity.sh" "$RELEASE/backend" "$SHA")"
+          echo "$out"
+          echo "$out" | grep -q 'PASS'
+          REMOTE
+
+      # RELEASE_PROCEDURE.md step 8a. Same applicability rule as 7a above -
+      # skipped (NOT_APPLICABLE) when this release has no
+      # backend/runtime/official-knowledge/requirements.txt. Performs no
+      # extraction and writes nothing; it only asserts the configured
+      # interpreter/library versions are exactly the pinned ones.
+      - name: Official-extraction runtime preflight gate (8a)
+        run: |
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" bash -s -- \
+            "${{ env.APP_ROOT }}" "${{ inputs.commit_sha }}" <<'REMOTE'
+          set -euo pipefail
+          APP_ROOT="$1"; SHA="$2"
+          RELEASE="$APP_ROOT/releases/$SHA"
+          if [ ! -f "$RELEASE/backend/runtime/official-knowledge/requirements.txt" ]; then
+            echo "OFFICIAL_EXTRACTION_RUNTIME_PREFLIGHT_GATE=NOT_APPLICABLE"
+            exit 0
+          fi
+          cd "$RELEASE/backend"
+          out="$(php artisan maintenance:v2-extractor-runtime-preflight)"
+          echo "$out"
+          echo "$out" | grep -q '^OFFICIAL_EXTRACTION_RUNTIME_PREFLIGHT=PASS$' || { echo "::error::official extraction runtime preflight did not report PASS"; exit 1; }
+          REMOTE
+
+      - name: Consolidated release preflight (must print RELEASE_PREFLIGHT=PASS)
+        run: |
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" bash -s -- \
+            "${{ env.APP_ROOT }}" "${{ inputs.commit_sha }}" <<'REMOTE'
+          set -euo pipefail
+          APP_ROOT="$1"; SHA="$2"
+          RELEASE="$APP_ROOT/releases/$SHA"
+          out="$("$RELEASE/scripts/deployment/verify-release.sh" "$RELEASE" "$APP_ROOT/shared" "$SHA")"
+          echo "$out"
+          echo "$out" | grep -q '^RELEASE_PREFLIGHT=PASS$'
+          REMOTE
+
+      - name: Migration status (read-only) then migrate --force
+        run: |
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" bash -s -- \
+            "${{ env.APP_ROOT }}" "${{ inputs.commit_sha }}" <<'REMOTE'
+          set -euo pipefail
+          APP_ROOT="$1"; SHA="$2"
+          cd "$APP_ROOT/releases/$SHA/backend"
+          php artisan migrate:status
+          php artisan migrate --force
+          REMOTE
+
+      - name: Sync verified dist into public_html (inode-preserving)
+        run: |
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" bash -s -- \
+            "${{ env.APP_ROOT }}" "${{ env.PUBLIC_HTML }}" "${{ inputs.commit_sha }}" <<'REMOTE'
+          set -euo pipefail
+          APP_ROOT="$1"; PUBLIC_HTML="$2"; SHA="$3"
+          "$APP_ROOT/releases/$SHA/scripts/deployment/sync-public-html.sh" "$APP_ROOT/releases/$SHA/dist" "$PUBLIC_HTML"
+          REMOTE
+
+      - name: Atomic current symlink activation
+        run: |
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" bash -s -- \
+            "${{ env.APP_ROOT }}" "${{ inputs.commit_sha }}" <<'REMOTE'
+          set -euo pipefail
+          APP_ROOT="$1"; SHA="$2"
+          ln -sfn "$APP_ROOT/releases/$SHA" "$APP_ROOT/.current-tmp-$SHA"
+          mv -Tf "$APP_ROOT/.current-tmp-$SHA" "$APP_ROOT/current"
+          REMOTE
+
+      - name: One-shot OPcache reset over HTTP
+        run: |
+          set -euo pipefail
+          token="opcache-reset-$(openssl rand -hex 16)"
+          remote_file="${{ env.PUBLIC_HTML }}/${token}.php"
+
+          # Fail-safe cleanup: once the temp file is copied into public_html,
+          # remove it on every exit path (success, curl failure, grep
+          # failure, or this step being killed/timed out) - never leave the
+          # reset endpoint reachable. The trap runs best-effort (|| true);
+          # it must never mask the real pass/fail verdict set below.
+          cleanup() {
+            ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" \
+              "rm -f '${remote_file}'" || true
+          }
+          trap cleanup EXIT
+
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" \
+            "cp '${{ env.APP_ROOT }}/current/scripts/deployment/reset-opcache.php' '${remote_file}'"
+          body="$(curl -fsS "https://${{ env.PROD_DOMAIN }}/${token}.php" || true)"
+          echo "$body" | grep -q '^OPCACHE_RESET_OK$' || { echo "::error::OPcache reset did not report OPCACHE_RESET_OK: $body"; exit 1; }
+
+      - name: Health and version smoke tests
+        run: |
+          set -euo pipefail
+          domain="https://${{ env.PROD_DOMAIN }}"
+
+          code="$(curl -s -o /dev/null -w '%{http_code}' "$domain/")"
+          test "$code" = "200" || { echo "::error::GET / returned $code"; exit 1; }
+
+          code="$(curl -s -o /dev/null -w '%{http_code}' "$domain/login")"
+          test "$code" = "200" || { echo "::error::GET /login returned $code"; exit 1; }
+
+          code="$(curl -s -o /dev/null -w '%{http_code}' "$domain/api/v1/health")"
+          test "$code" = "200" || { echo "::error::GET /api/v1/health returned $code"; exit 1; }
+
+          code="$(curl -s -o /dev/null -w '%{http_code}' "$domain/sanctum/csrf-cookie")"
+          test "$code" = "204" || { echo "::error::GET /sanctum/csrf-cookie returned $code"; exit 1; }
+
+          code="$(curl -s -o /dev/null -w '%{http_code}' "$domain/api/v1/me")"
+          test "$code" = "401" || { echo "::error::unauthenticated GET /api/v1/me returned $code"; exit 1; }
+
+          version_body="$(curl -fsS "$domain/api/v1/version")"
+          echo "$version_body" | grep -q "${{ inputs.commit_sha }}" || { echo "::error::deployed version does not report exact SHA ${{ inputs.commit_sha }}: $version_body"; exit 1; }
+
+      - name: Report
+        if: always()
+        run: |
+          echo "DEPLOYED_SHA=${{ inputs.commit_sha }}"
+          echo "RESULT=${{ job.status }}"
+          echo "SIGNED_IN_ACCEPTANCE=PENDING_MANUAL_ACCEPTANCE (RELEASE_PROCEDURE.md step 19 - real Incognito browser login - is not automated by this workflow; an operator must complete it before this release is considered accepted)"
+          echo "NOTE: on failure after activation, this workflow does NOT auto-rollback. Use scripts/deployment/rollback-release.sh manually after operator review."
