@@ -171,9 +171,15 @@ jobs:
     timeout-minutes: 30
     environment: production
     steps:
+      # Downloaded outside the git workspace on purpose: actions/checkout@v4
+      # below runs with its default clean: true (git clean -ffdx) before
+      # checking out, which deletes untracked files in the default working
+      # directory - including these tarballs, if they were downloaded there.
+      # ${{ runner.temp }} is never touched by checkout's clean step.
       - uses: actions/download-artifact@v4
         with:
           name: release-payload
+          path: ${{ runner.temp }}/release-payload
 
       - name: Check out scripts/deployment at the exact release SHA
         uses: actions/checkout@v4
@@ -182,6 +188,17 @@ jobs:
           fetch-depth: 1
           sparse-checkout: |
             scripts/deployment
+
+      - name: Verify release payload exists before any Production contact
+        run: |
+          set -euo pipefail
+          src="${{ runner.temp }}/release-payload/release-source.tar.gz"
+          dist="${{ runner.temp }}/release-payload/release-dist.tar.gz"
+          test -f "$src" || { echo "::error::missing downloaded artifact: $src"; exit 1; }
+          test -f "$dist" || { echo "::error::missing downloaded artifact: $dist"; exit 1; }
+          test -s "$src" || { echo "::error::downloaded artifact is empty: $src"; exit 1; }
+          test -s "$dist" || { echo "::error::downloaded artifact is empty: $dist"; exit 1; }
+          echo "PAYLOAD_VERIFIED=PASS"
 
       - name: Set up SSH (strict host key checking, key never printed)
         env:
@@ -212,7 +229,8 @@ jobs:
         run: |
           set -euo pipefail
           scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes -P "$SSH_PORT" \
-            release-source.tar.gz release-dist.tar.gz \
+            "${{ runner.temp }}/release-payload/release-source.tar.gz" \
+            "${{ runner.temp }}/release-payload/release-dist.tar.gz" \
             "$SSH_USER@$SSH_HOST:${{ env.APP_ROOT }}/.incoming-${{ inputs.commit_sha }}/"
 
       - name: Production backup gate (must print BACKUP_GATE=PASS)
