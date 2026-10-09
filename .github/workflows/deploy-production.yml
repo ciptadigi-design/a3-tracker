@@ -321,7 +321,7 @@ jobs:
           (cd "$RELEASE/backend" && php artisan config:clear && php artisan config:cache)
           out="$("$RELEASE/scripts/deployment/verify-release-identity.sh" "$RELEASE/backend" "$SHA")"
           echo "$out"
-          echo "$out" | grep -q 'PASS'
+          echo "$out" | grep -q "^RELEASE_IDENTITY_VERIFIED=${SHA}\$" || { echo "::error::verify-release-identity.sh did not report RELEASE_IDENTITY_VERIFIED=$SHA"; exit 1; }
           REMOTE
 
       # RELEASE_PROCEDURE.md step 8a. Same applicability rule as 7a above -
