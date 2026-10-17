@@ -44,7 +44,7 @@ return new class extends Migration
             $t->time('end_time')->nullable();
             $t->boolean('crosses_midnight')->default(false);
             $t->timestamps();
-            $t->unique(['machine_id', 'day_of_week']);
+            $t->unique(['machine_id', 'day_of_week'], 'machine_schedule_override_day_uq');
             $t->foreign('account_id')->references('id')->on('accounts')->restrictOnDelete();
             $t->foreign(['branch_id', 'account_id'])->references(['id', 'account_id'])->on('branches')->restrictOnDelete();
             $t->foreign(['machine_id', 'account_id'])->references(['id', 'account_id'])->on('machines')->restrictOnDelete();
