@@ -2063,3 +2063,41 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   .live-activity-row { grid-template-columns: 90px 1fr auto; }
   .live-activity-who { display: none; }
 }
+
+/* M2 Downtime & Maintenance V1 */
+.downtime-status-pill { width: fit-content; max-width: 100%; display: inline-flex; align-items: center; gap: 6px; padding: 6px 11px; border-radius: 99px; font-size: 8px; font-weight: 780; letter-spacing: 0.06em; text-transform: uppercase; }
+.downtime-status-active { color: var(--danger); background: rgba(217, 71, 71, 0.1); }
+.downtime-status-operational { color: var(--green); background: rgba(36, 170, 105, .1); }
+
+.downtime-active-card, .downtime-idle-card { display: flex; flex-direction: column; gap: 16px; }
+.downtime-idle-card { align-items: flex-start; }
+.downtime-active-status { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.downtime-active-status > strong { font-size: 15px; font-variant-numeric: tabular-nums; }
+
+.downtime-active-meta { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 18px; margin: 0; }
+.downtime-active-meta dt { font-size: 9px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted); }
+.downtime-active-meta dd { margin: 3px 0 0; font-size: 12px; color: var(--text); }
+.downtime-backdated-flag { display: inline-flex; align-items: center; gap: 6px; color: var(--warning); font-size: 11px; font-weight: 700; }
+
+.downtime-notes h3 { margin: 0 0 8px; font-size: 12px; }
+.downtime-notes-empty { margin: 0; color: var(--text-muted); font-size: 11px; }
+.downtime-notes ul { list-style: none; margin: 0 0 12px; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.downtime-notes li { padding: 10px 12px; border-radius: 13px; background: var(--surface-muted); font-size: 11px; display: flex; flex-direction: column; gap: 3px; }
+.downtime-notes li > time { color: var(--text-muted); font-size: 9px; font-weight: 700; }
+.downtime-notes li > small { color: var(--text-muted); }
+.downtime-note-form { display: flex; flex-direction: column; gap: 10px; }
+.downtime-note-form textarea { width: 100%; min-height: 64px; padding: 10px 12px; border-radius: 13px; border: 1px solid var(--border-subtle); background: var(--surface-solid); color: var(--text); resize: vertical; }
+.downtime-note-form button { align-self: flex-start; }
+
+.downtime-attention-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.downtime-attention-list li { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 13px 15px; border-radius: 15px; background: var(--surface-muted); }
+.downtime-attention-list li > div:first-child { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.downtime-attention-list li > div:first-child span { color: var(--text-muted); font-size: 10px; }
+.downtime-attention-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; font-size: 10px; color: var(--text-muted); flex: 0 0 auto; }
+.downtime-attention-meta strong { display: inline-flex; align-items: center; gap: 5px; color: var(--danger); font-size: 11px; }
+
+@media (max-width: 520px) {
+  .downtime-active-meta { grid-template-columns: minmax(0, 1fr); }
+  .downtime-attention-list li { flex-direction: column; align-items: flex-start; }
+  .downtime-attention-meta { align-items: flex-start; }
+}

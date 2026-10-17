@@ -19,13 +19,14 @@ class EffectiveCapabilityResolver
         'operator_can_transfer_inventory' => ['inventory.transfer'],
         'operator_can_log_errors' => ['incidents.create'],
         'operator_can_create_maintenance_ticket' => ['maintenance.ticket.create'],
+        'operator_can_manage_downtime' => ['downtime.manage'],
     ];
 
     private const GOVERNANCE = ['account.manage', 'members.manage', 'branches.manage', 'settings.policy.manage', 'audit.view'];
 
-    private const MANAGEMENT = ['settings.view', 'machines.manage', 'catalog.manage', 'operational_people.manage', 'suppliers.manage', 'inventory.items.manage', 'inventory.locations.manage', 'inventory.opening', 'components.configure', 'counters.correct', 'incidents.manage', 'click_targets.manage', 'machine_cost.selling_price.manage', 'machine_cost.operating_cost.manage', 'maintenance.ticket.assign', 'maintenance.ticket.update', 'maintenance.knowledge.submit', 'maintenance.knowledge.review'];
+    private const MANAGEMENT = ['settings.view', 'machines.manage', 'catalog.manage', 'operational_people.manage', 'suppliers.manage', 'inventory.items.manage', 'inventory.locations.manage', 'inventory.opening', 'components.configure', 'counters.correct', 'incidents.manage', 'click_targets.manage', 'machine_cost.selling_price.manage', 'machine_cost.operating_cost.manage', 'maintenance.ticket.assign', 'maintenance.ticket.update', 'maintenance.knowledge.submit', 'maintenance.knowledge.review', 'downtime.schedule.manage', 'downtime.backdate'];
 
-    private const READ_OPERATIONAL = ['counters.record', 'reports.view', 'machine_cost.view', 'maintenance.view'];
+    private const READ_OPERATIONAL = ['counters.record', 'reports.view', 'machine_cost.view', 'maintenance.view', 'downtime.view'];
 
     public function policy(Account $account): array
     {
@@ -56,7 +57,7 @@ class EffectiveCapabilityResolver
                 $result[$key] = true;
             }
         } elseif ($role === 'technician') {
-            foreach (['components.replace.inventory', 'components.replace.external', 'incidents.create', 'maintenance.ticket.create', 'maintenance.ticket.update', 'maintenance.action.create', 'maintenance.knowledge.submit'] as $key) {
+            foreach (['components.replace.inventory', 'components.replace.external', 'incidents.create', 'maintenance.ticket.create', 'maintenance.ticket.update', 'maintenance.action.create', 'maintenance.knowledge.submit', 'downtime.manage'] as $key) {
                 $result[$key] = true;
             }
         } elseif ($role === 'operator') {

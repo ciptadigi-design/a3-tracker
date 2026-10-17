@@ -31,14 +31,21 @@ namespace App\Services\KnowledgeProcessing;
  * enforced a format) - collision detection (Section J) needs both sides
  * compared on equal terms, even though detection from raw PDF text does not
  * trust the dash-less form as a genuine candidate signal.
+ *
+ * J-codes (M2 Downtime & Maintenance V1) follow the identical `J-DDDD` shape
+ * by product specification, matched here for structural symmetry only - no
+ * PDF-extraction sample has yet shown a real J-code occurrence the way the
+ * C-code sample above did. This does not fabricate or assume any J-code
+ * content exists; it only lets detection/normalization recognize one if and
+ * when real extracted text contains it.
  */
 final class ErrorCodeNormalizer
 {
     /** Strict, dash-required - see class docblock for why the dash is load-bearing here. */
-    private const DETECT_PATTERN = '/\bC\s*-\s*(\d{4})\b/i';
+    private const DETECT_PATTERN = '/\b([CJ])\s*-\s*(\d{4})\b/i';
 
     /** Lenient - for comparing an already-known code value (from either side) against a normalized candidate. */
-    private const LOOSE_PATTERN = '/^C[\s-]*(\d{4})$/i';
+    private const LOOSE_PATTERN = '/^([CJ])[\s-]*(\d{4})$/i';
 
     /**
      * @return list<array{code: string, normalized_code: string, offset: int}>
@@ -53,10 +60,11 @@ final class ErrorCodeNormalizer
 
         $candidates = [];
         foreach ($matches[0] as $i => [$rawMatch, $offset]) {
-            $digits = $matches[1][$i][0];
+            $prefix = strtoupper($matches[1][$i][0]);
+            $digits = $matches[2][$i][0];
             $candidates[] = [
                 'code' => $rawMatch,
-                'normalized_code' => 'C-'.$digits,
+                'normalized_code' => $prefix.'-'.$digits,
                 'offset' => $offset,
             ];
         }
@@ -67,7 +75,7 @@ final class ErrorCodeNormalizer
     /**
      * Normalize an already-known code string (e.g. from machine_error_codes,
      * or a manually-typed knowledge entry) for collision comparison. Returns
-     * null if it does not match the C+4-digit shape at all (never guesses).
+     * null if it does not match the C/J+4-digit shape at all (never guesses).
      */
     public static function normalize(string $rawCode): ?string
     {
@@ -76,6 +84,6 @@ final class ErrorCodeNormalizer
             return null;
         }
 
-        return 'C-'.$m[1];
+        return strtoupper($m[1]).'-'.$m[2];
     }
 }

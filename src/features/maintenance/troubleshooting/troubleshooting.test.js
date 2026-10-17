@@ -22,6 +22,12 @@ test('technician-safe normalization accepts harmless formatting without guessing
   assert.equal(normalizeErrorCodeInput(''), null)
 })
 
+test('J-code input normalizes the same way C-codes do, without affecting bare-digit C-code default', () => {
+  for (const input of ['J1101', 'J-1101', 'j1101', 'j-1101']) assert.equal(normalizeErrorCodeInput(input), 'J-1101')
+  // Bare digits with no explicit prefix still default to the legacy C-code shorthand.
+  assert.equal(normalizeErrorCodeInput('1101'), 'C-1101')
+})
+
 test('applicability labels preserve every server-provided variant choice', () => {
   assert.deepEqual(applicabilityLabels({ applicabilities: [{ scope_label: 'FS-531' }, { scope_label: 'FS-612' }] }), ['FS-531', 'FS-612'])
   assert.deepEqual(applicabilityLabels({ applicabilities: [], variant_key: 'FS-531_FS-612' }), ['FS-531 / FS-612'])

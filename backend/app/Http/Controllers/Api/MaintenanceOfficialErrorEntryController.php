@@ -70,6 +70,9 @@ class MaintenanceOfficialErrorEntryController extends Controller
     {
         $compact = preg_replace('/[\s-]+/', '', strtoupper(trim($value))) ?? '';
 
-        return str_starts_with($compact, 'C') ? $compact : 'C'.$compact;
+        // An explicit C- or J-code prefix is kept as-is; bare digits keep the
+        // legacy default of assuming a C-code (the only prefix that existed
+        // before J-code support was added).
+        return preg_match('/^[CJ]/', $compact) === 1 ? $compact : 'C'.$compact;
     }
 }

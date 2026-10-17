@@ -30,9 +30,14 @@ class GovernanceAudit
         // V1.8.1 - solution variants. Counts and a bounded, comma-joined list of reviewer-authored short
         // labels (e.g. "PK-512/513") - never the technician instruction text itself (that stays
         // covered by OMITTED_FIELDS' `instruction`/`technician_solution` below).
-        'solutions_proposed', 'solutions_added', 'solutions_skipped_identical', 'applicability_labels'];
+        'solutions_proposed', 'solutions_added', 'solutions_skipped_identical', 'applicability_labels',
+        // M2.20 - Downtime & Maintenance V1. Structured facts only: cause/error
+        // code are short classification labels, timestamps and flags are
+        // auditable as-is. Free text (description, resolution_note) stays in
+        // OMITTED_FIELDS below.
+        'cause', 'error_code_text', 'actual_start_at', 'actual_end_at', 'is_backdated', 'closed_by', 'downtime_event_id', 'day_of_week', 'is_operating', 'start_time', 'end_time', 'crosses_midnight', 'exception_date', 'override_start_time', 'override_end_time'];
 
-    public const OMITTED_FIELDS = ['notes', 'description', 'address', 'phone', 'email', 'contact_name', 'linked_user_id', 'serial_number', 'problem', 'symptoms', 'solution', 'success_notes', 'manufacturer_description', 'operator_description', 'official_solution', 'solution_summary', 'instruction', 'file_path', 'operator_solution', 'technician_solution', 'error_message', 'raw_text'];
+    public const OMITTED_FIELDS = ['notes', 'description', 'address', 'phone', 'email', 'contact_name', 'linked_user_id', 'serial_number', 'problem', 'symptoms', 'solution', 'success_notes', 'manufacturer_description', 'operator_description', 'official_solution', 'solution_summary', 'instruction', 'file_path', 'operator_solution', 'technician_solution', 'error_message', 'raw_text', 'resolution_note', 'note'];
 
     public function sanitize(array $data): array
     {

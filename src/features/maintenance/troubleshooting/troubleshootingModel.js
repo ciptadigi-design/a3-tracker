@@ -2,9 +2,11 @@ export function normalizeErrorCodeInput(value) {
   const trimmed = String(value ?? '').trim()
   if (!trimmed || !/^[a-z0-9\s-]+$/i.test(trimmed)) return null
   let compact = trimmed.toUpperCase().replace(/[\s-]+/g, '')
-  if (!compact.startsWith('C')) compact = `C${compact}`
+  // An explicit C- or J-code prefix is kept as-is; bare digits keep the
+  // legacy default of assuming a C-code.
+  if (!/^[CJ]/.test(compact)) compact = `C${compact}`
   if (compact.length < 2) return null
-  return `C-${compact.slice(1)}`
+  return `${compact[0]}-${compact.slice(1)}`
 }
 
 export function applicabilityLabels(entry) {

@@ -21,6 +21,7 @@ import { ClickTargetSettingsPage } from '../pages/ClickTargetSettingsPage.jsx'
 import { InventoryPage } from '../pages/InventoryPage.jsx'
 import { MachineCostPage } from '../pages/MachineCostPage.jsx'
 import { ReportsPage } from '../pages/ReportsPage.jsx'
+import { DowntimePage } from '../pages/DowntimePage.jsx'
 import { MyAccountPage } from '../pages/MyAccountPage.jsx'
 import { userErrorMessage } from '../lib/appErrors.js'
 
@@ -51,6 +52,8 @@ export function AppShell() {
   else if (path === '/inventory') page = <InventoryPage navigate={handleNavigate} />
   else if (path === '/machine-cost') page = <MachineCostPage />
   else if (path === '/reports') page = <ReportsPage />
+  else if (path === '/downtime' && tenant.can('downtime.view')) page = <DowntimePage />
+  else if (path === '/downtime') page = <ComingSoonPage title="Access denied" description="Your current workspace capabilities do not include Downtime." />
   else if (path === '/my-account') page = <MyAccountPage />
   else if ((path === '/settings' || path === '/settings/machine-models') && tenant.can('settings.view')) page = <SettingsPage key={tenant.account.id} navigate={handleNavigate} initialSection={path === '/settings/machine-models' ? 'models' : null} />
   else if (path === '/settings' || path === '/settings/machine-models') page = <ComingSoonPage title="Access denied" description="Your current workspace capabilities do not include Settings." />

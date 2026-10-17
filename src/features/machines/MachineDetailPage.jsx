@@ -14,6 +14,7 @@ import { userErrorMessage } from '../../lib/appErrors.js'
 import { CreateTicketDialog } from '../maintenance/CreateTicketDialog.jsx'
 import { MachineMaintenanceHistory } from '../maintenance/MachineMaintenanceHistory.jsx'
 import { createMaintenanceTicket } from '../../services/maintenance.js'
+import { DowntimeSection } from '../downtime/DowntimeSection.jsx'
 
 function DetailItem({ icon, label, value, hint }) {
   return <div className="detail-item"><span className="detail-item-icon">{createElement(icon, { size: 18 })}</span><div><span>{label}</span><strong>{value || '—'}</strong>{hint && <small>{hint}</small>}</div></div>
@@ -89,6 +90,8 @@ export function MachineDetailPage({ machineId, navigate }) {
         <DetailItem icon={Printer} label="Machine model" value={model?.name} hint={model?.model_code} />
         <DetailItem icon={FileText} label="Notes" value={machine.notes || 'No notes recorded'} />
       </section>
+
+      {can('downtime.view') && <DowntimeSection machine={machine} timezone={effectiveTimezone === 'Not configured' ? 'UTC' : effectiveTimezone} canManage={can('downtime.manage')} canBackdate={can('downtime.backdate')} />}
 
       {can('maintenance.view') && <MachineMaintenanceHistory machine={machine} timezone={effectiveTimezone === 'Not configured' ? 'UTC' : effectiveTimezone} canCreateTicket={can('maintenance.ticket.create')} navigate={navigate} onCreateTicket={() => setShowCreateTicket(true)} />}
 
