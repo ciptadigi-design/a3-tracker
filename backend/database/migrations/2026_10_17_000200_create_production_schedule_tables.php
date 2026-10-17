@@ -46,8 +46,8 @@ return new class extends Migration
             $t->timestamps();
             $t->unique(['machine_id', 'day_of_week'], 'machine_schedule_override_day_uq');
             $t->foreign('account_id')->references('id')->on('accounts')->restrictOnDelete();
-            $t->foreign(['branch_id', 'account_id'])->references(['id', 'account_id'])->on('branches')->restrictOnDelete();
-            $t->foreign(['machine_id', 'account_id'])->references(['id', 'account_id'])->on('machines')->restrictOnDelete();
+            $t->foreign(['branch_id', 'account_id'], 'machine_schedule_override_branch_fk')->references(['id', 'account_id'])->on('branches')->restrictOnDelete();
+            $t->foreign(['machine_id', 'account_id'], 'machine_schedule_override_machine_fk')->references(['id', 'account_id'])->on('machines')->restrictOnDelete();
         });
 
         // One-off date overrides (holiday, overtime, extra shift, closed). machine_id
