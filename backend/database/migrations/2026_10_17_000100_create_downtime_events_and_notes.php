@@ -24,7 +24,7 @@ return new class extends Migration
             $t->timestampTz('actual_start_at');
             $t->timestampTz('actual_end_at')->nullable();
             $t->text('resolution_note')->nullable();
-            $t->uuid('created_by');
+            $t->uuid('created_by')->nullable();
             $t->uuid('closed_by')->nullable();
             $t->boolean('is_backdated')->default(false);
             // Null while active/closed; 'active' exactly while actual_end_at IS NULL.
