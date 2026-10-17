@@ -1,9 +1,13 @@
+// Categorical labels stay in English, matching maintenanceUtils.js's
+// ticketTypeLabels/ticketPriorityLabels convention - operator-facing prose
+// is Indonesian, but enum/category labels are English everywhere they're
+// shown, including the English-only Owner Overview page.
 export const downtimeCauses = [
-  { value: 'error_code', label: 'Error code mesin' },
-  { value: 'mechanical', label: 'Kerusakan mekanis' },
-  { value: 'consumable', label: 'Consumable habis/kosong' },
-  { value: 'scheduled_maintenance', label: 'Maintenance terjadwal' },
-  { value: 'other', label: 'Lainnya' },
+  { value: 'error_code', label: 'Error Code' },
+  { value: 'mechanical', label: 'Mechanical Failure' },
+  { value: 'consumable', label: 'Consumable Empty' },
+  { value: 'scheduled_maintenance', label: 'Scheduled Maintenance' },
+  { value: 'other', label: 'Other' },
 ]
 
 export function causeLabel(cause) {

@@ -35,16 +35,16 @@ export function DowntimePage() {
 
   return (
     <div className="page-stack downtime-overview-page">
-      <PageHeader eyebrow="Operational availability" title="Downtime & Maintenance" description={`Ketersediaan mesin periode ${period.periodStart} s/d ${period.periodEnd}.`} />
+      <PageHeader eyebrow="Operational availability" title="Downtime & Maintenance" description={`Machine availability for ${period.periodStart} through ${period.periodEnd}.`} />
 
       <section className="report-filter-bar glass-surface" aria-label="Downtime overview filters">
-        <label><span>Branch</span><select value={branchFilter} onChange={(event) => setBranchFilter(event.target.value)}><option value="">Semua branch{branch ? ` (default: ${branch.name})` : ''}</option>{branches.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>
+        <label><span>Branch</span><select value={branchFilter} onChange={(event) => setBranchFilter(event.target.value)}><option value="">All branches{branch ? ` (default: ${branch.name})` : ''}</option>{branches.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>
         <button className="secondary-button" type="button" onClick={refresh} disabled={isLoading}><RefreshCcw size={15} className={isLoading ? 'spin' : ''} />Refresh</button>
       </section>
 
-      {error && <div className="inline-error" role="alert">{userErrorMessage(error, 'Downtime overview tidak dapat dimuat.')}</div>}
+      {error && <div className="inline-error" role="alert">{userErrorMessage(error, 'Downtime overview could not be loaded.')}</div>}
 
-      {isLoading && !overview ? <div className="report-loading glass-surface"><RefreshCcw className="spin" size={23} /><strong>Memuat ketersediaan mesin…</strong></div> : overview && (
+      {isLoading && !overview ? <div className="report-loading glass-surface"><RefreshCcw className="spin" size={23} /><strong>Loading machine availability…</strong></div> : overview && (
         <>
           <section className="report-kpi-grid">
             <OverviewKpi icon={<Gauge size={19} />} label="Machine Availability" value={formatAvailabilityPercent(overview.availability_percent)} hint="Periode berjalan" />
@@ -54,8 +54,8 @@ export function DowntimePage() {
           </section>
 
           <section className="downtime-attention glass-surface" aria-label="Machines needing attention">
-            <header><span className="card-kicker">Needs attention</span><h2>Mesin sedang downtime</h2></header>
-            {overview.attention.length === 0 ? <p className="downtime-notes-empty">Tidak ada mesin yang sedang downtime.</p> : (
+            <header><span className="card-kicker">Needs attention</span><h2>Machines currently in downtime</h2></header>
+            {overview.attention.length === 0 ? <p className="downtime-notes-empty">No machines are currently in downtime.</p> : (
               <ul className="downtime-attention-list">
                 {overview.attention.map((item) => (
                   <li key={item.downtime_event_id}>

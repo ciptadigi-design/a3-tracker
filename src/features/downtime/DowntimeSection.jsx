@@ -78,10 +78,10 @@ export function DowntimeSection({ machine, timezone, canManage, canBackdate }) {
             <div className="downtime-active-card">
               <div className="downtime-active-status"><span className="downtime-status-pill downtime-status-active"><Timer size={16} /> Downtime Active</span><LiveElapsed startAt={active.actual_start_at} /></div>
               <dl className="downtime-active-meta">
-                <div><dt>Mulai</dt><dd>{formatDowntimeDateTime(active.actual_start_at, timezone)}</dd></div>
+                <div><dt>Start</dt><dd>{formatDowntimeDateTime(active.actual_start_at, timezone)}</dd></div>
                 <div><dt>Cause</dt><dd>{causeLabel(active.cause)}</dd></div>
                 {active.error_code_text && <div><dt>Error code</dt><dd>{active.error_code_text}</dd></div>}
-                {active.description && <div><dt>Deskripsi</dt><dd>{active.description}</dd></div>}
+                {active.description && <div><dt>Description</dt><dd>{active.description}</dd></div>}
                 {active.is_backdated && <div><dt /><dd><span className="downtime-backdated-flag"><AlertTriangle size={14} /> Waktu mulai dicatat historis (backdated)</span></dd></div>}
               </dl>
 

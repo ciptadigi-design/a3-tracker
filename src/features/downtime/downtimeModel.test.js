@@ -30,7 +30,7 @@ test('currentMonthPeriod returns the full calendar month in the given timezone',
 })
 
 test('cause label falls back to the raw value for an unknown cause', () => {
-  assert.equal(causeLabel('mechanical'), 'Kerusakan mekanis')
+  assert.equal(causeLabel('mechanical'), 'Mechanical Failure')
   assert.equal(causeLabel('unknown_cause'), 'unknown_cause')
 })
 

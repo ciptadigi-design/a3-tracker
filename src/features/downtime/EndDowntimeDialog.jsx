@@ -34,7 +34,7 @@ export function EndDowntimeDialog({ canBackdate, onClose, onEnd }) {
         <h2 id="end-downtime-title">End Downtime</h2>
         <p>Mencatat mesin kembali beroperasi. Durasi dihitung otomatis dari waktu mulai.</p>
 
-        <label className="form-field"><span>Resolution (opsional)</span><textarea value={resolutionNote} onChange={(event) => setResolutionNote(event.target.value)} rows={3} disabled={isSaving} /></label>
+        <label className="form-field"><span>Resolution <small>Optional</small></span><textarea value={resolutionNote} onChange={(event) => setResolutionNote(event.target.value)} rows={3} disabled={isSaving} /></label>
 
         {canBackdate && (
           <div className="form-field">

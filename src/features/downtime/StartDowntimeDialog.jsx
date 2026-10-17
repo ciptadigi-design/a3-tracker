@@ -41,8 +41,8 @@ export function StartDowntimeDialog({ machine, canBackdate, onClose, onStart }) 
         <p>Catat mesin ini sebagai tidak beroperasi. Maintenance Note dapat ditambahkan setelahnya tanpa menutup downtime.</p>
 
         <label className="form-field"><span>Cause</span><select value={cause} onChange={(event) => setCause(event.target.value)} disabled={isSaving} required>{downtimeCauses.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}</select></label>
-        <label className="form-field"><span>Error code (opsional)</span><input value={errorCodeText} onChange={(event) => setErrorCodeText(event.target.value)} placeholder="Contoh: C-3913" maxLength={16} disabled={isSaving} /></label>
-        <label className="form-field"><span>Deskripsi (opsional)</span><textarea value={description} onChange={(event) => setDescription(event.target.value)} rows={3} disabled={isSaving} /></label>
+        <label className="form-field"><span>Error code <small>Optional</small></span><input value={errorCodeText} onChange={(event) => setErrorCodeText(event.target.value)} placeholder="Contoh: C-3913" maxLength={16} disabled={isSaving} /></label>
+        <label className="form-field"><span>Description <small>Optional</small></span><textarea value={description} onChange={(event) => setDescription(event.target.value)} rows={3} disabled={isSaving} /></label>
 
         {canBackdate && (
           <div className="form-field">
