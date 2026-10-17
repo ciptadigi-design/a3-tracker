@@ -110,7 +110,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .password-field input { padding-right: 52px; }
 .password-toggle { position: absolute; right: 7px; top: 6px; box-shadow: none; background: transparent; }
 .auth-error, .inline-error { color: var(--danger); background: rgba(217, 71, 71, 0.1); border: 1px solid rgba(217, 71, 71, 0.16); border-radius: 14px; padding: 12px 14px; font-size: 13px; line-height: 1.45; }
-.primary-button, .secondary-button { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; gap: 9px; padding: 0 18px; border-radius: 14px; font-weight: 700; cursor: pointer; text-decoration: none; transition: transform 160ms, box-shadow 160ms, background 160ms; }
+.primary-button, .secondary-button { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; gap: 9px; padding: 0 18px; border-radius: 14px; font-weight: 700; white-space: nowrap; cursor: pointer; text-decoration: none; transition: transform 160ms, box-shadow 160ms, background 160ms; }
 .primary-button { color: white; background: linear-gradient(145deg, var(--blue), var(--blue-deep)); box-shadow: 0 11px 24px rgba(20, 120, 242, 0.22); }
 .secondary-button { color: var(--text); background: var(--surface-solid); border: 1px solid var(--border-subtle); }
 .primary-button:not(:disabled):hover, .secondary-button:not(:disabled):hover { transform: translateY(-1px); }
@@ -189,8 +189,9 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .inline-error { margin: 14px 2px 0; }
 .page-content { width: 100%; max-width: 1440px; min-width: 0; margin: 0 auto; padding: clamp(34px, 5vw, 68px) clamp(8px, 3vw, 42px) 54px; }
 .page-stack { width: 100%; max-width: 100%; min-width: 0; display: grid; gap: 24px; }
-.page-header { width: 100%; max-width: 100%; min-width: 0; display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; }
+.page-header { width: 100%; max-width: 100%; min-width: 0; display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 24px; }
 .page-header > div { min-width: 0; }
+.page-header-copy { min-width: 240px; flex: 1 1 320px; }
 .page-header h1 { margin: 9px 0 8px; overflow-wrap: anywhere; font-size: clamp(32px, 4vw, 50px); line-height: 1.05; letter-spacing: -0.055em; }
 .page-header p { max-width: 700px; margin: 0; overflow-wrap: anywhere; color: var(--text-soft); font-size: 14px; line-height: 1.6; }
 .overview-grid { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(250px, 0.5fr); gap: 18px; }
@@ -367,7 +368,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .form-context-note { margin: -5px 0 0; color: var(--text-muted); font-size: 9px; line-height: 1.5; }
 .dialog-actions { display: flex; justify-content: flex-end; gap: 10px; padding-top: 4px; }
 .machine-form > .dialog-actions { flex: 0 0 auto; padding: 16px 26px calc(16px + env(safe-area-inset-bottom)); border-top: 1px solid var(--border-subtle); background: color-mix(in srgb, var(--surface-solid) 94%, transparent); box-shadow: 0 -10px 28px rgba(22, 34, 58, 0.05); }
-.danger-button, .danger-outline-button { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 0 18px; border-radius: 14px; cursor: pointer; font-weight: 720; }
+.danger-button, .danger-outline-button { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; gap: 8px; padding: 0 18px; border-radius: 14px; cursor: pointer; font-weight: 720; white-space: nowrap; }
 .danger-button { color: white; background: var(--danger); box-shadow: 0 10px 22px rgba(217, 71, 71, 0.18); }
 .danger-outline-button { color: var(--danger); background: rgba(217, 71, 71, 0.07); border: 1px solid rgba(217, 71, 71, 0.18); }
 .danger-button:disabled, .danger-outline-button:disabled { opacity: 0.5; cursor: not-allowed; }
@@ -383,7 +384,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 
 .back-button { width: fit-content; display: inline-flex; align-items: center; gap: 8px; padding: 7px 3px; color: var(--text-soft); cursor: pointer; background: transparent; font-size: 11px; font-weight: 700; }
 .back-button:hover { color: var(--blue); }
-.detail-actions { display: flex; align-items: center; gap: 9px; }
+.detail-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; flex: 0 1 auto; gap: 9px; }
 .retired-banner { color: var(--danger); background: rgba(217, 71, 71, 0.08); border: 1px solid rgba(217, 71, 71, 0.14); }
 .retired-banner div { display: flex; flex-direction: column; gap: 3px; }
 .retired-banner strong { font-size: 12px; }
