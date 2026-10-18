@@ -27,14 +27,17 @@ test('active-downtime loading goes through normalizeActiveDowntime, not the gene
   assert.match(service, /loadActiveDowntime = async \(machineId\) => normalizeActiveDowntime\(/)
 })
 
-test('Machine Detail derives status from describeMachineStatus and never keeps a closed event as active', () => {
+test('Machine Detail derives status from describeMachineStatus and stays read-only (mutations live in Maintenance)', () => {
   assert.match(section, /describeMachineStatus\(active, timezone\)/)
-  assert.match(section, /await endDowntime\(active\.id, payload\)\s*\n\s*setActive\(null\)/)
-  assert.match(section, /disabled=\{!status\.canComplete\}/)
+  assert.doesNotMatch(section, /endDowntime|startDowntime|addDowntimeNote|StartDowntimeDialog|EndDowntimeDialog/)
+})
+
+test('a closed event can never stay shown as active: Kondisi Mesin re-reads the server list after every mutation', () => {
+  for (const call of ['startDowntime', 'addDowntimeNote', 'endDowntime']) assert.match(condition, new RegExp(`await ${call}\\([^\\n]*\\)\\s*\\n[^\\n]*\\n?\\s*await refresh\\(\\)`))
 })
 
 test('navigation: no standalone Downtime item; Kondisi Mesin reuses the 4-column KPI grid with the four required metrics', () => {
   assert.doesNotMatch(sidebar, /path: '\/downtime'/)
   assert.match(condition, /report-kpi-grid compact/)
-  for (const label of ['Ketersediaan Mesin', 'Downtime Produksi', 'Jumlah Gangguan', 'Mesin Berhenti', 'Mesin Perlu Perhatian']) assert.match(condition, new RegExp(label))
+  for (const label of ['Ketersediaan Mesin', 'Downtime Produksi', 'Jumlah Gangguan', 'Mesin Berhenti', 'Downtime Aktif', 'Riwayat Downtime']) assert.match(condition, new RegExp(label))
 })

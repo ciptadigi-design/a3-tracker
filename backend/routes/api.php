@@ -141,6 +141,7 @@ Route::prefix('v1')->middleware('request.id')->group(function () {
             Route::put('operations/branches/{branch}/production-schedule', [ProductionScheduleController::class, 'putBranchSchedule']);
             Route::get('operations/machines/{machine}/production-schedule-override', [ProductionScheduleController::class, 'showMachineOverride']);
             Route::put('operations/machines/{machine}/production-schedule-override', [ProductionScheduleController::class, 'putMachineOverride']);
+            Route::delete('operations/machines/{machine}/production-schedule-override', [ProductionScheduleController::class, 'deleteMachineOverride']);
             Route::get('operations/branches/{branch}/production-schedule/exceptions', [ProductionScheduleController::class, 'listExceptions']);
             Route::post('operations/branches/{branch}/production-schedule/exceptions', [ProductionScheduleController::class, 'createException']);
             Route::delete('operations/production-schedule/exceptions/{exception}', [ProductionScheduleController::class, 'deleteException']);

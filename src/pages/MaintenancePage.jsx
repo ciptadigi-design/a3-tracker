@@ -94,7 +94,7 @@ export function MaintenancePage({ path, search, navigate }) {
         <button type="button" role="tab" aria-selected={tab === 'documents'} className={tab === 'documents' ? 'selected' : ''} onClick={() => navigate('/maintenance/documents')}><FileText size={16} /> Dokumen</button>
       </nav>
 
-      {tab === 'machine-condition' && canViewMachineCondition && <MachineConditionSection navigate={navigate} />}
+      {tab === 'machine-condition' && canViewMachineCondition && <MachineConditionSection key={`${initialMachineId}:${searchParams.get('action') || ''}`} navigate={navigate} initialMachineId={initialMachineId} initialAction={searchParams.get('action') || ''} />}
       {tab === 'troubleshooting' && <TroubleshootingSection key={initialQuery || 'empty'} initialQuery={initialQuery} initialMachineId={initialMachineId} accountId={account?.id} branchId={branch?.id} navigate={navigate} />}
       {tab === 'tickets' && <TicketsSection account={account} branch={branch} can={can} navigate={navigate} />}
       {tab === 'documents' && <DocumentRepositorySection />}

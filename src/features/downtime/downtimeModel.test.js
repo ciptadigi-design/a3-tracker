@@ -40,15 +40,16 @@ test('currentMonthPeriod returns the full calendar month in the given timezone',
 })
 
 test('cause label falls back to the raw value for an unknown cause', () => {
-  assert.equal(causeLabel('mechanical'), 'Mechanical Failure')
+  assert.equal(causeLabel('mechanical'), 'Kerusakan Mekanis')
   assert.equal(causeLabel('unknown_cause'), 'unknown_cause')
 })
 
 test('mapDowntimeError gives an understandable message per status', () => {
-  assert.match(mapDowntimeError({ status: 409 }), /already has an active downtime/)
-  assert.match(mapDowntimeError({ status: 403 }), /not authorized/)
+  assert.match(mapDowntimeError({ status: 409 }), /sudah memiliki downtime aktif/)
+  assert.match(mapDowntimeError({ status: 403 }), /tidak diizinkan/)
   assert.match(mapDowntimeError({ status: 422, errors: { cause: ['Cause is required.'] } }), /Cause is required/)
-  assert.match(mapDowntimeError({ status: 500 }), /could not be completed/)
+  assert.match(mapDowntimeError({ status: 422 }), /Periksa isian/)
+  assert.match(mapDowntimeError({ status: 500 }), /tidak dapat diselesaikan/)
 })
 
 test('newClientRequestId produces a non-empty, distinct token each call, to prevent duplicate submissions', () => {
@@ -89,7 +90,7 @@ test('a stopped machine with a missing or invalid start shows "Tidak tersedia", 
   const valid = describeMachineStatus(activeEvent, 'Asia/Jakarta')
   assert.equal(valid.canComplete, true)
   assert.doesNotMatch(valid.durationText, /NaN|Tidak tersedia/)
-  assert.equal(valid.causeText, 'Mechanical Failure')
+  assert.equal(valid.causeText, 'Kerusakan Mekanis')
   assert.equal(valid.errorCode, 'C-3913')
 })
 

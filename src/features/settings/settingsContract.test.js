@@ -11,10 +11,10 @@ const accountPage = readFileSync(new URL('../../pages/MyAccountPage.jsx', import
 const accountService = readFileSync(new URL('../../services/supabase/account.js', import.meta.url), 'utf8')
 const css = readFileSync(new URL('../../App.css', import.meta.url), 'utf8')
 
-test('Settings route and six-section control-plane IA are active', () => {
+test('Settings route and seven-section control-plane IA are active', () => {
   assert.match(app, /path === '\/settings'.*SettingsPage/)
   assert.doesNotMatch(app, /'\/settings': \['Settings'/)
-  for (const label of ['Workspace', 'Branches', 'Members & Roles', 'Permissions', 'Operations', 'Machine Models']) assert.match(page, new RegExp(label.replace('&', '\\&')))
+  for (const label of ['Workspace', 'Branches', 'Members & Roles', 'Permissions', 'Operations', 'Jadwal Operasional', 'Machine Models']) assert.match(page, new RegExp(label.replace('&', '\\&')))
   assert.match(sidebar, /Settings, active: true/)
   assert.match(sidebar, /can\('settings.view'\) && <NavLink/)
   assert.doesNotMatch(sidebar, /membership\?\.role|\['owner'/)
@@ -25,7 +25,8 @@ test('Settings route and six-section control-plane IA are active', () => {
 test('Advanced Machine Economics is de-scoped from the active Settings navigation, but stays dormant in source', () => {
   const sectionsLiteral = page.match(/const sections = \[[\s\S]*?\]\n/)?.[0] ?? ''
   assert.doesNotMatch(sectionsLiteral, /'advanced'/, 'Advanced must not be a selectable Settings section')
-  assert.equal((sectionsLiteral.match(/\[\s*'\w+',/g) ?? []).length, 6, 'exactly six sections should remain navigable')
+  assert.equal((sectionsLiteral.match(/\[\s*'\w+',/g) ?? []).length, 7, 'exactly seven sections should remain navigable (six + Jadwal Operasional)')
+  assert.match(sectionsLiteral, /\['schedule', 'Jadwal Operasional', CalendarClock, 'downtime\.schedule\.manage'\]/)
 
   // A stale persisted { section: 'advanced' } must not strand the user: validSection
   // rejects any section not present in the (now Advanced-less) sections array, and

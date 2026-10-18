@@ -15,4 +15,8 @@ export const laravelDowntime = {
   putBranchSchedule: (branchId, days) => apiClient.put(`/operations/branches/${branchId}/production-schedule`, { days }),
   machineOverride: (machineId) => apiClient.get(`/operations/machines/${machineId}/production-schedule-override`),
   putMachineOverride: (machineId, days) => apiClient.put(`/operations/machines/${machineId}/production-schedule-override`, { days }),
+  deleteMachineOverride: (machineId) => apiClient.delete(`/operations/machines/${machineId}/production-schedule-override`),
+  scheduleExceptions: (branchId, year, month) => apiClient.get(`/operations/branches/${branchId}/production-schedule/exceptions?year=${year}&month=${month}`),
+  createScheduleException: (branchId, payload) => apiClient.post(`/operations/branches/${branchId}/production-schedule/exceptions`, payload),
+  deleteScheduleException: (exceptionId) => apiClient.delete(`/operations/production-schedule/exceptions/${exceptionId}`),
 }

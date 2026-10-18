@@ -117,7 +117,8 @@ test('M2.13.2: Machine Models remains a distinct Settings section, no new sideba
   // always a capitalized identifier, distinguishing this array from the
   // unrelated `capabilities` tuples (['key', 'label', booleanLiteral]).
   const sectionIds = [...settings.matchAll(/\['(\w+)', '[^']+', ([A-Z]\w*), '[^']+'\]/g)].map((match) => match[1])
-  assert.deepEqual(sectionIds, ['workspace', 'branches', 'members', 'permissions', 'operations', 'models'])
+  // Phase 2 added the 'schedule' (Jadwal Operasional) section, gated by downtime.schedule.manage.
+  assert.deepEqual(sectionIds, ['workspace', 'branches', 'members', 'permissions', 'operations', 'schedule', 'models'])
 })
 
 test('M2.13.2: the Click Targets gateway respects existing Settings authorization (hidden/read-only when not authorized)', () => {

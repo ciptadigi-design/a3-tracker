@@ -2094,7 +2094,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .maintenance-tabs button { flex: 0 0 auto; white-space: nowrap; }
 .machine-condition-section .report-kpi strong { font-size: 16px; }
 .machine-condition-section { min-width: 0; display: grid; gap: 16px; }
-.machine-condition-filters { grid-template-columns: minmax(190px, 320px) minmax(0, 1fr) auto; }
+.machine-condition-filters { grid-template-columns: minmax(170px, 1fr) minmax(170px, 1fr) minmax(150px, 220px) auto; }
 .machine-condition-note { margin: 0 2px; color: var(--text-muted); font-size: 10px; }
 .downtime-attention { min-width: 0; display: grid; gap: 14px; padding: 22px 26px; border-radius: 28px; }
 .downtime-attention > header h2 { margin: 7px 0 0; font-size: 18px; letter-spacing: -0.03em; }
@@ -2116,17 +2116,72 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .machine-health-stopped-list { list-style: none; margin: 18px 0 0; padding: 0; display: grid; gap: 8px; }
 .machine-health-stopped-list li { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 13px; border-radius: 13px; background: var(--surface-muted); font-size: 12px; font-weight: 650; }
 
+/* Maintenance > Kondisi Mesin workflow: active entries, history, report action */
+.downtime-card-header { display: flex; align-items: flex-end; justify-content: space-between; gap: 14px; }
+.downtime-card-header > div { min-width: 0; }
+.downtime-card-header h2 { margin: 7px 0 0; font-size: 18px; letter-spacing: -0.03em; }
+.downtime-entry-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+.downtime-entry-note { overflow-wrap: anywhere; }
+.downtime-history-list li { grid-template-columns: minmax(0, 1.1fr) minmax(0, 2fr) auto; }
+.downtime-history-filter { display: grid; gap: 5px; min-width: 150px; }
+.downtime-history-filter > span { color: var(--text-muted); font-size: 9px; font-weight: 780; letter-spacing: .06em; text-transform: uppercase; }
+.downtime-history-filter select { min-height: 38px; padding: 0 11px; color: var(--text); border: 1px solid var(--border-subtle); border-radius: 11px; background: var(--surface-muted); font: inherit; font-size: 11px; }
+.downtime-history-more { justify-self: center; }
+
+/* Settings > Jadwal Operasional (cards, fields and buttons come from the Settings design system) */
+.schedule-tabs { margin: 0 20px; max-width: calc(100% - 40px); overflow-x: auto; }
+.schedule-tabs button { flex: 0 0 auto; white-space: nowrap; }
+.schedule-exception-form { display: grid; gap: 14px; }
+.schedule-body { min-width: 0; display: grid; gap: 14px; padding: 18px 20px 22px; }
+.schedule-panel { min-width: 0; display: grid; gap: 14px; }
+.schedule-pad { padding: 18px 20px; }
+.schedule-hint { margin: 0; color: var(--text-muted); font-size: 11px; line-height: 1.5; }
+.schedule-banner { margin: 0; padding: 12px 14px; color: var(--warning); border-radius: 13px; background: var(--amber-soft); font-size: 11px; font-weight: 650; }
+.schedule-week { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.schedule-week li { min-width: 0; display: grid; grid-template-columns: minmax(150px, 220px) minmax(0, 1fr); align-items: center; gap: 14px; padding: 10px 14px; border-radius: 15px; background: var(--surface-muted); }
+.schedule-week li.schedule-day-off { opacity: .78; }
+.schedule-day-toggle, .schedule-check { min-width: 0; display: flex; align-items: center; gap: 9px; font-size: 11px; }
+.schedule-day-toggle span { color: var(--text-muted); font-size: 10px; }
+.schedule-day-toggle input, .schedule-check input { width: 16px; height: 16px; flex: 0 0 auto; }
+.schedule-day-times { min-width: 0; display: grid; grid-template-columns: minmax(110px, 150px) minmax(110px, 150px) minmax(0, 1fr); align-items: end; gap: 12px; }
+.schedule-day-times .form-field input { min-height: 40px; }
+.schedule-actions { display: flex; justify-content: flex-end; }
+.schedule-list-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; }
+.schedule-list-head h3 { margin: 0; font-size: 14px; }
+.schedule-month { display: grid; gap: 5px; }
+.schedule-month > span { color: var(--text-muted); font-size: 9px; font-weight: 780; letter-spacing: .06em; text-transform: uppercase; }
+.schedule-month input { min-height: 38px; padding: 0 11px; color: var(--text); border: 1px solid var(--border-subtle); border-radius: 11px; background: var(--surface-muted); font: inherit; font-size: 11px; }
+.schedule-exception-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.schedule-exception-list li { min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 14px; padding: 11px 14px; border-radius: 15px; background: var(--surface-muted); }
+.schedule-exception-list li > div { min-width: 0; display: grid; gap: 3px; }
+.schedule-exception-list strong { font-size: 12px; }
+.schedule-exception-list li > div > span { color: var(--text-muted); font-size: 10px; overflow-wrap: anywhere; }
+.schedule-exception-window { font-size: 11px; font-weight: 700; font-variant-numeric: tabular-nums; }
+
 @media (max-width: 1180px) {
   .machine-condition-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .machine-condition-filters .machine-cost-period-readout { grid-column: auto; }
   .machine-condition-filters > button { grid-column: 1 / -1; }
+  .downtime-attention-list li, .downtime-history-list li { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .downtime-entry-actions { grid-column: 1 / -1; justify-content: flex-start; }
 }
 
 @media (max-width: 760px) {
   .machine-condition-filters { grid-template-columns: minmax(0, 1fr); }
   .downtime-section, .downtime-attention { padding: 18px 16px; border-radius: 22px; }
-  .downtime-attention-list li { grid-template-columns: minmax(0, 1fr); gap: 10px; }
+  .downtime-attention-list li, .downtime-history-list li { grid-template-columns: minmax(0, 1fr); gap: 10px; }
   .downtime-attention-list li > button { width: 100%; }
+  .downtime-card-header { flex-direction: column; align-items: stretch; }
+  .downtime-card-header > button { width: 100%; }
+  .downtime-entry-actions > button { flex: 1 1 100%; }
+  .schedule-week li { grid-template-columns: minmax(0, 1fr); gap: 10px; }
+  .schedule-day-times { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .schedule-day-times .schedule-check { grid-column: 1 / -1; }
+  .schedule-body { padding: 16px; }
+  .schedule-tabs { margin: 0 16px; max-width: calc(100% - 32px); }
+  .schedule-exception-list li { grid-template-columns: minmax(0, 1fr) auto; }
+  .schedule-exception-window { grid-column: 1; }
+  .schedule-actions > button { width: 100%; }
 }
 
 @media (max-width: 520px) {

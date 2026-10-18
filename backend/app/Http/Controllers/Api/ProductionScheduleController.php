@@ -21,16 +21,27 @@ class ProductionScheduleController extends Controller
     public function __construct(private BranchAccessResolver $branchAccess, private MachineAccessResolver $machineAccess) {}
 
     private const DAY_RULES = [
-        '*.day_of_week' => 'required|integer|min:0|max:6',
-        '*.is_operating' => 'required|boolean',
-        '*.start_time' => 'nullable|date_format:H:i',
-        '*.end_time' => 'nullable|date_format:H:i',
-        '*.crosses_midnight' => 'nullable|boolean',
+        'days.*.day_of_week' => 'required|integer|min:0|max:6',
+        'days.*.is_operating' => 'required|boolean',
+        'days.*.start_time' => 'nullable|date_format:H:i',
+        'days.*.end_time' => 'nullable|date_format:H:i',
+        'days.*.crosses_midnight' => 'nullable|boolean',
     ];
 
     private function assertBranchManage(Request $r, Branch $branch): void
     {
         abort_unless($this->branchAccess->canAccess($r->user(), $branch) && app(EffectiveCapabilityResolver::class)->allows($r->user(), $branch->account, 'downtime.schedule.manage'), 403);
+    }
+
+    /** An operating window must end after it starts (unless it crosses midnight, where start may not equal end). */
+    private function assertTimeOrder(?string $start, ?string $end, bool $crossesMidnight, string $field): void
+    {
+        if (! $start || ! $end) {
+            return;
+        }
+        if ($crossesMidnight ? $start === $end : $end <= $start) {
+            throw ValidationException::withMessages([$field => 'End time must be after start time (or mark the window as crossing midnight).']);
+        }
     }
 
     private function validateDays(Request $r): array
@@ -40,6 +51,9 @@ class ProductionScheduleController extends Controller
         foreach ($v['days'] as $day) {
             if (($day['is_operating'] ?? false) && (empty($day['start_time']) || empty($day['end_time']))) {
                 throw ValidationException::withMessages(['days' => 'start_time and end_time are required for an operating day.']);
+            }
+            if ($day['is_operating'] ?? false) {
+                $this->assertTimeOrder($day['start_time'], $day['end_time'], (bool) ($day['crosses_midnight'] ?? false), 'days');
             }
             $seen[$day['day_of_week']] = true;
         }
@@ -113,6 +127,23 @@ class ProductionScheduleController extends Controller
         });
     }
 
+    /** Disables a machine's override so it inherits the branch schedule again. */
+    public function deleteMachineOverride(Request $r, Machine $machine)
+    {
+        abort_unless($this->machineAccess->canAccess($r->user(), $machine) && app(EffectiveCapabilityResolver::class)->allows($r->user(), $machine->account, 'downtime.schedule.manage'), 403);
+
+        return DB::transaction(function () use ($r, $machine) {
+            $rows = MachineProductionScheduleOverride::where('machine_id', $machine->id)->lockForUpdate()->get();
+            foreach ($rows as $row) {
+                $before = app(GovernanceAudit::class)->snapshot($row);
+                $row->delete();
+                app(GovernanceAudit::class)->record($r->user(), 'machine_production_schedule_override.removed', 'machine_production_schedule_override', $row->id, $machine->account_id, ['changes' => $before]);
+            }
+
+            return response()->json(['data' => ['machine_id' => $machine->id, 'removed' => $rows->count()]]);
+        });
+    }
+
     public function listExceptions(Request $r, Branch $branch)
     {
         abort_unless($this->branchAccess->canAccess($r->user(), $branch), 403);
@@ -139,6 +170,9 @@ class ProductionScheduleController extends Controller
         if ($d['is_operating'] && (empty($d['override_start_time']) || empty($d['override_end_time']))) {
             throw ValidationException::withMessages(['override_start_time' => 'An operating exception requires both override start and end times.']);
         }
+        if ($d['is_operating']) {
+            $this->assertTimeOrder($d['override_start_time'], $d['override_end_time'], (bool) ($d['crosses_midnight'] ?? false), 'override_start_time');
+        }
         if (! empty($d['machine_id'])) {
             $machine = Machine::where('id', $d['machine_id'])->where('branch_id', $branch->id)->firstOrFail();
         }
@@ -148,7 +182,7 @@ class ProductionScheduleController extends Controller
             // by a DB constraint, so this check-then-insert is an accepted trade-off
             // for this low-frequency, admin-entered data.
             $existing = ProductionScheduleException::where('branch_id', $branch->id)
-                ->where('exception_date', $d['exception_date'])
+                ->whereDate('exception_date', $d['exception_date'])
                 ->where(fn ($q) => empty($d['machine_id']) ? $q->whereNull('machine_id') : $q->where('machine_id', $d['machine_id']))
                 ->lockForUpdate()->first();
             if ($existing) {

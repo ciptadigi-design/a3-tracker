@@ -1,13 +1,11 @@
-// Categorical labels stay in English, matching maintenanceUtils.js's
-// ticketTypeLabels/ticketPriorityLabels convention - operator-facing prose
-// is Indonesian, but enum/category labels are English everywhere they're
-// shown, including the English-only Owner Overview page.
+// Operator-facing workflow: every label is Indonesian (the stored cause values
+// stay the stable English enum keys the API already accepts).
 export const downtimeCauses = [
-  { value: 'error_code', label: 'Error Code' },
-  { value: 'mechanical', label: 'Mechanical Failure' },
-  { value: 'consumable', label: 'Consumable Empty' },
-  { value: 'scheduled_maintenance', label: 'Scheduled Maintenance' },
-  { value: 'other', label: 'Other' },
+  { value: 'error_code', label: 'Kode Error' },
+  { value: 'mechanical', label: 'Kerusakan Mekanis' },
+  { value: 'consumable', label: 'Consumable Habis' },
+  { value: 'scheduled_maintenance', label: 'Maintenance Terjadwal' },
+  { value: 'other', label: 'Lainnya' },
 ]
 
 export function causeLabel(cause) {
@@ -117,12 +115,139 @@ export function currentMonthPeriod(timezone = 'UTC') {
 }
 
 export function mapDowntimeError(error) {
-  if (error?.status === 409) return 'This machine already has an active downtime event, or this event is already closed. Refresh and try again.'
-  if (error?.status === 403) return 'Your role is not authorized to perform this downtime action.'
-  if (error?.status === 422) return error?.errors ? Object.values(error.errors).flat().join(' ') : 'Check the highlighted fields and try again.'
-  return 'The request could not be completed. Please try again.'
+  if (error?.status === 409) return 'Mesin ini sudah memiliki downtime aktif, atau downtime ini sudah ditutup. Muat ulang lalu coba lagi.'
+  if (error?.status === 403) return 'Peran Anda tidak diizinkan melakukan tindakan downtime ini.'
+  if (error?.status === 422) return error?.errors && Object.keys(error.errors).length ? Object.values(error.errors).flat().join(' ') : 'Periksa isian formulir lalu coba lagi.'
+  return 'Permintaan tidak dapat diselesaikan. Silakan coba lagi.'
 }
 
 export function newClientRequestId() {
   return typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`
+}
+
+/** Month input value (YYYY-MM) -> inclusive Y-m-d bounds. */
+export function monthToPeriod(monthValue) {
+  const match = /^(\d{4})-(\d{2})$/.exec(monthValue || '')
+  if (!match) return null
+  const [, year, month] = match
+  const lastDay = new Date(Number(year), Number(month), 0).getDate()
+  return { periodStart: `${year}-${month}-01`, periodEnd: `${year}-${month}-${String(lastDay).padStart(2, '0')}` }
+}
+
+export function currentMonthValue(timezone = 'UTC') {
+  const { periodStart } = currentMonthPeriod(timezone)
+  return periodStart.slice(0, 7)
+}
+
+/** Status of a downtime history row: an event without an end is still active. */
+export function describeEventStatus(event) {
+  return event?.actual_end_at ? { state: 'closed', label: 'Selesai' } : { state: 'active', label: 'Berhenti' }
+}
+
+/** Elapsed/production downtime for a history row, preferring the server's numbers. */
+export function describeEventDurations(event) {
+  const elapsed = Number.isFinite(event?.elapsed_minutes) ? event.elapsed_minutes : elapsedMinutesBetween(event?.actual_start_at, event?.actual_end_at)
+  return {
+    elapsedText: elapsed == null ? UNAVAILABLE_LABEL : formatElapsedMinutes(elapsed),
+    productionText: event?.production_downtime_minutes == null ? NOT_CONFIGURED_LABEL : formatElapsedMinutes(event.production_downtime_minutes),
+  }
+}
+
+/** Active-downtime card data for the Kondisi Mesin workspace (Overview attention items and active events share it). */
+export function describeActiveEntry(item, timezone = 'UTC') {
+  const status = describeMachineStatus(item, timezone)
+  const note = item?.latest_note?.note || null
+  return { ...status, latestNote: note, noteAt: item?.latest_note?.occurred_at ? formatDowntimeDateTime(item.latest_note.occurred_at, timezone) : null }
+}
+
+/** Deep link from Machine Detail into the Maintenance workspace with the machine preselected. */
+export function machineConditionPath(machineId, action = 'manage') {
+  return `/maintenance/machine-condition?machine=${encodeURIComponent(machineId)}&action=${action === 'report' ? 'report' : 'manage'}`
+}
+
+/** Machine already has an active event: block a second report client-side (the API also returns 409). */
+export function hasActiveDowntime(activeEntries, machineId) {
+  return (activeEntries || []).some((item) => item.machine_id === machineId)
+}
+
+// --- Operational schedule (Settings > Jadwal Operasional) ---------------------
+
+export const WEEK_DAYS = [
+  { day: 1, label: 'Senin' }, { day: 2, label: 'Selasa' }, { day: 3, label: 'Rabu' }, { day: 4, label: 'Kamis' },
+  { day: 5, label: 'Jumat' }, { day: 6, label: 'Sabtu' }, { day: 0, label: 'Minggu' },
+]
+
+export const exceptionTypes = [
+  { value: 'holiday', label: 'Libur Produksi', operating: false },
+  { value: 'closed', label: 'Tutup', operating: false },
+  { value: 'overtime', label: 'Lembur', operating: true },
+  { value: 'extra_shift', label: 'Shift Tambahan', operating: true },
+  { value: 'other', label: 'Perubahan Jam Operasional', operating: true },
+]
+
+export const exceptionTypeLabel = (type) => exceptionTypes.find((item) => item.value === type)?.label || type
+
+const trimTime = (value) => (typeof value === 'string' ? value.slice(0, 5) : '')
+
+/** A new, unconfigured week: every day non-operating and EMPTY times - no invented operating hours. */
+export function emptyWeek() {
+  return WEEK_DAYS.map(({ day }) => ({ day_of_week: day, is_operating: false, start_time: '', end_time: '', crosses_midnight: false }))
+}
+
+/** Saved rows -> editable week (always 7 rows, Monday first). */
+export function weekFromRows(rows) {
+  const byDay = new Map((rows || []).map((row) => [Number(row.day_of_week), row]))
+  return WEEK_DAYS.map(({ day }) => {
+    const row = byDay.get(day)
+    return row ? { day_of_week: day, is_operating: Boolean(row.is_operating), start_time: trimTime(row.start_time), end_time: trimTime(row.end_time), crosses_midnight: Boolean(row.crosses_midnight) } : { day_of_week: day, is_operating: false, start_time: '', end_time: '', crosses_midnight: false }
+  })
+}
+
+/** Returns an Indonesian error string, or null when the week can be saved. */
+export function validateWeek(week) {
+  if (!Array.isArray(week) || week.length !== 7) return 'Jadwal harus mencakup tujuh hari.'
+  for (const row of week) {
+    if (!row.is_operating) continue
+    const label = WEEK_DAYS.find((item) => item.day === row.day_of_week)?.label
+    if (!row.start_time || !row.end_time) return `${label}: isi jam mulai dan jam selesai, atau tandai hari non-operasional.`
+    if (row.crosses_midnight ? row.start_time === row.end_time : row.end_time <= row.start_time) return `${label}: jam selesai harus setelah jam mulai (atau tandai melewati tengah malam).`
+  }
+  if (!week.some((row) => row.is_operating)) return 'Tandai minimal satu hari operasional.'
+  return null
+}
+
+export function weekToPayload(week) {
+  return week.map((row) => ({
+    day_of_week: row.day_of_week,
+    is_operating: row.is_operating,
+    start_time: row.is_operating ? row.start_time : null,
+    end_time: row.is_operating ? row.end_time : null,
+    crosses_midnight: row.is_operating ? Boolean(row.crosses_midnight) : false,
+  }))
+}
+
+export function validateException(values) {
+  if (!values.exception_date) return 'Pilih tanggal pengecualian.'
+  const type = exceptionTypes.find((item) => item.value === values.type)
+  if (!type) return 'Pilih jenis pengecualian.'
+  if (type.operating) {
+    if (!values.override_start_time || !values.override_end_time) return 'Isi jam mulai dan jam selesai untuk hari yang tetap beroperasi.'
+    if (values.crosses_midnight ? values.override_start_time === values.override_end_time : values.override_end_time <= values.override_start_time) return 'Jam selesai harus setelah jam mulai (atau tandai melewati tengah malam).'
+  }
+  return null
+}
+
+/** API payload for an exception. machine_id stays null for a branch-wide exception - never broadened silently. */
+export function exceptionToPayload(values) {
+  const type = exceptionTypes.find((item) => item.value === values.type)
+  return {
+    machine_id: values.machine_id || null,
+    exception_date: values.exception_date,
+    type: values.type,
+    is_operating: Boolean(type?.operating),
+    override_start_time: type?.operating ? values.override_start_time : null,
+    override_end_time: type?.operating ? values.override_end_time : null,
+    crosses_midnight: type?.operating ? Boolean(values.crosses_midnight) : false,
+    note: values.note?.trim() || null,
+  }
 }

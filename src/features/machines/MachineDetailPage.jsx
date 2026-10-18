@@ -91,7 +91,7 @@ export function MachineDetailPage({ machineId, navigate }) {
         <DetailItem icon={FileText} label="Notes" value={machine.notes || 'No notes recorded'} />
       </section>
 
-      {can('downtime.view') && <DowntimeSection machine={machine} timezone={effectiveTimezone === 'Not configured' ? 'UTC' : effectiveTimezone} canManage={can('downtime.manage')} canBackdate={can('downtime.backdate')} />}
+      {can('downtime.view') && <DowntimeSection machine={machine} timezone={effectiveTimezone === 'Not configured' ? 'UTC' : effectiveTimezone} canManage={can('downtime.manage')} canOpenMaintenance={can('maintenance.view')} navigate={navigate} />}
 
       {can('maintenance.view') && <MachineMaintenanceHistory machine={machine} timezone={effectiveTimezone === 'Not configured' ? 'UTC' : effectiveTimezone} canCreateTicket={can('maintenance.ticket.create')} navigate={navigate} onCreateTicket={() => setShowCreateTicket(true)} />}
 
