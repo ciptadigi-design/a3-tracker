@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
-import { AlertTriangle, CheckCircle2, ClipboardPlus, LoaderCircle, PowerOff, RefreshCcw, Timer } from 'lucide-react'
+import { AlertTriangle, CheckCircle2, ClipboardPlus, LoaderCircle, PowerOff, RefreshCcw } from 'lucide-react'
 import { userErrorMessage } from '../../lib/appErrors.js'
 import { addDowntimeNote, endDowntime, loadActiveDowntime, startDowntime } from '../../services/downtime.js'
-import { causeLabel, elapsedMinutesBetween, formatDowntimeDateTime, formatElapsedMinutes, mapDowntimeError, newClientRequestId } from './downtimeModel.js'
+import { describeMachineStatus, elapsedMinutesBetween, formatDowntimeDateTime, formatElapsedMinutes, mapDowntimeError, newClientRequestId, UNAVAILABLE_LABEL } from './downtimeModel.js'
 import { EndDowntimeDialog } from './EndDowntimeDialog.jsx'
 import { StartDowntimeDialog } from './StartDowntimeDialog.jsx'
 
@@ -12,7 +12,7 @@ function LiveElapsed({ startAt }) {
     const interval = setInterval(() => setMinutes(elapsedMinutesBetween(startAt)), 30000)
     return () => clearInterval(interval)
   }, [startAt])
-  return <strong>{formatElapsedMinutes(minutes)}</strong>
+  return <>{minutes == null ? UNAVAILABLE_LABEL : formatElapsedMinutes(minutes)}</>
 }
 
 export function DowntimeSection({ machine, timezone, canManage, canBackdate }) {
@@ -63,29 +63,38 @@ export function DowntimeSection({ machine, timezone, canManage, canBackdate }) {
   }
 
   async function handleEnd(payload) {
-    const closed = await endDowntime(active.id, payload)
-    setActive(closed)
+    await endDowntime(active.id, payload)
+    setActive(null)
   }
+
+  const status = describeMachineStatus(active, timezone)
+  const isStopped = status.state === 'stopped'
 
   return (
     <section className="downtime-section glass-surface" aria-labelledby="downtime-section-title">
-      <header className="downtime-status-card-header">
-        <div><span className="card-kicker">Status mesin</span><h2 id="downtime-section-title">{isLoading && !active ? 'Memuat…' : active ? 'Berhenti' : 'Normal'}</h2></div>
-        <button className="icon-button" type="button" onClick={refresh} disabled={isLoading} aria-label="Refresh status mesin"><RefreshCcw size={17} className={isLoading ? 'spin' : ''} /></button>
+      <header className="maintenance-history-header">
+        <div>
+          <span className="card-kicker" id="downtime-section-title">Status Mesin</span>
+          <div className="downtime-status-line">
+            {isLoading && !active ? <span className="downtime-status-loading">Memuat…</span> : error ? null : <span className={`machine-status ${isStopped ? 'machine-status-down' : ''}`}>{status.label}</span>}
+          </div>
+        </div>
+        <div className="maintenance-history-header-actions"><button className="icon-button" type="button" onClick={refresh} disabled={isLoading} aria-label="Muat ulang status mesin"><RefreshCcw size={17} className={isLoading ? 'spin' : ''} /></button></div>
       </header>
 
-      {isLoading && !active ? <div className="maintenance-history-state"><LoaderCircle className="spin" size={25} /><strong>Memuat status mesin…</strong></div>
+      {isLoading && !active ? <div className="downtime-status-state"><LoaderCircle className="spin" size={20} /><span>Memuat status mesin…</span></div>
         : error ? <div className="embedded-error" role="alert"><strong>Status mesin tidak dapat dimuat.</strong><span>{userErrorMessage(error, 'Coba lagi beberapa saat.')}</span><button className="secondary-button" type="button" onClick={refresh}>Coba lagi</button></div>
-          : active ? (
-            <div className="downtime-active-card downtime-active-card-compact">
-              <div className="downtime-active-status"><span className="downtime-status-pill downtime-status-active"><Timer size={16} /> Berhenti</span><LiveElapsed startAt={active.actual_start_at} /></div>
-              <dl className="downtime-active-meta">
-                <div><dt>Waktu mulai</dt><dd>{formatDowntimeDateTime(active.actual_start_at, timezone)}</dd></div>
-                <div><dt>Penyebab</dt><dd>{causeLabel(active.cause)}</dd></div>
-                {active.error_code_text && <div><dt>Kode error</dt><dd>{active.error_code_text}</dd></div>}
+          : isStopped ? (
+            <>
+              <dl className="maintenance-history-summary downtime-status-summary">
+                <div><dt>Mulai</dt><dd>{status.startText}</dd></div>
+                <div><dt>Penyebab</dt><dd>{status.causeText}</dd></div>
+                <div><dt>Durasi</dt><dd>{status.canComplete ? <LiveElapsed startAt={active.actual_start_at} /> : status.durationText}</dd></div>
+                {status.errorCode && <div><dt>Kode error</dt><dd>{status.errorCode}</dd></div>}
                 {active.description && <div><dt>Deskripsi</dt><dd>{active.description}</dd></div>}
-                {active.is_backdated && <div><dt /><dd><span className="downtime-backdated-flag"><AlertTriangle size={14} /> Waktu mulai dicatat historis (backdated)</span></dd></div>}
               </dl>
+              {!status.canComplete && <div className="downtime-status-notice" role="alert"><AlertTriangle size={16} /><span>Waktu mulai downtime ini tidak valid, sehingga tidak dapat diselesaikan dari sini. Hubungi admin untuk memperbaiki data.</span></div>}
+              {active.is_backdated && <span className="downtime-backdated-flag"><AlertTriangle size={14} /> Waktu mulai dicatat historis (backdated)</span>}
 
               {(active.notes || []).length > 0 && (
                 <div className="downtime-notes">
@@ -94,32 +103,32 @@ export function DowntimeSection({ machine, timezone, canManage, canBackdate }) {
               )}
 
               {canManage && (
-                <div className="downtime-status-card-actions">
-                  {showNoteForm ? (
-                    <form className="downtime-note-form" onSubmit={handleAddNote}>
-                      <textarea value={noteText} onChange={(event) => setNoteText(event.target.value)} placeholder="Tambahkan catatan…" rows={2} disabled={isSubmittingNote} autoFocus />
-                      {noteError && <div className="form-error" role="alert"><AlertTriangle size={16} />{noteError}</div>}
-                      <div className="downtime-note-form-actions">
-                        <button className="secondary-button" type="button" onClick={() => { setShowNoteForm(false); setNoteText(''); setNoteError(null) }} disabled={isSubmittingNote}>Batalkan</button>
-                        <button className="secondary-button" type="submit" disabled={isSubmittingNote || !noteText.trim()}>{isSubmittingNote ? 'Menyimpan…' : 'Simpan Catatan'}</button>
-                      </div>
-                    </form>
-                  ) : (
+                showNoteForm ? (
+                  <form className="downtime-note-form" onSubmit={handleAddNote}>
+                    <textarea value={noteText} onChange={(event) => setNoteText(event.target.value)} placeholder="Tambahkan catatan…" rows={2} disabled={isSubmittingNote} autoFocus />
+                    {noteError && <div className="form-error" role="alert"><AlertTriangle size={16} />{noteError}</div>}
+                    <div className="downtime-note-form-actions">
+                      <button className="secondary-button" type="button" onClick={() => { setShowNoteForm(false); setNoteText(''); setNoteError(null) }} disabled={isSubmittingNote}>Batalkan</button>
+                      <button className="primary-button" type="submit" disabled={isSubmittingNote || !noteText.trim()}>{isSubmittingNote ? 'Menyimpan…' : 'Simpan Catatan'}</button>
+                    </div>
+                  </form>
+                ) : (
+                  <div className="downtime-status-card-actions">
                     <button className="secondary-button" type="button" onClick={() => setShowNoteForm(true)}><ClipboardPlus size={16} /> Tambah Catatan</button>
-                  )}
-                  <button className="primary-button" type="button" onClick={() => setShowEnd(true)}><CheckCircle2 size={17} /> Mesin Sudah Normal</button>
-                </div>
+                    <button className="primary-button" type="button" onClick={() => setShowEnd(true)} disabled={!status.canComplete}><CheckCircle2 size={17} /> Mesin Sudah Normal</button>
+                  </div>
+                )
               )}
-            </div>
+            </>
           ) : (
-            <div className="downtime-idle-card">
-              <span className="downtime-status-pill downtime-status-operational"><CheckCircle2 size={16} /> Normal</span>
+            <div className="downtime-status-row">
+              <p className="downtime-status-empty">Tidak ada downtime aktif.</p>
               {canManage && <button className="danger-outline-button" type="button" onClick={() => setShowStart(true)}><PowerOff size={17} /> Laporkan Mesin Berhenti</button>}
             </div>
           )}
 
       {showStart && <StartDowntimeDialog machine={machine} canBackdate={canBackdate} onClose={() => setShowStart(false)} onStart={handleStart} />}
-      {showEnd && active && <EndDowntimeDialog startAt={active.actual_start_at} canBackdate={canBackdate} onClose={() => setShowEnd(false)} onEnd={handleEnd} />}
+      {showEnd && active && status.canComplete && <EndDowntimeDialog startAt={active.actual_start_at} canBackdate={canBackdate} onClose={() => setShowEnd(false)} onEnd={handleEnd} />}
     </section>
   )
 }

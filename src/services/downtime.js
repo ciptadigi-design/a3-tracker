@@ -1,5 +1,6 @@
 import { laravelDowntime } from '../lib/api/downtime.js'
 import { unwrapData } from '../lib/api/apiClient.js'
+import { normalizeActiveDowntime } from '../features/downtime/downtimeModel.js'
 
 function toQueryString(params = {}) {
   const search = new URLSearchParams()
@@ -15,7 +16,7 @@ export const loadDowntimeOverview = async ({ accountId, branchId, machineId, per
 export const loadDowntimeEvents = async ({ machineId, branchId, status, page, perPage } = {}) =>
   unwrapData(await laravelDowntime.events(toQueryString({ machine_id: machineId, branch_id: branchId, status, page, per_page: perPage })))
 
-export const loadActiveDowntime = async (machineId) => unwrapData(await laravelDowntime.active(machineId))
+export const loadActiveDowntime = async (machineId) => normalizeActiveDowntime(await laravelDowntime.active(machineId))
 
 export const startDowntime = async (machineId, payload) => unwrapData(await laravelDowntime.start(machineId, payload))
 

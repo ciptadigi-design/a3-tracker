@@ -1,7 +1,7 @@
 import { PeriodFields } from '../features/periods/PeriodFields.jsx'
 import { createOverviewRequestGate, overviewContextTimezone, overviewInitialPeriod, overviewPeriod, overviewRangeError } from '../features/overview/overviewPeriod.js'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { CalendarRange, CheckCircle2, Gauge, PowerOff, RefreshCcw, Settings as SettingsIcon, TrendingUp } from 'lucide-react'
+import { CalendarRange, Gauge, RefreshCcw, Settings as SettingsIcon, TrendingUp } from 'lucide-react'
 import { PageHeader } from '../components/ui/PageHeader.jsx'
 import { useAuth } from '../features/auth/useAuth.js'
 import { useTenant } from '../features/account/useTenant.js'
@@ -16,11 +16,10 @@ import { loadClickTargetProjection } from '../services/clickTargets.js'
 import { createUIStateKey } from '../features/uiState/uiStateKeys.js'
 import { usePersistentUIState } from '../features/uiState/usePersistentUIState.js'
 import { userErrorMessage } from '../lib/appErrors.js'
-import { currentMonthPeriod } from '../features/downtime/downtimeModel.js'
+import { formatAvailabilityPercent, formatProductionDowntimeMinutes, summarizeMachineHealth } from '../features/downtime/downtimeModel.js'
 import { loadDowntimeOverview } from '../services/downtime.js'
 
-function MachineHealthSection({ account, branch, timezone, activeMachineCount, navigate }) {
-  const period = currentMonthPeriod(timezone)
+function MachineHealthSection({ account, branch, machine, period, navigate }) {
   const [overview, setOverview] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -29,37 +28,40 @@ function MachineHealthSection({ account, branch, timezone, activeMachineCount, n
     setIsLoading(true)
     setError(null)
     try {
-      setOverview(await loadDowntimeOverview({ accountId: account.id, branchId: branch?.id, periodStart: period.periodStart, periodEnd: period.periodEnd }))
+      setOverview(await loadDowntimeOverview({ accountId: account.id, branchId: branch?.id, machineId: machine.id, periodStart: period.start, periodEnd: period.end }))
     } catch (loadError) {
       setError(loadError)
     } finally {
       setIsLoading(false)
     }
-  }, [account.id, branch?.id, period.periodEnd, period.periodStart])
+  }, [account.id, branch?.id, machine.id, period.end, period.start])
 
   useEffect(() => { refresh() }, [refresh])
 
-  const stopped = overview?.attention ?? []
-  const operationalCount = Math.max(0, activeMachineCount - stopped.length)
-  const availabilityText = overview?.availability_percent == null ? 'Belum dikonfigurasi' : `${Number(overview.availability_percent).toFixed(1)}%`
-  const productionDowntimeText = overview?.production_downtime_minutes == null ? 'Belum dikonfigurasi' : `${overview.production_downtime_minutes} min`
+  const health = overview ? summarizeMachineHealth({ machines: [machine], attention: overview.attention ?? [] }) : null
+  const scheduleMissing = overview && overview.availability_percent == null && overview.production_downtime_minutes == null
+  const pending = !health
+  const dash = '\u2014'
 
   return (
-    <section className="machine-health-card glass-surface" aria-label="Machine health">
-      <header><span className="card-kicker">Machine Health</span><h2>Kondisi mesin saat ini</h2><button className="icon-button" type="button" onClick={refresh} disabled={isLoading} aria-label="Refresh machine health"><RefreshCcw size={16} className={isLoading ? 'spin' : ''} /></button></header>
+    <section className="overview-target-hero machine-health-card glass-surface" aria-label="Kesehatan mesin">
+      <header>
+        <div><span className="card-kicker">Kesehatan Mesin</span><h2>{machine.machine_code}</h2><p>Status operasional saat ini · {period.start} → {period.end}</p></div>
+        <button className="secondary-button compact-button" type="button" onClick={refresh} disabled={isLoading}><RefreshCcw size={14} className={isLoading ? 'spin' : ''} />Muat ulang</button>
+      </header>
 
-      {error ? <div className="inline-error" role="alert">{userErrorMessage(error, 'Machine health could not be loaded.')}</div> : (
+      {error ? <div className="inline-error" role="alert">{userErrorMessage(error, 'Kesehatan mesin tidak dapat dimuat.')}</div> : (
         <>
-          <div className="machine-health-metrics">
-            <div className="machine-health-metric tone-green"><CheckCircle2 size={18} /><strong>{isLoading && !overview ? '—' : operationalCount}</strong><span>Operational</span></div>
-            <div className="machine-health-metric tone-danger"><PowerOff size={18} /><strong>{isLoading && !overview ? '—' : stopped.length}</strong><span>Stopped</span></div>
-            <div className="machine-health-metric"><Gauge size={18} /><strong>{isLoading && !overview ? '—' : availabilityText}</strong><span>Availability</span></div>
-            <div className="machine-health-metric"><strong>{isLoading && !overview ? '—' : productionDowntimeText}</strong><span>Production downtime</span></div>
-          </div>
+          <dl className="overview-target-metrics">
+            <div><dt>Mesin Normal</dt><dd className="machine-health-ok">{pending ? dash : health.operationalCount}</dd></div>
+            <div><dt>Mesin Berhenti</dt><dd className={health?.stoppedCount > 0 ? 'machine-health-stopped' : ''}>{pending ? dash : health.stoppedCount}</dd></div>
+            <div><dt>Ketersediaan</dt><dd>{pending ? dash : formatAvailabilityPercent(overview.availability_percent)}{scheduleMissing && <small>Jadwal produksi belum diatur</small>}</dd></div>
+            <div><dt>Downtime Produksi</dt><dd>{pending ? dash : formatProductionDowntimeMinutes(overview.production_downtime_minutes)}{scheduleMissing && <small>Jadwal produksi belum diatur</small>}</dd></div>
+          </dl>
 
-          {stopped.length > 0 && (
+          {health?.stoppedCount > 0 && (
             <ul className="machine-health-stopped-list">
-              {stopped.map((item) => (
+              {health.stoppedMachines.map((item) => (
                 <li key={item.downtime_event_id}>
                   <span>{item.machine_name || item.machine_code}</span>
                   <button type="button" className="compact-button secondary-button" onClick={() => navigate?.(`/machines/${item.machine_id}`)}>Lihat detail</button>
@@ -222,8 +224,6 @@ function OverviewWorkspace({ navigate }) {
       </section>
       {!validPeriod && <div className="inline-error" role="alert">{rangeError}</div>}
 
-      {can('downtime.view') && !machinesLoading && !machinesError && <MachineHealthSection account={account} branch={branch} timezone={timezone} activeMachineCount={activeMachines.length} navigate={navigate} />}
-
       {machinesLoading ? null : machinesError ? <div className="inline-error" role="alert">{userErrorMessage(machinesError, 'Machine data is temporarily unavailable.')}</div> : activeMachines.length === 0 ? (
         <section className="starting-state glass-surface"><div><span className="card-kicker">Starting point</span><h3>{branch ? 'Your operations workspace is ready' : 'Create your first branch'}</h3><p>{branch ? 'No fabricated activity or KPI data is shown. Real operational insights will appear as your team begins using A3 Tracker.' : 'Branches establish the operational scope for machines, people, and inventory.'}</p></div>{!branch && can('settings.view') ? <button className="primary-button" type="button" onClick={() => navigate?.('/settings')}>Open Settings</button> : <div className="starting-state-line"><span /></div>}</section>
       ) : (
@@ -268,6 +268,8 @@ function OverviewWorkspace({ navigate }) {
               <DailyClickPerformanceChart rows={dailyRows} todayContext={todayContext} />
             </>
           )}
+
+          {can('downtime.view') && selectedMachine && validPeriod && <MachineHealthSection key={`${selectedMachine.id}:${period.start}:${period.end}`} account={account} branch={branch} machine={selectedMachine} period={period} navigate={navigate} />}
         </>
       )}
     </div>

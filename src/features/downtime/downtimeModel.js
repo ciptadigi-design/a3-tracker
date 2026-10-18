@@ -44,12 +44,67 @@ export function formatDowntimeDateTime(value, timezone) {
   return new Intl.DateTimeFormat('id-ID', { timeZone: timezone, dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value))
 }
 
+export const NOT_CONFIGURED_LABEL = 'Belum dikonfigurasi'
+export const UNAVAILABLE_LABEL = 'Tidak tersedia'
+
 export function formatAvailabilityPercent(value) {
-  return value == null ? 'Not configured' : `${Number(value).toFixed(1)}%`
+  return value == null ? NOT_CONFIGURED_LABEL : `${Number(value).toFixed(1)}%`
 }
 
 export function formatProductionDowntimeMinutes(value) {
-  return value == null ? 'Not configured' : formatElapsedMinutes(value)
+  return value == null ? NOT_CONFIGURED_LABEL : formatElapsedMinutes(value)
+}
+
+function isValidTimestamp(value) {
+  return Boolean(value) && !Number.isNaN(new Date(value).getTime())
+}
+
+/**
+ * GET /downtime/machines/{id}/active answers { data: null } for an idle
+ * machine. The generic unwrapData() falls back to the whole payload when
+ * data is null, which turned "no active downtime" into a truthy object and
+ * rendered an idle machine as "Berhenti". Returns the event, or null when
+ * there is none; throws rather than guessing when the body has no event id.
+ */
+export function normalizeActiveDowntime(payload) {
+  if (payload == null) return null
+  const event = Object.prototype.hasOwnProperty.call(payload, 'data') ? payload.data : payload
+  if (event == null) return null
+  if (typeof event !== 'object' || !event.id) throw new Error('Respons status downtime tidak valid.')
+  return event
+}
+
+/** Single source of truth for a machine's status, used by Machine Detail. */
+export function describeMachineStatus(event, timezone = 'UTC') {
+  if (!event) return { state: 'normal', label: 'Normal' }
+  const startValid = isValidTimestamp(event.actual_start_at)
+  const elapsedMinutes = startValid ? elapsedMinutesBetween(event.actual_start_at) : null
+  return {
+    state: 'stopped',
+    label: 'Berhenti',
+    startText: startValid ? formatDowntimeDateTime(event.actual_start_at, timezone) : UNAVAILABLE_LABEL,
+    causeText: event.cause ? causeLabel(event.cause) : UNAVAILABLE_LABEL,
+    errorCode: event.error_code_text || null,
+    elapsedMinutes,
+    durationText: elapsedMinutes == null ? UNAVAILABLE_LABEL : formatElapsedMinutes(elapsedMinutes),
+    canComplete: startValid,
+  }
+}
+
+/**
+ * Overview counts from the same active-event list Machine Detail reflects:
+ * a machine with an active downtime event is never counted as operational,
+ * even if it is missing from the machine list.
+ */
+export function summarizeMachineHealth({ machines = [], attention = [] }) {
+  const stoppedIds = new Set(attention.map((item) => item.machine_id))
+  const stoppedByMachine = new Map()
+  for (const item of attention) if (!stoppedByMachine.has(item.machine_id)) stoppedByMachine.set(item.machine_id, item)
+  return {
+    operationalCount: machines.filter((machine) => !stoppedIds.has(machine.id)).length,
+    stoppedCount: stoppedIds.size,
+    stoppedMachines: [...stoppedByMachine.values()],
+  }
 }
 
 /** Current calendar month, as Y-m-d bounds, in the given IANA timezone. */

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
-import { AlertTriangle, Gauge, ListChecks, PowerOff, RefreshCcw, Timer } from 'lucide-react'
+import { CalendarRange, CheckCircle2, Gauge, ListChecks, PowerOff, RefreshCcw, Timer } from 'lucide-react'
 import { useTenant } from '../account/useTenant.js'
-import { causeLabel, currentMonthPeriod, elapsedMinutesBetween, formatAvailabilityPercent, formatDowntimeDateTime, formatElapsedMinutes, formatProductionDowntimeMinutes } from './downtimeModel.js'
+import { currentMonthPeriod, describeMachineStatus, formatAvailabilityPercent, formatProductionDowntimeMinutes, NOT_CONFIGURED_LABEL } from './downtimeModel.js'
 import { userErrorMessage } from '../../lib/appErrors.js'
 import { loadDowntimeOverview } from '../../services/downtime.js'
 
@@ -10,10 +10,9 @@ function OverviewKpi({ icon, label, value, hint, tone = 'blue' }) {
 }
 
 /**
- * "Kondisi Mesin" tab of the Maintenance page - reuses the Downtime Overview
- * data (GET /downtime/overview) that previously lived on its own standalone
- * /downtime page. Downtime APIs, records, and permissions are unchanged;
- * this is only a presentational home for the same data.
+ * "Kondisi Mesin" tab of the Maintenance page - presents the existing
+ * Downtime Overview data (GET /downtime/overview). Downtime APIs, records,
+ * and permissions are unchanged.
  */
 export function MachineConditionSection({ navigate }) {
   const { account, branch, branches } = useTenant()
@@ -38,40 +37,48 @@ export function MachineConditionSection({ navigate }) {
 
   useEffect(() => { refresh() }, [refresh])
 
+  const scheduleMissing = overview && overview.availability_percent == null && overview.production_downtime_minutes == null
+  const stopped = overview?.attention ?? []
+
   return (
     <div className="machine-condition-section">
-      <section className="report-filter-bar glass-surface" aria-label="Downtime overview filters">
-        <label><span>Branch</span><select value={branchFilter} onChange={(event) => setBranchFilter(event.target.value)}><option value="">All branches</option>{branches.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>
-        <button className="secondary-button" type="button" onClick={refresh} disabled={isLoading}><RefreshCcw size={15} className={isLoading ? 'spin' : ''} />Refresh</button>
+      <section className="machine-cost-filters machine-condition-filters glass-surface" aria-label="Filter kondisi mesin">
+        <label><span>Cabang</span><select value={branchFilter} onChange={(event) => setBranchFilter(event.target.value)}><option value="">Semua cabang</option>{branches.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>
+        <div className="machine-cost-period-readout"><CalendarRange size={16} /><span>{period.periodStart} → {period.periodEnd}<small>Bulan berjalan · {effectiveTimezone}</small></span></div>
+        <button className="secondary-button" type="button" onClick={refresh} disabled={isLoading}><RefreshCcw size={15} className={isLoading ? 'spin' : ''} />Muat ulang</button>
       </section>
-      <p className="machine-condition-period-note">Machine availability for {period.periodStart} through {period.periodEnd}.</p>
 
-      {error && <div className="inline-error" role="alert">{userErrorMessage(error, 'Downtime overview could not be loaded.')}</div>}
+      {error && <div className="inline-error" role="alert">{userErrorMessage(error, 'Kondisi mesin tidak dapat dimuat.')}</div>}
 
-      {isLoading && !overview ? <div className="report-loading glass-surface"><RefreshCcw className="spin" size={23} /><strong>Loading machine availability…</strong></div> : overview && (
+      {isLoading && !overview ? <div className="report-loading glass-surface"><RefreshCcw className="spin" size={23} /><strong>Memuat kondisi mesin…</strong></div> : overview && (
         <>
-          <section className="report-kpi-grid">
-            <OverviewKpi icon={<Gauge size={19} />} label="Machine Availability" value={formatAvailabilityPercent(overview.availability_percent)} hint="Periode berjalan" />
-            <OverviewKpi icon={<Timer size={19} />} label="Production Downtime" value={formatProductionDowntimeMinutes(overview.production_downtime_minutes)} hint="Terhadap jam operasional" tone="warning" />
-            <OverviewKpi icon={<ListChecks size={19} />} label="Downtime Events" value={overview.event_count} hint="Semua downtime pada periode ini" tone="purple" />
-            <OverviewKpi icon={<PowerOff size={19} />} label="Machine Attention" value={overview.attention.length} hint="Downtime aktif saat ini" tone="green" />
+          <section className="report-kpi-grid compact" aria-label="Ringkasan kondisi mesin">
+            <OverviewKpi icon={<Gauge size={19} />} label="Ketersediaan Mesin" value={formatAvailabilityPercent(overview.availability_percent)} hint={scheduleMissing ? 'Jadwal produksi belum diatur' : 'Terhadap jam operasional'} />
+            <OverviewKpi icon={<Timer size={19} />} label="Downtime Produksi" value={formatProductionDowntimeMinutes(overview.production_downtime_minutes)} hint={scheduleMissing ? 'Jadwal produksi belum diatur' : 'Dalam jam operasional'} tone="warning" />
+            <OverviewKpi icon={<ListChecks size={19} />} label="Jumlah Gangguan" value={overview.event_count} hint="Kejadian downtime pada periode ini" tone="purple" />
+            <OverviewKpi icon={<PowerOff size={19} />} label="Mesin Berhenti" value={stopped.length} hint="Sedang berhenti saat ini" tone={stopped.length > 0 ? 'warning' : 'green'} />
           </section>
 
-          <section className="downtime-attention glass-surface" aria-label="Machines needing attention">
-            <header><span className="card-kicker">Needs attention</span><h2>Machines currently in downtime</h2></header>
-            {overview.attention.length === 0 ? <p className="downtime-notes-empty">No machines are currently in downtime.</p> : (
+          <section className="downtime-attention glass-surface" aria-label="Mesin perlu perhatian">
+            <header><span className="card-kicker">Perlu perhatian</span><h2>Mesin Perlu Perhatian</h2></header>
+            {stopped.length === 0 ? (
+              <p className="downtime-attention-empty"><CheckCircle2 size={17} />Tidak ada mesin yang sedang berhenti.</p>
+            ) : (
               <ul className="downtime-attention-list">
-                {overview.attention.map((item) => (
-                  <li key={item.downtime_event_id}>
-                    <button type="button" className="downtime-attention-link" onClick={() => navigate?.(`/machines/${item.machine_id}`)}>
-                      <strong>{item.machine_name || item.machine_code}</strong><span>{causeLabel(item.cause)}{item.error_code_text ? ` · ${item.error_code_text}` : ''}</span>
-                    </button>
-                    <div className="downtime-attention-meta"><span>{formatDowntimeDateTime(item.actual_start_at, effectiveTimezone)}</span><strong><AlertTriangle size={14} /> {formatElapsedMinutes(elapsedMinutesBetween(item.actual_start_at))}</strong></div>
-                  </li>
-                ))}
+                {stopped.map((item) => {
+                  const status = describeMachineStatus(item, effectiveTimezone)
+                  return (
+                    <li key={item.downtime_event_id}>
+                      <div className="downtime-attention-main"><strong>{item.machine_name || item.machine_code}</strong><span>{[item.machine_code && item.machine_name ? item.machine_code : null, status.causeText, status.errorCode].filter(Boolean).join(' · ')}</span></div>
+                      <dl className="downtime-attention-meta"><div><dt>Mulai</dt><dd>{status.startText}</dd></div><div><dt>Durasi</dt><dd>{status.durationText}</dd></div></dl>
+                      <button className="secondary-button compact-button" type="button" onClick={() => navigate?.(`/machines/${item.machine_id}`)}>Lihat detail</button>
+                    </li>
+                  )
+                })}
               </ul>
             )}
           </section>
+          {scheduleMissing && <p className="machine-condition-note">{NOT_CONFIGURED_LABEL}: ketersediaan dan downtime produksi dihitung setelah jadwal produksi diatur.</p>}
         </>
       )}
     </div>
