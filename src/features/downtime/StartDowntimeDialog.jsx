@@ -37,7 +37,7 @@ export function StartDowntimeDialog({ machine, canBackdate, onClose, onStart }) 
     <BlockingDialog className="confirm-dialog glass-surface" labelledBy="start-downtime-title" onClose={onClose} busy={isSaving}>
       <form onSubmit={handleSubmit}>
         <header className="dialog-header"><span className="danger-dialog-icon"><PowerOff size={23} /></span><button className="icon-button" type="button" onClick={onClose} disabled={isSaving} aria-label="Close"><X size={19} /></button></header>
-        <h2 id="start-downtime-title">Start Downtime — {machine.display_name}</h2>
+        <h2 id="start-downtime-title">Laporkan Mesin Berhenti — {machine.display_name}</h2>
         <p>Catat mesin ini sebagai tidak beroperasi. Maintenance Note dapat ditambahkan setelahnya tanpa menutup downtime.</p>
 
         <label className="form-field"><span>Cause</span><select value={cause} onChange={(event) => setCause(event.target.value)} disabled={isSaving} required>{downtimeCauses.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}</select></label>
@@ -53,8 +53,8 @@ export function StartDowntimeDialog({ machine, canBackdate, onClose, onStart }) 
 
         {error && <div className="form-error" role="alert"><AlertTriangle size={16} />{error}</div>}
         <footer className="dialog-actions">
-          <button className="secondary-button" type="button" onClick={onClose} disabled={isSaving}>Batal</button>
-          <button className="danger-button" type="submit" disabled={isSaving}>{isSaving && <LoaderCircle className="spin" size={17} />}{isSaving ? 'Memulai…' : 'Start Downtime'}</button>
+          <button className="secondary-button" type="button" onClick={onClose} disabled={isSaving}>Batalkan</button>
+          <button className="danger-button" type="submit" disabled={isSaving}>{isSaving && <LoaderCircle className="spin" size={17} />}{isSaving ? 'Menyimpan…' : 'Laporkan Berhenti'}</button>
         </footer>
       </form>
     </BlockingDialog>

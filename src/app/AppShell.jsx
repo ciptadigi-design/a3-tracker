@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Sidebar } from '../components/layout/Sidebar.jsx'
 import { TopBar } from '../components/layout/TopBar.jsx'
 import { useAuth } from '../features/auth/useAuth.js'
@@ -21,11 +21,17 @@ import { ClickTargetSettingsPage } from '../pages/ClickTargetSettingsPage.jsx'
 import { InventoryPage } from '../pages/InventoryPage.jsx'
 import { MachineCostPage } from '../pages/MachineCostPage.jsx'
 import { ReportsPage } from '../pages/ReportsPage.jsx'
-import { DowntimePage } from '../pages/DowntimePage.jsx'
 import { MyAccountPage } from '../pages/MyAccountPage.jsx'
 import { userErrorMessage } from '../lib/appErrors.js'
 
 const comingSoonPages = {}
+
+// Downtime was consolidated into Maintenance > Kondisi Mesin; this keeps
+// existing /downtime deep links (bookmarks, notifications) working.
+function DowntimeRedirect({ navigate }) {
+  useEffect(() => { navigate('/maintenance/machine-condition') }, [navigate])
+  return null
+}
 
 export function AppShell() {
   const { signOut } = useAuth()
@@ -52,15 +58,14 @@ export function AppShell() {
   else if (path === '/inventory') page = <InventoryPage navigate={handleNavigate} />
   else if (path === '/machine-cost') page = <MachineCostPage />
   else if (path === '/reports') page = <ReportsPage />
-  else if (path === '/downtime' && tenant.can('downtime.view')) page = <DowntimePage />
-  else if (path === '/downtime') page = <ComingSoonPage title="Access denied" description="Your current workspace capabilities do not include Downtime." />
+  else if (path === '/downtime') page = <DowntimeRedirect navigate={handleNavigate} />
   else if (path === '/my-account') page = <MyAccountPage />
   else if ((path === '/settings' || path === '/settings/machine-models') && tenant.can('settings.view')) page = <SettingsPage key={tenant.account.id} navigate={handleNavigate} initialSection={path === '/settings/machine-models' ? 'models' : null} />
   else if (path === '/settings' || path === '/settings/machine-models') page = <ComingSoonPage title="Access denied" description="Your current workspace capabilities do not include Settings." />
   else if (path === '/settings/click-targets') page = <ClickTargetSettingsPage />
   else if (getIncidentIdFromPath(path)) page = <IncidentDetailPage incidentId={getIncidentIdFromPath(path)} navigate={handleNavigate} />
-  else if (['/maintenance', '/maintenance/troubleshooting', '/maintenance/tickets', '/maintenance/documents'].includes(path) && tenant.can('maintenance.view')) page = <MaintenancePage path={path} search={search} navigate={handleNavigate} />
-  else if (['/maintenance', '/maintenance/troubleshooting', '/maintenance/tickets', '/maintenance/documents'].includes(path)) page = <ComingSoonPage title="Access denied" description="Your current workspace capabilities do not include Maintenance." />
+  else if (['/maintenance', '/maintenance/machine-condition', '/maintenance/troubleshooting', '/maintenance/tickets', '/maintenance/documents'].includes(path) && tenant.can('maintenance.view')) page = <MaintenancePage path={path} search={search} navigate={handleNavigate} />
+  else if (['/maintenance', '/maintenance/machine-condition', '/maintenance/troubleshooting', '/maintenance/tickets', '/maintenance/documents'].includes(path)) page = <ComingSoonPage title="Access denied" description="Your current workspace capabilities do not include Maintenance." />
   else if (getTroubleshootingEntryIdFromPath(path) && tenant.can('maintenance.view')) page = <TroubleshootingDetailPage entryId={getTroubleshootingEntryIdFromPath(path)} search={search} navigate={handleNavigate} />
   else if (getTroubleshootingEntryIdFromPath(path)) page = <ComingSoonPage title="Access denied" description="Your current workspace capabilities do not include Maintenance." />
   else if (getMaintenanceTicketIdFromPath(path) && tenant.can('maintenance.view')) page = <MaintenanceTicketDetailPage ticketId={getMaintenanceTicketIdFromPath(path)} navigate={handleNavigate} />

@@ -15,6 +15,16 @@ test('formatElapsedMinutes renders days/hours/minutes only when non-zero', () =>
   assert.equal(formatElapsedMinutes(null), '—')
 })
 
+test('a missing or unparseable actual_start_at never produces "NaNm" (regression for production Machine Detail bug)', () => {
+  assert.equal(elapsedMinutesBetween(undefined), null)
+  assert.equal(elapsedMinutesBetween(null), null)
+  assert.equal(elapsedMinutesBetween(''), null)
+  assert.equal(elapsedMinutesBetween('not-a-date'), null)
+  assert.equal(elapsedMinutesBetween('2026-01-01T00:00:00Z', 'not-a-date'), null)
+  assert.equal(formatElapsedMinutes(elapsedMinutesBetween(undefined)), '—')
+  assert.equal(formatElapsedMinutes(NaN), '—')
+})
+
 test('availability and production downtime render "Not configured" rather than a fake zero', () => {
   assert.equal(formatAvailabilityPercent(null), 'Not configured')
   assert.equal(formatAvailabilityPercent(97.3), '97.3%')

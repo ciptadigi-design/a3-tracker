@@ -60,10 +60,11 @@ test('document detail no longer exposes extraction, process knowledge, or knowle
   assert.doesNotMatch(detail, /createDocumentImport/)
 })
 
-test('maintenance navigation shows Troubleshooting, Tickets, and Documents - no Knowledge Base or Error Codes tab', () => {
+test('maintenance navigation shows Kondisi Mesin, Troubleshooting, Tiket Maintenance, and Dokumen - no Knowledge Base or Error Codes tab', () => {
+  assert.match(page, /Kondisi Mesin<\/button>/)
   assert.match(page, /Troubleshooting<\/button>/)
-  assert.match(page, /Tickets<\/button>/)
-  assert.match(page, /Documents<\/button>/)
+  assert.match(page, /Tiket Maintenance<\/button>/)
+  assert.match(page, /Dokumen<\/button>/)
   assert.doesNotMatch(page, /Knowledge base<\/button>/)
   assert.doesNotMatch(page, /Error Codes<\/button>/)
   assert.doesNotMatch(page, /ErrorCodeKnowledgeSection/)

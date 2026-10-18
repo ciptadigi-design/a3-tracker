@@ -1,16 +1,21 @@
 import { useCallback, useEffect, useState } from 'react'
 import { AlertTriangle, Gauge, ListChecks, PowerOff, RefreshCcw, Timer } from 'lucide-react'
-import { PageHeader } from '../components/ui/PageHeader.jsx'
-import { useTenant } from '../features/account/useTenant.js'
-import { causeLabel, currentMonthPeriod, elapsedMinutesBetween, formatAvailabilityPercent, formatDowntimeDateTime, formatElapsedMinutes, formatProductionDowntimeMinutes } from '../features/downtime/downtimeModel.js'
-import { userErrorMessage } from '../lib/appErrors.js'
-import { loadDowntimeOverview } from '../services/downtime.js'
+import { useTenant } from '../account/useTenant.js'
+import { causeLabel, currentMonthPeriod, elapsedMinutesBetween, formatAvailabilityPercent, formatDowntimeDateTime, formatElapsedMinutes, formatProductionDowntimeMinutes } from './downtimeModel.js'
+import { userErrorMessage } from '../../lib/appErrors.js'
+import { loadDowntimeOverview } from '../../services/downtime.js'
 
 function OverviewKpi({ icon, label, value, hint, tone = 'blue' }) {
   return <article className="report-kpi glass-surface"><span className={`report-kpi-icon tone-${tone}`}>{icon}</span><div><span>{label}</span><strong>{value}</strong>{hint && <small>{hint}</small>}</div></article>
 }
 
-export function DowntimePage() {
+/**
+ * "Kondisi Mesin" tab of the Maintenance page - reuses the Downtime Overview
+ * data (GET /downtime/overview) that previously lived on its own standalone
+ * /downtime page. Downtime APIs, records, and permissions are unchanged;
+ * this is only a presentational home for the same data.
+ */
+export function MachineConditionSection({ navigate }) {
   const { account, branch, branches } = useTenant()
   const effectiveTimezone = branch?.timezone || account?.default_timezone || 'UTC'
   const [branchFilter, setBranchFilter] = useState('')
@@ -34,13 +39,12 @@ export function DowntimePage() {
   useEffect(() => { refresh() }, [refresh])
 
   return (
-    <div className="page-stack downtime-overview-page">
-      <PageHeader eyebrow="Operational availability" title="Downtime & Maintenance" description={`Machine availability for ${period.periodStart} through ${period.periodEnd}.`} />
-
+    <div className="machine-condition-section">
       <section className="report-filter-bar glass-surface" aria-label="Downtime overview filters">
-        <label><span>Branch</span><select value={branchFilter} onChange={(event) => setBranchFilter(event.target.value)}><option value="">All branches{branch ? ` (default: ${branch.name})` : ''}</option>{branches.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>
+        <label><span>Branch</span><select value={branchFilter} onChange={(event) => setBranchFilter(event.target.value)}><option value="">All branches</option>{branches.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>
         <button className="secondary-button" type="button" onClick={refresh} disabled={isLoading}><RefreshCcw size={15} className={isLoading ? 'spin' : ''} />Refresh</button>
       </section>
+      <p className="machine-condition-period-note">Machine availability for {period.periodStart} through {period.periodEnd}.</p>
 
       {error && <div className="inline-error" role="alert">{userErrorMessage(error, 'Downtime overview could not be loaded.')}</div>}
 
@@ -59,7 +63,9 @@ export function DowntimePage() {
               <ul className="downtime-attention-list">
                 {overview.attention.map((item) => (
                   <li key={item.downtime_event_id}>
-                    <div><strong>{item.machine_name || item.machine_code}</strong><span>{causeLabel(item.cause)}{item.error_code_text ? ` · ${item.error_code_text}` : ''}</span></div>
+                    <button type="button" className="downtime-attention-link" onClick={() => navigate?.(`/machines/${item.machine_id}`)}>
+                      <strong>{item.machine_name || item.machine_code}</strong><span>{causeLabel(item.cause)}{item.error_code_text ? ` · ${item.error_code_text}` : ''}</span>
+                    </button>
                     <div className="downtime-attention-meta"><span>{formatDowntimeDateTime(item.actual_start_at, effectiveTimezone)}</span><strong><AlertTriangle size={14} /> {formatElapsedMinutes(elapsedMinutesBetween(item.actual_start_at))}</strong></div>
                   </li>
                 ))}

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { AlertTriangle, BarChart3, Boxes, CalendarDays, ChevronDown, ChevronRight, CircleDollarSign, ClipboardCheck, Gauge, LogOut, Package, PowerOff, Printer, Settings, UserRound, Wrench } from 'lucide-react'
+import { AlertTriangle, BarChart3, Boxes, CalendarDays, ChevronDown, ChevronRight, CircleDollarSign, ClipboardCheck, Gauge, LogOut, Package, Printer, Settings, UserRound, Wrench } from 'lucide-react'
 
 const navigation = [
   { path: '/', label: 'Overview', icon: Gauge, active: true },
@@ -10,7 +10,6 @@ const navigation = [
   { path: '/machine-cost', label: 'Machine Cost', icon: CircleDollarSign, active: true },
   { path: '/errors', label: 'Errors', icon: AlertTriangle, active: true },
   { path: '/maintenance', label: 'Maintenance', icon: Wrench, active: true },
-  { path: '/downtime', label: 'Downtime', icon: PowerOff, active: true },
   { path: '/reports', label: 'Reports', icon: BarChart3, active: true },
 ]
 
@@ -37,7 +36,7 @@ export function Sidebar({ path, navigate, account, branch, profile, roleLabel, c
       </div>
       <nav className="primary-nav" aria-label="Primary navigation">
         <span className="nav-label">Workspace</span>
-        {navigation.filter((item) => item.path === '/reports' ? can('reports.view') : item.path === '/machine-cost' ? can('machine_cost.view') : item.path === '/maintenance' ? can('maintenance.view') : item.path === '/downtime' ? can('downtime.view') : true).map((item) => <NavLink key={item.path} item={item} path={path} navigate={navigate} />)}
+        {navigation.filter((item) => item.path === '/reports' ? can('reports.view') : item.path === '/machine-cost' ? can('machine_cost.view') : item.path === '/maintenance' ? can('maintenance.view') : true).map((item) => <NavLink key={item.path} item={item} path={path} navigate={navigate} />)}
       </nav>
       <nav className="secondary-nav" aria-label="Settings navigation">
         {can('settings.view') && <NavLink item={{ path: '/settings', label: 'Settings', icon: Settings, active: true }} path={path} navigate={navigate} />}

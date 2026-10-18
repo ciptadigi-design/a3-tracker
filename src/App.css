@@ -2091,13 +2091,43 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 
 .downtime-attention-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
 .downtime-attention-list li { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 13px 15px; border-radius: 15px; background: var(--surface-muted); }
-.downtime-attention-list li > div:first-child { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
-.downtime-attention-list li > div:first-child span { color: var(--text-muted); font-size: 10px; }
+.downtime-attention-link { display: flex; flex-direction: column; gap: 3px; min-width: 0; background: none; border: none; padding: 0; text-align: left; cursor: pointer; font: inherit; color: var(--text); }
+.downtime-attention-link span { color: var(--text-muted); font-size: 10px; }
 .downtime-attention-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; font-size: 10px; color: var(--text-muted); flex: 0 0 auto; }
 .downtime-attention-meta strong { display: inline-flex; align-items: center; gap: 5px; color: var(--danger); font-size: 11px; }
+
+/* Compact Machine Detail status card (M2 Downtime UX consolidation) */
+.downtime-status-card-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.downtime-status-card-header h2 { margin: 2px 0 0; }
+.downtime-active-card-compact { gap: 14px; }
+.downtime-status-card-actions { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 10px; }
+.downtime-note-form-actions { display: flex; gap: 8px; }
+
+/* Maintenance > Kondisi Mesin tab content */
+.machine-condition-period-note { margin: -6px 0 0; font-size: 11px; color: var(--text-muted); }
+
+/* Main Overview > Machine Health */
+.machine-health-card { display: flex; flex-direction: column; gap: 14px; }
+.machine-health-card > header { display: flex; align-items: center; gap: 10px; }
+.machine-health-card > header h2 { margin: 2px 0 0; flex: 1; }
+.machine-health-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.machine-health-metric { display: flex; flex-direction: column; gap: 4px; padding: 11px 13px; border-radius: 13px; background: var(--surface-muted); }
+.machine-health-metric strong { font-size: 17px; }
+.machine-health-metric span { font-size: 10px; color: var(--text-muted); }
+.machine-health-metric.tone-green strong { color: var(--green); }
+.machine-health-metric.tone-danger strong { color: var(--danger); }
+.machine-health-stopped-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.machine-health-stopped-list li { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 9px 12px; border-radius: 12px; background: var(--surface-muted); font-size: 12px; }
+
+@media (max-width: 767px) {
+  .machine-health-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
 
 @media (max-width: 520px) {
   .downtime-active-meta { grid-template-columns: minmax(0, 1fr); }
   .downtime-attention-list li { flex-direction: column; align-items: flex-start; }
   .downtime-attention-meta { align-items: flex-start; }
+  .downtime-status-card-header { flex-wrap: wrap; }
+  .machine-health-metrics { grid-template-columns: minmax(0, 1fr); }
+  .machine-health-card > header { flex-wrap: wrap; }
 }

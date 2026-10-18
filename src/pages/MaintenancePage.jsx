@@ -1,9 +1,10 @@
 import { useState } from 'react'
-import { CheckCircle2, ClipboardPlus, FileText, ListChecks, Plus, RefreshCcw, Search, Wrench } from 'lucide-react'
+import { Activity, CheckCircle2, ClipboardPlus, FileText, ListChecks, Plus, RefreshCcw, Search, Wrench } from 'lucide-react'
 import { PageHeader } from '../components/ui/PageHeader.jsx'
 import { useTenant } from '../features/account/useTenant.js'
 import { CreateTicketDialog } from '../features/maintenance/CreateTicketDialog.jsx'
 import { DocumentRepositorySection } from '../features/maintenance/documents/DocumentRepositorySection.jsx'
+import { MachineConditionSection } from '../features/downtime/MachineConditionSection.jsx'
 import { useMaintenanceTickets } from '../features/maintenance/useMaintenanceTickets.js'
 import { formatMaintenanceDate, ticketPriorityLabels, ticketStatusLabels } from '../features/maintenance/maintenanceUtils.js'
 import { useMachines } from '../features/machines/useMachines.js'
@@ -73,21 +74,27 @@ function TicketsSection({ account, branch, can, navigate }) {
 
 export function MaintenancePage({ path, search, navigate }) {
   const { account, branch, can } = useTenant()
-  const tab = path === '/maintenance/tickets' ? 'tickets' : path === '/maintenance/documents' ? 'documents' : 'troubleshooting'
+  const canViewMachineCondition = can('downtime.view')
+  const tab = path === '/maintenance/troubleshooting' ? 'troubleshooting'
+    : path === '/maintenance/tickets' ? 'tickets'
+      : path === '/maintenance/documents' ? 'documents'
+        : canViewMachineCondition ? 'machine-condition' : 'troubleshooting'
   const searchParams = new URLSearchParams(search)
   const initialQuery = searchParams.get('q') || ''
   const initialMachineId = searchParams.get('machine') || ''
 
   return (
     <div className="page-stack maintenance-page">
-      <PageHeader eyebrow={`${account?.name} · ${branch?.name ?? 'No branch'}`} title="Maintenance" description="Cari penanganan resmi, kelola tiket, dan akses dokumen mesin." />
+      <PageHeader eyebrow={`${account?.name} · ${branch?.name ?? 'No branch'}`} title="Maintenance" description="Kondisi mesin, penanganan resmi, tiket, dan dokumen mesin dalam satu tempat." />
 
       <nav className="machine-view-tabs maintenance-tabs" role="tablist" aria-label="Maintenance sections">
+        {canViewMachineCondition && <button type="button" role="tab" aria-selected={tab === 'machine-condition'} className={tab === 'machine-condition' ? 'selected' : ''} onClick={() => navigate('/maintenance/machine-condition')}><Activity size={16} /> Kondisi Mesin</button>}
         <button type="button" role="tab" aria-selected={tab === 'troubleshooting'} className={tab === 'troubleshooting' ? 'selected' : ''} onClick={() => navigate('/maintenance/troubleshooting')}><Search size={16} /> Troubleshooting</button>
-        <button type="button" role="tab" aria-selected={tab === 'tickets'} className={tab === 'tickets' ? 'selected' : ''} onClick={() => navigate('/maintenance/tickets')}><ListChecks size={16} /> Tickets</button>
-        <button type="button" role="tab" aria-selected={tab === 'documents'} className={tab === 'documents' ? 'selected' : ''} onClick={() => navigate('/maintenance/documents')}><FileText size={16} /> Documents</button>
+        <button type="button" role="tab" aria-selected={tab === 'tickets'} className={tab === 'tickets' ? 'selected' : ''} onClick={() => navigate('/maintenance/tickets')}><ListChecks size={16} /> Tiket Maintenance</button>
+        <button type="button" role="tab" aria-selected={tab === 'documents'} className={tab === 'documents' ? 'selected' : ''} onClick={() => navigate('/maintenance/documents')}><FileText size={16} /> Dokumen</button>
       </nav>
 
+      {tab === 'machine-condition' && canViewMachineCondition && <MachineConditionSection navigate={navigate} />}
       {tab === 'troubleshooting' && <TroubleshootingSection key={initialQuery || 'empty'} initialQuery={initialQuery} initialMachineId={initialMachineId} accountId={account?.id} branchId={branch?.id} navigate={navigate} />}
       {tab === 'tickets' && <TicketsSection account={account} branch={branch} can={can} navigate={navigate} />}
       {tab === 'documents' && <DocumentRepositorySection />}

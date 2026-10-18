@@ -14,15 +14,21 @@ export function causeLabel(cause) {
   return downtimeCauses.find((item) => item.value === cause)?.label || cause
 }
 
-/** Whole-minute elapsed time, floor-rounded like the backend's elapsedMinutes(). */
+/**
+ * Whole-minute elapsed time, floor-rounded like the backend's elapsedMinutes().
+ * Returns null (never NaN, never a misleading 0) when startIso/endIso can't be parsed.
+ */
 export function elapsedMinutesBetween(startIso, endIso = null) {
+  if (!startIso) return null
   const start = new Date(startIso).getTime()
+  if (Number.isNaN(start)) return null
   const end = endIso ? new Date(endIso).getTime() : Date.now()
+  if (Number.isNaN(end)) return null
   return Math.max(0, Math.floor((end - start) / 60000))
 }
 
 export function formatElapsedMinutes(totalMinutes) {
-  if (totalMinutes == null) return '—'
+  if (totalMinutes == null || Number.isNaN(totalMinutes)) return '—'
   const days = Math.floor(totalMinutes / 1440)
   const hours = Math.floor((totalMinutes % 1440) / 60)
   const minutes = totalMinutes % 60

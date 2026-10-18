@@ -1,7 +1,7 @@
 import { PeriodFields } from '../features/periods/PeriodFields.jsx'
 import { createOverviewRequestGate, overviewContextTimezone, overviewInitialPeriod, overviewPeriod, overviewRangeError } from '../features/overview/overviewPeriod.js'
-import { useEffect, useMemo, useState } from 'react'
-import { CalendarRange, Gauge, RefreshCcw, Settings as SettingsIcon, TrendingUp } from 'lucide-react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { CalendarRange, CheckCircle2, Gauge, PowerOff, RefreshCcw, Settings as SettingsIcon, TrendingUp } from 'lucide-react'
 import { PageHeader } from '../components/ui/PageHeader.jsx'
 import { useAuth } from '../features/auth/useAuth.js'
 import { useTenant } from '../features/account/useTenant.js'
@@ -16,6 +16,62 @@ import { loadClickTargetProjection } from '../services/clickTargets.js'
 import { createUIStateKey } from '../features/uiState/uiStateKeys.js'
 import { usePersistentUIState } from '../features/uiState/usePersistentUIState.js'
 import { userErrorMessage } from '../lib/appErrors.js'
+import { currentMonthPeriod } from '../features/downtime/downtimeModel.js'
+import { loadDowntimeOverview } from '../services/downtime.js'
+
+function MachineHealthSection({ account, branch, timezone, activeMachineCount, navigate }) {
+  const period = currentMonthPeriod(timezone)
+  const [overview, setOverview] = useState(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState(null)
+
+  const refresh = useCallback(async () => {
+    setIsLoading(true)
+    setError(null)
+    try {
+      setOverview(await loadDowntimeOverview({ accountId: account.id, branchId: branch?.id, periodStart: period.periodStart, periodEnd: period.periodEnd }))
+    } catch (loadError) {
+      setError(loadError)
+    } finally {
+      setIsLoading(false)
+    }
+  }, [account.id, branch?.id, period.periodEnd, period.periodStart])
+
+  useEffect(() => { refresh() }, [refresh])
+
+  const stopped = overview?.attention ?? []
+  const operationalCount = Math.max(0, activeMachineCount - stopped.length)
+  const availabilityText = overview?.availability_percent == null ? 'Belum dikonfigurasi' : `${Number(overview.availability_percent).toFixed(1)}%`
+  const productionDowntimeText = overview?.production_downtime_minutes == null ? 'Belum dikonfigurasi' : `${overview.production_downtime_minutes} min`
+
+  return (
+    <section className="machine-health-card glass-surface" aria-label="Machine health">
+      <header><span className="card-kicker">Machine Health</span><h2>Kondisi mesin saat ini</h2><button className="icon-button" type="button" onClick={refresh} disabled={isLoading} aria-label="Refresh machine health"><RefreshCcw size={16} className={isLoading ? 'spin' : ''} /></button></header>
+
+      {error ? <div className="inline-error" role="alert">{userErrorMessage(error, 'Machine health could not be loaded.')}</div> : (
+        <>
+          <div className="machine-health-metrics">
+            <div className="machine-health-metric tone-green"><CheckCircle2 size={18} /><strong>{isLoading && !overview ? '—' : operationalCount}</strong><span>Operational</span></div>
+            <div className="machine-health-metric tone-danger"><PowerOff size={18} /><strong>{isLoading && !overview ? '—' : stopped.length}</strong><span>Stopped</span></div>
+            <div className="machine-health-metric"><Gauge size={18} /><strong>{isLoading && !overview ? '—' : availabilityText}</strong><span>Availability</span></div>
+            <div className="machine-health-metric"><strong>{isLoading && !overview ? '—' : productionDowntimeText}</strong><span>Production downtime</span></div>
+          </div>
+
+          {stopped.length > 0 && (
+            <ul className="machine-health-stopped-list">
+              {stopped.map((item) => (
+                <li key={item.downtime_event_id}>
+                  <span>{item.machine_name || item.machine_code}</span>
+                  <button type="button" className="compact-button secondary-button" onClick={() => navigate?.(`/machines/${item.machine_id}`)}>Lihat detail</button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </>
+      )}
+    </section>
+  )
+}
 
 function CostPerClickCard({ summary, periodLabel }) {
   // M2.17.5: product decision changed - Cost / Click now renders whole-Rupiah like
@@ -165,6 +221,8 @@ function OverviewWorkspace({ navigate }) {
         <button className="secondary-button" type="button" onClick={refresh} disabled={loading || !validPeriod || !selectedMachine}><RefreshCcw size={15} />Refresh</button>
       </section>
       {!validPeriod && <div className="inline-error" role="alert">{rangeError}</div>}
+
+      {can('downtime.view') && !machinesLoading && !machinesError && <MachineHealthSection account={account} branch={branch} timezone={timezone} activeMachineCount={activeMachines.length} navigate={navigate} />}
 
       {machinesLoading ? null : machinesError ? <div className="inline-error" role="alert">{userErrorMessage(machinesError, 'Machine data is temporarily unavailable.')}</div> : activeMachines.length === 0 ? (
         <section className="starting-state glass-surface"><div><span className="card-kicker">Starting point</span><h3>{branch ? 'Your operations workspace is ready' : 'Create your first branch'}</h3><p>{branch ? 'No fabricated activity or KPI data is shown. Real operational insights will appear as your team begins using A3 Tracker.' : 'Branches establish the operational scope for machines, people, and inventory.'}</p></div>{!branch && can('settings.view') ? <button className="primary-button" type="button" onClick={() => navigate?.('/settings')}>Open Settings</button> : <div className="starting-state-line"><span /></div>}</section>
