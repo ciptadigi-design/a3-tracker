@@ -121,7 +121,7 @@ class MaintenanceTicketsController extends Controller
     public function show(Request $r, string $id)
     {
         $ticket = MaintenanceTicket::with([
-            'machine.branch', 'errorCode', 'actions.performer', 'reporter', 'assignee', 'downtimeEvent',
+            'machine.branch', 'errorCode', 'actions.performer', 'reporter', 'assignee', 'downtimeEvent', 'resolver:id,name',
         ])->findOrFail($id);
         abort_unless(app(MachineAccessResolver::class)->canAccess($r->user(), $ticket->machine), 403);
         $ticket->load([
@@ -238,14 +238,39 @@ class MaintenanceTicketsController extends Controller
         return response()->json(['data' => $ticket]);
     }
 
+    public function setResponsible(Request $r, string $id)
+    {
+        $ticket = MaintenanceTicket::with('machine')->findOrFail($id);
+        abort_unless(app(MachineAccessResolver::class)->canAccess($r->user(), $ticket->machine, true), 403);
+        app(EffectiveCapabilityResolver::class)->authorize($r->user(), $ticket->machine->account, 'maintenance.ticket.assign');
+        abort_if(in_array($ticket->status, ['DONE', 'CANCELLED'], true), 409, 'Tiket sudah ditutup.');
+        $d = $r->validate([
+            'internal_pic_person_id' => 'nullable|uuid',
+            'external_technician_name' => 'nullable|string|max:120',
+            'external_vendor_name' => 'nullable|string|max:120',
+        ]);
+        $before = app(GovernanceAudit::class)->snapshot($ticket);
+        $ticket = app(MaintenanceTicketService::class)->setResponsible($ticket, $d);
+
+        app(GovernanceAudit::class)->changed($r->user(), 'maintenance_ticket.responsible_changed', 'maintenance_ticket', $ticket->id, $ticket->account_id, $before, app(GovernanceAudit::class)->snapshot($ticket), array_keys($ticket->getChanges()));
+
+        return response()->json(['data' => $ticket]);
+    }
+
     public function transition(Request $r, string $id)
     {
         $ticket = MaintenanceTicket::with('machine')->findOrFail($id);
         abort_unless(app(MachineAccessResolver::class)->canAccess($r->user(), $ticket->machine, true), 403);
         app(EffectiveCapabilityResolver::class)->authorize($r->user(), $ticket->machine->account, 'maintenance.ticket.update');
-        $d = $r->validate(['status' => 'required|in:IN_PROGRESS,DONE,CANCELLED']);
+        $d = $r->validate([
+            'status' => 'required|in:IN_PROGRESS,DONE,CANCELLED',
+            'resolution_cause' => 'nullable|string|max:5000',
+            'resolution_action' => 'nullable|string|max:5000',
+            'resolution_test_result' => 'nullable|in:normal,monitoring,not_normal',
+            'resolution_notes' => 'nullable|string|max:5000',
+        ]);
         $before = app(GovernanceAudit::class)->snapshot($ticket);
-        $ticket = app(MaintenanceTicketService::class)->transition($ticket, $d['status']);
+        $ticket = app(MaintenanceTicketService::class)->transition($ticket, $d['status'], $d, $r->user());
 
         app(GovernanceAudit::class)->changed($r->user(), 'maintenance_ticket.status_changed', 'maintenance_ticket', $ticket->id, $ticket->account_id, $before, app(GovernanceAudit::class)->snapshot($ticket), array_keys($ticket->getChanges()));
 
@@ -257,7 +282,17 @@ class MaintenanceTicketsController extends Controller
         $ticket = MaintenanceTicket::with('machine')->findOrFail($id);
         abort_unless(app(MachineAccessResolver::class)->canAccess($r->user(), $ticket->machine, true), 403);
         app(EffectiveCapabilityResolver::class)->authorize($r->user(), $ticket->machine->account, 'maintenance.action.create');
-        $d = $r->validate(['action_description' => 'required|string', 'result' => 'nullable|string|max:40', 'component_replacement_id' => 'nullable|uuid', 'performed_at' => 'nullable|date']);
+        abort_if(in_array($ticket->status, ['DONE', 'CANCELLED'], true), 409, 'Tiket sudah ditutup.');
+        $d = $r->validate([
+            'action_description' => 'required|string|max:5000',
+            'findings' => 'nullable|string|max:5000',
+            'result' => 'nullable|string|max:40',
+            'component_replacement_id' => 'nullable|uuid',
+            'performed_at' => 'nullable|date',
+            'operator_person_id' => 'nullable|uuid',
+            'external_technician_name' => 'nullable|string|max:120',
+            'vendor_name' => 'nullable|string|max:120',
+        ]);
         $d['performed_by'] = $r->user()->id;
         $action = app(MaintenanceTicketService::class)->recordAction($ticket, $d);
 

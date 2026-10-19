@@ -131,7 +131,7 @@ class MaintenanceTroubleshootingTicketFlowTest extends TestCase
         $f = $this->fixture();
         $ticket = $this->actingAs($f['owner'])->postJson('/api/v1/maintenance/tickets', ['machine_id' => $f['machine']->id, 'official_error_entry_id' => $f['entry']->id, 'title' => 'Lifecycle'])->json('data');
         $this->actingAs($f['owner'])->patchJson("/api/v1/maintenance/tickets/{$ticket['id']}/status", ['status' => 'IN_PROGRESS'])->assertOk();
-        $this->actingAs($f['owner'])->patchJson("/api/v1/maintenance/tickets/{$ticket['id']}/status", ['status' => 'DONE'])->assertOk();
+        $this->actingAs($f['owner'])->patchJson("/api/v1/maintenance/tickets/{$ticket['id']}/status", ['status' => 'DONE', 'resolution_cause' => 'Roller kotor', 'resolution_action' => 'Roller dibersihkan', 'resolution_test_result' => 'normal'])->assertOk();
         $this->assertSame((string) $f['entry']->id, MaintenanceTicket::findOrFail($ticket['id'])->official_error_entry_id);
 
         $this->expectException(QueryException::class);

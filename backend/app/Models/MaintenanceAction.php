@@ -11,7 +11,7 @@ class MaintenanceAction extends Model
 
     protected $keyType = 'string';
 
-    protected $fillable = ['account_id', 'ticket_id', 'component_replacement_id', 'action_description', 'result', 'performed_by', 'performed_at'];
+    protected $fillable = ['account_id', 'ticket_id', 'component_replacement_id', 'action_description', 'result', 'performed_by', 'performed_at', 'operator_person_id', 'operator_name', 'external_technician_name', 'vendor_name', 'findings'];
 
     protected $casts = ['performed_at' => 'datetime'];
 
@@ -21,6 +21,9 @@ class MaintenanceAction extends Model
             $m->id ??= (string) Str::uuid();
             $m->performed_at ??= now();
         });
+        // The activity log is append-only: history is never rewritten or removed.
+        static::updating(fn () => throw new \LogicException('Maintenance activity history is append-only.'));
+        static::deleting(fn () => throw new \LogicException('Maintenance activity history is append-only.'));
     }
 
     public function ticket()

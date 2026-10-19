@@ -989,6 +989,9 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .incident-detail-total > span { color: var(--text-muted); font-size: 9px; font-weight: 720; letter-spacing: 0.06em; text-transform: uppercase; }
 .incident-detail-total strong { overflow-wrap: anywhere; color: var(--danger); font-size: 26px; }
 .incident-detail-total small { color: var(--text-soft); font-size: 9px; line-height: 1.4; }
+.maintenance-timeline { grid-template-columns: minmax(0, 1fr) !important; list-style: none; padding: 0; margin: 0; }
+.maintenance-timeline small { display: block; }
+.form-warning { display: flex; align-items: flex-start; gap: 8px; padding: 10px 12px; border-radius: 14px; background: var(--warning-soft, rgba(245, 158, 11, 0.14)); color: var(--text); font-size: 13px; }
 .incident-narrative-list { min-width: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .incident-narrative-card { min-width: 0; min-height: 150px; display: flex; align-items: flex-start; gap: 14px; padding: 20px; border-radius: 22px; }
 .incident-narrative-card > span { width: 32px; height: 32px; display: grid; place-items: center; flex: 0 0 auto; color: var(--blue); border-radius: 11px; background: var(--blue-soft); font-size: 11px; font-weight: 780; }

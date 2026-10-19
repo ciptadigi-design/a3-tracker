@@ -135,8 +135,49 @@ export function buildTicketPrefillFromErrorCode(errorCode) {
 export function mapMaintenanceError(error) {
   if (error?.status === 409) return 'This ticket already moved to a different state. Refresh and try again.'
   if (error?.status === 403) return 'Your role is not authorized to perform this maintenance action.'
-  if (error?.status === 422) return 'Check the highlighted fields and try again.'
+  if (error?.status === 422) return Object.values(error.errors || {}).flat()[0] || 'Check the highlighted fields and try again.'
   return 'The request could not be completed. Please try again.'
+}
+
+// Mirrors MaintenanceTicketService::TEST_RESULTS - labels shown on the resolution form.
+export const testResultLabels = {
+  normal: 'Normal',
+  monitoring: 'Perlu Monitoring',
+  not_normal: 'Belum Normal',
+}
+
+// Client-side fast-fail only; MaintenanceTicketService::validatedResolution is authoritative.
+// Breakdown tickets need a full resolution and cannot close while "Belum Normal".
+export function validateResolution(ticketType, values) {
+  const errors = {}
+  if (!values.resolution_cause?.trim()) errors.resolution_cause = 'Penyebab masalah wajib diisi.'
+  if (!values.resolution_action?.trim()) errors.resolution_action = 'Tindakan penyelesaian wajib diisi.'
+  if (!testResultLabels[values.resolution_test_result]) errors.resolution_test_result = 'Hasil pengujian wajib dipilih.'
+  else if (values.resolution_test_result === 'not_normal' && ticketType === 'breakdown') errors.resolution_test_result = 'Mesin belum normal. Tiket gangguan tetap Dalam Proses.'
+  return errors
+}
+
+// Preventive/inspection tickets may still complete without any resolution (legacy behaviour).
+export const resolutionOptionalTypes = ['preventive', 'inspection']
+
+// Who performed one activity: internal operator and/or external technician (+ vendor).
+export function performerParts(entry) {
+  const parts = []
+  if (entry?.operator_name) parts.push({ kind: 'internal', label: entry.operator_name })
+  if (entry?.external_technician_name || entry?.vendor_name) {
+    parts.push({ kind: 'external', label: [entry.external_technician_name, entry.vendor_name && `(${entry.vendor_name})`].filter(Boolean).join(' ') })
+  }
+  return parts
+}
+
+export function sortActivitiesChronologically(actions) {
+  return [...(actions || [])].sort((a, b) => new Date(a.performed_at) - new Date(b.performed_at))
+}
+
+// A ticket completed while its linked downtime is still running needs a visible reminder;
+// the two lifecycles are independent and nothing closes downtime automatically.
+export function hasActiveLinkedDowntime(ticket) {
+  return Boolean(ticket?.downtime_event && !ticket.downtime_event.actual_end_at)
 }
 
 // Mirrors DocumentStorageService::MAX_FILE_SIZE_BYTES - client-side validation is a

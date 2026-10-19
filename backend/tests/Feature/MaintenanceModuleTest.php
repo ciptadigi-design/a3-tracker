@@ -145,7 +145,7 @@ class MaintenanceModuleTest extends TestCase
             'result' => 'resolved',
         ])->assertCreated();
 
-        $this->actingAs($technician)->patchJson("/api/v1/maintenance/tickets/{$ticket['id']}/status", ['status' => 'DONE'])
+        $this->actingAs($technician)->patchJson("/api/v1/maintenance/tickets/{$ticket['id']}/status", ['status' => 'DONE', 'resolution_cause' => 'Roller kotor', 'resolution_action' => 'Roller dibersihkan', 'resolution_test_result' => 'normal'])
             ->assertOk()
             ->assertJsonPath('data.status', 'DONE');
 
@@ -195,7 +195,7 @@ class MaintenanceModuleTest extends TestCase
         $admin = $this->member($f['home'], 'admin', $f['branch']);
         $ticket = $this->actingAs($admin)->postJson('/api/v1/maintenance/tickets', ['machine_id' => $f['machine']->id, 'title' => 'Paper jam'])->json('data');
         $this->actingAs($admin)->patchJson("/api/v1/maintenance/tickets/{$ticket['id']}/status", ['status' => 'IN_PROGRESS'])->assertOk();
-        $this->actingAs($admin)->patchJson("/api/v1/maintenance/tickets/{$ticket['id']}/status", ['status' => 'DONE'])->assertOk();
+        $this->actingAs($admin)->patchJson("/api/v1/maintenance/tickets/{$ticket['id']}/status", ['status' => 'DONE', 'resolution_cause' => 'Roller kotor', 'resolution_action' => 'Roller dibersihkan', 'resolution_test_result' => 'normal'])->assertOk();
 
         $this->actingAs($admin)->patchJson("/api/v1/maintenance/tickets/{$ticket['id']}/status", ['status' => 'IN_PROGRESS'])->assertStatus(409);
     }
@@ -215,7 +215,7 @@ class MaintenanceModuleTest extends TestCase
         $this->assertNotNull($created['opened_at']);
 
         $this->actingAs($admin)->patchJson("/api/v1/maintenance/tickets/{$created['id']}/status", ['status' => 'IN_PROGRESS'])->assertOk();
-        $this->actingAs($admin)->patchJson("/api/v1/maintenance/tickets/{$created['id']}/status", ['status' => 'DONE'])->assertOk();
+        $this->actingAs($admin)->patchJson("/api/v1/maintenance/tickets/{$created['id']}/status", ['status' => 'DONE', 'resolution_cause' => 'Roller kotor', 'resolution_action' => 'Roller dibersihkan', 'resolution_test_result' => 'normal'])->assertOk();
 
         $ticket = MaintenanceTicket::find($created['id']);
         $this->assertNotNull($ticket->opened_at);

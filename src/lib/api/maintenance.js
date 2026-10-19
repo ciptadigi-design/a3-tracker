@@ -31,7 +31,8 @@ export const laravelMaintenance = {
   createTicket: (payload) => apiClient.post('/maintenance/tickets', payload),
   updateTicket: (id, payload) => apiClient.patch(`/maintenance/tickets/${id}`, payload),
   assignTicket: (id, assignedTo) => apiClient.patch(`/maintenance/tickets/${id}/assign`, { assigned_to: assignedTo }),
-  transitionTicket: (id, status) => apiClient.patch(`/maintenance/tickets/${id}/status`, { status }),
+  transitionTicket: (id, status, resolution = {}) => apiClient.patch(`/maintenance/tickets/${id}/status`, { status, ...resolution }),
+  setResponsible: (id, payload) => apiClient.patch(`/maintenance/tickets/${id}/responsible`, payload),
   createAction: (ticketId, payload) => apiClient.post(`/maintenance/tickets/${ticketId}/actions`, payload),
 
   knowledge: (params = '') => apiClient.get(`/maintenance/knowledge${params ? `?${params}` : ''}`),

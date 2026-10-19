@@ -153,7 +153,7 @@ class DowntimeTicketIntegrationTest extends TestCase
         $second = $this->start($f);
         $secondTicketId = $second['maintenance_ticket']['id'];
         $this->actingAs($f['owner'])->patchJson("/api/v1/maintenance/tickets/{$secondTicketId}/status", ['status' => 'IN_PROGRESS'])->assertOk();
-        $this->actingAs($f['owner'])->patchJson("/api/v1/maintenance/tickets/{$secondTicketId}/status", ['status' => 'DONE'])->assertOk();
+        $this->actingAs($f['owner'])->patchJson("/api/v1/maintenance/tickets/{$secondTicketId}/status", ['status' => 'DONE', 'resolution_cause' => 'Roller kotor', 'resolution_action' => 'Roller dibersihkan', 'resolution_test_result' => 'normal'])->assertOk();
         $this->assertTrue(DowntimeEvent::findOrFail($second['id'])->isActive());
     }
 

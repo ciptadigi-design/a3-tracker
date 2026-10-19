@@ -6,10 +6,14 @@ import { PageHeader } from '../../components/ui/PageHeader.jsx'
 import { useAuth } from '../auth/useAuth.js'
 import { useTenant } from '../account/useTenant.js'
 import { userErrorMessage } from '../../lib/appErrors.js'
-import { assignMaintenanceTicket, recordMaintenanceAction, transitionMaintenanceTicket } from '../../services/maintenance.js'
+import { assignMaintenanceTicket, recordMaintenanceAction, setMaintenanceResponsible, transitionMaintenanceTicket } from '../../services/maintenance.js'
+import { branchOperationalPeople } from '../operationalPeople/eligibility.js'
+import { useOperationalPeople } from '../operationalPeople/useOperationalPeople.js'
 import { useMaintenanceTicket } from './useMaintenanceTicket.js'
 import { RecordActionDialog } from './RecordActionDialog.jsx'
-import { formatMaintenanceDate, mapMaintenanceError, nextTicketStatuses, ticketPriorityLabels, ticketStatusLabels, ticketTypeLabels } from './maintenanceUtils.js'
+import { ResolveTicketDialog } from './ResolveTicketDialog.jsx'
+import { ResponsibleSection } from './ResponsibleSection.jsx'
+import { formatMaintenanceDate, hasActiveLinkedDowntime, mapMaintenanceError, nextTicketStatuses, performerParts, sortActivitiesChronologically, testResultLabels, ticketPriorityLabels, ticketStatusLabels, ticketTypeLabels } from './maintenanceUtils.js'
 import { troubleshootingDetailUrl } from './troubleshooting/troubleshootingModel.js'
 import { causeLabel, formatElapsedMinutes } from '../downtime/downtimeModel.js'
 
@@ -18,16 +22,18 @@ function DetailItem({ icon, label, value, hint }) {
 }
 
 const statusActionMeta = {
-  IN_PROGRESS: { label: 'Start work', icon: ArrowRightCircle },
-  DONE: { label: 'Mark done', icon: CheckCircle2 },
-  CANCELLED: { label: 'Cancel ticket', icon: XCircle },
+  IN_PROGRESS: { label: 'Mulai Penanganan', icon: ArrowRightCircle },
+  DONE: { label: 'Selesaikan Ticket', icon: CheckCircle2 },
+  CANCELLED: { label: 'Batalkan Ticket', icon: XCircle },
 }
 
 export function MaintenanceTicketDetailPage({ ticketId, navigate }) {
   const { user } = useAuth()
   const { account, branch, can } = useTenant()
   const state = useMaintenanceTicket(ticketId)
+  const people = useOperationalPeople(state.ticket?.account_id, state.ticket?.branch_id)
   const [showRecordAction, setShowRecordAction] = useState(false)
+  const [showResolve, setShowResolve] = useState(false)
   const [actionError, setActionError] = useState(null)
   const [success, setSuccess] = useState(null)
   const [isUpdating, setIsUpdating] = useState(false)
@@ -43,13 +49,31 @@ export function MaintenanceTicketDetailPage({ ticketId, navigate }) {
   const canRecordAction = can('maintenance.action.create')
   const availableTransitions = canUpdate ? (nextTicketStatuses[ticket.status] || []) : []
 
+  const eligiblePeople = branchOperationalPeople(people.people, ticket.branch_id)
+  const isOpenTicket = ticket.status === 'OPEN' || ticket.status === 'IN_PROGRESS'
+  const downtimeStillActive = hasActiveLinkedDowntime(ticket)
+
+  async function handleResolve(resolution) {
+    const updated = await transitionMaintenanceTicket(ticket.id, 'DONE', resolution)
+    state.setTicket((current) => ({ ...current, ...updated }))
+    await state.refresh({ silent: true })
+    setSuccess('Ticket diselesaikan.')
+  }
+
+  async function handleSaveResponsible(values) {
+    const updated = await setMaintenanceResponsible(ticket.id, values)
+    state.setTicket((current) => ({ ...current, ...updated }))
+    setSuccess('Penanggung jawab disimpan.')
+  }
+
   async function handleTransition(status) {
+    if (status === 'DONE') { setShowResolve(true); return }
     setIsUpdating(true)
     setActionError(null)
     try {
       const updated = await transitionMaintenanceTicket(ticket.id, status)
       state.setTicket((current) => ({ ...current, ...updated }))
-      setSuccess(`Ticket moved to ${ticketStatusLabels[status]}.`)
+      setSuccess(`Ticket dipindahkan ke ${ticketStatusLabels[status]}.`)
     } catch (error) {
       setActionError(mapMaintenanceError(error))
     } finally {
@@ -76,13 +100,12 @@ export function MaintenanceTicketDetailPage({ ticketId, navigate }) {
     const action = await recordMaintenanceAction(ticket.id, values)
     state.setTicket((current) => ({ ...current, actions: [...(current.actions || []), action] }))
     await state.refresh({ silent: true })
-    setSuccess('Action recorded on this ticket.')
+    setSuccess('Aktivitas dicatat.')
   }
 
   const actions = (
     <div className="detail-actions">
       {canAssign && <button className="secondary-button" type="button" onClick={handleAssignToggle} disabled={isUpdating}><UserRound size={17} /> {ticket.assigned_to === user.id ? 'Unassign me' : 'Assign to me'}</button>}
-      {canRecordAction && ticket.status !== 'DONE' && ticket.status !== 'CANCELLED' && <button className="secondary-button" type="button" onClick={() => setShowRecordAction(true)} disabled={isUpdating}><PencilLine size={17} /> Record action</button>}
       {availableTransitions.map((status) => {
         const meta = statusActionMeta[status]
         return <button key={status} className={status === 'CANCELLED' ? 'danger-outline-button' : 'primary-button'} type="button" onClick={() => handleTransition(status)} disabled={isUpdating}>{createElement(meta.icon, { size: 17 })} {meta.label}</button>
@@ -93,7 +116,7 @@ export function MaintenanceTicketDetailPage({ ticketId, navigate }) {
   return (
     <div className="page-stack">
       <button className="back-button" type="button" onClick={() => navigate('/maintenance')}><ArrowLeft size={17} /> Back to Maintenance</button>
-      <PageHeader eyebrow={`${account?.name} · ${ticket.machine?.display_name || 'Unknown machine'}`} title={ticket.title} description="Machine problem history, resolution actions, and downtime tracking." action={actions} />
+      <PageHeader eyebrow={`${account?.name} · ${ticket.machine?.display_name || 'Unknown machine'}`} title={ticket.title} description="Penanganan gangguan, riwayat aktivitas, dan penyelesaian." action={actions} />
       {success && <div className="success-banner" role="status"><CheckCircle2 size={18} /><span>{success}</span><button type="button" onClick={() => setSuccess(null)}>Dismiss</button></div>}
       {actionError && <div className="form-error" role="alert"><span>{actionError}</span></div>}
 
@@ -117,16 +140,42 @@ export function MaintenanceTicketDetailPage({ ticketId, navigate }) {
 
       {ticket.description && <section className="incident-narrative-card glass-surface"><strong>Description</strong><p>{ticket.description}</p></section>}
 
-      <section className="machine-list-card glass-surface">
-        <div className="list-toolbar"><div><span className="card-kicker">Resolution history</span><h2>{(ticket.actions || []).length} recorded {ticket.actions?.length === 1 ? 'action' : 'actions'}</h2></div></div>
+      <ResponsibleSection key={`${ticket.internal_pic_person_id}|${ticket.external_technician_name}|${ticket.external_vendor_name}|${ticket.status}`} ticket={ticket} people={eligiblePeople} peopleLoading={people.isLoading} peopleError={people.error} canEdit={canAssign && isOpenTicket} onSave={handleSaveResponsible} />
+
+      <section className="machine-list-card glass-surface" aria-label="Riwayat Penanganan">
+        <div className="list-toolbar"><div><span className="card-kicker">Riwayat Penanganan</span><h2>{(ticket.actions || []).length} aktivitas tercatat</h2></div>{canRecordAction && isOpenTicket && <button className="secondary-button" type="button" onClick={() => setShowRecordAction(true)}><PencilLine size={16} /> Tambah Aktivitas</button>}</div>
         {(ticket.actions || []).length === 0
-          ? <div className="machine-empty-state"><ClipboardList size={36} strokeWidth={1.35} /><h3>No actions recorded yet.</h3><p>Actions performed to diagnose or resolve this ticket will appear here.</p></div>
-          : <ul className="incident-narrative-list">{[...ticket.actions].sort((a, b) => new Date(b.performed_at) - new Date(a.performed_at)).map((action) => (
-            <li key={action.id} className="incident-narrative-card glass-surface"><span><Wrench size={16} /></span><div><strong>{action.performer?.name || 'Unknown'} · {formatMaintenanceDate(action.performed_at, timezone)}</strong><p>{action.action_description}</p>{action.result && <small>Result: {action.result}</small>}</div></li>
-          ))}</ul>}
+          ? <div className="machine-empty-state"><ClipboardList size={36} strokeWidth={1.35} /><h3>Belum ada aktivitas.</h3><p>Pemeriksaan dan perbaikan yang dilakukan akan muncul di sini.</p></div>
+          : <ol className="incident-narrative-list maintenance-timeline">{sortActivitiesChronologically(ticket.actions).map((action) => (
+            <li key={action.id} className="incident-narrative-card glass-surface"><span><Wrench size={16} /></span><div>
+              <strong>{formatMaintenanceDate(action.performed_at, timezone)}</strong>
+              {performerParts(action).map((part) => <small key={part.kind}>{part.kind === 'internal' ? 'PIC' : 'Teknisi eksternal'}: {part.label}</small>)}
+              <p>{action.action_description}</p>
+              {action.findings && <small>Temuan: {action.findings}</small>}
+              {action.result && <small>Hasil: {action.result}</small>}
+              <small>Dicatat oleh {action.performer?.name || 'Tidak diketahui'}</small>
+            </div></li>
+          ))}</ol>}
       </section>
 
-      {showRecordAction && <RecordActionDialog onClose={() => setShowRecordAction(false)} onSave={handleRecordAction} />}
+      {ticket.status === 'DONE' && (
+        <section className="incident-narrative-card glass-surface" aria-label="Penyelesaian">
+          <strong>Penyelesaian</strong>
+          {ticket.resolution_cause || ticket.resolution_action
+            ? <>
+              <p><b>Penyebab:</b> {ticket.resolution_cause}</p>
+              <p><b>Tindakan:</b> {ticket.resolution_action}</p>
+              <p><b>Hasil pengujian:</b> {testResultLabels[ticket.resolution_test_result] || '—'}</p>
+              {ticket.resolution_notes && <p><b>Catatan:</b> {ticket.resolution_notes}</p>}
+            </>
+            : <p>Ticket ini diselesaikan tanpa ringkasan penyelesaian.</p>}
+          <small>Selesai {formatMaintenanceDate(ticket.resolved_at, timezone)}{ticket.resolver?.name ? ` oleh ${ticket.resolver.name}` : ''}</small>
+          {downtimeStillActive && <small className="field-error" role="status">Downtime terkait masih berjalan. Akhiri dari Kondisi Mesin bila mesin sudah beroperasi.</small>}
+        </section>
+      )}
+
+      {showResolve && <ResolveTicketDialog ticket={ticket} downtimeStillActive={downtimeStillActive} onClose={() => setShowResolve(false)} onSave={handleResolve} />}
+      {showRecordAction && <RecordActionDialog people={eligiblePeople} peopleLoading={people.isLoading} peopleError={people.error} onClose={() => setShowRecordAction(false)} onSave={handleRecordAction} />}
     </div>
   )
 }
