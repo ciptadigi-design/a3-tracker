@@ -1180,7 +1180,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .confirm-dialog { width: min(440px,100%); padding: 28px; border-radius: 25px; }.confirm-dialog h2 { margin: 18px 0 8px; }.confirm-dialog p { margin: 0 0 22px; color: var(--text-soft); font-size: 13px; line-height: 1.6; }.confirm-dialog .dialog-actions { padding: 0; border: 0; }.danger-button { min-height: 42px; display: inline-flex; align-items: center; padding: 0 16px; color: white; cursor: pointer; border-radius: 13px; background: var(--danger); }.danger-button:disabled { opacity: .55; }
 
 @media (max-width: 1200px) {
-  .components-page > .page-header { align-items: flex-start; flex-direction: column; }
+  .components-page > .page-header { align-items: flex-start; flex-direction: column; } .components-page > .page-header > .page-header-copy { flex: 0 0 auto; }
   .machine-components-context,.model-profiles-context { grid-template-columns: minmax(0,1fr) auto; }
   .machine-components-context > label,.model-profiles-context > label { grid-column: 1 / -1; }
 }
@@ -1243,6 +1243,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   .branch-select select { max-width: 132px; }
   .page-content { padding: 34px 4px 42px; }
   .page-header { align-items: flex-start; flex-direction: column; }
+  .page-header-copy { flex: 0 0 auto; min-width: 0; }
   .page-header h1 { font-size: 34px; }
   .page-header .primary-button { width: 100%; }
   .hero-card { grid-template-columns: minmax(0, 1fr); min-height: 390px; }

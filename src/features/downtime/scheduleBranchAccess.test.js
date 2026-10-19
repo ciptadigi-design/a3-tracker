@@ -58,3 +58,12 @@ test('late responses for a previously selected branch cannot overwrite the curre
 test('Settings relies on the server-scoped branch list for the schedule section', () => {
   assert.match(settingsPage, /<ScheduleSettingsSection account=\{account\} branches=\{data\.branches\} \/>/)
 })
+
+test('stacked page headers never inherit the row-direction 320px flex-basis as a height', () => {
+  const css = readFileSync(new URL('../../App.css', import.meta.url), 'utf8')
+  // Desktop row layout keeps its width basis for the copy block.
+  assert.match(css, /\.page-header-copy \{ min-width: 240px; flex: 1 1 320px; \}/)
+  // Every rule that turns .page-header into a column must reset that basis (it would become a height).
+  assert.match(css, /\.page-header \{ align-items: flex-start; flex-direction: column; \}\n\s+\.page-header-copy \{ flex: 0 0 auto; min-width: 0; \}/)
+  assert.match(css, /\.components-page > \.page-header \{ align-items: flex-start; flex-direction: column; \} \.components-page > \.page-header > \.page-header-copy \{ flex: 0 0 auto; \}/)
+})
