@@ -251,3 +251,19 @@ export function exceptionToPayload(values) {
     note: values.note?.trim() || null,
   }
 }
+
+/**
+ * Branch access for Settings > Jadwal Operasional. `branches` is the server-scoped
+ * Settings list (already limited to the signed-in account's assignments); this only
+ * decides presentation: none -> empty state, single -> locked selector, multiple -> free choice.
+ */
+export function resolveScheduleBranches(branches) {
+  const available = (Array.isArray(branches) ? branches : []).filter((item) => item && item.is_active !== false)
+  const mode = available.length === 0 ? 'none' : available.length === 1 ? 'single' : 'multiple'
+  return { branches: available, mode, defaultBranchId: available[0]?.id ?? '' }
+}
+
+/** A branch selection is only valid while it is still one of the authorized branches. */
+export function effectiveScheduleBranchId(branches, selectedId) {
+  return branches.some((item) => item.id === selectedId) ? selectedId : (branches[0]?.id ?? '')
+}

@@ -173,7 +173,7 @@ test('schedule panels use the existing API contract and never touch downtime eve
   assert.match(schedule, /saveBranchProductionSchedule\(branchId, weekToPayload\(week\)\)/)
   assert.match(schedule, /saveMachineScheduleOverride\(machineId, weekToPayload\(week\)\)/)
   assert.match(schedule, /removeMachineScheduleOverride\(machineId\)/)
-  assert.match(schedule, /createScheduleException\(branchId, exceptionToPayload\(values\)\)/)
+  assert.match(schedule, /createScheduleException\(branchId, exceptionToPayload\(\{ \.\.\.values, machine_id: scopedMachine \}\)\)/)
   assert.doesNotMatch(schedule, /startDowntime|endDowntime|addDowntimeNote/)
   assert.match(schedule, /Belum dikonfigurasi|NOT_CONFIGURED_LABEL/)
 })

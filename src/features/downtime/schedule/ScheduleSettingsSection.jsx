@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { CheckCircle2, LoaderCircle, Plus, RefreshCcw, Trash2 } from 'lucide-react'
 import { useMachines } from '../../machines/useMachines.js'
 import { userErrorMessage } from '../../../lib/appErrors.js'
@@ -7,7 +7,7 @@ import {
   removeMachineScheduleOverride, saveBranchProductionSchedule, saveMachineScheduleOverride,
 } from '../../../services/downtime.js'
 import {
-  currentMonthValue, emptyWeek, exceptionToPayload, exceptionTypeLabel, exceptionTypes, NOT_CONFIGURED_LABEL, validateException, validateWeek, WEEK_DAYS, weekFromRows, weekToPayload,
+  currentMonthValue, effectiveScheduleBranchId, emptyWeek, exceptionToPayload, exceptionTypeLabel, exceptionTypes, NOT_CONFIGURED_LABEL, resolveScheduleBranches, validateException, validateWeek, WEEK_DAYS, weekFromRows, weekToPayload,
 } from '../downtimeModel.js'
 
 const tabs = [['branch', 'Jadwal Cabang'], ['machine', 'Jadwal Khusus Mesin'], ['exceptions', 'Pengecualian Tanggal']]
@@ -43,7 +43,8 @@ function WeekEditor({ week, onChange, disabled }) {
 }
 
 function BranchPicker({ branches, value, onChange }) {
-  return <label className="form-field"><span>Cabang</span><select value={value} onChange={(event) => onChange(event.target.value)}>{branches.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>
+  const locked = branches.length === 1
+  return <label className="form-field"><span>Cabang</span><select value={value} onChange={(event) => onChange(event.target.value)} disabled={locked} aria-readonly={locked || undefined} title={locked ? 'Akun ini hanya ditugaskan pada satu cabang.' : undefined}>{branches.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>
 }
 
 function BranchSchedulePanel({ branchId, timezone }) {
@@ -54,13 +55,19 @@ function BranchSchedulePanel({ branchId, timezone }) {
   const [error, setError] = useState(null)
   const [notice, setNotice] = useState(null)
 
+  const requestId = useRef(0)
+
+  // Only the latest request may write state, so a slow response for a previous branch is discarded.
   const load = useCallback(async () => {
+    const request = ++requestId.current
+    const isCurrent = () => requestId.current === request
     setIsLoading(true); setError(null)
     try {
       const rows = await loadBranchProductionSchedule(branchId)
+      if (!isCurrent()) return
       setConfigured(rows.length > 0)
       setWeek(rows.length > 0 ? weekFromRows(rows) : emptyWeek())
-    } catch (loadError) { setError(userErrorMessage(loadError, 'Jadwal cabang tidak dapat dimuat.')) } finally { setIsLoading(false) }
+    } catch (loadError) { if (isCurrent()) setError(userErrorMessage(loadError, 'Jadwal cabang tidak dapat dimuat.')) } finally { if (isCurrent()) setIsLoading(false) }
   }, [branchId])
   useEffect(() => { setNotice(null); load() }, [load])
 
@@ -89,8 +96,12 @@ function BranchSchedulePanel({ branchId, timezone }) {
 
 function MachineOverridePanel({ account, branches, branchId, onBranchChange }) {
   const machinesState = useMachines(account.id, branchId)
-  const machines = useMemo(() => machinesState.machines.filter((item) => item.status !== 'retired'), [machinesState.machines])
-  const [machineId, setMachineId] = useState('')
+  const machines = useMemo(() => (machinesState.isLoading ? [] : machinesState.machines.filter((item) => item.status !== 'retired')), [machinesState.machines, machinesState.isLoading])
+  // The machine choice is stored with its branch so a branch switch can never reuse a stale machine.
+  const [machineChoice, setMachineChoice] = useState({ branchId: '', id: '' })
+  const machineId = machineChoice.branchId === branchId && machines.some((item) => item.id === machineChoice.id) ? machineChoice.id : ''
+  const setMachineId = (id) => setMachineChoice({ branchId, id })
+  const loadRequest = useRef(0)
   const [enabled, setEnabled] = useState(false)
   const [hasOverride, setHasOverride] = useState(false)
   const [branchRows, setBranchRows] = useState([])
@@ -100,18 +111,19 @@ function MachineOverridePanel({ account, branches, branchId, onBranchChange }) {
   const [error, setError] = useState(null)
   const [notice, setNotice] = useState(null)
 
-  useEffect(() => { setMachineId('') }, [branchId])
-
   const load = useCallback(async () => {
-    if (!machineId) return
+    const request = ++loadRequest.current
+    const isCurrent = () => loadRequest.current === request
+    if (!machineId) { setIsLoading(false); return }
     setIsLoading(true); setError(null)
     try {
       const [rows, inherited] = await Promise.all([loadMachineScheduleOverride(machineId), loadBranchProductionSchedule(branchId)])
+      if (!isCurrent()) return
       setBranchRows(inherited)
       setHasOverride(rows.length > 0)
       setEnabled(rows.length > 0)
       setWeek(rows.length > 0 ? weekFromRows(rows) : weekFromRows(inherited))
-    } catch (loadError) { setError(userErrorMessage(loadError, 'Jadwal khusus mesin tidak dapat dimuat.')) } finally { setIsLoading(false) }
+    } catch (loadError) { if (isCurrent()) setError(userErrorMessage(loadError, 'Jadwal khusus mesin tidak dapat dimuat.')) } finally { if (isCurrent()) setIsLoading(false) }
   }, [machineId, branchId])
   useEffect(() => { setNotice(null); load() }, [load])
 
@@ -165,7 +177,8 @@ const blankException = { machine_id: '', exception_date: '', type: 'holiday', ov
 
 function ExceptionsPanel({ account, branches, branchId, onBranchChange }) {
   const machinesState = useMachines(account.id, branchId)
-  const machines = useMemo(() => machinesState.machines.filter((item) => item.status !== 'retired'), [machinesState.machines])
+  const machines = useMemo(() => (machinesState.isLoading ? [] : machinesState.machines.filter((item) => item.status !== 'retired')), [machinesState.machines, machinesState.isLoading])
+  const loadRequest = useRef(0)
   const [month, setMonth] = useState(() => currentMonthValue('UTC'))
   const [rows, setRows] = useState([])
   const [values, setValues] = useState(blankException)
@@ -177,14 +190,18 @@ function ExceptionsPanel({ account, branches, branchId, onBranchChange }) {
   const type = exceptionTypes.find((item) => item.value === values.type)
 
   const load = useCallback(async () => {
+    const request = ++loadRequest.current
+    const isCurrent = () => loadRequest.current === request
     const [year, monthNumber] = month.split('-').map(Number)
     setIsLoading(true)
+    setRows([])
     try {
-      setRows(await loadScheduleExceptions(branchId, year, monthNumber))
-    } catch (loadError) { setError(userErrorMessage(loadError, 'Pengecualian tidak dapat dimuat.')) } finally { setIsLoading(false) }
+      const loaded = await loadScheduleExceptions(branchId, year, monthNumber)
+      if (isCurrent()) setRows(loaded)
+    } catch (loadError) { if (isCurrent()) setError(userErrorMessage(loadError, 'Pengecualian tidak dapat dimuat.')) } finally { if (isCurrent()) setIsLoading(false) }
   }, [branchId, month])
   useEffect(() => { load() }, [load])
-  useEffect(() => { setValues((current) => ({ ...current, machine_id: '' })) }, [branchId])
+  useEffect(() => { setValues((current) => ({ ...current, machine_id: '' })); setConfirmId(null); setError(null); setNotice(null) }, [branchId])
 
   const change = (patch) => setValues((current) => ({ ...current, ...patch }))
   const machineName = (id) => machines.find((item) => item.id === id)?.display_name || 'Mesin tertentu'
@@ -196,7 +213,8 @@ function ExceptionsPanel({ account, branches, branchId, onBranchChange }) {
     if (problem) { setError(problem); return }
     setIsSaving(true)
     try {
-      await createScheduleException(branchId, exceptionToPayload(values))
+      const scopedMachine = machines.some((item) => item.id === values.machine_id) ? values.machine_id : ''
+      await createScheduleException(branchId, exceptionToPayload({ ...values, machine_id: scopedMachine }))
       setValues(blankException)
       setNotice('Pengecualian ditambahkan.')
       await load()
@@ -253,24 +271,26 @@ function ExceptionsPanel({ account, branches, branchId, onBranchChange }) {
 
 /** Settings > Jadwal Operasional: the configuration UI for the production-schedule backend. */
 export function ScheduleSettingsSection({ account, branches }) {
-  const activeBranches = useMemo(() => branches.filter((item) => item.is_active !== false), [branches])
+  const { branches: activeBranches } = useMemo(() => resolveScheduleBranches(branches), [branches])
   const [tab, setTab] = useState('branch')
-  const [branchId, setBranchId] = useState(() => activeBranches[0]?.id ?? '')
+  const [selectedBranchId, setBranchId] = useState('')
+  // Never fall back to an arbitrary branch: the selection must be one of the authorized branches.
+  const branchId = effectiveScheduleBranchId(activeBranches, selectedBranchId)
   const branch = activeBranches.find((item) => item.id === branchId)
   const timezone = branch?.timezone || account.default_timezone || 'UTC'
 
   return (
     <section className="settings-card glass-surface schedule-settings">
       <header><div><span className="card-kicker">Produksi</span><h2>Jadwal Operasional</h2><p>Jam produksi dipakai untuk menghitung Ketersediaan Mesin dan Downtime Produksi. Mengubah jadwal tidak mengubah catatan downtime yang sudah ada.</p></div></header>
-      {activeBranches.length === 0 ? <p className="schedule-hint schedule-pad">Belum ada cabang aktif.</p> : (
+      {activeBranches.length === 0 ? <p className="schedule-hint schedule-pad">Akun ini belum ditugaskan ke cabang mana pun, sehingga jadwal operasional tidak dapat dilihat atau diubah. Hubungi pemilik workspace untuk mengatur penugasan cabang.</p> : (
         <>
           <nav className="machine-view-tabs schedule-tabs" role="tablist" aria-label="Jadwal operasional">
             {tabs.map(([id, label]) => <button key={id} type="button" role="tab" aria-selected={tab === id} className={tab === id ? 'selected' : ''} onClick={() => setTab(id)}>{label}</button>)}
           </nav>
           <div className="schedule-body">
-            {tab === 'branch' && <><BranchPicker branches={activeBranches} value={branchId} onChange={setBranchId} /><BranchSchedulePanel branchId={branchId} timezone={timezone} /></>}
-            {tab === 'machine' && <MachineOverridePanel account={account} branches={activeBranches} branchId={branchId} onBranchChange={setBranchId} />}
-            {tab === 'exceptions' && <ExceptionsPanel account={account} branches={activeBranches} branchId={branchId} onBranchChange={setBranchId} />}
+            {tab === 'branch' && <><BranchPicker branches={activeBranches} value={branchId} onChange={setBranchId} /><BranchSchedulePanel key={branchId} branchId={branchId} timezone={timezone} /></>}
+            {tab === 'machine' && <MachineOverridePanel key={branchId} account={account} branches={activeBranches} branchId={branchId} onBranchChange={setBranchId} />}
+            {tab === 'exceptions' && <ExceptionsPanel key={branchId} account={account} branches={activeBranches} branchId={branchId} onBranchChange={setBranchId} />}
           </div>
         </>
       )}

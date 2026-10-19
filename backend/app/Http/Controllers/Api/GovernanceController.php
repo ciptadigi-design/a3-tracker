@@ -37,12 +37,19 @@ class GovernanceController extends Controller
         $policy = $resolver->policy($a);
         $matrix = collect(['owner', 'admin', 'technician', 'operator'])->mapWithKeys(fn ($role) => [$role => $resolver->forRole($role, $policy)]);
 
+        // Same assignment scoping as branches(): null means organization-wide access.
+        $branchIds = app(AccountAccessResolver::class)->authorizedBranchIds($r->user(), $a);
+        $branches = $a->branches()->orderBy('name');
+        if ($branchIds !== null) {
+            $branches->whereIn('id', $branchIds);
+        }
+
         $canManageMembers = $capabilities['members.manage'] === true;
         $canManagePeople = $capabilities['operational_people.manage'] === true;
         $canManageGlobalCatalog = $capabilities['catalog.global.manage'] === true;
 
         return response()->json(['data' => [
-            'branches' => $a->branches()->orderBy('name')->get(),
+            'branches' => $branches->get(),
             'members' => $canManageMembers ? $a->memberships()->with(['user', 'branchAssignments'])->get()->map(fn ($m) => ['id' => $m->id, 'user_id' => $m->user_id, 'role' => $m->role, 'status' => $m->status, 'username' => $m->user?->username, 'display_name' => $m->user?->name, 'email' => $m->user?->email, 'branch_ids' => $m->branchAssignments->where('is_active', true)->pluck('branch_id')->values()]) : [],
             'policy' => $policy,
             'capability_matrix' => $matrix,
