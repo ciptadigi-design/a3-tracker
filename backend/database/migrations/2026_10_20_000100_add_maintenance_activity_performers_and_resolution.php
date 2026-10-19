@@ -44,11 +44,20 @@ return new class extends Migration
 
         Schema::table('maintenance_actions', function (Blueprint $table) use ($sqlite) {
             $sqlite ? $table->dropForeign(['operator_person_id', 'account_id']) : $table->dropForeign('maintenance_actions_person_fk');
+            // MySQL keeps the index it auto-created for the FK; drop it so up() can re-apply cleanly.
+            if (! $sqlite && Schema::hasIndex('maintenance_actions', 'maintenance_actions_person_fk')) {
+                $table->dropIndex('maintenance_actions_person_fk');
+            }
             $table->dropColumn(['operator_person_id', 'operator_name', 'external_technician_name', 'vendor_name', 'findings']);
         });
         Schema::table('maintenance_tickets', function (Blueprint $table) use ($sqlite) {
             $sqlite ? $table->dropForeign(['internal_pic_person_id', 'account_id']) : $table->dropForeign('maintenance_tickets_pic_person_fk');
             $sqlite ? $table->dropForeign(['resolved_by']) : $table->dropForeign('maintenance_tickets_resolved_by_fk');
+            foreach (['maintenance_tickets_pic_person_fk', 'maintenance_tickets_resolved_by_fk'] as $index) {
+                if (! $sqlite && Schema::hasIndex('maintenance_tickets', $index)) {
+                    $table->dropIndex($index);
+                }
+            }
             $table->dropColumn(['internal_pic_person_id', 'internal_pic_name', 'external_technician_name', 'external_vendor_name', 'resolution_cause', 'resolution_action', 'resolution_test_result', 'resolution_notes', 'resolved_by']);
         });
     }

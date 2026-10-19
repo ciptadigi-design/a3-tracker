@@ -24,6 +24,9 @@ return new class extends Migration
             Schema::getConnection()->getDriverName() === 'sqlite'
                 ? $table->dropForeign(['corrects_action_id'])
                 : $table->dropForeign('maintenance_actions_corrects_fk');
+            if (Schema::getConnection()->getDriverName() !== 'sqlite' && Schema::hasIndex('maintenance_actions', 'maintenance_actions_corrects_fk')) {
+                $table->dropIndex('maintenance_actions_corrects_fk');
+            }
             $table->dropColumn(['corrects_action_id', 'correction_reason']);
         });
     }
