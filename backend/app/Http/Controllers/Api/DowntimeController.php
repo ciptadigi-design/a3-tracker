@@ -171,7 +171,7 @@ class DowntimeController extends Controller
     public function overview(Request $r)
     {
         $v = $r->validate([
-            'account_id' => 'required|uuid', 'branch_id' => 'nullable|uuid', 'machine_id' => 'nullable|uuid',
+            'account_id' => 'required|uuid', 'branch_id' => 'nullable|uuid', 'machine_id' => 'nullable|uuid', 'detail' => 'nullable|boolean',
         ] + OperationalPeriodRange::rules($r));
         $account = Account::findOrFail($v['account_id']);
         app(EffectiveCapabilityResolver::class)->authorize($r->user(), $account, 'downtime.view');
@@ -186,6 +186,6 @@ class DowntimeController extends Controller
             $allowed = $account->branches()->where('is_active', true)->whereIn('id', $allowed)->pluck('id')->all();
         }
 
-        return response()->json(['data' => app(OwnerDowntimeOverviewService::class)->build($account->id, $v['branch_id'] ?? null, $v['machine_id'] ?? null, $v['period_start'], $v['period_end'], $allowed)]);
+        return response()->json(['data' => app(OwnerDowntimeOverviewService::class)->build($account->id, $v['branch_id'] ?? null, $v['machine_id'] ?? null, $v['period_start'], $v['period_end'], $allowed, (bool) ($v['detail'] ?? false))]);
     }
 }

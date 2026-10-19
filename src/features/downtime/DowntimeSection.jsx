@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { AlertTriangle, ClipboardList, LoaderCircle, PowerOff, RefreshCcw } from 'lucide-react'
+import { AlertTriangle, ClipboardList, LoaderCircle, RefreshCcw } from 'lucide-react'
 import { userErrorMessage } from '../../lib/appErrors.js'
 import { loadActiveDowntime } from '../../services/downtime.js'
 import { describeMachineStatus, elapsedMinutesBetween, formatElapsedMinutes, machineConditionPath, UNAVAILABLE_LABEL } from './downtimeModel.js'
@@ -18,7 +18,7 @@ function LiveElapsed({ startAt }) {
  * closing downtime live in Maintenance > Kondisi Mesin; this card only shows the
  * current state and links there with the machine preselected.
  */
-export function DowntimeSection({ machine, timezone, canManage, canOpenMaintenance, navigate }) {
+export function DowntimeSection({ machine, timezone, canOpenMaintenance, navigate }) {
   const [active, setActive] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -39,8 +39,6 @@ export function DowntimeSection({ machine, timezone, canManage, canOpenMaintenan
 
   const status = describeMachineStatus(active, timezone)
   const isStopped = status.state === 'stopped'
-  const action = isStopped ? 'manage' : 'report'
-  const actionLabel = isStopped ? 'Kelola Downtime' : 'Lapor Gangguan'
 
   return (
     <section className="downtime-section glass-surface" aria-labelledby="downtime-section-title">
@@ -65,13 +63,11 @@ export function DowntimeSection({ machine, timezone, canManage, canOpenMaintenan
                   <div><dt>Durasi</dt><dd>{status.canComplete ? <LiveElapsed startAt={active.actual_start_at} /> : status.durationText}</dd></div>
                   {status.errorCode && <div><dt>Kode error</dt><dd>{status.errorCode}</dd></div>}
                 </dl>
-              ) : <p className="downtime-status-empty">Tidak ada downtime aktif.</p>}
+              ) : <p className="downtime-status-empty">Mesin beroperasi normal. Tidak ada downtime aktif.</p>}
               {isStopped && !status.canComplete && <div className="downtime-status-notice" role="alert"><AlertTriangle size={16} /><span>Waktu mulai downtime ini tidak valid. Hubungi admin untuk memperbaiki data.</span></div>}
               {canOpenMaintenance && (
                 <div className="downtime-status-card-actions">
-                  {canManage
-                    ? <button className={isStopped ? 'primary-button' : 'danger-outline-button'} type="button" onClick={() => navigate(machineConditionPath(machine.id, action))}>{isStopped ? <ClipboardList size={17} /> : <PowerOff size={17} />} {actionLabel}</button>
-                    : <button className="secondary-button" type="button" onClick={() => navigate(machineConditionPath(machine.id, 'manage'))}><ClipboardList size={17} /> Lihat di Maintenance</button>}
+                  <button className="secondary-button" type="button" onClick={() => navigate(machineConditionPath(machine.id))}><ClipboardList size={17} /> Kelola di Maintenance</button>
                 </div>
               )}
             </>

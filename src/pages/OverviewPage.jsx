@@ -16,10 +16,10 @@ import { loadClickTargetProjection } from '../services/clickTargets.js'
 import { createUIStateKey } from '../features/uiState/uiStateKeys.js'
 import { usePersistentUIState } from '../features/uiState/usePersistentUIState.js'
 import { userErrorMessage } from '../lib/appErrors.js'
-import { formatAvailabilityPercent, formatProductionDowntimeMinutes, summarizeMachineHealth } from '../features/downtime/downtimeModel.js'
+import { describeOwnerKpis, summarizeMachineHealth } from '../features/downtime/downtimeModel.js'
 import { loadDowntimeOverview } from '../services/downtime.js'
 
-function MachineHealthSection({ account, branch, machine, period, navigate }) {
+function MachineHealthSection({ account, branch, machine, period }) {
   const [overview, setOverview] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -39,37 +39,25 @@ function MachineHealthSection({ account, branch, machine, period, navigate }) {
   useEffect(() => { refresh() }, [refresh])
 
   const health = overview ? summarizeMachineHealth({ machines: [machine], attention: overview.attention ?? [] }) : null
-  const scheduleMissing = overview && overview.availability_percent == null && overview.production_downtime_minutes == null
+  const kpi = describeOwnerKpis(overview)
   const pending = !health
   const dash = '\u2014'
 
   return (
     <section className="overview-target-hero machine-health-card glass-surface" aria-label="Kesehatan mesin">
       <header>
-        <div><span className="card-kicker">Kesehatan Mesin</span><h2>{machine.machine_code}</h2><p>Status operasional saat ini · {period.start} → {period.end}</p></div>
+        <div><span className="card-kicker">Kesehatan Mesin</span><h2>{machine.machine_code}</h2><p>Periode {period.start} → {period.end}</p></div>
         <button className="secondary-button compact-button" type="button" onClick={refresh} disabled={isLoading}><RefreshCcw size={14} className={isLoading ? 'spin' : ''} />Muat ulang</button>
       </header>
 
       {error ? <div className="inline-error" role="alert">{userErrorMessage(error, 'Kesehatan mesin tidak dapat dimuat.')}</div> : (
-        <>
-          <dl className="overview-target-metrics">
-            <div><dt>Mesin Normal</dt><dd className="machine-health-ok">{pending ? dash : health.operationalCount}</dd></div>
-            <div><dt>Mesin Berhenti</dt><dd className={health?.stoppedCount > 0 ? 'machine-health-stopped' : ''}>{pending ? dash : health.stoppedCount}</dd></div>
-            <div><dt>Ketersediaan</dt><dd>{pending ? dash : formatAvailabilityPercent(overview.availability_percent)}{scheduleMissing && <small>Jadwal produksi belum diatur</small>}</dd></div>
-            <div><dt>Downtime Produksi</dt><dd>{pending ? dash : formatProductionDowntimeMinutes(overview.production_downtime_minutes)}{scheduleMissing && <small>Jadwal produksi belum diatur</small>}</dd></div>
-          </dl>
-
-          {health?.stoppedCount > 0 && (
-            <ul className="machine-health-stopped-list">
-              {health.stoppedMachines.map((item) => (
-                <li key={item.downtime_event_id}>
-                  <span>{item.machine_name || item.machine_code}</span>
-                  <button type="button" className="compact-button secondary-button" onClick={() => navigate?.(`/machines/${item.machine_id}`)}>Lihat detail</button>
-                </li>
-              ))}
-            </ul>
-          )}
-        </>
+        <dl className="overview-target-metrics">
+          <div><dt>Status Saat Ini</dt><dd className={health?.stoppedCount > 0 ? 'machine-health-stopped' : 'machine-health-ok'}>{pending ? dash : health.stoppedCount > 0 ? 'Berhenti' : 'Normal'}</dd></div>
+          <div><dt>Ketersediaan</dt><dd>{pending ? dash : kpi.availability}{!pending && kpi.scheduleMissing && <small>Atur di Pengaturan › Jadwal Operasional</small>}</dd></div>
+          <div><dt>Downtime Produksi</dt><dd>{pending ? dash : kpi.productionDowntime}</dd></div>
+          <div><dt>Jumlah Downtime</dt><dd>{pending ? dash : kpi.eventCount}{!pending && kpi.ongoingCount > 0 && <small>{kpi.ongoingCount} masih berjalan</small>}</dd></div>
+          <div><dt>Rata-rata Pemulihan</dt><dd>{pending ? dash : kpi.recovery}{!pending && kpi.completedCount > 0 && <small>dari {kpi.completedCount} insiden selesai</small>}</dd></div>
+        </dl>
       )}
     </section>
   )
@@ -269,7 +257,7 @@ function OverviewWorkspace({ navigate }) {
             </>
           )}
 
-          {can('downtime.view') && selectedMachine && validPeriod && <MachineHealthSection key={`${selectedMachine.id}:${period.start}:${period.end}`} account={account} branch={branch} machine={selectedMachine} period={period} navigate={navigate} />}
+          {can('downtime.view') && selectedMachine && validPeriod && <MachineHealthSection key={`${selectedMachine.id}:${period.start}:${period.end}`} account={account} branch={branch} machine={selectedMachine} period={period} />}
         </>
       )}
     </div>

@@ -64,9 +64,9 @@ test('Maintenance reads the ?machine=&action= deep link, ignoring a malformed id
 // --- Machine Detail --------------------------------------------------------------
 
 test('Machine Detail keeps a compact Status Mesin card and only navigates to Maintenance', () => {
-  assert.match(detail, /Kelola Downtime/)
-  assert.match(detail, /Lapor Gangguan/)
-  assert.match(detail, /navigate\(machineConditionPath\(machine\.id, action\)\)/)
+  assert.match(detail, /Kelola di Maintenance/)
+  assert.doesNotMatch(detail, /Lapor Gangguan|Kelola Downtime/)
+  assert.match(detail, /navigate\(machineConditionPath\(machine\.id\)\)/)
   assert.doesNotMatch(detail, /<form|<textarea|BlockingDialog|useState\(false\)/, 'no downtime forms or dialogs in Machine Detail')
   assert.match(detailPage, /canOpenMaintenance=\{can\('maintenance\.view'\)\} navigate=\{navigate\}/)
 })

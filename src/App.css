@@ -444,15 +444,6 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .incident-status-pill.in_progress { color: var(--warning); background: var(--amber-soft); }
 .incident-status-pill.done { color: var(--green); background: rgba(36, 170, 105, .1); }
 .incident-status-pill.cancelled { color: var(--text-muted); background: var(--surface-muted); }
-.future-module-section { min-width: 0; display: grid; grid-template-columns: minmax(240px, 0.55fr) minmax(0, 1.45fr); gap: 22px; align-items: center; padding-top: 8px; }
-.future-module-section > div { min-width: 0; }
-.future-module-section h2 { margin: 9px 0 7px; font-size: 22px; letter-spacing: -0.04em; }
-.future-module-section p { margin: 0; color: var(--text-soft); font-size: 12px; line-height: 1.55; }
-.future-module-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
-.future-module-card { min-width: 0; min-height: 112px; display: flex; flex-direction: column; justify-content: center; gap: 8px; padding: 17px; border-radius: 20px; }
-.future-module-card svg { color: var(--purple); }
-.future-module-card strong { font-size: 11px; }
-.future-module-card span { color: var(--text-muted); font-size: 9px; }
 
 .daily-machine-context { width: 100%; max-width: 100%; min-width: 0; min-height: 112px; display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 20px 22px; border-radius: 25px; }
 .daily-machine-context > div { min-width: 0; display: flex; align-items: center; gap: 15px; }
@@ -1214,7 +1205,6 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   .detail-item:nth-child(2n) { border-right: 0; }
   .detail-item:nth-last-child(-n+3) { border-bottom: 1px solid var(--border-subtle); }
   .detail-item:nth-last-child(-n+2) { border-bottom: 0; }
-  .future-module-section { grid-template-columns: minmax(0, 1fr); }
   .daily-summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .incident-summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .incident-history-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -1290,7 +1280,6 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   .maintenance-history-actions button:only-child { grid-column: 1 / -1; }
   .maintenance-history-empty > div { width: 100%; flex-direction: column; }
   .maintenance-history-empty button { width: 100%; }
-  .future-module-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .daily-machine-context { align-items: stretch; flex-direction: column; }
   .daily-machine-context > div { width: 100%; max-width: 100%; align-items: flex-start; }
   .daily-machine-context p { line-height: 1.45; }
@@ -2114,8 +2103,8 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .machine-health-card h2 { font-size: 20px; }
 .machine-health-card .machine-health-ok { color: var(--green); }
 .machine-health-card .machine-health-stopped { color: var(--danger); }
-.machine-health-stopped-list { list-style: none; margin: 18px 0 0; padding: 0; display: grid; gap: 8px; }
-.machine-health-stopped-list li { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 13px; border-radius: 13px; background: var(--surface-muted); font-size: 12px; font-weight: 650; }
+.machine-health-card .overview-target-metrics { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+@media (max-width: 1100px) { .machine-health-card .overview-target-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 
 /* Maintenance > Kondisi Mesin workflow: active entries, history, report action */
 .downtime-card-header { display: flex; align-items: flex-end; justify-content: space-between; gap: 14px; }
@@ -2137,6 +2126,9 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .schedule-panel { min-width: 0; display: grid; gap: 14px; }
 .schedule-pad { padding: 18px 20px; }
 .schedule-hint { margin: 0; color: var(--text-muted); font-size: 11px; line-height: 1.5; }
+.report-two-column { min-width: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 11px; }
+@media (max-width: 860px) { .report-two-column { grid-template-columns: minmax(0, 1fr); } }
+.reports-page > .schedule-banner { margin: 0; }
 .schedule-banner { margin: 0; padding: 12px 14px; color: var(--warning); border-radius: 13px; background: var(--amber-soft); font-size: 11px; font-weight: 650; }
 .schedule-week { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
 .schedule-week li { min-width: 0; display: grid; grid-template-columns: minmax(150px, 220px) minmax(0, 1fr); align-items: center; gap: 14px; padding: 10px 14px; border-radius: 15px; background: var(--surface-muted); }
@@ -2188,6 +2180,6 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 @media (max-width: 520px) {
   .downtime-status-summary { grid-template-columns: minmax(0, 1fr); }
   .downtime-status-row > button, .downtime-status-card-actions > button, .downtime-note-form-actions > button { width: 100%; }
-  .machine-health-card .overview-target-metrics { grid-template-columns: minmax(0, 1fr); }
+  .machine-health-card .overview-target-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .machine-health-card > header > button { width: 100%; }
 }

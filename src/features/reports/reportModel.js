@@ -8,6 +8,7 @@ export const reportTabs = [
   { id: 'incidents', label: 'Incident / Error / Waste' },
   { id: 'operators', label: 'Operator Activity' },
   { id: 'consumption', label: 'Inventory Consumption' },
+  { id: 'downtime', label: 'Downtime' },
 ]
 
 export function validReportFilters(value) {

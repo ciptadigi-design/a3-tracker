@@ -79,6 +79,21 @@ exportDefinitions.incidents = exportDefinitions.errors
 exportDefinitions.operators = { slug: 'operator-activity', rows: (report) => (report.operatorActivity ?? report.operator_activity ?? []).map((row) => ({ Operator: row.operator, 'Counter Entries': row.counter_entries, 'Recorded Usage': row.recorded_usage, 'Last Counter Entry': row.last_counter_entry, Machines: Array.isArray(row.machines) ? row.machines.join(', ') : row.machines })) }
 exportDefinitions.consumption = { slug: 'inventory-consumption', rows: (report) => (report.inventoryConsumption ?? report.inventory_consumption ?? []).map((row) => ({ Date: row.replaced_at || row.effective_date, Machine: row.machine_code, Item: row.inventory_item_name || row.item, Component: row.component_code || row.component, Quantity: row.inventory_quantity ?? row.quantity_consumed, 'Consumed Cost (IDR)': row.consumed_cost, Location: row.inventory_location_name })) }
 
+// Downtime analytics export: the same server-computed figures shown in Reports > Downtime.
+exportDefinitions.downtime = {
+  slug: 'downtime-analytics',
+  rows: (data) => [
+    { Section: 'Ringkasan', Item: 'Ketersediaan Mesin (%)', Value: data.availability_percent ?? 'Belum dikonfigurasi', Detail: `Jadwal: ${data.schedule_status}` },
+    { Section: 'Ringkasan', Item: 'Downtime Produksi (menit)', Value: data.production_downtime_minutes ?? 'Belum dikonfigurasi', Detail: '' },
+    { Section: 'Ringkasan', Item: 'Jumlah Downtime', Value: data.event_count, Detail: `${data.ongoing_event_count} masih berjalan` },
+    { Section: 'Ringkasan', Item: 'Rata-rata Pemulihan (menit)', Value: data.average_recovery_minutes ?? 'Belum ada pemulihan', Detail: `${data.completed_event_count} insiden selesai` },
+    ...(data.trend ?? []).map((row) => ({ Section: 'Tren', Item: row.bucket, Value: row.production_downtime_minutes ?? 'Belum dikonfigurasi', Detail: 'Downtime produksi (menit)' })),
+    ...(data.ranking ?? []).map((row) => ({ Section: 'Peringkat Mesin', Item: `${row.machine_code} · ${row.machine_name}`, Value: row.production_downtime_minutes ?? 'Belum dikonfigurasi', Detail: `${row.event_count} insiden` })),
+    ...(data.causes ?? []).map((row) => ({ Section: 'Penyebab', Item: row.cause, Value: row.count, Detail: 'Jumlah insiden' })),
+    ...(data.error_codes ?? []).map((row) => ({ Section: 'Kode Error', Item: row.error_code, Value: row.count, Detail: 'Jumlah insiden' })),
+  ],
+}
+
 function exportValue(value) {
   if (value == null || value === '') return ''
   if (typeof value === 'boolean') return value ? 'Yes' : 'No'

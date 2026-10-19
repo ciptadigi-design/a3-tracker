@@ -267,3 +267,26 @@ export function resolveScheduleBranches(branches) {
 export function effectiveScheduleBranchId(branches, selectedId) {
   return branches.some((item) => item.id === selectedId) ? selectedId : (branches[0]?.id ?? '')
 }
+
+export const NO_RECOVERY_LABEL = 'Belum ada pemulihan'
+
+/**
+ * Presentation-only mapping of the server's owner KPI payload (GET /downtime/overview).
+ * All numbers are computed by the backend; this never derives a KPI. Missing schedule
+ * data renders "Belum dikonfigurasi" instead of a percentage, and an average recovery
+ * only exists for completed incidents.
+ */
+export function describeOwnerKpis(data) {
+  const status = data?.schedule_status ?? 'not_configured'
+  return {
+    scheduleStatus: status,
+    scheduleMissing: status === 'not_configured',
+    schedulePartial: status === 'partial',
+    availability: formatAvailabilityPercent(data?.availability_percent),
+    productionDowntime: formatProductionDowntimeMinutes(data?.production_downtime_minutes),
+    eventCount: String(data?.event_count ?? 0),
+    ongoingCount: data?.ongoing_event_count ?? 0,
+    completedCount: data?.completed_event_count ?? 0,
+    recovery: data?.average_recovery_minutes == null ? NO_RECOVERY_LABEL : formatElapsedMinutes(data.average_recovery_minutes),
+  }
+}

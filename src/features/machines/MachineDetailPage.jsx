@@ -1,5 +1,5 @@
 import { createElement, useState } from 'react'
-import { ArrowLeft, CalendarDays, CheckCircle2, Clock3, Edit3, FileText, Gauge, History, MapPin, Printer, ShieldAlert, Tag, Tv, Wrench } from 'lucide-react'
+import { ArrowLeft, CalendarDays, CheckCircle2, Clock3, Edit3, FileText, History, MapPin, Printer, ShieldAlert, Tag, Tv, Wrench } from 'lucide-react'
 import { ErrorState } from '../../components/ui/ErrorState.jsx'
 import { LoadingScreen } from '../../components/ui/LoadingScreen.jsx'
 import { PageHeader } from '../../components/ui/PageHeader.jsx'
@@ -24,12 +24,6 @@ function formatDate(value) {
   if (!value) return 'Not recorded'
   return new Intl.DateTimeFormat('en-GB', { dateStyle: 'medium', timeZone: 'UTC' }).format(new Date(`${value}T00:00:00Z`))
 }
-
-const futureModules = [
-  ['Counters', Gauge],
-  ['Components', Printer],
-  ['Errors', ShieldAlert],
-]
 
 export function MachineDetailPage({ machineId, navigate }) {
   const { user } = useAuth()
@@ -91,11 +85,10 @@ export function MachineDetailPage({ machineId, navigate }) {
         <DetailItem icon={FileText} label="Notes" value={machine.notes || 'No notes recorded'} />
       </section>
 
-      {can('downtime.view') && <DowntimeSection machine={machine} timezone={effectiveTimezone === 'Not configured' ? 'UTC' : effectiveTimezone} canManage={can('downtime.manage')} canOpenMaintenance={can('maintenance.view')} navigate={navigate} />}
+      {can('downtime.view') && <DowntimeSection machine={machine} timezone={effectiveTimezone === 'Not configured' ? 'UTC' : effectiveTimezone} canOpenMaintenance={can('maintenance.view')} navigate={navigate} />}
 
       {can('maintenance.view') && <MachineMaintenanceHistory machine={machine} timezone={effectiveTimezone === 'Not configured' ? 'UTC' : effectiveTimezone} canCreateTicket={can('maintenance.ticket.create')} navigate={navigate} onCreateTicket={() => setShowCreateTicket(true)} />}
 
-      <section className="future-module-section"><div><span className="card-kicker">Operational modules</span><h2>Connected workflows will arrive later.</h2><p>No counter, health, component, or error data is fabricated here.</p></div><div className="future-module-grid">{futureModules.map((module) => <article className="future-module-card glass-surface" key={module[0]}>{createElement(module[1], { size: 20 })}<strong>{module[0]}</strong><span>Coming later</span></article>)}</div></section>
 
       {canManage && machineWorkflow.isContextActive && machineWorkflow.workflow.type === 'edit' && machineWorkflow.workflow.machineId === machine.id && <MachineFormDialog mode="edit" machine={machine} account={account} branches={branches} branchId={branch?.id} onClose={machineWorkflow.clearWorkflow} onSave={handleUpdate} />}
       {showRetire && <RetireMachineDialog machine={machine} onClose={() => setShowRetire(false)} onConfirm={handleRetire} />}
