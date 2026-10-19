@@ -173,6 +173,7 @@ Route::prefix('v1')->middleware('request.id')->group(function () {
             Route::patch('maintenance/tickets/{id}/responsible', [MaintenanceTicketsController::class, 'setResponsible']);
             Route::patch('maintenance/tickets/{id}/status', [MaintenanceTicketsController::class, 'transition']);
             Route::post('maintenance/tickets/{id}/actions', [MaintenanceTicketsController::class, 'storeAction']);
+            Route::post('maintenance/tickets/{id}/actions/{actionId}/corrections', [MaintenanceTicketsController::class, 'correctAction']);
             Route::get('maintenance/knowledge', [MaintenanceKnowledgeController::class, 'index']);
             Route::post('maintenance/knowledge', [MaintenanceKnowledgeController::class, 'store']);
             Route::patch('maintenance/knowledge/{id}/review', [MaintenanceKnowledgeController::class, 'review']);

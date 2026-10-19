@@ -171,6 +171,43 @@ class MaintenanceTicketService
         return $ticket;
     }
 
+    /**
+     * Auditable correction: a new row referencing the original activity, with a reason and the
+     * submitting user. The original, the ticket status and any linked downtime are untouched.
+     */
+    public function correctAction(MaintenanceTicket $ticket, MaintenanceAction $original, array $d): MaintenanceAction
+    {
+        if ($original->ticket_id !== $ticket->id || $original->account_id !== $ticket->account_id) {
+            throw ValidationException::withMessages(['action' => 'Aktivitas tidak ditemukan pada tiket ini.']);
+        }
+        if ($original->corrects_action_id !== null) {
+            throw ValidationException::withMessages(['action' => 'Koreksi hanya dapat dibuat untuk aktivitas asli.']);
+        }
+        $person = ! empty($d['operator_person_id']) ? $this->eligiblePerson($ticket, $d['operator_person_id'], 'operator_person_id') : null;
+        $external = $this->blankToNull($d['external_technician_name'] ?? null);
+        $vendor = $this->blankToNull($d['vendor_name'] ?? null);
+        if (! $person && $external === null && $vendor === null) {
+            // No performer given: the correction keeps the original's performer.
+            $person = $original->operator_person_id ? OperationalPerson::where('account_id', $ticket->account_id)->find($original->operator_person_id) : null;
+            $external = $original->external_technician_name;
+            $vendor = $original->vendor_name;
+        }
+
+        return MaintenanceAction::create([
+            'account_id' => $ticket->account_id,
+            'ticket_id' => $ticket->id,
+            'corrects_action_id' => $original->id,
+            'correction_reason' => trim($d['correction_reason']),
+            'action_description' => $d['action_description'],
+            'findings' => $this->blankToNull($d['findings'] ?? null),
+            'performed_by' => $d['performed_by'] ?? null,
+            'operator_person_id' => $person?->id,
+            'operator_name' => $person?->name,
+            'external_technician_name' => $external,
+            'vendor_name' => $vendor,
+        ]);
+    }
+
     private function blankToNull(?string $v): ?string
     {
         $v = $v === null ? null : trim($v);

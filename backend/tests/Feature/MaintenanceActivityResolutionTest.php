@@ -247,4 +247,166 @@ class MaintenanceActivityResolutionTest extends TestCase
         $this->assertSame('DONE', MaintenanceTicket::findOrFail($ticketId)->status);
         $this->assertSame($startAt, $event->refresh()->actual_start_at->toIso8601String());
     }
+
+    // --- Operator-role maintenance workflow (real operator capability context) ---
+
+    public function test_operator_can_run_the_maintenance_workflow_on_an_authorized_ticket(): void
+    {
+        $f = $this->fixture();
+        $operator = $this->member($f['account'], 'operator', $f['branch']);
+        $t = $this->ticket($f, ['status' => 'OPEN']);
+
+        $this->actingAs($operator)->getJson("/api/v1/maintenance/tickets/{$t->id}")->assertOk();
+        $this->actingAs($operator)->patchJson("/api/v1/maintenance/tickets/{$t->id}/status", ['status' => 'IN_PROGRESS'])->assertOk();
+        $this->actingAs($operator)->patchJson("/api/v1/maintenance/tickets/{$t->id}/responsible", ['internal_pic_person_id' => $f['andi']->id])->assertOk();
+        $this->actingAs($operator)->postJson("/api/v1/maintenance/tickets/{$t->id}/actions", ['action_description' => 'Pembersihan'])->assertCreated()
+            ->assertJsonPath('data.performed_by', $operator->id)->assertJsonPath('data.operator_name', 'Andi');
+        $this->actingAs($operator)->patchJson("/api/v1/maintenance/tickets/{$t->id}/status", ['status' => 'DONE'])->assertStatus(422);
+        $this->actingAs($operator)->patchJson("/api/v1/maintenance/tickets/{$t->id}/status", $this->done(['resolution_test_result' => 'not_normal']))->assertStatus(422);
+        $this->assertSame('IN_PROGRESS', $t->refresh()->status);
+        $this->actingAs($operator)->patchJson("/api/v1/maintenance/tickets/{$t->id}/status", $this->done())->assertOk();
+        $this->assertSame($operator->id, $t->refresh()->resolved_by);
+    }
+
+    public function test_operator_is_confined_to_authorized_branch_and_account(): void
+    {
+        $f = $this->fixture();
+        $otherBranchOperator = $this->member($f['account'], 'operator', $f['otherBranch']);
+        $foreignOperator = $this->member($f['foreign'], 'operator');
+        $t = $this->ticket($f);
+        foreach ([$otherBranchOperator, $foreignOperator] as $user) {
+            $this->actingAs($user)->getJson("/api/v1/maintenance/tickets/{$t->id}")->assertForbidden();
+            $this->actingAs($user)->postJson("/api/v1/maintenance/tickets/{$t->id}/actions", ['action_description' => 'x'])->assertForbidden();
+            $this->actingAs($user)->patchJson("/api/v1/maintenance/tickets/{$t->id}/status", $this->done())->assertForbidden();
+            $this->actingAs($user)->patchJson("/api/v1/maintenance/tickets/{$t->id}/responsible", [])->assertForbidden();
+        }
+        $operator = $this->member($f['account'], 'operator', $f['branch']);
+        $this->actingAs($operator)->patchJson("/api/v1/maintenance/tickets/{$t->id}/responsible", ['internal_pic_person_id' => $f['otherBranchPerson']->id])->assertStatus(422);
+    }
+
+    public function test_technician_admin_and_owner_keep_the_workflow_capabilities(): void
+    {
+        $f = $this->fixture();
+        foreach (['technician', 'admin', 'owner'] as $role) {
+            $user = $this->member($f['account'], $role, $f['branch']);
+            $t = $this->ticket($f);
+            $this->actingAs($user)->postJson("/api/v1/maintenance/tickets/{$t->id}/actions", ['action_description' => 'x'])->assertCreated();
+            $this->actingAs($user)->patchJson("/api/v1/maintenance/tickets/{$t->id}/responsible", ['internal_pic_person_id' => $f['siti']->id])->assertOk();
+            $this->actingAs($user)->patchJson("/api/v1/maintenance/tickets/{$t->id}/status", $this->done())->assertOk();
+            $c = $this->ticket($f);
+            $this->actingAs($user)->patchJson("/api/v1/maintenance/tickets/{$c->id}/status", ['status' => 'CANCELLED'])->assertOk();
+        }
+    }
+
+    // --- Auditable activity correction ---
+
+    private function original(array $f, MaintenanceTicket $t): array
+    {
+        return $this->actingAs($f['owner'])->postJson("/api/v1/maintenance/tickets/{$t->id}/actions", ['action_description' => 'Mengganti drum', 'operator_person_id' => $f['andi']->id])->assertCreated()->json('data');
+    }
+
+    public function test_correction_is_a_new_referencing_row_that_leaves_the_original_intact(): void
+    {
+        $f = $this->fixture();
+        $t = $this->ticket($f);
+        $orig = $this->original($f, $t);
+        $admin = $this->member($f['account'], 'admin', $f['branch']);
+
+        $c = $this->actingAs($admin)->postJson("/api/v1/maintenance/tickets/{$t->id}/actions/{$orig['id']}/corrections", ['action_description' => 'Membersihkan drum', 'correction_reason' => 'Kesalahan penulisan tindakan'])
+            ->assertCreated()->json('data');
+        $this->assertSame($orig['id'], $c['corrects_action_id']);
+        $this->assertSame('Kesalahan penulisan tindakan', $c['correction_reason']);
+        $this->assertSame($admin->id, $c['performed_by']);
+        $this->assertNotNull($c['performed_at']);
+        $this->assertSame('Andi', $c['operator_name']);
+        $this->assertSame('Mengganti drum', MaintenanceAction::find($orig['id'])->action_description);
+        $this->assertSame(2, MaintenanceAction::count());
+        $shown = $this->actingAs($admin)->getJson("/api/v1/maintenance/tickets/{$t->id}")->assertOk()->json('data.actions');
+        $this->assertCount(2, $shown);
+        $this->assertDatabaseHas('governance_audit_logs', ['action' => 'maintenance_action.corrected']);
+    }
+
+    public function test_correction_requires_a_reason_and_an_original_activity_on_the_same_ticket(): void
+    {
+        $f = $this->fixture();
+        $t = $this->ticket($f);
+        $other = $this->ticket($f);
+        $orig = $this->original($f, $t);
+        $url = fn ($ticket, $id) => "/api/v1/maintenance/tickets/{$ticket->id}/actions/{$id}/corrections";
+
+        $this->actingAs($f['owner'])->postJson($url($t, $orig['id']), ['action_description' => 'x'])->assertStatus(422)->assertJsonValidationErrors('correction_reason');
+        $this->actingAs($f['owner'])->postJson($url($t, $orig['id']), ['action_description' => 'x', 'correction_reason' => '  '])->assertStatus(422);
+        $this->actingAs($f['owner'])->postJson($url($other, $orig['id']), ['action_description' => 'x', 'correction_reason' => 'salah tiket'])->assertNotFound();
+
+        $c = $this->actingAs($f['owner'])->postJson($url($t, $orig['id']), ['action_description' => 'ok', 'correction_reason' => 'typo'])->assertCreated()->json('data');
+        $this->actingAs($f['owner'])->postJson($url($t, $c['id']), ['action_description' => 'again', 'correction_reason' => 'typo'])->assertStatus(422);
+        $this->assertSame(2, MaintenanceAction::count());
+    }
+
+    public function test_correction_is_confined_by_account_and_branch_and_validates_performers(): void
+    {
+        $f = $this->fixture();
+        $t = $this->ticket($f);
+        $orig = $this->original($f, $t);
+        $body = ['action_description' => 'x', 'correction_reason' => 'typo'];
+        foreach ([$this->member($f['foreign'], 'owner'), $this->member($f['account'], 'admin', $f['otherBranch'])] as $user) {
+            $this->actingAs($user)->postJson("/api/v1/maintenance/tickets/{$t->id}/actions/{$orig['id']}/corrections", $body)->assertForbidden();
+        }
+        $this->actingAs($f['owner'])->postJson("/api/v1/maintenance/tickets/{$t->id}/actions/{$orig['id']}/corrections", $body + ['operator_person_id' => $f['foreignPerson']->id])->assertStatus(422);
+        $this->assertSame(1, MaintenanceAction::count());
+    }
+
+    public function test_correction_leaves_ticket_status_and_downtime_untouched_and_works_on_closed_tickets(): void
+    {
+        $f = $this->fixture();
+        $started = $this->actingAs($f['owner'])->postJson("/api/v1/downtime/machines/{$f['machine']->id}/start", ['cause' => 'hasil_kotor', 'description' => 'Noda', 'client_request_id' => (string) Str::uuid()])->assertCreated()->json('data');
+        $ticketId = $started['maintenance_ticket']['id'];
+        $this->actingAs($f['owner'])->patchJson("/api/v1/maintenance/tickets/{$ticketId}/status", ['status' => 'IN_PROGRESS'])->assertOk();
+        $orig = $this->actingAs($f['owner'])->postJson("/api/v1/maintenance/tickets/{$ticketId}/actions", ['action_description' => 'Mengganti drum'])->assertCreated()->json('data');
+        $this->actingAs($f['owner'])->patchJson("/api/v1/maintenance/tickets/{$ticketId}/status", $this->done())->assertOk();
+        $ticketBefore = MaintenanceTicket::find($ticketId)->only(['status', 'resolved_at', 'resolution_cause']);
+        $eventBefore = DowntimeEvent::find($started['id'])->only(['actual_start_at', 'actual_end_at']);
+
+        $this->actingAs($f['owner'])->postJson("/api/v1/maintenance/tickets/{$ticketId}/actions/{$orig['id']}/corrections", ['action_description' => 'Membersihkan drum', 'correction_reason' => 'typo'])->assertCreated();
+
+        $this->assertEquals($ticketBefore, MaintenanceTicket::find($ticketId)->only(['status', 'resolved_at', 'resolution_cause']));
+        $this->assertEquals($eventBefore, DowntimeEvent::find($started['id'])->only(['actual_start_at', 'actual_end_at']));
+    }
+
+    public function test_operator_can_correct_on_authorized_ticket_and_original_rows_cannot_be_deleted(): void
+    {
+        $f = $this->fixture();
+        $t = $this->ticket($f);
+        $orig = $this->original($f, $t);
+        $operator = $this->member($f['account'], 'operator', $f['branch']);
+        $this->actingAs($operator)->postJson("/api/v1/maintenance/tickets/{$t->id}/actions/{$orig['id']}/corrections", ['action_description' => 'Membersihkan drum', 'correction_reason' => 'typo'])->assertCreated();
+        $this->expectException(\LogicException::class);
+        MaintenanceAction::find($orig['id'])->delete();
+    }
+
+    public function test_phase_3_2_migrations_roll_back_and_reapply_without_losing_existing_rows(): void
+    {
+        $f = $this->fixture();
+        $t = $this->ticket($f);
+        $action = app(MaintenanceTicketService::class)->recordAction($t, ['action_description' => 'Cek', 'performed_by' => $f['owner']->id]);
+        $corrections = require database_path('migrations/2026_10_20_000200_add_maintenance_action_corrections.php');
+        $performers = require database_path('migrations/2026_10_20_000100_add_maintenance_activity_performers_and_resolution.php');
+
+        // SQLite rebuilds tables for column drops; MySQL alters in place. Disabling FKs only affects that rebuild.
+        if (\Illuminate\Support\Facades\DB::getDriverName() === 'sqlite') {
+            \Illuminate\Support\Facades\DB::statement('PRAGMA defer_foreign_keys = ON');
+        }
+        $corrections->down();
+        $performers->down();
+        $this->assertFalse(\Illuminate\Support\Facades\Schema::hasColumn('maintenance_actions', 'corrects_action_id'));
+        $this->assertFalse(\Illuminate\Support\Facades\Schema::hasColumn('maintenance_tickets', 'resolution_cause'));
+        $this->assertSame(1, MaintenanceTicket::count());
+        $this->assertSame('Cek', \Illuminate\Support\Facades\DB::table('maintenance_actions')->where('id', $action->id)->value('action_description'));
+
+        $performers->up();
+        $corrections->up();
+        $this->assertTrue(\Illuminate\Support\Facades\Schema::hasColumn('maintenance_actions', 'corrects_action_id'));
+        $this->assertTrue(\Illuminate\Support\Facades\Schema::hasColumn('maintenance_tickets', 'resolved_by'));
+        $this->assertSame(1, MaintenanceAction::count());
+    }
 }

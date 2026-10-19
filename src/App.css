@@ -991,6 +991,10 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .incident-detail-total small { color: var(--text-soft); font-size: 9px; line-height: 1.4; }
 .maintenance-timeline { grid-template-columns: minmax(0, 1fr) !important; list-style: none; padding: 0; margin: 0; }
 .maintenance-timeline small { display: block; }
+.timeline-superseded { text-decoration: line-through; opacity: 0.7; }
+.timeline-correction { margin-top: 8px; padding: 10px 12px; border-left: 3px solid var(--accent, #3b82f6); border-radius: 10px; background: rgba(59, 130, 246, 0.08); }
+.timeline-label { font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; font-size: 10px; }
+.correction-badge { font-style: normal; color: var(--text-muted); }
 .form-warning { display: flex; align-items: flex-start; gap: 8px; padding: 10px 12px; border-radius: 14px; background: var(--warning-soft, rgba(245, 158, 11, 0.14)); color: var(--text); font-size: 13px; }
 .incident-narrative-list { min-width: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .incident-narrative-card { min-width: 0; min-height: 150px; display: flex; align-items: flex-start; gap: 14px; padding: 20px; border-radius: 22px; }

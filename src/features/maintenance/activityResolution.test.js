@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import test from 'node:test'
-import { hasActiveLinkedDowntime, mapMaintenanceError, performerParts, resolutionOptionalTypes, sortActivitiesChronologically, testResultLabels, validateResolution } from './maintenanceUtils.js'
+import { groupActivities, hasActiveLinkedDowntime, mapMaintenanceError, performerParts, resolutionOptionalTypes, sortActivitiesChronologically, testResultLabels, validateResolution } from './maintenanceUtils.js'
 import { branchOperationalPeople } from '../operationalPeople/eligibility.js'
 
 const read = (path) => readFileSync(new URL(path, import.meta.url), 'utf8')
@@ -90,4 +90,35 @@ test('layout reuses existing responsive classes', () => {
   const css = read('../../App.css')
   assert.match(css, /\.maintenance-timeline \{/)
   assert.match(css, /\.form-warning \{/)
+})
+
+test('corrections attach to the original, which stays visible; the latest correction is current', () => {
+  const rows = [
+    { id: 'c2', corrects_action_id: 'a', performed_at: '2026-10-19T17:00:00Z', action_description: 'Koreksi 2' },
+    { id: 'a', performed_at: '2026-10-19T14:00:00Z', action_description: 'Mengganti drum' },
+    { id: 'b', performed_at: '2026-10-19T15:00:00Z', action_description: 'Test' },
+    { id: 'c1', corrects_action_id: 'a', performed_at: '2026-10-19T16:00:00Z', action_description: 'Koreksi 1' },
+  ]
+  const groups = groupActivities(rows)
+  assert.deepEqual(groups.map((group) => group.original.id), ['a', 'b'])
+  assert.deepEqual(groups[0].corrections.map((row) => row.id), ['c1', 'c2'])
+  assert.equal(groups[0].current.id, 'c2')
+  assert.equal(groups[1].current.id, 'b')
+})
+
+test('correction UI distinguishes original, corrected info, reason, corrector and time, and requires a reason', () => {
+  assert.match(detail, /Catatan asli/)
+  assert.match(detail, /Informasi koreksi/)
+  assert.match(detail, /Alasan koreksi: \{correction\.correction_reason\}/)
+  assert.match(detail, /Dikoreksi oleh/)
+  assert.match(detail, /correctMaintenanceAction\(ticket\.id, correcting\.original\.id, values\)/)
+  assert.match(activityDialog, /Alasan koreksi wajib diisi/)
+  assert.match(api, /actions\/\$\{actionId\}\/corrections/)
+})
+
+test('operator workflow is driven by the narrow backend capabilities', () => {
+  assert.match(detail, /can\('maintenance\.ticket\.progress'\)/)
+  assert.match(detail, /can\('maintenance\.ticket\.responsible'\)/)
+  assert.match(detail, /can\('maintenance\.ticket\.cancel'\)/)
+  assert.doesNotMatch(detail, /can\('maintenance\.ticket\.update'\)/)
 })

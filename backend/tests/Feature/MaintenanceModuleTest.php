@@ -113,14 +113,16 @@ class MaintenanceModuleTest extends TestCase
         ])->assertCreated();
     }
 
-    public function test_operator_cannot_update_or_transition_ticket(): void
+    public function test_operator_cannot_edit_assign_or_cancel_a_ticket(): void
     {
         $f = $this->fixture();
         $owner = $this->member($f['home'], 'owner', $f['branch']);
         $ticket = $this->actingAs($owner)->postJson('/api/v1/maintenance/tickets', ['machine_id' => $f['machine']->id, 'title' => 'Paper jam'])->json('data');
 
         $operator = $this->member($f['home'], 'operator', $f['branch']);
-        $this->actingAs($operator)->patchJson("/api/v1/maintenance/tickets/{$ticket['id']}/status", ['status' => 'IN_PROGRESS'])->assertForbidden();
+        $this->actingAs($operator)->patchJson("/api/v1/maintenance/tickets/{$ticket['id']}", ['title' => 'Edited'])->assertForbidden();
+        $this->actingAs($operator)->patchJson("/api/v1/maintenance/tickets/{$ticket['id']}/assign", ['assigned_to' => $operator->id])->assertForbidden();
+        $this->actingAs($operator)->patchJson("/api/v1/maintenance/tickets/{$ticket['id']}/status", ['status' => 'CANCELLED'])->assertForbidden();
     }
 
     // --- Technician: can create tickets, update them, and record actions ---

@@ -8,6 +8,7 @@ use App\Models\AccountMembership;
 use App\Models\Machine;
 use App\Models\MachineComponent;
 use App\Models\MachineErrorCode;
+use App\Models\MaintenanceAction;
 use App\Models\MaintenanceOfficialErrorEntry;
 use App\Models\MaintenanceTicket;
 use App\Services\AccountAccessResolver;
@@ -242,7 +243,7 @@ class MaintenanceTicketsController extends Controller
     {
         $ticket = MaintenanceTicket::with('machine')->findOrFail($id);
         abort_unless(app(MachineAccessResolver::class)->canAccess($r->user(), $ticket->machine, true), 403);
-        app(EffectiveCapabilityResolver::class)->authorize($r->user(), $ticket->machine->account, 'maintenance.ticket.assign');
+        app(EffectiveCapabilityResolver::class)->authorize($r->user(), $ticket->machine->account, 'maintenance.ticket.responsible');
         abort_if(in_array($ticket->status, ['DONE', 'CANCELLED'], true), 409, 'Tiket sudah ditutup.');
         $d = $r->validate([
             'internal_pic_person_id' => 'nullable|uuid',
@@ -261,7 +262,7 @@ class MaintenanceTicketsController extends Controller
     {
         $ticket = MaintenanceTicket::with('machine')->findOrFail($id);
         abort_unless(app(MachineAccessResolver::class)->canAccess($r->user(), $ticket->machine, true), 403);
-        app(EffectiveCapabilityResolver::class)->authorize($r->user(), $ticket->machine->account, 'maintenance.ticket.update');
+        app(EffectiveCapabilityResolver::class)->authorize($r->user(), $ticket->machine->account, 'maintenance.ticket.progress');
         $d = $r->validate([
             'status' => 'required|in:IN_PROGRESS,DONE,CANCELLED',
             'resolution_cause' => 'nullable|string|max:5000',
@@ -269,6 +270,9 @@ class MaintenanceTicketsController extends Controller
             'resolution_test_result' => 'nullable|in:normal,monitoring,not_normal',
             'resolution_notes' => 'nullable|string|max:5000',
         ]);
+        if ($d['status'] === 'CANCELLED') {
+            app(EffectiveCapabilityResolver::class)->authorize($r->user(), $ticket->machine->account, 'maintenance.ticket.cancel');
+        }
         $before = app(GovernanceAudit::class)->snapshot($ticket);
         $ticket = app(MaintenanceTicketService::class)->transition($ticket, $d['status'], $d, $r->user());
 
@@ -299,6 +303,28 @@ class MaintenanceTicketsController extends Controller
         app(GovernanceAudit::class)->changed($r->user(), 'maintenance_action.recorded', 'maintenance_action', $action->id, $ticket->account_id, [], app(GovernanceAudit::class)->snapshot($action));
 
         return response()->json(['data' => $action], 201);
+    }
+
+    public function correctAction(Request $r, string $id, string $actionId)
+    {
+        $ticket = MaintenanceTicket::with('machine')->findOrFail($id);
+        abort_unless(app(MachineAccessResolver::class)->canAccess($r->user(), $ticket->machine, true), 403);
+        app(EffectiveCapabilityResolver::class)->authorize($r->user(), $ticket->machine->account, 'maintenance.action.create');
+        $original = MaintenanceAction::where('ticket_id', $ticket->id)->where('account_id', $ticket->account_id)->findOrFail($actionId);
+        $d = $r->validate([
+            'correction_reason' => 'required|string|min:3|max:500',
+            'action_description' => 'required|string|max:5000',
+            'findings' => 'nullable|string|max:5000',
+            'operator_person_id' => 'nullable|uuid',
+            'external_technician_name' => 'nullable|string|max:120',
+            'vendor_name' => 'nullable|string|max:120',
+        ]);
+        $d['performed_by'] = $r->user()->id;
+        $correction = app(MaintenanceTicketService::class)->correctAction($ticket, $original, $d);
+
+        app(GovernanceAudit::class)->changed($r->user(), 'maintenance_action.corrected', 'maintenance_action', $correction->id, $ticket->account_id, [], app(GovernanceAudit::class)->snapshot($correction));
+
+        return response()->json(['data' => $correction], 201);
     }
 
     private function officialApplicability(MaintenanceOfficialErrorEntry $entry, Machine $machine): string

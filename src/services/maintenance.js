@@ -47,6 +47,7 @@ export const updateMaintenanceTicket = async (id, payload) => unwrapData(await l
 export const assignMaintenanceTicket = async (id, assignedTo) => unwrapData(await laravelMaintenance.assignTicket(id, assignedTo))
 export const transitionMaintenanceTicket = async (id, status, resolution) => unwrapData(await laravelMaintenance.transitionTicket(id, status, resolution))
 export const setMaintenanceResponsible = async (id, payload) => unwrapData(await laravelMaintenance.setResponsible(id, payload))
+export const correctMaintenanceAction = async (ticketId, actionId, payload) => unwrapData(await laravelMaintenance.correctAction(ticketId, actionId, payload))
 export const recordMaintenanceAction = async (ticketId, payload) => unwrapData(await laravelMaintenance.createAction(ticketId, payload))
 
 export const loadMaintenanceKnowledge = async ({ approvalStatus, machineModelId, errorCodeId } = {}) => unwrapCollection(await laravelMaintenance.knowledge(toQueryString({ approval_status: approvalStatus, machine_model_id: machineModelId, error_code_id: errorCodeId })))

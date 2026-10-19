@@ -22,9 +22,11 @@ class EffectiveCapabilityResolver
         'operator_can_manage_downtime' => ['downtime.manage'],
     ];
 
+    private const OPERATOR_MAINTENANCE = ['maintenance.ticket.progress', 'maintenance.ticket.responsible', 'maintenance.action.create'];
+
     private const GOVERNANCE = ['account.manage', 'members.manage', 'branches.manage', 'settings.policy.manage', 'audit.view'];
 
-    private const MANAGEMENT = ['settings.view', 'machines.manage', 'catalog.manage', 'operational_people.manage', 'suppliers.manage', 'inventory.items.manage', 'inventory.locations.manage', 'inventory.opening', 'components.configure', 'counters.correct', 'incidents.manage', 'click_targets.manage', 'machine_cost.selling_price.manage', 'machine_cost.operating_cost.manage', 'maintenance.ticket.assign', 'maintenance.ticket.update', 'maintenance.action.create', 'maintenance.knowledge.submit', 'maintenance.knowledge.review', 'downtime.schedule.manage', 'downtime.backdate'];
+    private const MANAGEMENT = ['settings.view', 'machines.manage', 'catalog.manage', 'operational_people.manage', 'suppliers.manage', 'inventory.items.manage', 'inventory.locations.manage', 'inventory.opening', 'components.configure', 'counters.correct', 'incidents.manage', 'click_targets.manage', 'machine_cost.selling_price.manage', 'machine_cost.operating_cost.manage', 'maintenance.ticket.assign', 'maintenance.ticket.update', 'maintenance.ticket.progress', 'maintenance.ticket.responsible', 'maintenance.ticket.cancel', 'maintenance.action.create', 'maintenance.knowledge.submit', 'maintenance.knowledge.review', 'downtime.schedule.manage', 'downtime.backdate'];
 
     private const READ_OPERATIONAL = ['counters.record', 'reports.view', 'machine_cost.view', 'maintenance.view', 'downtime.view'];
 
@@ -57,10 +59,16 @@ class EffectiveCapabilityResolver
                 $result[$key] = true;
             }
         } elseif ($role === 'technician') {
-            foreach (['components.replace.inventory', 'components.replace.external', 'incidents.create', 'maintenance.ticket.create', 'maintenance.ticket.update', 'maintenance.action.create', 'maintenance.knowledge.submit', 'downtime.manage'] as $key) {
+            foreach (['components.replace.inventory', 'components.replace.external', 'incidents.create', 'maintenance.ticket.create', 'maintenance.ticket.update', 'maintenance.ticket.progress', 'maintenance.ticket.responsible', 'maintenance.ticket.cancel', 'maintenance.action.create', 'maintenance.knowledge.submit', 'downtime.manage'] as $key) {
                 $result[$key] = true;
             }
         } elseif ($role === 'operator') {
+            // Maintenance work on tickets the operator can already reach (branch-scoped by the
+            // controllers): start/complete, log activities, set the PIC. Never edit, assign
+            // accounts, or cancel - those stay with management/technicians.
+            foreach (self::OPERATOR_MAINTENANCE as $key) {
+                $result[$key] = true;
+            }
             foreach (self::POLICY_ACTIONS as $policyKey => $actions) {
                 foreach ($actions as $key) {
                     $result[$key] = ($policy[$policyKey] ?? false) === true;

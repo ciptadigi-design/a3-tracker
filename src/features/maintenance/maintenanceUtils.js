@@ -174,6 +174,18 @@ export function sortActivitiesChronologically(actions) {
   return [...(actions || [])].sort((a, b) => new Date(a.performed_at) - new Date(b.performed_at))
 }
 
+// Corrections are append-only rows that reference an original activity. The timeline shows
+// each original (never rewritten) with its corrections attached, oldest first; the latest
+// correction is the "current" information.
+export function groupActivities(actions) {
+  const rows = actions || []
+  const corrections = rows.filter((row) => row.corrects_action_id)
+  return sortActivitiesChronologically(rows.filter((row) => !row.corrects_action_id)).map((original) => {
+    const own = sortActivitiesChronologically(corrections.filter((row) => row.corrects_action_id === original.id))
+    return { original, corrections: own, current: own.length ? own[own.length - 1] : original }
+  })
+}
+
 // A ticket completed while its linked downtime is still running needs a visible reminder;
 // the two lifecycles are independent and nothing closes downtime automatically.
 export function hasActiveLinkedDowntime(ticket) {

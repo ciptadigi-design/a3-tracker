@@ -6,14 +6,14 @@ import { PageHeader } from '../../components/ui/PageHeader.jsx'
 import { useAuth } from '../auth/useAuth.js'
 import { useTenant } from '../account/useTenant.js'
 import { userErrorMessage } from '../../lib/appErrors.js'
-import { assignMaintenanceTicket, recordMaintenanceAction, setMaintenanceResponsible, transitionMaintenanceTicket } from '../../services/maintenance.js'
+import { assignMaintenanceTicket, correctMaintenanceAction, recordMaintenanceAction, setMaintenanceResponsible, transitionMaintenanceTicket } from '../../services/maintenance.js'
 import { branchOperationalPeople } from '../operationalPeople/eligibility.js'
 import { useOperationalPeople } from '../operationalPeople/useOperationalPeople.js'
 import { useMaintenanceTicket } from './useMaintenanceTicket.js'
 import { RecordActionDialog } from './RecordActionDialog.jsx'
 import { ResolveTicketDialog } from './ResolveTicketDialog.jsx'
 import { ResponsibleSection } from './ResponsibleSection.jsx'
-import { formatMaintenanceDate, hasActiveLinkedDowntime, mapMaintenanceError, nextTicketStatuses, performerParts, sortActivitiesChronologically, testResultLabels, ticketPriorityLabels, ticketStatusLabels, ticketTypeLabels } from './maintenanceUtils.js'
+import { formatMaintenanceDate, hasActiveLinkedDowntime, groupActivities, mapMaintenanceError, nextTicketStatuses, performerParts, testResultLabels, ticketPriorityLabels, ticketStatusLabels, ticketTypeLabels } from './maintenanceUtils.js'
 import { troubleshootingDetailUrl } from './troubleshooting/troubleshootingModel.js'
 import { causeLabel, formatElapsedMinutes } from '../downtime/downtimeModel.js'
 
@@ -34,6 +34,7 @@ export function MaintenanceTicketDetailPage({ ticketId, navigate }) {
   const people = useOperationalPeople(state.ticket?.account_id, state.ticket?.branch_id)
   const [showRecordAction, setShowRecordAction] = useState(false)
   const [showResolve, setShowResolve] = useState(false)
+  const [correcting, setCorrecting] = useState(null)
   const [actionError, setActionError] = useState(null)
   const [success, setSuccess] = useState(null)
   const [isUpdating, setIsUpdating] = useState(false)
@@ -44,10 +45,12 @@ export function MaintenanceTicketDetailPage({ ticketId, navigate }) {
 
   const ticket = state.ticket
   const timezone = ticket.machine?.timezone || branch?.timezone || account?.default_timezone || 'UTC'
-  const canUpdate = can('maintenance.ticket.update')
+  const canProgress = can('maintenance.ticket.progress')
   const canAssign = can('maintenance.ticket.assign')
+  const canSetResponsible = can('maintenance.ticket.responsible')
+  const canCancel = can('maintenance.ticket.cancel')
   const canRecordAction = can('maintenance.action.create')
-  const availableTransitions = canUpdate ? (nextTicketStatuses[ticket.status] || []) : []
+  const availableTransitions = canProgress ? (nextTicketStatuses[ticket.status] || []).filter((status) => status !== 'CANCELLED' || canCancel) : []
 
   const eligiblePeople = branchOperationalPeople(people.people, ticket.branch_id)
   const isOpenTicket = ticket.status === 'OPEN' || ticket.status === 'IN_PROGRESS'
@@ -58,6 +61,12 @@ export function MaintenanceTicketDetailPage({ ticketId, navigate }) {
     state.setTicket((current) => ({ ...current, ...updated }))
     await state.refresh({ silent: true })
     setSuccess('Ticket diselesaikan.')
+  }
+
+  async function handleCorrect(values) {
+    await correctMaintenanceAction(ticket.id, correcting.original.id, values)
+    await state.refresh({ silent: true })
+    setSuccess('Koreksi dicatat. Catatan asli tetap tersimpan.')
   }
 
   async function handleSaveResponsible(values) {
@@ -140,20 +149,32 @@ export function MaintenanceTicketDetailPage({ ticketId, navigate }) {
 
       {ticket.description && <section className="incident-narrative-card glass-surface"><strong>Description</strong><p>{ticket.description}</p></section>}
 
-      <ResponsibleSection key={`${ticket.internal_pic_person_id}|${ticket.external_technician_name}|${ticket.external_vendor_name}|${ticket.status}`} ticket={ticket} people={eligiblePeople} peopleLoading={people.isLoading} peopleError={people.error} canEdit={canAssign && isOpenTicket} onSave={handleSaveResponsible} />
+      <ResponsibleSection key={`${ticket.internal_pic_person_id}|${ticket.external_technician_name}|${ticket.external_vendor_name}|${ticket.status}`} ticket={ticket} people={eligiblePeople} peopleLoading={people.isLoading} peopleError={people.error} canEdit={canSetResponsible && isOpenTicket} onSave={handleSaveResponsible} />
 
       <section className="machine-list-card glass-surface" aria-label="Riwayat Penanganan">
         <div className="list-toolbar"><div><span className="card-kicker">Riwayat Penanganan</span><h2>{(ticket.actions || []).length} aktivitas tercatat</h2></div>{canRecordAction && isOpenTicket && <button className="secondary-button" type="button" onClick={() => setShowRecordAction(true)}><PencilLine size={16} /> Tambah Aktivitas</button>}</div>
         {(ticket.actions || []).length === 0
           ? <div className="machine-empty-state"><ClipboardList size={36} strokeWidth={1.35} /><h3>Belum ada aktivitas.</h3><p>Pemeriksaan dan perbaikan yang dilakukan akan muncul di sini.</p></div>
-          : <ol className="incident-narrative-list maintenance-timeline">{sortActivitiesChronologically(ticket.actions).map((action) => (
-            <li key={action.id} className="incident-narrative-card glass-surface"><span><Wrench size={16} /></span><div>
-              <strong>{formatMaintenanceDate(action.performed_at, timezone)}</strong>
-              {performerParts(action).map((part) => <small key={part.kind}>{part.kind === 'internal' ? 'PIC' : 'Teknisi eksternal'}: {part.label}</small>)}
-              <p>{action.action_description}</p>
-              {action.findings && <small>Temuan: {action.findings}</small>}
-              {action.result && <small>Hasil: {action.result}</small>}
-              <small>Dicatat oleh {action.performer?.name || 'Tidak diketahui'}</small>
+          : <ol className="incident-narrative-list maintenance-timeline">{groupActivities(ticket.actions).map(({ original, corrections, current }) => (
+            <li key={original.id} className="incident-narrative-card glass-surface"><span><Wrench size={16} /></span><div>
+              <strong>{formatMaintenanceDate(original.performed_at, timezone)}{corrections.length > 0 && <em className="correction-badge"> · Dikoreksi</em>}</strong>
+              <small className="timeline-label">{corrections.length > 0 ? 'Catatan asli' : 'Aktivitas'}</small>
+              {performerParts(original).map((part) => <small key={part.kind}>{part.kind === 'internal' ? 'PIC' : 'Teknisi eksternal'}: {part.label}</small>)}
+              <p className={corrections.length > 0 ? 'timeline-superseded' : undefined}>{original.action_description}</p>
+              {original.findings && <small>Temuan: {original.findings}</small>}
+              {original.result && <small>Hasil: {original.result}</small>}
+              <small>Dicatat oleh {original.performer?.name || 'Tidak diketahui'}</small>
+              {corrections.map((correction) => (
+                <div key={correction.id} className="timeline-correction">
+                  <small className="timeline-label">Informasi koreksi</small>
+                  {performerParts(correction).map((part) => <small key={part.kind}>{part.kind === 'internal' ? 'PIC' : 'Teknisi eksternal'}: {part.label}</small>)}
+                  <p>{correction.action_description}</p>
+                  {correction.findings && <small>Temuan: {correction.findings}</small>}
+                  <small>Alasan koreksi: {correction.correction_reason}</small>
+                  <small>Dikoreksi oleh {correction.performer?.name || 'Tidak diketahui'} · {formatMaintenanceDate(correction.performed_at, timezone)}</small>
+                </div>
+              ))}
+              {canRecordAction && <button className="secondary-button" type="button" onClick={() => setCorrecting({ original, current })}>Koreksi</button>}
             </div></li>
           ))}</ol>}
       </section>
@@ -175,6 +196,7 @@ export function MaintenanceTicketDetailPage({ ticketId, navigate }) {
       )}
 
       {showResolve && <ResolveTicketDialog ticket={ticket} downtimeStillActive={downtimeStillActive} onClose={() => setShowResolve(false)} onSave={handleResolve} />}
+      {correcting && <RecordActionDialog people={eligiblePeople} peopleLoading={people.isLoading} peopleError={people.error} correcting={correcting.current} onClose={() => setCorrecting(null)} onSave={handleCorrect} />}
       {showRecordAction && <RecordActionDialog people={eligiblePeople} peopleLoading={people.isLoading} peopleError={people.error} onClose={() => setShowRecordAction(false)} onSave={handleRecordAction} />}
     </div>
   )
