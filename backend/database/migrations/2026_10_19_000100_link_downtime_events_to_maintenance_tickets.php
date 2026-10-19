@@ -18,6 +18,10 @@ return new class extends Migration
             // composite FK prevents cross-account links at the database boundary.
             $table->uuid('downtime_event_id')->nullable()->after('client_request_id');
             $table->unique('downtime_event_id', 'maintenance_tickets_downtime_event_uq');
+            $table->index(
+                ['downtime_event_id', 'account_id', 'branch_id', 'machine_id'],
+                'maintenance_tickets_downtime_scope_idx'
+            );
             $table->foreign(['downtime_event_id', 'account_id', 'branch_id', 'machine_id'], 'maintenance_tickets_downtime_event_fk')
                 ->references(['id', 'account_id', 'branch_id', 'machine_id'])
                 ->on('downtime_events')
@@ -34,6 +38,7 @@ return new class extends Migration
                 $table->dropForeign('maintenance_tickets_downtime_event_fk');
             }
             $table->dropUnique('maintenance_tickets_downtime_event_uq');
+            $table->dropIndex('maintenance_tickets_downtime_scope_idx');
             $table->dropColumn('downtime_event_id');
         });
         Schema::table('downtime_events', function (Blueprint $table) {
