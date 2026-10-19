@@ -3,21 +3,27 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Account;
 use App\Models\AccountMembership;
 use App\Models\Machine;
 use App\Models\MachineComponent;
 use App\Models\MachineErrorCode;
 use App\Models\MaintenanceOfficialErrorEntry;
 use App\Models\MaintenanceTicket;
+use App\Services\AccountAccessResolver;
+use App\Services\DowntimeDurationCalculator;
 use App\Services\EffectiveCapabilityResolver;
 use App\Services\GovernanceAudit;
 use App\Services\MachineAccessResolver;
 use App\Services\MaintenanceTicketService;
+use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 
 class MaintenanceTicketsController extends Controller
 {
+    public function __construct(private AccountAccessResolver $accountAccess) {}
+
     public function machineHistory(Request $r, Machine $machine)
     {
         $machine->loadMissing(['account', 'branch']);
@@ -90,7 +96,18 @@ class MaintenanceTicketsController extends Controller
     public function index(Request $r)
     {
         $ids = $r->user()->memberships()->where('status', 'active')->pluck('account_id');
-        $q = MaintenanceTicket::whereIn('account_id', $ids);
+        $q = MaintenanceTicket::where(function ($scope) use ($r, $ids) {
+            $scope->whereRaw('1 = 0');
+            foreach (Account::whereIn('id', $ids)->get() as $account) {
+                $allowed = $this->accountAccess->authorizedBranchIds($r->user(), $account);
+                $scope->orWhere(function ($accountScope) use ($account, $allowed) {
+                    $accountScope->where('account_id', $account->id);
+                    if ($allowed !== null) {
+                        $accountScope->whereIn('branch_id', $allowed);
+                    }
+                });
+            }
+        });
         if ($r->filled('machine_id')) {
             $q->where('machine_id', $r->string('machine_id'));
         }
@@ -98,13 +115,13 @@ class MaintenanceTicketsController extends Controller
             $q->where('status', $r->string('status'));
         }
 
-        return response()->json(['data' => $q->with(['machine', 'errorCode', 'assignee'])->orderByDesc('opened_at')->paginate(min((int) $r->integer('per_page', 25), 50))]);
+        return response()->json(['data' => $q->with(['machine', 'errorCode', 'assignee', 'downtimeEvent:id,cause,actual_start_at,actual_end_at,error_code_text'])->orderByDesc('opened_at')->paginate(min((int) $r->integer('per_page', 25), 50))]);
     }
 
     public function show(Request $r, string $id)
     {
         $ticket = MaintenanceTicket::with([
-            'machine.branch', 'errorCode', 'actions.performer', 'reporter', 'assignee',
+            'machine.branch', 'errorCode', 'actions.performer', 'reporter', 'assignee', 'downtimeEvent',
         ])->findOrFail($id);
         abort_unless(app(MachineAccessResolver::class)->canAccess($r->user(), $ticket->machine), 403);
         $ticket->load([
@@ -117,6 +134,12 @@ class MaintenanceTicketsController extends Controller
                         ->orWhere('account_id', $ticket->account_id)))
                 ->with('document:id,title'),
         ]);
+
+        if ($ticket->downtimeEvent) {
+            $start = CarbonImmutable::parse($ticket->downtimeEvent->actual_start_at);
+            $end = $ticket->downtimeEvent->actual_end_at ? CarbonImmutable::parse($ticket->downtimeEvent->actual_end_at) : CarbonImmutable::now();
+            $ticket->downtimeEvent->setAttribute('elapsed_minutes', app(DowntimeDurationCalculator::class)->elapsedMinutes($start, $end));
+        }
 
         return response()->json(['data' => $ticket]);
     }

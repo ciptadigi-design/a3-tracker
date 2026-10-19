@@ -36,7 +36,7 @@ test('the report action is gated by downtime.manage and appears once, not duplic
 })
 
 test('active downtime shows the required actions and the latest maintenance note', () => {
-  for (const label of ['Tambah Catatan', 'Mesin Sudah Normal', 'Lihat Detail', 'Catatan terakhir']) assert.match(condition, new RegExp(label))
+  for (const label of ['Tambah Catatan', 'Mesin Sudah Normal', 'Lihat Ticket', 'Catatan terakhir']) assert.match(condition, new RegExp(label))
   assert.match(condition, /await addDowntimeNote\(entry\.downtime_event_id, payload\)/)
   assert.match(condition, /await endDowntime\(entry\.downtime_event_id, payload\)/)
   assert.match(condition, /disabled=\{!status\.canComplete\}/, 'an event with an invalid start can not be completed from the UI')

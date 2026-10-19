@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Account;
+use App\Models\Branch;
 use App\Models\DowntimeEvent;
 use App\Models\Machine;
 use App\Services\AccountAccessResolver;
@@ -41,7 +42,7 @@ class DowntimeController extends Controller
     public function active(Request $r, Machine $machine)
     {
         $this->assertRead($r, $machine);
-        $event = DowntimeEvent::where('machine_id', $machine->id)->whereNull('actual_end_at')->with('notes.performer')->first();
+        $event = DowntimeEvent::where('machine_id', $machine->id)->whereNull('actual_end_at')->with(['notes.performer', 'maintenanceTicket:id,downtime_event_id,status'])->first();
 
         return response()->json(['data' => $event]);
     }
@@ -59,7 +60,13 @@ class DowntimeController extends Controller
         $canBackdate = app(EffectiveCapabilityResolver::class)->allows($r->user(), $machine->account, 'downtime.backdate');
         $event = app(DowntimeService::class)->start($machine, $r->user(), $d, $canBackdate);
 
-        app(GovernanceAudit::class)->changed($r->user(), 'downtime_event.started', 'downtime_event', $event->id, $event->account_id, [], app(GovernanceAudit::class)->snapshot($event));
+        if ($event->wasRecentlyCreated) {
+            $audit = app(GovernanceAudit::class);
+            $audit->changed($r->user(), 'downtime_event.started', 'downtime_event', $event->id, $event->account_id, [], $audit->snapshot($event));
+            if ($event->maintenanceTicket) {
+                $audit->changed($r->user(), 'maintenance_ticket.created_from_downtime', 'maintenance_ticket', $event->maintenanceTicket->id, $event->account_id, [], $audit->snapshot($event->maintenanceTicket));
+            }
+        }
 
         return response()->json(['data' => $event], 201);
     }
@@ -125,7 +132,7 @@ class DowntimeController extends Controller
                     }
                 });
             }
-        })->with(['machine.branch', 'machine.account', 'branch', 'notes']);
+        })->with(['machine.branch', 'machine.account', 'branch', 'notes', 'maintenanceTicket:id,downtime_event_id,status']);
 
         if (! empty($v['machine_id'])) {
             $q->where('machine_id', $v['machine_id']);
@@ -140,7 +147,7 @@ class DowntimeController extends Controller
             // Window is resolved in the selected machine's/branch's timezone, else the account default.
             $tzSource = ! empty($v['machine_id']) ? Machine::with(['branch', 'account'])->find($v['machine_id']) : null;
             $tz = $tzSource ? app(MachineTimezoneResolver::class)->resolve($tzSource)
-                : (! empty($v['branch_id']) ? (\App\Models\Branch::with('account')->find($v['branch_id']))?->timezone : null);
+                : (! empty($v['branch_id']) ? (Branch::with('account')->find($v['branch_id']))?->timezone : null);
             $tz = $tz ?: (Account::whereIn('id', $r->user()->memberships()->where('status', 'active')->pluck('account_id'))->value('default_timezone') ?: 'UTC');
             $from = CarbonImmutable::parse($v['period_start'], $tz)->startOfDay()->utc();
             $to = CarbonImmutable::parse($v['period_end'], $tz)->addDay()->startOfDay()->utc();
@@ -177,7 +184,7 @@ class DowntimeController extends Controller
         app(EffectiveCapabilityResolver::class)->authorize($r->user(), $account, 'downtime.view');
         abort_unless($this->accountAccess->canAccess($r->user(), $account), 403);
         if (! empty($v['branch_id'])) {
-            $branch = \App\Models\Branch::where('id', $v['branch_id'])->where('account_id', $account->id)->firstOrFail();
+            $branch = Branch::where('id', $v['branch_id'])->where('account_id', $account->id)->firstOrFail();
             abort_unless($this->branchAccess->canAccess($r->user(), $branch), 403);
         }
 

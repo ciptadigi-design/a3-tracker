@@ -11,6 +11,7 @@ import { useMaintenanceTicket } from './useMaintenanceTicket.js'
 import { RecordActionDialog } from './RecordActionDialog.jsx'
 import { formatMaintenanceDate, mapMaintenanceError, nextTicketStatuses, ticketPriorityLabels, ticketStatusLabels, ticketTypeLabels } from './maintenanceUtils.js'
 import { troubleshootingDetailUrl } from './troubleshooting/troubleshootingModel.js'
+import { causeLabel, formatElapsedMinutes } from '../downtime/downtimeModel.js'
 
 function DetailItem({ icon, label, value, hint }) {
   return <div className="detail-item"><span className="detail-item-icon">{createElement(icon, { size: 18 })}</span><div><span>{label}</span><strong>{value || '—'}</strong>{hint && <small>{hint}</small>}</div></div>
@@ -97,9 +98,10 @@ export function MaintenanceTicketDetailPage({ ticketId, navigate }) {
       {actionError && <div className="form-error" role="alert"><span>{actionError}</span></div>}
 
       <section className="incident-detail-hero glass-surface">
-        <div><span className={`incident-status-pill ${ticket.status.toLowerCase()}`}>{ticketStatusLabels[ticket.status]}</span><h2>{ticket.title}</h2><p>{ticketTypeLabels[ticket.type]} · {ticketPriorityLabels[ticket.priority]} · Opened {formatMaintenanceDate(ticket.opened_at, timezone)}</p></div>
-        {/* Downtime is opened_at -> resolved_at, shown via the Opened/Resolved detail items below - no separate tracked window. */}
+        <div><span className={`incident-status-pill ${ticket.status.toLowerCase()}`}>{ticketStatusLabels[ticket.status]}</span><h2>{ticket.title}</h2><p>{ticketTypeLabels[ticket.type]} · {ticketPriorityLabels[ticket.priority]} · Opened {formatMaintenanceDate(ticket.opened_at, timezone)}{ticket.downtime_event ? ' · Sumber: Downtime' : ''}</p></div>
       </section>
+
+      {ticket.downtime_event && <section className="ticket-knowledge-reference glass-surface"><span><Gauge size={20} /></span><div><span className="card-kicker">Downtime terkait</span><h2>{causeLabel(ticket.downtime_event.cause)}</h2><p>Mulai {formatMaintenanceDate(ticket.downtime_event.actual_start_at, timezone)} · Selesai {formatMaintenanceDate(ticket.downtime_event.actual_end_at, timezone)} · Durasi {formatElapsedMinutes(ticket.downtime_event.elapsed_minutes)}</p>{ticket.downtime_event.error_code_text && <small>Kode error: {ticket.downtime_event.error_code_text}</small>}</div><button className="secondary-button" type="button" onClick={() => navigate(`/maintenance/machine-condition?machine=${encodeURIComponent(ticket.machine_id)}`)}>Kondisi Mesin <ArrowRight size={16} /></button></section>}
 
       <section className="detail-grid glass-surface" aria-label="Ticket details">
         <DetailItem icon={Printer} label="Machine" value={ticket.machine ? `${ticket.machine.machine_code} · ${ticket.machine.display_name}` : 'Unknown'} />

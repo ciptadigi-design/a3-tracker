@@ -30,7 +30,7 @@ function TicketRow({ ticket, timezone, onOpen }) {
       <span className="machine-card-icon"><Wrench size={22} /></span>
       <span className="machine-card-main">
         <span className="machine-card-title"><strong>{ticket.title}</strong><span className={`incident-status-pill ${ticket.status.toLowerCase()}`}>{ticketStatusLabels[ticket.status]}</span></span>
-        <span className="machine-card-code">{ticket.machine?.machine_code || 'Unknown machine'} · {ticketPriorityLabels[ticket.priority]}</span>
+        <span className="machine-card-code">{ticket.machine?.machine_code || 'Unknown machine'} · {ticketPriorityLabels[ticket.priority]}{ticket.downtime_event ? ' · Sumber: Downtime' : ''}</span>
       </span>
       <span className="machine-card-meta"><span>Opened {formatMaintenanceDate(ticket.opened_at, timezone, { dateOnly: true })}</span><span>{ticket.assignee?.name ? `Assigned: ${ticket.assignee.name}` : 'Unassigned'}</span></span>
     </button>

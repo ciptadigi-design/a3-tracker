@@ -5,6 +5,7 @@ import { machineIdPattern } from '../../hooks/useAppRoute.js'
 import { useMachines } from '../machines/useMachines.js'
 import { AddNoteDialog } from './AddNoteDialog.jsx'
 import { currentMonthValue, describeActiveEntry, describeEventDurations, describeEventStatus, formatAvailabilityPercent, formatDowntimeDateTime, formatProductionDowntimeMinutes, monthToPeriod, causeLabel, NOT_CONFIGURED_LABEL } from './downtimeModel.js'
+import { ticketStatusLabels } from '../maintenance/maintenanceUtils.js'
 import { EndDowntimeDialog } from './EndDowntimeDialog.jsx'
 import { StartDowntimeDialog } from './StartDowntimeDialog.jsx'
 import { userErrorMessage } from '../../lib/appErrors.js'
@@ -26,17 +27,17 @@ function ActiveEntry({ item, timezone, canManage, onNote, onEnd, onOpen }) {
         <span>{identity}</span>
         {status.latestNote && <span className="downtime-entry-note">Catatan terakhir: {status.latestNote}</span>}
       </div>
-      <dl className="downtime-attention-meta"><div><dt>Mulai</dt><dd>{status.startText}</dd></div><div><dt>Durasi</dt><dd>{status.durationText}</dd></div></dl>
+      <dl className="downtime-attention-meta"><div><dt>Mulai</dt><dd>{status.startText}</dd></div><div><dt>Durasi</dt><dd>{status.durationText}</dd></div><div><dt>Ticket</dt><dd>{item.maintenance_ticket ? item.maintenance_ticket.id.slice(0, 8).toUpperCase() : 'Belum ada ticket terkait'}</dd></div><div><dt>Status Ticket</dt><dd>{item.maintenance_ticket ? ticketStatusLabels[item.maintenance_ticket.status] : '—'}</dd></div></dl>
       <div className="downtime-entry-actions">
         {canManage && <button className="secondary-button compact-button" type="button" onClick={onNote}><ClipboardPlus size={15} /> Tambah Catatan</button>}
         {canManage && <button className="primary-button compact-button" type="button" onClick={onEnd} disabled={!status.canComplete} title={status.canComplete ? undefined : 'Waktu mulai tidak valid'}><CheckCircle2 size={15} /> Mesin Sudah Normal</button>}
-        <button className="secondary-button compact-button" type="button" onClick={onOpen}>Lihat Detail</button>
+        {item.maintenance_ticket && <button className="secondary-button compact-button" type="button" onClick={onOpen}>Lihat Ticket</button>}
       </div>
     </li>
   )
 }
 
-function HistoryEntry({ event, timezone }) {
+function HistoryEntry({ event, timezone, onOpenTicket }) {
   const state = describeEventStatus(event)
   const durations = describeEventDurations(event)
   const machine = event.machine
@@ -50,7 +51,12 @@ function HistoryEntry({ event, timezone }) {
         <div><dt>Durasi</dt><dd>{durations.elapsedText}</dd></div>
         <div><dt>Downtime Produksi</dt><dd>{durations.productionText}</dd></div>
       </dl>
-      <span className={`machine-status ${state.state === 'active' ? 'machine-status-down' : ''}`}>{state.label}</span>
+      <div className="downtime-entry-actions">
+        <span className={`machine-status ${state.state === 'active' ? 'machine-status-down' : ''}`}>{state.label}</span>
+        {event.maintenance_ticket
+          ? <><small>Ticket {event.maintenance_ticket.id.slice(0, 8).toUpperCase()} · {ticketStatusLabels[event.maintenance_ticket.status]}</small><button className="secondary-button compact-button" type="button" onClick={onOpenTicket}>Lihat Ticket</button></>
+          : <small>Belum ada ticket terkait</small>}
+      </div>
     </li>
   )
 }
@@ -167,7 +173,7 @@ export function MachineConditionSection({ navigate, initialMachineId: requestedM
               <ul className="downtime-attention-list">
                 {active.map((item) => (
                   <ActiveEntry key={item.downtime_event_id} item={item} timezone={timezone} canManage={canManage}
-                    onNote={() => setDialog({ type: 'note', entry: item })} onEnd={() => setDialog({ type: 'end', entry: item })} onOpen={() => navigate?.(`/machines/${item.machine_id}`)} />
+                    onNote={() => setDialog({ type: 'note', entry: item })} onEnd={() => setDialog({ type: 'end', entry: item })} onOpen={() => navigate?.(`/maintenance/tickets/${item.maintenance_ticket.id}`)} />
                 ))}
               </ul>
             )}
@@ -182,7 +188,7 @@ export function MachineConditionSection({ navigate, initialMachineId: requestedM
               <p className="downtime-attention-empty"><History size={17} />Belum ada downtime pada periode ini.</p>
             ) : (
               <>
-                <ul className="downtime-attention-list downtime-history-list">{history.rows.map((event) => <HistoryEntry key={event.id} event={event} timezone={timezone} />)}</ul>
+                <ul className="downtime-attention-list downtime-history-list">{history.rows.map((event) => <HistoryEntry key={event.id} event={event} timezone={timezone} onOpenTicket={() => navigate?.(`/maintenance/tickets/${event.maintenance_ticket.id}`)} />)}</ul>
                 {history.hasMore && <button className="secondary-button downtime-history-more" type="button" onClick={loadMore} disabled={isLoadingMore}>{isLoadingMore ? 'Memuat…' : 'Muat lebih banyak'}</button>}
               </>
             )}

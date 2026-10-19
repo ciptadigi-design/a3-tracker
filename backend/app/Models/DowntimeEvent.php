@@ -52,6 +52,11 @@ class DowntimeEvent extends Model
         return $this->hasMany(DowntimeNote::class, 'downtime_event_id')->orderBy('occurred_at');
     }
 
+    public function maintenanceTicket()
+    {
+        return $this->hasOne(MaintenanceTicket::class, 'downtime_event_id');
+    }
+
     public function isActive(): bool
     {
         return $this->actual_end_at === null;

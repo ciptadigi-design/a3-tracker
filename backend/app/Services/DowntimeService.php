@@ -28,10 +28,34 @@ class DowntimeService
     // network/human entry delay, not a meaningful retroactive edit.
     private const BACKDATE_TOLERANCE_MINUTES = 5;
 
+    private const CAUSE_LABELS = [
+        'paper_jam' => 'Paper Jam',
+        'layar_blank' => 'Layar Blank',
+        'hasil_cetak_tidak_optimal' => 'Hasil cetak tidak optimal',
+        'hasil_kotor' => 'Hasil Kotor',
+        'hasil_pudar' => 'Hasil Pudar',
+        'hasil_berbayang' => 'Hasil Berbayang',
+        'hasil_bergaris' => 'Hasil Bergaris',
+        'hasil_tidak_menempel' => 'Hasil Tidak Menempel',
+        'mesin_berisik' => 'Mesin berisik',
+        'toner_tidak_detect' => 'Toner tidak detect',
+        'mesin_mati_total' => 'Mesin Mati Total',
+        'layar_berubah_warna' => 'Layar Berubah Warna',
+        'error_code' => 'Error code',
+        'mechanical' => 'Kerusakan Mekanis',
+        'consumable' => 'Consumable Habis',
+        'scheduled_maintenance' => 'Maintenance Terjadwal',
+        'power' => 'Gangguan Listrik',
+        'other' => 'Lainnya',
+        'jam' => 'Paper Jam',
+    ];
+
+    public function __construct(private MaintenanceTicketService $tickets) {}
+
     public function start(Machine $machine, User $actor, array $d, bool $canBackdate): DowntimeEvent
     {
         if (! empty($d['client_request_id'])) {
-            $existing = DowntimeEvent::where('account_id', $machine->account_id)->where('client_request_id', $d['client_request_id'])->first();
+            $existing = DowntimeEvent::where('account_id', $machine->account_id)->where('client_request_id', $d['client_request_id'])->with('maintenanceTicket')->first();
             if ($existing) {
                 return $existing;
             }
@@ -46,9 +70,9 @@ class DowntimeService
             throw ValidationException::withMessages(['actual_start_at' => 'Downtime cannot start in the future.']);
         }
 
-        return DB::transaction(function () use ($machine, $actor, $d, $actualStartAt, $isBackdated) {
-            try {
-                return DowntimeEvent::create([
+        try {
+            return DB::transaction(function () use ($machine, $actor, $d, $actualStartAt, $isBackdated) {
+                $event = DowntimeEvent::create([
                     'account_id' => $machine->account_id,
                     'branch_id' => $machine->branch_id,
                     'machine_id' => $machine->id,
@@ -61,13 +85,38 @@ class DowntimeService
                     'active_key' => 'active',
                     'client_request_id' => $d['client_request_id'] ?? null,
                 ]);
-            } catch (QueryException $e) {
-                if ((string) $e->getCode() === '23000') {
-                    throw new ConflictHttpException('This machine already has an active downtime event. End it before starting a new one.');
+
+                $ticket = $this->tickets->create([
+                    'account_id' => $event->account_id,
+                    'branch_id' => $event->branch_id,
+                    'machine_id' => $event->machine_id,
+                    'downtime_event_id' => $event->id,
+                    'title' => self::CAUSE_LABELS[$event->cause] ?? str_replace('_', ' ', ucfirst($event->cause)),
+                    'description' => $event->description,
+                    'reported_by' => $actor->id,
+                    'opened_at' => $event->actual_start_at,
+                ]);
+                $event->setRelation('maintenanceTicket', $ticket);
+
+                return $event;
+            }, 3);
+        } catch (QueryException $e) {
+            // A retry racing the original request resolves to the already committed
+            // pair. A different request still receives the active-event conflict.
+            if (! empty($d['client_request_id'])) {
+                $existing = DowntimeEvent::where('account_id', $machine->account_id)
+                    ->where('client_request_id', $d['client_request_id'])
+                    ->with('maintenanceTicket')
+                    ->first();
+                if ($existing) {
+                    return $existing;
                 }
-                throw $e;
             }
-        }, 3);
+            if ((string) $e->getCode() === '23000') {
+                throw new ConflictHttpException('This machine already has an active downtime event. End it before starting a new one.');
+            }
+            throw $e;
+        }
     }
 
     public function addNote(DowntimeEvent $event, array $d): DowntimeNote

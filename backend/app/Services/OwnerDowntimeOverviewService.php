@@ -104,7 +104,7 @@ class OwnerDowntimeOverviewService
         $availabilityPercent = ($configured > 0 && $totalScheduled > 0)
             ? round((($totalScheduled - $totalProductionDowntime) / $totalScheduled) * 100, 1)
             : null;
-        $activeEvents = DowntimeEvent::whereIn('machine_id', $machineIds)->whereNull('actual_end_at')->with(['machine.branch', 'notes'])->orderBy('actual_start_at')->get();
+        $activeEvents = DowntimeEvent::whereIn('machine_id', $machineIds)->whereNull('actual_end_at')->with(['machine.branch', 'notes', 'maintenanceTicket:id,downtime_event_id,status'])->orderBy('actual_start_at')->get();
 
         $result = [
             'period' => ['start' => $periodStartDate, 'end' => $periodEndDate],
@@ -132,6 +132,10 @@ class OwnerDowntimeOverviewService
                 'error_code_text' => $e->error_code_text,
                 'actual_start_at' => $e->actual_start_at,
                 'elapsed_minutes' => $this->calc->elapsedMinutes(CarbonImmutable::parse($e->actual_start_at), $now),
+                'maintenance_ticket' => $e->maintenanceTicket ? [
+                    'id' => $e->maintenanceTicket->id,
+                    'status' => $e->maintenanceTicket->status,
+                ] : null,
             ])->values(),
         ];
 
