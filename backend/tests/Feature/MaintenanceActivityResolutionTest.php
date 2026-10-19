@@ -81,11 +81,11 @@ class MaintenanceActivityResolutionTest extends TestCase
         $t = $this->ticket($f);
         $url = "/api/v1/maintenance/tickets/{$t->id}/actions";
 
-        $this->actingAs($f['owner'])->postJson($url, ['action_description' => 'Pemeriksaan hasil cetak', 'findings' => 'Ditemukan bercak.', 'operator_person_id' => $f['andi']->id])->assertCreated()
+        $this->actingAs($f['owner'])->postJson($url, ['performed_at' => '2026-10-19 14:58:00', 'action_description' => 'Pemeriksaan hasil cetak', 'findings' => 'Ditemukan bercak.', 'operator_person_id' => $f['andi']->id])->assertCreated()
             ->assertJsonPath('data.operator_name', 'Andi')->assertJsonPath('data.performed_by', $f['owner']->id)->assertJsonPath('data.ticket_id', $t->id);
-        $this->actingAs($f['owner'])->postJson($url, ['action_description' => 'Pemeriksaan drum', 'findings' => 'Drum perlu dibersihkan.', 'external_technician_name' => 'Budi', 'vendor_name' => 'Konica Minolta'])->assertCreated()
+        $this->actingAs($f['owner'])->postJson($url, ['performed_at' => '2026-10-19 15:25:00', 'action_description' => 'Pemeriksaan drum', 'findings' => 'Drum perlu dibersihkan.', 'external_technician_name' => 'Budi', 'vendor_name' => 'Konica Minolta'])->assertCreated()
             ->assertJsonPath('data.operator_person_id', null)->assertJsonPath('data.vendor_name', 'Konica Minolta');
-        $this->actingAs($f['owner'])->postJson($url, ['action_description' => 'Test print ulang', 'operator_person_id' => $f['siti']->id, 'external_technician_name' => 'Budi'])->assertCreated()
+        $this->actingAs($f['owner'])->postJson($url, ['performed_at' => '2026-10-19 15:40:00', 'action_description' => 'Test print ulang', 'operator_person_id' => $f['siti']->id, 'external_technician_name' => 'Budi'])->assertCreated()
             ->assertJsonPath('data.operator_name', 'Siti')->assertJsonPath('data.external_technician_name', 'Budi');
 
         $shown = $this->actingAs($f['owner'])->getJson("/api/v1/maintenance/tickets/{$t->id}")->assertOk()->json('data.actions');
