@@ -2,7 +2,7 @@ import { createElement, useCallback, useEffect, useRef, useState } from 'react'
 import { AlertTriangle, BarChart3, Clock3, Gauge, RefreshCcw, Wrench } from 'lucide-react'
 import { userErrorMessage } from '../../lib/appErrors.js'
 import { loadDowntimeOverview } from '../../services/downtime.js'
-import { describeOwnerKpis, formatProductionDowntimeMinutes } from '../downtime/downtimeModel.js'
+import { causeLabel, describeOwnerKpis, formatProductionDowntimeMinutes } from '../downtime/downtimeModel.js'
 
 function Kpi({ icon, label, value, hint, tone = 'blue' }) {
   return <article className="report-kpi glass-surface"><span className={`report-kpi-icon tone-${tone}`}>{createElement(icon, { size: 19 })}</span><div><span>{label}</span><strong>{value}</strong><small>{hint}</small></div></article>
@@ -80,7 +80,7 @@ export function DowntimeReportTab({ account, branch, machineId, period, refreshV
             valueOf={(row) => row.production_downtime_minutes} labelOf={(row) => `${row.machine_code}${row.machine_name ? ` · ${row.machine_name}` : ''}`}
             formatValue={(row) => `${formatProductionDowntimeMinutes(row.production_downtime_minutes)} · ${row.event_count}×`} emptyDetail="Belum ada mesin dengan downtime." />
           <div className="report-two-column">
-            <Bars title="Penyebab Paling Sering" description="Dari insiden yang tercatat" rows={data.causes ?? []} valueOf={(row) => row.count} labelOf={(row) => row.cause} formatValue={(row) => `${row.count}×`} emptyDetail="Belum ada penyebab tercatat." />
+            <Bars title="Penyebab Paling Sering" description="Dari insiden yang tercatat" rows={data.causes ?? []} valueOf={(row) => row.count} labelOf={(row) => causeLabel(row.cause)} formatValue={(row) => `${row.count}×`} emptyDetail="Belum ada penyebab tercatat." />
             <Bars title="Kode Error Paling Sering" description="Hanya insiden dengan kode error" rows={data.error_codes ?? []} valueOf={(row) => row.count} labelOf={(row) => row.error_code} formatValue={(row) => `${row.count}×`} emptyDetail="Tidak ada kode error tercatat." />
           </div>
         </>

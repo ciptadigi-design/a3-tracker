@@ -1,3 +1,5 @@
+import { causeLabel } from '../downtime/downtimeModel.js'
+
 const exportDefinitions = {
   overview: {
     slug: 'overview-machine-summary',
@@ -89,7 +91,7 @@ exportDefinitions.downtime = {
     { Section: 'Ringkasan', Item: 'Rata-rata Pemulihan (menit)', Value: data.average_recovery_minutes ?? 'Belum ada pemulihan', Detail: `${data.completed_event_count} insiden selesai` },
     ...(data.trend ?? []).map((row) => ({ Section: 'Tren', Item: row.bucket, Value: row.production_downtime_minutes ?? 'Belum dikonfigurasi', Detail: 'Downtime produksi (menit)' })),
     ...(data.ranking ?? []).map((row) => ({ Section: 'Peringkat Mesin', Item: `${row.machine_code} · ${row.machine_name}`, Value: row.production_downtime_minutes ?? 'Belum dikonfigurasi', Detail: `${row.event_count} insiden` })),
-    ...(data.causes ?? []).map((row) => ({ Section: 'Penyebab', Item: row.cause, Value: row.count, Detail: 'Jumlah insiden' })),
+    ...(data.causes ?? []).map((row) => ({ Section: 'Penyebab', Item: causeLabel(row.cause), Value: row.count, Detail: 'Jumlah insiden' })),
     ...(data.error_codes ?? []).map((row) => ({ Section: 'Kode Error', Item: row.error_code, Value: row.count, Detail: 'Jumlah insiden' })),
   ],
 }

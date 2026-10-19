@@ -274,4 +274,17 @@ class DowntimeKpiAnalyticsTest extends TestCase
         $this->assertArrayNotHasKey('ranking', $d);
         $this->assertArrayNotHasKey('trend', $d);
     }
+
+    public function test_legacy_and_new_cause_keys_coexist_in_report_aggregation(): void
+    {
+        $this->schedule($this->main);
+        $this->downtime($this->m1, '2026-10-05 09:00', '2026-10-05 10:00', 'mechanical');
+        $this->downtime($this->m1, '2026-10-06 09:00', '2026-10-06 10:00', 'paper_jam');
+        $this->downtime($this->m2, '2026-10-07 09:00', '2026-10-07 10:00', 'paper_jam');
+        $d = $this->kpi('2026-10-01', '2026-10-31', ['detail' => 1]);
+
+        $counts = collect($d['causes'])->pluck('count', 'cause')->all();
+        $this->assertSame(['paper_jam' => 2, 'mechanical' => 1], $counts);
+        $this->assertSame(['cause' => 'paper_jam', 'count' => 2], $d['causes'][0]);
+    }
 }

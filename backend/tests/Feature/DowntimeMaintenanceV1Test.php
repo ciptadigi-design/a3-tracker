@@ -393,4 +393,26 @@ class DowntimeMaintenanceV1Test extends TestCase
         // Restricted member only sees branch "MAIN", never "SECOND" machines' events.
         $this->assertSame(0, $response->json('data.event_count'));
     }
+
+    public function test_every_operational_cause_key_is_accepted_and_stored_verbatim(): void
+    {
+        $keys = ['paper_jam', 'layar_blank', 'hasil_cetak_tidak_optimal', 'hasil_kotor', 'hasil_pudar', 'hasil_berbayang', 'hasil_bergaris',
+            'hasil_tidak_menempel', 'mesin_berisik', 'toner_tidak_detect', 'mesin_mati_total', 'layar_berubah_warna', 'error_code'];
+        $f = $this->fixture();
+        foreach ($keys as $key) {
+            $event = $this->actingAs($f['owner'])->postJson("/api/v1/downtime/machines/{$f['machine']->id}/start", ['cause' => $key, 'error_code_text' => $key === 'error_code' ? 'C-3913' : null])->assertCreated()->json('data');
+            $this->assertSame($key, $event['cause']);
+            $this->actingAs($f['owner'])->postJson("/api/v1/downtime/events/{$event['id']}/end", [])->assertOk();
+        }
+        $stored = DowntimeEvent::where('machine_id', $f['machine']->id)->pluck('cause')->all();
+        $this->assertCount(13, $stored);
+        $this->assertEqualsCanonicalizing($keys, $stored);
+    }
+
+    public function test_start_still_requires_a_cause(): void
+    {
+        $f = $this->fixture();
+        $this->actingAs($f['owner'])->postJson("/api/v1/downtime/machines/{$f['machine']->id}/start", [])->assertStatus(422);
+        $this->actingAs($f['owner'])->postJson("/api/v1/downtime/machines/{$f['machine']->id}/start", ['cause' => str_repeat('x', 61)])->assertStatus(422);
+    }
 }

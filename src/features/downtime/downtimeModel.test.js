@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { causeLabel, currentMonthPeriod, describeMachineStatus, elapsedMinutesBetween, formatAvailabilityPercent, formatElapsedMinutes, formatProductionDowntimeMinutes, mapDowntimeError, newClientRequestId, normalizeActiveDowntime, summarizeMachineHealth } from './downtimeModel.js'
+import { causeLabel, downtimeCauses, legacyDowntimeCauses, currentMonthPeriod, describeMachineStatus, elapsedMinutesBetween, formatAvailabilityPercent, formatElapsedMinutes, formatProductionDowntimeMinutes, mapDowntimeError, newClientRequestId, normalizeActiveDowntime, summarizeMachineHealth } from './downtimeModel.js'
 
 test('elapsed minutes floors to whole minutes and never goes negative', () => {
   assert.equal(elapsedMinutesBetween('2026-01-01T00:00:00Z', '2026-01-01T02:00:00Z'), 120)
@@ -115,4 +115,19 @@ test('an active event for a machine missing from the machine list is still count
 test('single-machine scope with no active events is fully operational and counts no phantom stops', () => {
   const health = summarizeMachineHealth({ machines: [{ id: 'm-1' }], attention: [] })
   assert.deepEqual({ o: health.operationalCount, s: health.stoppedCount }, { o: 1, s: 0 })
+})
+
+test('start form offers exactly the 13 operational causes in order, single-select values within the 60-char API limit', () => {
+  assert.deepEqual(downtimeCauses.map((c) => c.label), [
+    'Paper Jam', 'Layar Blank', 'Hasil cetak tidak optimal', 'Hasil Kotor', 'Hasil Pudar', 'Hasil Berbayang', 'Hasil Bergaris',
+    'Hasil Tidak Menempel', 'Mesin berisik', 'Toner tidak detect', 'Mesin Mati Total', 'Layar Berubah Warna', 'Error code',
+  ])
+  assert.equal(new Set(downtimeCauses.map((c) => c.value)).size, 13)
+  for (const c of downtimeCauses) { assert.match(c.value, /^[a-z_]+$/); assert.ok(c.value.length <= 60); assert.equal(causeLabel(c.value), c.label) }
+})
+
+test('legacy stored causes still resolve to readable labels but are not offered by the form', () => {
+  const offered = new Set(downtimeCauses.map((c) => c.value))
+  for (const c of legacyDowntimeCauses) { assert.ok(!offered.has(c.value)); assert.equal(causeLabel(c.value), c.label) }
+  assert.equal(causeLabel('mechanical'), 'Kerusakan Mekanis')
 })

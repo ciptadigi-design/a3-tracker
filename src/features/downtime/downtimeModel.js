@@ -1,7 +1,24 @@
 // Operator-facing workflow: every label is Indonesian (the stored cause values
 // stay the stable English enum keys the API already accepts).
 export const downtimeCauses = [
-  { value: 'error_code', label: 'Kode Error' },
+  { value: 'paper_jam', label: 'Paper Jam' },
+  { value: 'layar_blank', label: 'Layar Blank' },
+  { value: 'hasil_cetak_tidak_optimal', label: 'Hasil cetak tidak optimal' },
+  { value: 'hasil_kotor', label: 'Hasil Kotor' },
+  { value: 'hasil_pudar', label: 'Hasil Pudar' },
+  { value: 'hasil_berbayang', label: 'Hasil Berbayang' },
+  { value: 'hasil_bergaris', label: 'Hasil Bergaris' },
+  { value: 'hasil_tidak_menempel', label: 'Hasil Tidak Menempel' },
+  { value: 'mesin_berisik', label: 'Mesin berisik' },
+  { value: 'toner_tidak_detect', label: 'Toner tidak detect' },
+  { value: 'mesin_mati_total', label: 'Mesin Mati Total' },
+  { value: 'layar_berubah_warna', label: 'Layar Berubah Warna' },
+  { value: 'error_code', label: 'Error code' },
+]
+
+// Causes the form used to offer. Never offered again, but events already stored
+// with these keys must keep rendering a readable label in history and reports.
+export const legacyDowntimeCauses = [
   { value: 'mechanical', label: 'Kerusakan Mekanis' },
   { value: 'consumable', label: 'Consumable Habis' },
   { value: 'scheduled_maintenance', label: 'Maintenance Terjadwal' },
@@ -9,7 +26,7 @@ export const downtimeCauses = [
 ]
 
 export function causeLabel(cause) {
-  return downtimeCauses.find((item) => item.value === cause)?.label || cause
+  return [...downtimeCauses, ...legacyDowntimeCauses].find((item) => item.value === cause)?.label || cause
 }
 
 /**
