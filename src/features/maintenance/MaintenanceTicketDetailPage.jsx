@@ -156,8 +156,8 @@ export function MaintenanceTicketDetailPage({ ticketId, navigate }) {
 
       <section className="ticket-card glass-surface" aria-label="Informasi ticket">
         <div className="ticket-card-head"><div><span className="card-kicker">Informasi ticket</span></div></div>
-        <dl className="ticket-fields">
-          <Field label="Machine">{ticket.machine ? `${ticket.machine.machine_code} · ${ticket.machine.display_name}` : 'Unknown'}</Field>
+        <dl className="ticket-fields ticket-fields-info">
+          <Field label="Machine" wide>{ticket.machine ? `${ticket.machine.machine_code} · ${ticket.machine.display_name}` : 'Unknown'}</Field>
           {/* The ticket's own error_code is the master-data link; auto-created tickets never set it. The code
               reported on the related downtime is shown as such, never mapped onto the ticket. */}
           <Field label="Error code" hint={errorCode.hint}>{errorCode.value}</Field>

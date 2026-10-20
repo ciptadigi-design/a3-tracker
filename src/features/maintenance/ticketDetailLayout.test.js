@@ -76,3 +76,12 @@ test('UI refinement: timeline sits in one card and the PIC form has no detached 
   assert.match(css, /\.ticket-form-actions \{ display: flex; justify-content: flex-end; \}/)
   assert.match(css, /\.ticket-responsible-form \.form-grid \{ grid-template-columns: minmax\(0, 1fr\); \}/)
 })
+
+test('ticket detail retouch: bounded PIC form, balanced info grid, compact header', () => {
+  const css = read('../../App.css')
+  assert.match(css, /\.ticket-responsible-form \{[^}]*max-width: 640px/)
+  assert.match(css, /\.ticket-fields-info \{ grid-template-columns: repeat\(3, minmax\(0, 1fr\)\)/)
+  assert.match(css, /\.ticket-page \.page-header h1 \{[^}]*font-size: clamp\(22px/)
+  assert.match(css, /\.ticket-resolution \{ grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/)
+  assert.match(read('./MaintenanceTicketDetailPage.jsx'), /ticket-fields ticket-fields-info/)
+})
