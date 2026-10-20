@@ -1,0 +1,146 @@
+name: Import Official J-Codes
+
+# One-time, manually triggered, additive Production import of the reviewed J-code (jam indication)
+# dataset. It reuses the deployment workflow's Hostinger secrets (the `production` environment),
+# never redeploys, never runs migrations, and creates no new credentials. The Artisan command it
+# runs is additive and idempotent, and refuses anything but "no J entries yet" or an identical rerun.
+# Every gate below fails closed; apply only runs when the preview matches the reviewed contract.
+
+on:
+  workflow_dispatch:
+    inputs:
+      expected_release_sha:
+        description: "Exact 40-hex SHA that must be the live Production release"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
+env:
+  APP_ROOT: /home/u777904340/a3-production-app
+  SOURCE_SHA256: ae679f5bcd31a49826f9b2587ad4b9483be93950f246c1ea014a7dd0ddcb6ee4
+  DATASET_DIGEST: d4df7fce824de2a03f1242a7fc474a9b54f49ddaa4343b68a585a12a699079b9
+  CONFIRMATION: APPLY-JAM-376-d4df7fce824d
+
+jobs:
+  import:
+    name: Preview, apply and verify the reviewed J-code import
+    runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 30
+    steps:
+      - name: Reject anything that is not an exact 40-hex SHA
+        run: |
+          sha='${{ inputs.expected_release_sha }}'
+          [[ "$sha" =~ ^[0-9a-f]{40}$ ]] || { echo "::error::expected_release_sha must be an exact 40-hex SHA"; exit 1; }
+
+      - name: Set up SSH (strict host key checking, key never printed)
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.HOSTINGER_SSH_PRIVATE_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.HOSTINGER_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          printf '%s\n' "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+
+      - name: Resolve, preview, apply and verify on Production
+        run: |
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes -p "${{ secrets.HOSTINGER_SSH_PORT }}" \
+            "${{ secrets.HOSTINGER_SSH_USER }}@${{ secrets.HOSTINGER_SSH_HOST }}" bash -s -- \
+            "${{ env.APP_ROOT }}" "${{ inputs.expected_release_sha }}" "${{ env.SOURCE_SHA256 }}" \
+            "${{ env.DATASET_DIGEST }}" "${{ env.CONFIRMATION }}" <<'REMOTE'
+          set -euo pipefail
+          APP_ROOT="$1"; EXPECTED_SHA="$2"; SOURCE_SHA="$3"; DIGEST="$4"; CONFIRM="$5"
+          stop() { echo "JAM_IMPORT_STOPPED=$1"; exit 1; }
+
+          [ "$(basename "$(readlink -f "$APP_ROOT/current")")" = "$EXPECTED_SHA" ] || stop "live release is not $EXPECTED_SHA"
+          cd "$APP_ROOT/current/backend"
+
+          # --- resolve the manual from Production: the one document that carries the C-code parents ---
+          RESOLVE="$(php artisan tinker --execute="$(cat <<'PHP'
+          $docs = DB::table('maintenance_official_error_entries')->where('code', 'like', 'C-%')->distinct()->pluck('document_id');
+          if ($docs->count() !== 1) { echo 'RESOLVE_ERROR=expected exactly one document with C-code parents, found '.$docs->count().PHP_EOL; return; }
+          $d = DB::table('maintenance_documents')->find($docs[0]);
+          $path = realpath(Illuminate\Support\Facades\Storage::disk($d->storage_disk)->path($d->file_path));
+          echo 'RESOLVE_ENV='.app()->environment().PHP_EOL;
+          echo 'RESOLVE_RELEASE='.config('release.git_sha').PHP_EOL;
+          echo 'RESOLVE_DOC='.$d->id.PHP_EOL;
+          echo 'RESOLVE_STATUS='.$d->status.'/'.((int) $d->is_active).PHP_EOL;
+          echo 'RESOLVE_PDF='.($path ?: '').PHP_EOL;
+          echo 'RESOLVE_C='.DB::table('maintenance_official_error_entries')->where('document_id', $d->id)->where('code', 'like', 'C-%')->count().PHP_EOL;
+          echo 'RESOLVE_J='.DB::table('maintenance_official_error_entries')->where('document_id', $d->id)->where('code', 'like', 'J-%')->count().PHP_EOL;
+          echo 'RESOLVE_TICKETS='.DB::table('maintenance_tickets')->count().PHP_EOL;
+          PHP
+          )" 2>&1)"
+          get() { printf '%s\n' "$RESOLVE" | sed -n "s/^$1=//p" | head -1; }
+          if printf '%s\n' "$RESOLVE" | grep -q '^RESOLVE_ERROR='; then stop "$(get RESOLVE_ERROR)"; fi
+          DOC="$(get RESOLVE_DOC)"; PDF="$(get RESOLVE_PDF)"
+          [ "$(get RESOLVE_ENV)" = "production" ] || stop "APP_ENV is not production"
+          [ "$(get RESOLVE_RELEASE)" = "$EXPECTED_SHA" ] || stop "configured release SHA differs from $EXPECTED_SHA"
+          [ "$(get RESOLVE_STATUS)" = "PUBLISHED/1" ] || stop "document is not published and active"
+          [ "$(get RESOLVE_J)" = "0" ] || stop "J-code entries already exist (RESOLVE_J=$(get RESOLVE_J)); use the verify path instead"
+          [ -n "$DOC" ] && [ -f "$PDF" ] || stop "document or stored PDF not found"
+          [ "$(sha256sum "$PDF" | cut -d' ' -f1)" = "$SOURCE_SHA" ] || stop "stored PDF SHA-256 does not match the reviewed source"
+          echo "RESOLVED_DOCUMENT=$DOC"
+          echo "RESOLVED_PDF_BASENAME=$(basename "$PDF")"
+          echo "PDF_SHA256_VERIFIED=$SOURCE_SHA"
+          echo "C_CODE_PARENTS_BEFORE=$(get RESOLVE_C)"
+          C_BEFORE="$(get RESOLVE_C)"; TICKETS_BEFORE="$(get RESOLVE_TICKETS)"
+
+          # --- preview (writes nothing) must match the reviewed contract exactly ---
+          PREVIEW="$(php artisan maintenance:v2-ingest-jam-codes --preview --document="$DOC" --pdf="$PDF" 2>&1)" || { echo "$PREVIEW" | tail -5; stop "preview command failed"; }
+          for needle in '"scenario": "FIRST_APPLY"' '"created": 376' '"accepted": 376' '"quarantined": 2' '"distinct_codes": 371' "\"dataset_digest\": \"$DIGEST\"" '"mutation_performed": false' 'JAM_CODE_PREVIEW=PASS'; do
+            printf '%s\n' "$PREVIEW" | grep -qF -- "$needle" || stop "preview does not contain $needle"
+          done
+          echo "PREVIEW_MATCHES_CONTRACT=PASS"
+
+          # --- additive apply ---
+          APPLY="$(php artisan maintenance:v2-ingest-jam-codes --apply --document="$DOC" --pdf="$PDF" \
+            --expected-dataset-digest="$DIGEST" --expected-environment=production --confirm="$CONFIRM" 2>&1)" || { echo "$APPLY" | tail -5; stop "apply failed (transaction rolled back)"; }
+          printf '%s\n' "$APPLY" | grep -qF '"transaction": "COMMITTED"' || stop "apply did not commit"
+          printf '%s\n' "$APPLY" | grep -qF 'JAM_CODE_APPLY=PASS' || stop "apply did not report PASS"
+          echo "APPLY=COMMITTED"
+
+          # --- read-only verify + independent post-checks ---
+          VERIFY="$(php artisan maintenance:v2-ingest-jam-codes --verify --document="$DOC" --pdf="$PDF" 2>&1)" || { echo "$VERIFY" | tail -5; stop "verify failed"; }
+          printf '%s\n' "$VERIFY" | grep -qF 'JAM_CODE_VERIFY=PASS' || stop "verify did not report PASS"
+          echo "VERIFY=PASS"
+
+          POST="$(php artisan tinker --execute="$(cat <<'PHP'
+          $e = DB::table('maintenance_official_error_entries')->where('code', 'like', 'J-%');
+          echo 'POST_J='.(clone $e)->count().PHP_EOL;
+          echo 'POST_J_DISTINCT_CODES='.(clone $e)->distinct()->count('code').PHP_EOL;
+          echo 'POST_J_DISTINCT_VARIANTS='.DB::table('maintenance_official_error_entries')->where('code', 'like', 'J-%')->select('code', 'variant_key')->distinct()->get()->count().PHP_EOL;
+          echo 'POST_C='.DB::table('maintenance_official_error_entries')->where('code', 'like', 'C-%')->count().PHP_EOL;
+          echo 'POST_J_WITHOUT_RUN='.(clone $e)->whereNull('ingestion_run_id')->count().PHP_EOL;
+          echo 'POST_J_BAD_PAGES='.(clone $e)->where(fn ($q) => $q->where('source_page_start', '<', 1310)->orWhere('source_page_end', '>', 1334))->count().PHP_EOL;
+          echo 'POST_QUARANTINED_PRESENT='.(clone $e)->where(fn ($q) => $q->where(fn ($w) => $w->where('code', 'J-7272')->where('variant_key', 'SD-510'))->orWhere(fn ($w) => $w->where('code', 'J-7524')->where('variant_key', 'FD')))->count().PHP_EOL;
+          echo 'POST_RUNS='.DB::table('maintenance_official_ingestion_runs')->where('contract_name', 'konica-c1070-v1.5-jam-code-list')->where('status', 'COMPLETED')->count().PHP_EOL;
+          echo 'POST_TICKETS='.DB::table('maintenance_tickets')->count().PHP_EOL;
+          foreach (['J1101', 'J1001', 'J7225', 'C0213'] as $q) {
+            $rows = DB::table('maintenance_official_error_entries')->whereRaw("REPLACE(UPPER(code), '-', '') = ?", [$q])->get(['code', 'variant_key', 'source_page_start']);
+            echo 'SEARCH_'.$q.'='.$rows->count().':'.$rows->map(fn ($r) => $r->code.'/'.$r->variant_key.'@p'.$r->source_page_start)->implode(',').PHP_EOL;
+          }
+          PHP
+          )" 2>&1)"
+          printf '%s\n' "$POST"
+          pget() { printf '%s\n' "$POST" | sed -n "s/^$1=//p" | head -1; }
+          [ "$(pget POST_J)" = "376" ] || stop "expected 376 J entries"
+          [ "$(pget POST_J_DISTINCT_VARIANTS)" = "376" ] || stop "duplicate J variants present"
+          [ "$(pget POST_J_DISTINCT_CODES)" = "371" ] || stop "expected 371 distinct J codes"
+          [ "$(pget POST_C)" = "$C_BEFORE" ] || stop "C-code entry count changed"
+          [ "$(pget POST_J_WITHOUT_RUN)" = "0" ] || stop "J entries without a run link"
+          [ "$(pget POST_J_BAD_PAGES)" = "0" ] || stop "J entries outside manual pages 1310-1334"
+          [ "$(pget POST_QUARANTINED_PRESENT)" = "0" ] || stop "a quarantined row was imported"
+          [ "$(pget POST_RUNS)" = "1" ] || stop "expected exactly one completed jam-code run"
+          [ "$(pget POST_TICKETS)" = "$TICKETS_BEFORE" ] || stop "maintenance ticket count changed"
+          echo "JAM_IMPORT_COMPLETE=PASS"
+          REMOTE
