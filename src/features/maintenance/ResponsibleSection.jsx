@@ -47,7 +47,7 @@ export function ResponsibleSection({ ticket, people, peopleLoading, peopleError,
       <div className="ticket-subsection-head"><h3>Penanggung Jawab</h3></div>
       <form className="ticket-responsible-form" onSubmit={handleSubmit}>
         <div className="form-grid">
-          <label className="form-field"><span><UserRound size={14} /> PIC Internal</span>
+          <label className="form-field"><span>PIC Internal</span>
             <select aria-label="PIC Internal" value={form.internal_pic_person_id} onChange={set('internal_pic_person_id')} disabled={peopleLoading || Boolean(peopleError)}>
               <option value="">{peopleLoading ? 'Memuat operator…' : 'Tanpa PIC internal'}</option>
               {picMissing && <option value={ticket.internal_pic_person_id}>{ticket.internal_pic_name} (tidak aktif)</option>}
