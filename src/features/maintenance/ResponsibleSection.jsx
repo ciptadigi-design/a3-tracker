@@ -27,17 +27,24 @@ export function ResponsibleSection({ ticket, people, peopleLoading, peopleError,
   }
 
   if (!canEdit) {
+    const rows = [
+      ticket.internal_pic_name && ['PIC Internal', ticket.internal_pic_name],
+      ticket.external_technician_name && ['Teknisi Eksternal', ticket.external_technician_name],
+      ticket.external_vendor_name && ['Vendor / Perusahaan', ticket.external_vendor_name],
+    ].filter(Boolean)
     return (
-      <section className="machine-list-card glass-surface" aria-label="Penanggung Jawab">
-        <div className="list-toolbar"><div><span className="card-kicker">Penanggung Jawab</span><h2>{ticket.internal_pic_name || 'Belum ditentukan'}</h2></div></div>
-        {(ticket.external_technician_name || ticket.external_vendor_name) && <p>Teknisi eksternal: {[ticket.external_technician_name, ticket.external_vendor_name && `(${ticket.external_vendor_name})`].filter(Boolean).join(' ')}</p>}
-      </section>
+      <div className="ticket-subsection" aria-label="Penanggung Jawab">
+        <div className="ticket-subsection-head"><h3>Penanggung Jawab</h3></div>
+        {rows.length === 0
+          ? <p className="ticket-empty"><UserRound size={16} />Belum ditentukan.</p>
+          : <dl className="ticket-fields">{rows.map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl>}
+      </div>
     )
   }
 
   return (
-    <section className="machine-list-card glass-surface" aria-label="Penanggung Jawab">
-      <div className="list-toolbar"><div><span className="card-kicker">Penanggung Jawab</span><h2>PIC internal &amp; teknisi eksternal</h2></div></div>
+    <div className="ticket-subsection" aria-label="Penanggung Jawab">
+      <div className="ticket-subsection-head"><h3>Penanggung Jawab</h3></div>
       <form className="machine-form" onSubmit={handleSubmit}>
         <div className="form-grid">
           <label className="form-field"><span><UserRound size={14} /> PIC Internal</span>
@@ -55,6 +62,6 @@ export function ResponsibleSection({ ticket, people, peopleLoading, peopleError,
         {error && <div className="form-error" role="alert"><span>{error}</span></div>}
         <div className="dialog-actions"><button className="secondary-button" type="submit" disabled={isSaving}>{isSaving && <LoaderCircle className="spin" size={16} />}{isSaving ? 'Menyimpan…' : 'Simpan Penanggung Jawab'}</button></div>
       </form>
-    </section>
+    </div>
   )
 }

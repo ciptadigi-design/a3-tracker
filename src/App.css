@@ -2190,3 +2190,65 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   .machine-health-card .overview-target-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .machine-health-card > header > button { width: 100%; }
 }
+
+/* ---- Downtime history rows: one aligned grid (identity | timings | status + ticket) ---- */
+.downtime-history-list li { grid-template-columns: minmax(0, 1.2fr) minmax(0, 2.4fr) minmax(170px, 0.9fr); align-items: start; gap: 12px 22px; }
+.downtime-history-meta { margin: 0; min-width: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px 18px; }
+.downtime-history-meta > div { min-width: 0; }
+.downtime-history-meta dt { color: var(--text-muted); font-size: 9px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
+.downtime-history-meta dd { margin: 3px 0 0; overflow-wrap: anywhere; font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.downtime-history-ticket { min-width: 0; display: grid; justify-items: start; gap: 7px; }
+.downtime-history-ticket small { color: var(--text-muted); font-size: 11px; overflow-wrap: anywhere; }
+
+/* ---- Maintenance ticket detail: content-driven cards (no min-heights) ---- */
+.ticket-page { gap: 16px; }
+.ticket-card { min-width: 0; display: grid; gap: 14px; padding: 20px 24px; border-radius: 24px; }
+.ticket-card-head { min-width: 0; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.ticket-card-head h2 { margin: 6px 0 0; font-size: 18px; letter-spacing: -0.03em; overflow-wrap: anywhere; }
+.ticket-summary-head { min-width: 0; display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; }
+.ticket-summary-head p { margin: 0; overflow-wrap: anywhere; color: var(--text-soft); font-size: 12px; line-height: 1.5; }
+.ticket-description { margin: 0; overflow-wrap: anywhere; color: var(--text-soft); font-size: 13px; line-height: 1.6; white-space: pre-wrap; }
+.ticket-reference { min-width: 0; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 15px; background: var(--surface-muted); }
+.ticket-reference > span { width: 34px; height: 34px; display: grid; place-items: center; color: var(--blue); background: var(--blue-soft); border-radius: 11px; }
+.ticket-reference > div { min-width: 0; display: grid; gap: 2px; }
+.ticket-reference strong { overflow-wrap: anywhere; font-size: 14px; }
+.ticket-reference small { overflow-wrap: anywhere; color: var(--text-soft); font-size: 11px; }
+.ticket-fields { margin: 0; min-width: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px 24px; }
+.ticket-fields > div { min-width: 0; }
+.ticket-fields dt { color: var(--text-muted); font-size: 9px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; }
+.ticket-fields dd { margin: 4px 0 0; display: grid; justify-items: start; gap: 2px; overflow-wrap: anywhere; font-size: 13px; font-weight: 650; line-height: 1.5; white-space: pre-wrap; }
+.ticket-fields dd small { color: var(--text-muted); font-size: 10px; font-weight: 500; }
+.ticket-field-wide { grid-column: 1 / -1; }
+.ticket-resolution dd { font-weight: 500; }
+.ticket-subsection { min-width: 0; display: grid; gap: 10px; padding-top: 14px; border-top: 1px solid var(--border-subtle); }
+.ticket-subsection-head { min-width: 0; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px 12px; }
+.ticket-subsection-head h3 { margin: 0; color: var(--blue); font-size: 11px; font-weight: 750; letter-spacing: 0.12em; text-transform: uppercase; }
+.ticket-empty { margin: 0; display: flex; align-items: center; gap: 8px; color: var(--text-muted); font-size: 12px; }
+.ticket-empty svg { flex: 0 0 auto; }
+.ticket-activity-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.ticket-activity { min-width: 0; display: grid; justify-items: start; gap: 5px; padding: 12px 14px; border-radius: 15px; background: var(--surface-muted); }
+.ticket-activity > * { max-width: 100%; }
+.ticket-activity-head { width: 100%; display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 14px; }
+.ticket-activity-head strong { font-size: 12px; }
+.ticket-activity-who { display: flex; flex-wrap: wrap; gap: 2px 12px; color: var(--text-soft); font-size: 11px; }
+.ticket-activity p { margin: 0; overflow-wrap: anywhere; color: var(--text); font-size: 12px; line-height: 1.6; white-space: pre-wrap; }
+.ticket-activity small { overflow-wrap: anywhere; color: var(--text-muted); font-size: 11px; }
+.ticket-activity .timeline-correction { width: 100%; margin-top: 4px; }
+.ticket-activity-correct { margin-top: 2px; }
+
+@media (max-width: 1180px) {
+  .downtime-history-list li { grid-template-columns: minmax(0, 1fr); }
+  .downtime-history-ticket { grid-auto-flow: column; justify-content: start; align-items: center; justify-items: start; gap: 8px 14px; flex-wrap: wrap; }
+}
+@media (max-width: 760px) {
+  .downtime-history-meta { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .downtime-history-ticket { grid-auto-flow: row; justify-items: stretch; }
+  .downtime-history-ticket .machine-status { justify-self: start; }
+  .downtime-history-ticket button { width: 100%; min-height: 44px; }
+  .ticket-card { padding: 16px; border-radius: 20px; }
+  .ticket-fields { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .ticket-reference { grid-template-columns: auto minmax(0, 1fr); }
+  .ticket-reference button { grid-column: 1 / -1; width: 100%; min-height: 44px; }
+  .ticket-card-head > button, .ticket-subsection-head > button, .ticket-activity-correct { min-height: 44px; }
+  .ticket-card-head > button { width: 100%; justify-content: center; }
+}

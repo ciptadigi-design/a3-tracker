@@ -1,5 +1,5 @@
 import { createElement, useState } from 'react'
-import { ArrowLeft, ArrowRight, ArrowRightCircle, BookOpenText, CalendarClock, CheckCircle2, ClipboardList, Gauge, PencilLine, Printer, ShieldAlert, Tag, UserRound, Wrench, XCircle } from 'lucide-react'
+import { ArrowLeft, ArrowRight, ArrowRightCircle, BookOpenText, CheckCircle2, ClipboardList, Gauge, PencilLine, UserRound, XCircle } from 'lucide-react'
 import { ErrorState } from '../../components/ui/ErrorState.jsx'
 import { LoadingScreen } from '../../components/ui/LoadingScreen.jsx'
 import { PageHeader } from '../../components/ui/PageHeader.jsx'
@@ -13,13 +13,16 @@ import { useMaintenanceTicket } from './useMaintenanceTicket.js'
 import { RecordActionDialog } from './RecordActionDialog.jsx'
 import { ResolveTicketDialog } from './ResolveTicketDialog.jsx'
 import { ResponsibleSection } from './ResponsibleSection.jsx'
-import { formatMaintenanceDate, hasActiveLinkedDowntime, groupActivities, mapMaintenanceError, nextTicketStatuses, performerParts, testResultLabels, ticketPriorityLabels, ticketStatusLabels, ticketTypeLabels } from './maintenanceUtils.js'
+import { formatMaintenanceDate, hasActiveLinkedDowntime, groupActivities, mapMaintenanceError, nextTicketStatuses, performerParts, testResultLabels, ticketErrorCodeDisplay, ticketPriorityLabels, ticketStatusLabels, ticketTypeLabels } from './maintenanceUtils.js'
 import { troubleshootingDetailUrl } from './troubleshooting/troubleshootingModel.js'
 import { causeLabel, formatElapsedMinutes } from '../downtime/downtimeModel.js'
 
-function DetailItem({ icon, label, value, hint }) {
-  return <div className="detail-item"><span className="detail-item-icon">{createElement(icon, { size: 18 })}</span><div><span>{label}</span><strong>{value || '—'}</strong>{hint && <small>{hint}</small>}</div></div>
+function Field({ label, children, hint, wide }) {
+  return <div className={wide ? 'ticket-field-wide' : undefined}><dt>{label}</dt><dd>{children || '—'}{hint && <small>{hint}</small>}</dd></div>
 }
+
+// Existing status pill palette: green = normal, amber = needs monitoring, red = not normal.
+const testResultTone = { normal: 'done', monitoring: 'in_progress', not_normal: 'voided' }
 
 const statusActionMeta = {
   IN_PROGRESS: { label: 'Mulai Penanganan', icon: ArrowRightCircle },
@@ -55,6 +58,7 @@ export function MaintenanceTicketDetailPage({ ticketId, navigate }) {
   const eligiblePeople = branchOperationalPeople(people.people, ticket.branch_id)
   const isOpenTicket = ticket.status === 'OPEN' || ticket.status === 'IN_PROGRESS'
   const downtimeStillActive = hasActiveLinkedDowntime(ticket)
+  const errorCode = ticketErrorCodeDisplay(ticket)
 
   async function handleResolve(resolution) {
     const updated = await transitionMaintenanceTicket(ticket.id, 'DONE', resolution)
@@ -123,77 +127,105 @@ export function MaintenanceTicketDetailPage({ ticketId, navigate }) {
   )
 
   return (
-    <div className="page-stack">
+    <div className="page-stack ticket-page">
       <button className="back-button" type="button" onClick={() => navigate('/maintenance')}><ArrowLeft size={17} /> Back to Maintenance</button>
       <PageHeader eyebrow={`${account?.name} · ${ticket.machine?.display_name || 'Unknown machine'}`} title={ticket.title} description="Penanganan gangguan, riwayat aktivitas, dan penyelesaian." action={actions} />
       {success && <div className="success-banner" role="status"><CheckCircle2 size={18} /><span>{success}</span><button type="button" onClick={() => setSuccess(null)}>Dismiss</button></div>}
       {actionError && <div className="form-error" role="alert"><span>{actionError}</span></div>}
 
-      <section className="incident-detail-hero glass-surface">
-        <div><span className={`incident-status-pill ${ticket.status.toLowerCase()}`}>{ticketStatusLabels[ticket.status]}</span><h2>{ticket.title}</h2><p>{ticketTypeLabels[ticket.type]} · {ticketPriorityLabels[ticket.priority]} · Opened {formatMaintenanceDate(ticket.opened_at, timezone)}{ticket.downtime_event ? ' · Sumber: Downtime' : ''}</p></div>
+      <section className="ticket-card glass-surface" aria-label="Ringkasan ticket">
+        <div className="ticket-summary-head">
+          <span className={`incident-status-pill ${ticket.status.toLowerCase()}`}>{ticketStatusLabels[ticket.status]}</span>
+          <p>{ticketTypeLabels[ticket.type]} · {ticketPriorityLabels[ticket.priority]} · Opened {formatMaintenanceDate(ticket.opened_at, timezone)}{ticket.downtime_event ? ' · Sumber: Downtime' : ''}</p>
+        </div>
+        {ticket.description && <p className="ticket-description">{ticket.description}</p>}
+        {ticket.official_error_entry && <div className="ticket-reference"><span><BookOpenText size={18} /></span><div><span className="card-kicker">Troubleshooting Reference</span><strong>{ticket.official_error_entry.code}</strong><small>{ticket.official_error_entry.classification || 'Official troubleshooting procedure'}{ticket.official_error_entry.document?.title ? ` · ${ticket.official_error_entry.document.title}` : ''}</small></div><button className="secondary-button compact-button" type="button" onClick={() => navigate(troubleshootingDetailUrl(ticket.official_error_entry.id, ticket.machine?.id))}>Lihat Penanganan <ArrowRight size={15} /></button></div>}
       </section>
 
-      {ticket.downtime_event && <section className="ticket-knowledge-reference glass-surface"><span><Gauge size={20} /></span><div><span className="card-kicker">Downtime terkait</span><h2>{causeLabel(ticket.downtime_event.cause)}</h2><p>Mulai {formatMaintenanceDate(ticket.downtime_event.actual_start_at, timezone)} · Selesai {formatMaintenanceDate(ticket.downtime_event.actual_end_at, timezone)} · Durasi {formatElapsedMinutes(ticket.downtime_event.elapsed_minutes)}</p>{ticket.downtime_event.error_code_text && <small>Kode error: {ticket.downtime_event.error_code_text}</small>}</div><button className="secondary-button" type="button" onClick={() => navigate(`/maintenance/machine-condition?machine=${encodeURIComponent(ticket.machine_id)}`)}>Kondisi Mesin <ArrowRight size={16} /></button></section>}
-
-      <section className="detail-grid glass-surface" aria-label="Ticket details">
-        <DetailItem icon={Printer} label="Machine" value={ticket.machine ? `${ticket.machine.machine_code} · ${ticket.machine.display_name}` : 'Unknown'} />
-        <DetailItem icon={ShieldAlert} label="Error code" value={ticket.error_code ? `${ticket.error_code.code} · ${ticket.error_code.title}` : 'Not specified'} />
-        <DetailItem icon={Tag} label="Type / Priority" value={`${ticketTypeLabels[ticket.type]} · ${ticketPriorityLabels[ticket.priority]}`} />
-        <DetailItem icon={UserRound} label="Reported by" value={ticket.reporter?.name || 'Unknown'} hint={formatMaintenanceDate(ticket.opened_at, timezone)} />
-        <DetailItem icon={UserRound} label="Assigned to" value={ticket.assignee?.name || 'Unassigned'} />
-        <DetailItem icon={CalendarClock} label="Started" value={formatMaintenanceDate(ticket.started_at, timezone)} />
-        <DetailItem icon={Gauge} label="Resolved" value={formatMaintenanceDate(ticket.resolved_at, timezone)} />
-      </section>
-
-      {ticket.official_error_entry && <section className="ticket-knowledge-reference glass-surface"><span><BookOpenText size={20} /></span><div><span className="card-kicker">Troubleshooting Reference</span><h2>{ticket.official_error_entry.code}</h2><p>{ticket.official_error_entry.classification || 'Official troubleshooting procedure'}</p>{ticket.official_error_entry.document?.title && <small>{ticket.official_error_entry.document.title}</small>}</div><button className="secondary-button" type="button" onClick={() => navigate(troubleshootingDetailUrl(ticket.official_error_entry.id, ticket.machine?.id))}>Lihat Penanganan <ArrowRight size={16} /></button></section>}
-
-      {ticket.description && <section className="incident-narrative-card glass-surface"><strong>Description</strong><p>{ticket.description}</p></section>}
-
-      <ResponsibleSection key={`${ticket.internal_pic_person_id}|${ticket.external_technician_name}|${ticket.external_vendor_name}|${ticket.status}`} ticket={ticket} people={eligiblePeople} peopleLoading={people.isLoading} peopleError={people.error} canEdit={canSetResponsible && isOpenTicket} onSave={handleSaveResponsible} />
-
-      <section className="machine-list-card glass-surface" aria-label="Riwayat Penanganan">
-        <div className="list-toolbar"><div><span className="card-kicker">Riwayat Penanganan</span><h2>{(ticket.actions || []).length} aktivitas tercatat</h2></div>{canRecordAction && isOpenTicket && <button className="secondary-button" type="button" onClick={() => setShowRecordAction(true)}><PencilLine size={16} /> Tambah Aktivitas</button>}</div>
-        {(ticket.actions || []).length === 0
-          ? <div className="machine-empty-state"><ClipboardList size={36} strokeWidth={1.35} /><h3>Belum ada aktivitas.</h3><p>Pemeriksaan dan perbaikan yang dilakukan akan muncul di sini.</p></div>
-          : <ol className="incident-narrative-list maintenance-timeline">{groupActivities(ticket.actions).map(({ original, corrections, current }) => (
-            <li key={original.id} className="incident-narrative-card glass-surface"><span><Wrench size={16} /></span><div>
-              <strong>{formatMaintenanceDate(original.performed_at, timezone)}{corrections.length > 0 && <em className="correction-badge"> · Dikoreksi</em>}</strong>
-              <small className="timeline-label">{corrections.length > 0 ? 'Catatan asli' : 'Aktivitas'}</small>
-              {performerParts(original).map((part) => <small key={part.kind}>{part.kind === 'internal' ? 'PIC' : 'Teknisi eksternal'}: {part.label}</small>)}
-              <p className={corrections.length > 0 ? 'timeline-superseded' : undefined}>{original.action_description}</p>
-              {original.findings && <small>Temuan: {original.findings}</small>}
-              {original.result && <small>Hasil: {original.result}</small>}
-              <small>Dicatat oleh {original.performer?.name || 'Tidak diketahui'}</small>
-              {corrections.map((correction) => (
-                <div key={correction.id} className="timeline-correction">
-                  <small className="timeline-label">Informasi koreksi</small>
-                  {performerParts(correction).map((part) => <small key={part.kind}>{part.kind === 'internal' ? 'PIC' : 'Teknisi eksternal'}: {part.label}</small>)}
-                  <p>{correction.action_description}</p>
-                  {correction.findings && <small>Temuan: {correction.findings}</small>}
-                  <small>Alasan koreksi: {correction.correction_reason}</small>
-                  <small>Dikoreksi oleh {correction.performer?.name || 'Tidak diketahui'} · {formatMaintenanceDate(correction.performed_at, timezone)}</small>
-                </div>
-              ))}
-              {canRecordAction && <button className="secondary-button" type="button" onClick={() => setCorrecting({ original, current })}>Koreksi</button>}
-            </div></li>
-          ))}</ol>}
-      </section>
-
-      {ticket.status === 'DONE' && (
-        <section className="incident-narrative-card glass-surface" aria-label="Penyelesaian">
-          <strong>Penyelesaian</strong>
-          {ticket.resolution_cause || ticket.resolution_action
-            ? <>
-              <p><b>Penyebab:</b> {ticket.resolution_cause}</p>
-              <p><b>Tindakan:</b> {ticket.resolution_action}</p>
-              <p><b>Hasil pengujian:</b> {testResultLabels[ticket.resolution_test_result] || '—'}</p>
-              {ticket.resolution_notes && <p><b>Catatan:</b> {ticket.resolution_notes}</p>}
-            </>
-            : <p>Ticket ini diselesaikan tanpa ringkasan penyelesaian.</p>}
-          <small>Selesai {formatMaintenanceDate(ticket.resolved_at, timezone)}{ticket.resolver?.name ? ` oleh ${ticket.resolver.name}` : ''}</small>
-          {downtimeStillActive && <small className="field-error" role="status">Downtime terkait masih berjalan. Akhiri dari Kondisi Mesin bila mesin sudah beroperasi.</small>}
+      {ticket.downtime_event && (
+        <section className="ticket-card glass-surface" aria-label="Downtime terkait">
+          <div className="ticket-card-head"><div><span className="card-kicker">Downtime terkait</span><h2>{causeLabel(ticket.downtime_event.cause)}</h2></div><button className="secondary-button compact-button" type="button" onClick={() => navigate(`/maintenance/machine-condition?machine=${encodeURIComponent(ticket.machine_id)}`)}><Gauge size={15} /> Kondisi Mesin <ArrowRight size={15} /></button></div>
+          <dl className="ticket-fields">
+            <Field label="Kode error">{ticket.downtime_event.error_code_text}</Field>
+            <Field label="Mulai">{formatMaintenanceDate(ticket.downtime_event.actual_start_at, timezone)}</Field>
+            <Field label="Selesai">{ticket.downtime_event.actual_end_at ? formatMaintenanceDate(ticket.downtime_event.actual_end_at, timezone) : 'Masih berjalan'}</Field>
+            <Field label="Durasi">{formatElapsedMinutes(ticket.downtime_event.elapsed_minutes)}</Field>
+          </dl>
         </section>
       )}
+
+      <section className="ticket-card glass-surface" aria-label="Informasi ticket">
+        <div className="ticket-card-head"><div><span className="card-kicker">Informasi ticket</span></div></div>
+        <dl className="ticket-fields">
+          <Field label="Machine">{ticket.machine ? `${ticket.machine.machine_code} · ${ticket.machine.display_name}` : 'Unknown'}</Field>
+          {/* The ticket's own error_code is the master-data link; auto-created tickets never set it. The code
+              reported on the related downtime is shown as such, never mapped onto the ticket. */}
+          <Field label="Error code" hint={errorCode.hint}>{errorCode.value}</Field>
+          <Field label="Type / Priority">{`${ticketTypeLabels[ticket.type]} · ${ticketPriorityLabels[ticket.priority]}`}</Field>
+          <Field label="Reported by" hint={formatMaintenanceDate(ticket.opened_at, timezone)}>{ticket.reporter?.name || 'Unknown'}</Field>
+          <Field label="Assigned to">{ticket.assignee?.name || 'Unassigned'}</Field>
+          <Field label="Started">{formatMaintenanceDate(ticket.started_at, timezone)}</Field>
+          <Field label="Resolved">{formatMaintenanceDate(ticket.resolved_at, timezone)}</Field>
+        </dl>
+      </section>
+
+      <section className="ticket-card glass-surface" aria-label="Penanganan dan penyelesaian">
+        <div className="ticket-card-head"><div><span className="card-kicker">Penanganan &amp; Penyelesaian</span></div></div>
+
+        <ResponsibleSection key={`${ticket.internal_pic_person_id}|${ticket.external_technician_name}|${ticket.external_vendor_name}|${ticket.status}`} ticket={ticket} people={eligiblePeople} peopleLoading={people.isLoading} peopleError={people.error} canEdit={canSetResponsible && isOpenTicket} onSave={handleSaveResponsible} />
+
+        <div className="ticket-subsection" aria-label="Riwayat Penanganan">
+          <div className="ticket-subsection-head"><h3>Riwayat Penanganan</h3>{canRecordAction && isOpenTicket && <button className="secondary-button compact-button" type="button" onClick={() => setShowRecordAction(true)}><PencilLine size={15} /> Tambah Aktivitas</button>}</div>
+          {(ticket.actions || []).length === 0
+            ? <p className="ticket-empty"><ClipboardList size={16} />Belum ada aktivitas penanganan yang dicatat.</p>
+            : <ol className="ticket-activity-list maintenance-timeline">{groupActivities(ticket.actions).map(({ original, corrections, current }) => (
+              <li key={original.id} className="ticket-activity">
+                <div className="ticket-activity-head">
+                  <strong>{formatMaintenanceDate(original.performed_at, timezone)}{corrections.length > 0 && <em className="correction-badge"> · Dikoreksi</em>}</strong>
+                  <div className="ticket-activity-who">{performerParts(original).map((part) => <span key={part.kind}>{part.kind === 'internal' ? 'PIC' : 'Teknisi eksternal'}: {part.label}</span>)}</div>
+                </div>
+                <small className="timeline-label">{corrections.length > 0 ? 'Catatan asli' : 'Aktivitas'}</small>
+                <p className={corrections.length > 0 ? 'timeline-superseded' : undefined}>{original.action_description}</p>
+                {original.findings && <small>Temuan: {original.findings}</small>}
+                {original.result && <small>Hasil: {original.result}</small>}
+                <small>Dicatat oleh {original.performer?.name || 'Tidak diketahui'}</small>
+                {corrections.map((correction) => (
+                  <div key={correction.id} className="timeline-correction">
+                    <small className="timeline-label">Informasi koreksi</small>
+                    {performerParts(correction).map((part) => <small key={part.kind}>{part.kind === 'internal' ? 'PIC' : 'Teknisi eksternal'}: {part.label}</small>)}
+                    <p>{correction.action_description}</p>
+                    {correction.findings && <small>Temuan: {correction.findings}</small>}
+                    <small>Alasan koreksi: {correction.correction_reason}</small>
+                    <small>Dikoreksi oleh {correction.performer?.name || 'Tidak diketahui'} · {formatMaintenanceDate(correction.performed_at, timezone)}</small>
+                  </div>
+                ))}
+                {canRecordAction && <button className="secondary-button compact-button ticket-activity-correct" type="button" onClick={() => setCorrecting({ original, current })}>Koreksi</button>}
+              </li>
+            ))}</ol>}
+        </div>
+
+        <div className="ticket-subsection" aria-label="Hasil Penyelesaian">
+          <div className="ticket-subsection-head"><h3>Hasil Penyelesaian</h3></div>
+          {ticket.status === 'DONE' ? (
+            <>
+              {ticket.resolution_cause || ticket.resolution_action
+                ? <dl className="ticket-fields ticket-resolution">
+                  <Field label="Penyebab" wide>{ticket.resolution_cause}</Field>
+                  <Field label="Tindakan" wide>{ticket.resolution_action}</Field>
+                  <Field label="Hasil Pengujian">{testResultLabels[ticket.resolution_test_result] ? <span className={`incident-status-pill ${testResultTone[ticket.resolution_test_result]}`}>{testResultLabels[ticket.resolution_test_result]}</span> : '—'}</Field>
+                  <Field label="Waktu Penyelesaian">{formatMaintenanceDate(ticket.resolved_at, timezone)}</Field>
+                  <Field label="Diselesaikan Oleh">{ticket.resolver?.name}</Field>
+                  {ticket.resolution_notes && <Field label="Catatan" wide>{ticket.resolution_notes}</Field>}
+                </dl>
+                : <>
+                  <p className="ticket-empty">Ticket ini diselesaikan tanpa ringkasan penyelesaian.</p>
+                  <dl className="ticket-fields"><Field label="Waktu Penyelesaian">{formatMaintenanceDate(ticket.resolved_at, timezone)}</Field><Field label="Diselesaikan Oleh">{ticket.resolver?.name}</Field></dl>
+                </>}
+              {downtimeStillActive && <small className="field-error" role="status">Downtime terkait masih berjalan. Akhiri dari Kondisi Mesin bila mesin sudah beroperasi.</small>}
+            </>
+          ) : <p className="ticket-empty">{ticket.status === 'CANCELLED' ? 'Ticket dibatalkan tanpa penyelesaian.' : 'Hasil penyelesaian muncul setelah ticket diselesaikan.'}</p>}
+        </div>
+      </section>
 
       {showResolve && <ResolveTicketDialog ticket={ticket} downtimeStillActive={downtimeStillActive} onClose={() => setShowResolve(false)} onSave={handleResolve} />}
       {correcting && <RecordActionDialog people={eligiblePeople} peopleLoading={people.isLoading} peopleError={people.error} correcting={correcting.current} onClose={() => setCorrecting(null)} onSave={handleCorrect} />}

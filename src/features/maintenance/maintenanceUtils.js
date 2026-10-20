@@ -186,6 +186,16 @@ export function groupActivities(actions) {
   })
 }
 
+// The ticket's own error_code is the master-data link and is never set on tickets created from
+// downtime. A code typed on the related downtime is shown as that downtime's code - never
+// copied or mapped onto the ticket.
+export function ticketErrorCodeDisplay(ticket) {
+  if (ticket?.error_code) return { value: `${ticket.error_code.code} · ${ticket.error_code.title}`, hint: null }
+  const downtimeCode = ticket?.downtime_event?.error_code_text
+  if (downtimeCode) return { value: downtimeCode, hint: 'Dari downtime terkait' }
+  return { value: 'Not specified', hint: null }
+}
+
 // A ticket completed while its linked downtime is still running needs a visible reminder;
 // the two lifecycles are independent and nothing closes downtime automatically.
 export function hasActiveLinkedDowntime(ticket) {

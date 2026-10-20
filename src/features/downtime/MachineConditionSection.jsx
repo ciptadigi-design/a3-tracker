@@ -45,13 +45,13 @@ function HistoryEntry({ event, timezone, onOpenTicket }) {
   return (
     <li>
       <div className="downtime-attention-main"><strong>{machine?.display_name || machine?.machine_code || 'Mesin'}</strong><span>{identity}</span></div>
-      <dl className="downtime-attention-meta">
+      <dl className="downtime-history-meta">
         <div><dt>Mulai</dt><dd>{formatDowntimeDateTime(event.actual_start_at, timezone)}</dd></div>
         <div><dt>Selesai</dt><dd>{event.actual_end_at ? formatDowntimeDateTime(event.actual_end_at, timezone) : '—'}</dd></div>
         <div><dt>Durasi</dt><dd>{durations.elapsedText}</dd></div>
         <div><dt>Downtime Produksi</dt><dd>{durations.productionText}</dd></div>
       </dl>
-      <div className="downtime-entry-actions">
+      <div className="downtime-history-ticket">
         <span className={`machine-status ${state.state === 'active' ? 'machine-status-down' : ''}`}>{state.label}</span>
         {event.maintenance_ticket
           ? <><small>Ticket {event.maintenance_ticket.id.slice(0, 8).toUpperCase()} · {ticketStatusLabels[event.maintenance_ticket.status]}</small><button className="secondary-button compact-button" type="button" onClick={onOpenTicket}>Lihat Ticket</button></>
