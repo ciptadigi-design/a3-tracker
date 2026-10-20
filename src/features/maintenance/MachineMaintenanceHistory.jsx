@@ -14,7 +14,7 @@ function HistoryItem({ ticket, machineId, timezone, navigate }) {
   const code = official?.code || knownError?.code
   const classification = official?.classification || knownError?.title
 
-  return <article className="maintenance-history-item glass-surface">
+  return <article className="maintenance-history-item">
     <time dateTime={ticket.opened_at}><CalendarClock size={16} />{formatMaintenanceDate(ticket.opened_at, timezone)}</time>
     <div className="maintenance-history-content">
       <div className="maintenance-history-title">
@@ -68,7 +68,7 @@ export function MachineMaintenanceHistory({ machine, timezone, canCreateTicket, 
     setPage(1)
   }
 
-  return <section className="machine-maintenance-history" id="maintenance-history" aria-labelledby="maintenance-history-title">
+  return <section className="machine-maintenance-history glass-surface" id="maintenance-history" aria-labelledby="maintenance-history-title">
     <header className="maintenance-history-header">
       <div><span className="card-kicker">Operational timeline</span><h2 id="maintenance-history-title">Riwayat Maintenance</h2><p>Masalah maintenance mesin ini, kapan terjadi, dan status penanganannya.</p></div>
       <div className="maintenance-history-header-actions">{canCreateTicket && machine.is_active && <button className="primary-button" type="button" onClick={onCreateTicket}><ClipboardPlus size={17} /> Buat Ticket</button>}<button className="icon-button" type="button" onClick={loadHistory} disabled={isLoading} aria-label="Refresh maintenance history"><RefreshCcw size={17} className={isLoading ? 'spin' : ''} /></button></div>
@@ -84,7 +84,7 @@ export function MachineMaintenanceHistory({ machine, timezone, canCreateTicket, 
 
     {isLoading && !history ? <div className="maintenance-history-state"><LoaderCircle className="spin" size={25} /><strong>Memuat riwayat maintenance…</strong></div>
       : error ? <div className="embedded-error" role="alert"><strong>Riwayat maintenance tidak dapat dimuat.</strong><span>{userErrorMessage(error, 'Coba lagi beberapa saat.')}</span><button className="secondary-button" type="button" onClick={loadHistory}>Coba lagi</button></div>
-        : items.length === 0 ? <div className="maintenance-history-empty glass-surface"><History size={38} strokeWidth={1.35} /><h3>{status ? `Tidak ada ticket berstatus ${ticketStatusLabels[status]}.` : 'Belum ada riwayat maintenance untuk mesin ini.'}</h3><p>Ticket manual dan ticket dari Troubleshooting akan tampil di sini.</p><div><button className="secondary-button" type="button" onClick={() => navigate(`/maintenance/troubleshooting?machine=${encodeURIComponent(machine.id)}`)}><Wrench size={17} /> Troubleshooting</button>{canCreateTicket && machine.is_active && <button className="primary-button" type="button" onClick={onCreateTicket}><ClipboardPlus size={17} /> Buat Ticket</button>}</div></div>
+        : items.length === 0 ? <div className="maintenance-history-empty"><History size={38} strokeWidth={1.35} /><h3>{status ? `Tidak ada ticket berstatus ${ticketStatusLabels[status]}.` : 'Belum ada riwayat maintenance untuk mesin ini.'}</h3><p>Ticket manual dan ticket dari Troubleshooting akan tampil di sini.</p><div><button className="secondary-button" type="button" onClick={() => navigate(`/maintenance/troubleshooting?machine=${encodeURIComponent(machine.id)}`)}><Wrench size={17} /> Troubleshooting</button>{canCreateTicket && machine.is_active && <button className="primary-button" type="button" onClick={onCreateTicket}><ClipboardPlus size={17} /> Buat Ticket</button>}</div></div>
           : <div className="maintenance-history-list">{items.map((ticket) => <HistoryItem key={ticket.id} ticket={ticket} machineId={machine.id} timezone={timezone} navigate={navigate} />)}</div>}
 
     {tickets && <Pagination total={tickets.total} page={tickets.current_page} pageSize={tickets.per_page} pages={tickets.last_page} start={tickets.from ? tickets.from - 1 : 0} end={tickets.to || 0} onPageChange={setPage} onPageSizeChange={changePageSize} label="maintenance tickets" />}

@@ -45,7 +45,7 @@ export function ResponsibleSection({ ticket, people, peopleLoading, peopleError,
   return (
     <div className="ticket-subsection" aria-label="Penanggung Jawab">
       <div className="ticket-subsection-head"><h3>Penanggung Jawab</h3></div>
-      <form className="machine-form" onSubmit={handleSubmit}>
+      <form className="ticket-responsible-form" onSubmit={handleSubmit}>
         <div className="form-grid">
           <label className="form-field"><span><UserRound size={14} /> PIC Internal</span>
             <select aria-label="PIC Internal" value={form.internal_pic_person_id} onChange={set('internal_pic_person_id')} disabled={peopleLoading || Boolean(peopleError)}>
@@ -57,10 +57,10 @@ export function ResponsibleSection({ ticket, people, peopleLoading, peopleError,
             {peopleError && <small>Daftar operator tidak dapat dimuat.</small>}
           </label>
           <label className="form-field"><span>Teknisi Eksternal</span><input value={form.external_technician_name} onChange={set('external_technician_name')} maxLength={120} placeholder="Opsional, mis. Budi" /></label>
-          <label className="form-field"><span>Vendor / Perusahaan</span><input value={form.external_vendor_name} onChange={set('external_vendor_name')} maxLength={120} placeholder="Opsional, mis. Konica Minolta" /></label>
+          <label className="form-field form-field-wide"><span>Vendor / Perusahaan</span><input value={form.external_vendor_name} onChange={set('external_vendor_name')} maxLength={120} placeholder="Opsional, mis. Konica Minolta" /></label>
         </div>
         {error && <div className="form-error" role="alert"><span>{error}</span></div>}
-        <div className="dialog-actions"><button className="secondary-button" type="submit" disabled={isSaving}>{isSaving && <LoaderCircle className="spin" size={16} />}{isSaving ? 'Menyimpan…' : 'Simpan Penanggung Jawab'}</button></div>
+        <div className="ticket-form-actions"><button className="secondary-button" type="submit" disabled={isSaving}>{isSaving && <LoaderCircle className="spin" size={16} />}{isSaving ? 'Menyimpan…' : 'Simpan Penanggung Jawab'}</button></div>
       </form>
     </div>
   )

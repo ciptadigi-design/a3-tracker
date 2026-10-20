@@ -65,3 +65,14 @@ test('downtime history rows use one aligned grid with status and ticket grouped,
   assert.match(css, /@media \(max-width: 760px\) \{\n {2}\.downtime-history-meta \{ grid-template-columns: repeat\(2/)
   assert.match(css, /\.downtime-history-ticket button \{ width: 100%; min-height: 44px; \}/)
 })
+
+test('UI refinement: timeline sits in one card and the PIC form has no detached action strip', () => {
+  const css = read('../../App.css')
+  const history = read('./MachineMaintenanceHistory.jsx')
+  assert.match(history, /className="machine-maintenance-history glass-surface"/)
+  assert.doesNotMatch(history, /maintenance-history-(item|empty) glass-surface/, 'no nested glass cards')
+  assert.doesNotMatch(responsible, /machine-form|dialog-actions/, 'the shared dialog footer strip is not used inline')
+  assert.match(responsible, /form-field form-field-wide"><span>Vendor/)
+  assert.match(css, /\.ticket-form-actions \{ display: flex; justify-content: flex-end; \}/)
+  assert.match(css, /\.ticket-responsible-form \.form-grid \{ grid-template-columns: minmax\(0, 1fr\); \}/)
+})
