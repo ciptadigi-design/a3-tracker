@@ -1,0 +1,2665 @@
+{
+    "schema": "maintenance-reviewed-jam-code-list/v1",
+    "contract": "konica-c1070-v1.5-jam-code-list",
+    "source_pdf_sha256": "ae679f5bcd31a49826f9b2587ad4b9483be93950f246c1ea014a7dd0ddcb6ee4",
+    "parser_revision": "jam-code-table-parser/v1",
+    "extractor_revision": "pypdf/6.14.2-positioned-runs",
+    "first_page": 1310,
+    "last_page": 1334,
+    "dataset_digest": "d4df7fce824de2a03f1242a7fc474a9b54f49ddaa4343b68a585a12a699079b9",
+    "expected": {
+        "discovered": 378,
+        "accepted": 376,
+        "quarantined": 2,
+        "distinct_codes": 371,
+        "distinct_discovered_codes": 373,
+        "applicabilities": 376,
+        "steps": 376
+    },
+    "entries": [
+        {
+            "code": "J-1001",
+            "variant_key": "BYPASS",
+            "page_start": 1310,
+            "page_end": 1310,
+            "entry_digest": "de088decb43c412033f0574a305f718793e7e11567ab3e4c76c4b204d92fd4b1"
+        },
+        {
+            "code": "J-1002",
+            "variant_key": "BYPASS",
+            "page_start": 1310,
+            "page_end": 1310,
+            "entry_digest": "890bcdda8f55b5636e475697fde0ca7e3c47a11b54cbc67413b5715396f7c74c"
+        },
+        {
+            "code": "J-1003",
+            "variant_key": "BYPASS",
+            "page_start": 1310,
+            "page_end": 1310,
+            "entry_digest": "a1bd20036952f1ab0c4003927fef1481487c26bbc47f7135c2a6e94dbdd4d3df"
+        },
+        {
+            "code": "J-1051",
+            "variant_key": "BYPASS",
+            "page_start": 1310,
+            "page_end": 1310,
+            "entry_digest": "dfa3ea444af2e3e0688494e9c25e205054a9cc91e778c79d629a8ad7d65d72f3"
+        },
+        {
+            "code": "J-1101",
+            "variant_key": "TRAY1",
+            "page_start": 1310,
+            "page_end": 1310,
+            "entry_digest": "f6c4c381382ba6d9c5b44af9354701f3917e774e86f8ac520b4dee2fbf7053b7"
+        },
+        {
+            "code": "J-1151",
+            "variant_key": "TRAY1",
+            "page_start": 1310,
+            "page_end": 1310,
+            "entry_digest": "a7654a9bfb8dadec614435f184c7a989feebe2cbde9766948b9933bc9c0d7b3c"
+        },
+        {
+            "code": "J-1201",
+            "variant_key": "TRAY_2",
+            "page_start": 1310,
+            "page_end": 1310,
+            "entry_digest": "c7d01af50031e3615bc9d3d979baba2512096d92b9261f4360d40e8d89645131"
+        },
+        {
+            "code": "J-1251",
+            "variant_key": "TRAY_2",
+            "page_start": 1310,
+            "page_end": 1310,
+            "entry_digest": "475e7f3d9004efcb683a2db4f841d943cb481fe09da5e9903beb42bfd9fc644d"
+        },
+        {
+            "code": "J-1501",
+            "variant_key": "LU",
+            "page_start": 1310,
+            "page_end": 1310,
+            "entry_digest": "323ed306e7ac1898008d8731a9471e939b7b31750d0110731a4b10054976a081"
+        },
+        {
+            "code": "J-1502",
+            "variant_key": "LU",
+            "page_start": 1310,
+            "page_end": 1310,
+            "entry_digest": "6d14d04e1961dad3979ab48318f419b818015b78846f2c864f2d1f4f95400bd3"
+        },
+        {
+            "code": "J-1551",
+            "variant_key": "LU",
+            "page_start": 1310,
+            "page_end": 1310,
+            "entry_digest": "780365d7f1aa7741048f9fcb44bfd195c94a43f31c7f36a7de798afcd512e7e0"
+        },
+        {
+            "code": "J-1552",
+            "variant_key": "LU",
+            "page_start": 1310,
+            "page_end": 1310,
+            "entry_digest": "38f79ce345db4cedd5724cbbeec3e7c5640493de50c288eda86bd65c16417acd"
+        },
+        {
+            "code": "J-1601",
+            "variant_key": "PF-602M_707",
+            "page_start": 1310,
+            "page_end": 1310,
+            "entry_digest": "315b03a2031cfa3671e9cd03392b418256b6afd2c898ef603b447474b0e7f5d4"
+        },
+        {
+            "code": "J-1602",
+            "variant_key": "PF-602M_707",
+            "page_start": 1310,
+            "page_end": 1310,
+            "entry_digest": "087506b999474ad4006f56d5d9b0a8e0a680f74068c18267e33aad4114d2b3e4"
+        },
+        {
+            "code": "J-1603",
+            "variant_key": "PF-602M",
+            "page_start": 1310,
+            "page_end": 1310,
+            "entry_digest": "50a3d26c69ebe459b3389463bb786719f30d04f7cfb445f932fa69f2299453aa"
+        },
+        {
+            "code": "J-1604",
+            "variant_key": "PF-602M",
+            "page_start": 1310,
+            "page_end": 1310,
+            "entry_digest": "7bf6262ae337cc5de970f43000a04ea81b02462376b0d147686f4f42eff86570"
+        },
+        {
+            "code": "J-1605",
+            "variant_key": "PF-602M",
+            "page_start": 1310,
+            "page_end": 1310,
+            "entry_digest": "4e7f5015154335c74e1e5d8e1d8d9a485db01862445c42a91b496f432c629785"
+        },
+        {
+            "code": "J-1606",
+            "variant_key": "PF-602M",
+            "page_start": 1310,
+            "page_end": 1310,
+            "entry_digest": "fe515764596b2b749daeaa81ca1e8d44c54392a66d29cf5ee859753561b581d0"
+        },
+        {
+            "code": "J-1607",
+            "variant_key": "PF-602M",
+            "page_start": 1311,
+            "page_end": 1311,
+            "entry_digest": "85cd58543de2fefc42e7f42f735d1516206479846271b375fd9bd11cffd4db31"
+        },
+        {
+            "code": "J-1608",
+            "variant_key": "PF-602M",
+            "page_start": 1311,
+            "page_end": 1311,
+            "entry_digest": "df21417a948702e7039323ce7b28a38ecda09e0d5a3a0defd93a3a8bfae2501b"
+        },
+        {
+            "code": "J-1609",
+            "variant_key": "PF-602M",
+            "page_start": 1311,
+            "page_end": 1311,
+            "entry_digest": "aa6c094973add3195e05ccd5b30808687bf381fb7957cb021098b2a4f59ba17e"
+        },
+        {
+            "code": "J-1610",
+            "variant_key": "PF-602M_707",
+            "page_start": 1311,
+            "page_end": 1311,
+            "entry_digest": "0cb93900b84946c9d2c619b9fd0fc39add274a308f04fb3fec98acead59e2905"
+        },
+        {
+            "code": "J-1611",
+            "variant_key": "PF-602M",
+            "page_start": 1311,
+            "page_end": 1311,
+            "entry_digest": "c01f29f4e46f1ddbcbd3df38e7e968d6b0d5fbc2c2dfc2328c9489adb4d14a62"
+        },
+        {
+            "code": "J-1613",
+            "variant_key": "PF-707",
+            "page_start": 1311,
+            "page_end": 1311,
+            "entry_digest": "ef36a2e1db6911307a4a4ddc8ae3474d6e735bec64fbfd6b4ba052d31d320bac"
+        },
+        {
+            "code": "J-1614",
+            "variant_key": "PF-707",
+            "page_start": 1311,
+            "page_end": 1311,
+            "entry_digest": "dcb27911a554ace276bb51f58938f9dac9fd3993280bd12a2f0b95c8df21a695"
+        },
+        {
+            "code": "J-1615",
+            "variant_key": "PF-707",
+            "page_start": 1311,
+            "page_end": 1311,
+            "entry_digest": "88d597ecf2c46a88faae31e6703e4e5cdd0f7c798888faa8b62fca3eb16c3996"
+        },
+        {
+            "code": "J-1616",
+            "variant_key": "PF-707",
+            "page_start": 1311,
+            "page_end": 1311,
+            "entry_digest": "a5bb1f658edb9411d26aa87c41d2ce91ff67e8e6be2b77a107718bdb9e15f31b"
+        },
+        {
+            "code": "J-1617",
+            "variant_key": "PF-707",
+            "page_start": 1311,
+            "page_end": 1311,
+            "entry_digest": "d2e07ce839a6b54b40351071e125bb39c5b8d9a1e22a73415d8c84261ca930bc"
+        },
+        {
+            "code": "J-1618",
+            "variant_key": "PF-707",
+            "page_start": 1311,
+            "page_end": 1311,
+            "entry_digest": "d1a674129a77df44bf83a47d31f8a7fe9bed9b734a8109dd1921ae874fb261b7"
+        },
+        {
+            "code": "J-1619",
+            "variant_key": "PF-707",
+            "page_start": 1311,
+            "page_end": 1311,
+            "entry_digest": "62f11a545cf45d5e0f7fcb73c5ed8e4bfb4dba3db5ee057e30c8fca4b12554ef"
+        },
+        {
+            "code": "J-1620",
+            "variant_key": "PF-707",
+            "page_start": 1311,
+            "page_end": 1311,
+            "entry_digest": "07f0555be8946c35f69f25eaea50eeeddcb44312135afc15442143abc8baeb5a"
+        },
+        {
+            "code": "J-1621",
+            "variant_key": "PF-707",
+            "page_start": 1311,
+            "page_end": 1311,
+            "entry_digest": "b4ccf64ec662bb5c5aed9d232d2833985be063db5cdb708958392f8a071936ab"
+        },
+        {
+            "code": "J-1622",
+            "variant_key": "PF-707",
+            "page_start": 1311,
+            "page_end": 1311,
+            "entry_digest": "8529f0b8646af859ff4de2d90edc0edf0432cc55bb7233dd70eeee23358a79e4"
+        },
+        {
+            "code": "J-1623",
+            "variant_key": "PF-707",
+            "page_start": 1312,
+            "page_end": 1312,
+            "entry_digest": "5be0569d721db77bb5521c428b8318670699d811eb0dcf432c2bc5f44ecd4c6d"
+        },
+        {
+            "code": "J-1624",
+            "variant_key": "PF-707",
+            "page_start": 1312,
+            "page_end": 1312,
+            "entry_digest": "6a6e0f60ae702563dec3d40835809f65ebd0b5ca698c441ec910b0574e08b1e6"
+        },
+        {
+            "code": "J-1625",
+            "variant_key": "PF-707",
+            "page_start": 1312,
+            "page_end": 1312,
+            "entry_digest": "b32fce24344cafb9d8c5be25a9d305ef47976ed9485db364fedc8bda78b8194b"
+        },
+        {
+            "code": "J-1626",
+            "variant_key": "PF-707",
+            "page_start": 1312,
+            "page_end": 1312,
+            "entry_digest": "a5057a4f65d606e8c4ff5362cf3e5b216388ae00866b36f2451aedd2ce24f4cf"
+        },
+        {
+            "code": "J-1627",
+            "variant_key": "PF-707",
+            "page_start": 1312,
+            "page_end": 1312,
+            "entry_digest": "91752c301f3f602cc2180084cd37040ae9bdf7e762ba0f7531e1f52bebd72c4d"
+        },
+        {
+            "code": "J-1628",
+            "variant_key": "PF-707",
+            "page_start": 1312,
+            "page_end": 1312,
+            "entry_digest": "55283d3bfca6016c420e9a7d85bd083be04a02e42ce805a9e4ae0d336fde5f5e"
+        },
+        {
+            "code": "J-1631",
+            "variant_key": "PF-707",
+            "page_start": 1312,
+            "page_end": 1312,
+            "entry_digest": "f34cd8f5b128381249309da4fbbd4a82248f309c4bc6c80767a2f68da9bac778"
+        },
+        {
+            "code": "J-1632",
+            "variant_key": "PF-707",
+            "page_start": 1312,
+            "page_end": 1312,
+            "entry_digest": "c3f4d332d9db6f1b7c14031b9f177530cae5869962ca29602abc9d428f18de80"
+        },
+        {
+            "code": "J-1633",
+            "variant_key": "PF-707",
+            "page_start": 1312,
+            "page_end": 1312,
+            "entry_digest": "3a1f6958754aac554b1ed4d41da9e686957f9a18339d920db366a86ce2505636"
+        },
+        {
+            "code": "J-1651",
+            "variant_key": "PF-602M_707",
+            "page_start": 1312,
+            "page_end": 1312,
+            "entry_digest": "f37869a3f65c4ce4ef543a3cba0391ebacd6a39c7efbe12855333c92710a7d04"
+        },
+        {
+            "code": "J-1652",
+            "variant_key": "PF-602M_707",
+            "page_start": 1312,
+            "page_end": 1312,
+            "entry_digest": "321bbc72efc8186d7925c210866dc9743d3c333e9d7a6a6f3cc210a37821af1a"
+        },
+        {
+            "code": "J-1653",
+            "variant_key": "PF-602M",
+            "page_start": 1312,
+            "page_end": 1312,
+            "entry_digest": "83cd940391fe9b0ea8757e125ef7af770f7b92bc76100798d161cb0b43ba825e"
+        },
+        {
+            "code": "J-1654",
+            "variant_key": "PF-602M",
+            "page_start": 1312,
+            "page_end": 1312,
+            "entry_digest": "936237f433eb196b0ba25bf55c645472b40c29eecad23e2705b8299b7b43e85d"
+        },
+        {
+            "code": "J-1655",
+            "variant_key": "PF-602M",
+            "page_start": 1312,
+            "page_end": 1312,
+            "entry_digest": "10567e7a6ba63a4b948bcbe958065b05e1ef14f3b81b801a8a748746b07b16c6"
+        },
+        {
+            "code": "J-1656",
+            "variant_key": "PF-602M",
+            "page_start": 1312,
+            "page_end": 1312,
+            "entry_digest": "97bb9eb531f6abefdc929996793a0c4432eccd3a7e9be9038485e7b8e1ba27ff"
+        },
+        {
+            "code": "J-1657",
+            "variant_key": "PF-602M",
+            "page_start": 1312,
+            "page_end": 1312,
+            "entry_digest": "19ca907d90de58d7b7ea5cc0268d87bdf3e13120966cafe71a21b514390d4fd2"
+        },
+        {
+            "code": "J-1658",
+            "variant_key": "PF-602M",
+            "page_start": 1312,
+            "page_end": 1312,
+            "entry_digest": "1e30f8b530238302f8a67a24f0354d5811b4da9c19200348f64200c89b8b6402"
+        },
+        {
+            "code": "J-1663",
+            "variant_key": "PF-707",
+            "page_start": 1313,
+            "page_end": 1313,
+            "entry_digest": "29bbc123da70de6eb6c1d15d02246a7443932c863704f0e6edcd99b183785b1b"
+        },
+        {
+            "code": "J-1664",
+            "variant_key": "PF-707",
+            "page_start": 1313,
+            "page_end": 1313,
+            "entry_digest": "3ecc4f1492adf13728c43cbd2f0baf52d0f16be18826607099ec4f4a806b0f1e"
+        },
+        {
+            "code": "J-1665",
+            "variant_key": "PF-707",
+            "page_start": 1313,
+            "page_end": 1313,
+            "entry_digest": "1557dd7caf90257e7a33e4bc7bfd97a0fcced1293e9fe7637e942fe36dffb170"
+        },
+        {
+            "code": "J-1666",
+            "variant_key": "PF-707",
+            "page_start": 1313,
+            "page_end": 1313,
+            "entry_digest": "66da903320723cbd3ba3f56557fc01ee3e0634fb80eb6cb90fcaef00b3cdaade"
+        },
+        {
+            "code": "J-1667",
+            "variant_key": "PF-707",
+            "page_start": 1313,
+            "page_end": 1313,
+            "entry_digest": "b60b09c3cb0aee29ce78d802cbef490b22e3bb5b26fa5782dafddd77322466a5"
+        },
+        {
+            "code": "J-1668",
+            "variant_key": "PF-707",
+            "page_start": 1313,
+            "page_end": 1313,
+            "entry_digest": "69de137cc5be7a612e3fbaa10e748076aa88fa5a536f64a4f88366ea2d790410"
+        },
+        {
+            "code": "J-1670",
+            "variant_key": "PF-707",
+            "page_start": 1313,
+            "page_end": 1313,
+            "entry_digest": "2d9c169f42ea644eb922cdd39e3154951bb3ab15c965504497c8c5e8720729c0"
+        },
+        {
+            "code": "J-1671",
+            "variant_key": "PF-707",
+            "page_start": 1313,
+            "page_end": 1313,
+            "entry_digest": "ecbd73fe4dc16a0d2277acd5ad040fcfd48404e6c774c26c296733056b0190d2"
+        },
+        {
+            "code": "J-1672",
+            "variant_key": "PF-707",
+            "page_start": 1313,
+            "page_end": 1313,
+            "entry_digest": "5346d44e3551718270653c4a97b8cb0f91d6908536effefa2eef75217b2b2cef"
+        },
+        {
+            "code": "J-1673",
+            "variant_key": "PF-707",
+            "page_start": 1313,
+            "page_end": 1313,
+            "entry_digest": "66f4c5c847147d158c161999112cba0de49a60d773536e02ff3270a7082d04af"
+        },
+        {
+            "code": "J-1674",
+            "variant_key": "PF-707",
+            "page_start": 1313,
+            "page_end": 1313,
+            "entry_digest": "f832f16fc97bf7e2497199b2a42b59e72df6e97aaea47d233939dc923beafe31"
+        },
+        {
+            "code": "J-1675",
+            "variant_key": "PF-707",
+            "page_start": 1313,
+            "page_end": 1313,
+            "entry_digest": "6043e650f2053394191a975fd8a80418a049d52d56ced2e80164d6866e34b967"
+        },
+        {
+            "code": "J-1676",
+            "variant_key": "PF-707",
+            "page_start": 1313,
+            "page_end": 1313,
+            "entry_digest": "78e28a2780faa87365d0c9f990731d47d368916c2df65267441f2c092a756161"
+        },
+        {
+            "code": "J-1701",
+            "variant_key": "PAPER_FEED",
+            "page_start": 1313,
+            "page_end": 1313,
+            "entry_digest": "2e2004f3952f6cded189206cecf6d674e13cce630bedba9b88a41e37ec8ce40a"
+        },
+        {
+            "code": "J-1702",
+            "variant_key": "PAPER_FEED",
+            "page_start": 1313,
+            "page_end": 1313,
+            "entry_digest": "743b40378aa12638c6bad22583b8f9495eaf9d369ff7fbfcfdb8372e4c16d91e"
+        },
+        {
+            "code": "J-1704",
+            "variant_key": "PAPER_FEED",
+            "page_start": 1313,
+            "page_end": 1313,
+            "entry_digest": "ad98ba9e572b4d6ec09af12ba054e6a5e95228cc7feaeeea7df793fe5c7ac4ad"
+        },
+        {
+            "code": "J-1705",
+            "variant_key": "PAPER_FEED",
+            "page_start": 1313,
+            "page_end": 1313,
+            "entry_digest": "cd20035001e9bcfadb2220648acda696c0717371551e763450e44eb25a3c48e6"
+        },
+        {
+            "code": "J-1706",
+            "variant_key": "PAPER_FEED",
+            "page_start": 1313,
+            "page_end": 1313,
+            "entry_digest": "f7d79e50456565642b19eab66392277ea72b2b66fe6dfa3b89592b21c8c0089b"
+        },
+        {
+            "code": "J-1707",
+            "variant_key": "PAPER_FEED",
+            "page_start": 1313,
+            "page_end": 1313,
+            "entry_digest": "44cb401516e5725450384ffde02012b5e714c58b0ac108fe024c075b8164c8d5"
+        },
+        {
+            "code": "J-1708",
+            "variant_key": "PAPER_FEED",
+            "page_start": 1313,
+            "page_end": 1313,
+            "entry_digest": "a1a67688fbe7b63f4e54833bad28bf41a9080c5b14a7005045b52fc018d24a73"
+        },
+        {
+            "code": "J-1709",
+            "variant_key": "PAPER_FEED",
+            "page_start": 1314,
+            "page_end": 1314,
+            "entry_digest": "e36180278acc03b63119358be7bdc00abd8b1744a0917490b684296873e4fb60"
+        },
+        {
+            "code": "J-1710",
+            "variant_key": "PAPER_FEED",
+            "page_start": 1314,
+            "page_end": 1314,
+            "entry_digest": "904f740205338f161f1da8017c7fcf270b713a5b5d294b4847ebef1ebab96c56"
+        },
+        {
+            "code": "J-1751",
+            "variant_key": "PAPER_FEED",
+            "page_start": 1314,
+            "page_end": 1314,
+            "entry_digest": "095ff0a31e9e836272cab6eb49c781bd790930ed3f00a0096da4ea548671d0bd"
+        },
+        {
+            "code": "J-1752",
+            "variant_key": "PAPER_FEED",
+            "page_start": 1314,
+            "page_end": 1314,
+            "entry_digest": "9afb26596e235e16793c562f246c9ea29251b326e371f95dfdf56a979b0cf625"
+        },
+        {
+            "code": "J-1753",
+            "variant_key": "PAPER_FEED",
+            "page_start": 1314,
+            "page_end": 1314,
+            "entry_digest": "007ae31315a46d7b81160a5de3350e5db98d555e39ca14e1284c53accccce3d2"
+        },
+        {
+            "code": "J-1754",
+            "variant_key": "PAPER_FEED",
+            "page_start": 1314,
+            "page_end": 1314,
+            "entry_digest": "1880dad0110b2d3531b4496cc0e12b9e095278983decd76bc1ea8ff133536bab"
+        },
+        {
+            "code": "J-1901",
+            "variant_key": "OTHERS",
+            "page_start": 1314,
+            "page_end": 1314,
+            "entry_digest": "52db012cdb2fac611e341acc86ed35aa38aa3aad5a87f897ce5ad1c6ab666db7"
+        },
+        {
+            "code": "J-1902",
+            "variant_key": "LU",
+            "page_start": 1314,
+            "page_end": 1314,
+            "entry_digest": "f8cd41928a486b1396b78cdb87b2b676d12bdf78adb226284cefd1bc8810c78d"
+        },
+        {
+            "code": "J-1903",
+            "variant_key": "PF",
+            "page_start": 1314,
+            "page_end": 1314,
+            "entry_digest": "6e33ccca93f09382f84698cfeaca1323cfcabae252252b2c02786de50a98777b"
+        },
+        {
+            "code": "J-3101",
+            "variant_key": "REGISTRATION",
+            "page_start": 1314,
+            "page_end": 1314,
+            "entry_digest": "f999a2f4e5ded9bca76da5a96c06d70b667423f5fc261d010db82b0fc7ec772b"
+        },
+        {
+            "code": "J-3102",
+            "variant_key": "REGISTRATION",
+            "page_start": 1314,
+            "page_end": 1314,
+            "entry_digest": "01dfdb4ad520dfef36c79239377cc44e7b095859879d7cf139527291fc2cd841"
+        },
+        {
+            "code": "J-3106",
+            "variant_key": "REGISTRATION_FUSING",
+            "page_start": 1314,
+            "page_end": 1314,
+            "entry_digest": "c517c4245ebab5be3934320f95ce49c0bf86e5a4278ee43def4ee205abee7745"
+        },
+        {
+            "code": "J-3112",
+            "variant_key": "REGISTRATION",
+            "page_start": 1314,
+            "page_end": 1314,
+            "entry_digest": "39aa882ef5e6a674e105a070050eacbafcf63e8204b5222d0e1ee3c43b57ccfe"
+        },
+        {
+            "code": "J-3120",
+            "variant_key": "REGISTRATION",
+            "page_start": 1315,
+            "page_end": 1315,
+            "entry_digest": "43ca7d2739432123684f283a8dfa7dccf5698724ce7bb995cf2051cfc03f4425"
+        },
+        {
+            "code": "J-3151",
+            "variant_key": "REGISTRATION",
+            "page_start": 1315,
+            "page_end": 1315,
+            "entry_digest": "adc86c6a29b9e536f3d5c7c3b00600a670569e0de4dd04b9f39a0082cc2b1b54"
+        },
+        {
+            "code": "J-3152",
+            "variant_key": "REGISTRATION",
+            "page_start": 1315,
+            "page_end": 1315,
+            "entry_digest": "ed2bd52f5daaf9adb5043dd0e97c6685b51950a59dff0b17111e5572dbe3b3e2"
+        },
+        {
+            "code": "J-3201",
+            "variant_key": "FUSING_OUTPUT",
+            "page_start": 1315,
+            "page_end": 1315,
+            "entry_digest": "aa52dacf26d593afe4a3dad846f7111948376a42b9bcdbba7c9d75bc6e1590f4"
+        },
+        {
+            "code": "J-3202",
+            "variant_key": "FUSING_OUTPUT",
+            "page_start": 1315,
+            "page_end": 1315,
+            "entry_digest": "34b843616e3efb45485f67fcc463da0877c8d0d88404f5eb6ddcc62400cdfb82"
+        },
+        {
+            "code": "J-3203",
+            "variant_key": "FUSING_OUTPUT",
+            "page_start": 1315,
+            "page_end": 1315,
+            "entry_digest": "93ab8ce6309e6f2d5bf204520760af7f6f18355de7c890443b422292f914e463"
+        },
+        {
+            "code": "J-3204",
+            "variant_key": "FUSING_OUTPUT",
+            "page_start": 1315,
+            "page_end": 1315,
+            "entry_digest": "f77f7e7332077c1f1668eb786bca82107d48f920d06a4cc7240d09d38d610232"
+        },
+        {
+            "code": "J-3205",
+            "variant_key": "FUSING_OUTPUT",
+            "page_start": 1315,
+            "page_end": 1315,
+            "entry_digest": "7056e515de12392d423520e2c63bbedb8d60f72d939894ca8c4e16e81bbe9b53"
+        },
+        {
+            "code": "J-3206",
+            "variant_key": "FUSING_OUTPUT",
+            "page_start": 1315,
+            "page_end": 1315,
+            "entry_digest": "27d62e140e7817be0594c2747305ccbd8d319e9b3f286ffb159a0a7b69baa7c1"
+        },
+        {
+            "code": "J-3207",
+            "variant_key": "FUSING_OUTPUT",
+            "page_start": 1315,
+            "page_end": 1315,
+            "entry_digest": "70148a3af12582db4baf47548f0df647488a6673f577ac9a57148ae7010c0415"
+        },
+        {
+            "code": "J-3208",
+            "variant_key": "FUSING_OUTPUT",
+            "page_start": 1315,
+            "page_end": 1315,
+            "entry_digest": "11b2bed420b5a01ae9223532736c54d95e2a752023db990b833d8bf8639f3d8e"
+        },
+        {
+            "code": "J-3209",
+            "variant_key": "FUSING_OUTPUT",
+            "page_start": 1315,
+            "page_end": 1315,
+            "entry_digest": "83addf0a8717bbb3887f86987f75c0606ce428f90426241f8890f11466c4329a"
+        },
+        {
+            "code": "J-3251",
+            "variant_key": "FUSING_OUTPUT",
+            "page_start": 1315,
+            "page_end": 1315,
+            "entry_digest": "f42b848cabab1f7634394f20d9ead311ccc90fae8d214ba6839ba647298ba623"
+        },
+        {
+            "code": "J-3252",
+            "variant_key": "FUSING_OUTPUT",
+            "page_start": 1315,
+            "page_end": 1315,
+            "entry_digest": "3d53a225c5580e6ecde47ceac8aa0951e9cfa6bf6096b5937be92b48d68cab76"
+        },
+        {
+            "code": "J-3253",
+            "variant_key": "FUSING_OUTPUT",
+            "page_start": 1315,
+            "page_end": 1315,
+            "entry_digest": "08c43a56d9fc002a84dcf761146c5c5e52c31231017912086922a05ae3775367"
+        },
+        {
+            "code": "J-3254",
+            "variant_key": "FUSING_OUTPUT",
+            "page_start": 1315,
+            "page_end": 1315,
+            "entry_digest": "06787700922a31580bca5715b126c2ab4112e7eafaddb1226133b2a6ff7904dc"
+        },
+        {
+            "code": "J-5101",
+            "variant_key": "OTHERS",
+            "page_start": 1316,
+            "page_end": 1316,
+            "entry_digest": "52a59ff145727a5e24517b746fcf9f5d517abdab30ee5b514b33de7cfe1ae4e5"
+        },
+        {
+            "code": "J-6601",
+            "variant_key": "DF",
+            "page_start": 1316,
+            "page_end": 1316,
+            "entry_digest": "261b4167a6dd5d5e34e360fdc73b26bd5cc2076a44b2d7e064a25110e8de91bf"
+        },
+        {
+            "code": "J-6603",
+            "variant_key": "DF",
+            "page_start": 1316,
+            "page_end": 1316,
+            "entry_digest": "78224443f59404740d6d3d99481584f1cac0e6d3bf97813b7d977b5da14e701f"
+        },
+        {
+            "code": "J-6604",
+            "variant_key": "DF",
+            "page_start": 1316,
+            "page_end": 1316,
+            "entry_digest": "1e033808df0da048f2f5ef88c5f32fa66bf15edbccdddb810759939848cf55bf"
+        },
+        {
+            "code": "J-6605",
+            "variant_key": "DF",
+            "page_start": 1316,
+            "page_end": 1316,
+            "entry_digest": "c4400270022240ffb6fe388aefa308cbceb3ac2bd7114f4e99cef3fce5350f29"
+        },
+        {
+            "code": "J-6606",
+            "variant_key": "DF",
+            "page_start": 1316,
+            "page_end": 1316,
+            "entry_digest": "0f5a5793e5940ae9551fb007a2bc96e787beedea910dbebcb871dbb9e308874e"
+        },
+        {
+            "code": "J-6607",
+            "variant_key": "DF",
+            "page_start": 1316,
+            "page_end": 1316,
+            "entry_digest": "703053345060509861c730e9742ccf78e0af49da609527c1593f5498cb9b7b00"
+        },
+        {
+            "code": "J-6611",
+            "variant_key": "DF",
+            "page_start": 1316,
+            "page_end": 1316,
+            "entry_digest": "5a57bf3e4f4cad8e428436b2492b5b0733fca25f0d6e6802b629adf58b2a426e"
+        },
+        {
+            "code": "J-6613",
+            "variant_key": "DF",
+            "page_start": 1316,
+            "page_end": 1316,
+            "entry_digest": "41fdd0d5a24bf31ceb713ea83cfe9862ff6a470ad0638b8db5408ddf4a7833f4"
+        },
+        {
+            "code": "J-6614",
+            "variant_key": "DF",
+            "page_start": 1316,
+            "page_end": 1316,
+            "entry_digest": "013d32fb0b50d94b77af937aa061445b8803feba8db0b91b258b47894d292bbe"
+        },
+        {
+            "code": "J-6615",
+            "variant_key": "DF",
+            "page_start": 1316,
+            "page_end": 1316,
+            "entry_digest": "631dd020e98372ac0226f95d689d6c4594f66a0e9775a66bd07e1e71bddddd11"
+        },
+        {
+            "code": "J-6621",
+            "variant_key": "DF",
+            "page_start": 1316,
+            "page_end": 1316,
+            "entry_digest": "22fd18c3da3a7d53ccd5e4181c92ac3249f1242dd6f8d3c7ce2f203af53fc0a6"
+        },
+        {
+            "code": "J-6623",
+            "variant_key": "DF",
+            "page_start": 1316,
+            "page_end": 1316,
+            "entry_digest": "d6ca2c37e74adfd8928df8db5c3b3d42a46346f1e9c15fe816a6f4458e59fc59"
+        },
+        {
+            "code": "J-6624",
+            "variant_key": "DF",
+            "page_start": 1316,
+            "page_end": 1316,
+            "entry_digest": "4b6542c9862e1a34e3904227e5c66272bbbabfeb3d6f5976c93a9515cd1b30f6"
+        },
+        {
+            "code": "J-6633",
+            "variant_key": "DF",
+            "page_start": 1316,
+            "page_end": 1316,
+            "entry_digest": "93edf22645e6e9e408dd0d3944610dffd8244fa21c9483a9737765d00f66dc0e"
+        },
+        {
+            "code": "J-6634",
+            "variant_key": "DF",
+            "page_start": 1316,
+            "page_end": 1316,
+            "entry_digest": "faef30b0b9680d559b3abf40f7f1a1ab54353253e8bcc2151baac1d4005bc926"
+        },
+        {
+            "code": "J-6698",
+            "variant_key": "DF",
+            "page_start": 1316,
+            "page_end": 1316,
+            "entry_digest": "1c793c1038df4a254f84ba244d2fa3d3982805fad63e3b9c9c654944bddf1b1d"
+        },
+        {
+            "code": "J-6699",
+            "variant_key": "DF",
+            "page_start": 1316,
+            "page_end": 1316,
+            "entry_digest": "0352667363dd68fa7ccf933337c2f13a0c568eba8b9b296a7ed4dc5065ad54f0"
+        },
+        {
+            "code": "J-6701",
+            "variant_key": "DF",
+            "page_start": 1317,
+            "page_end": 1317,
+            "entry_digest": "232882085071418b7172eb0ba77f61bc9e43c0d4ac2f90fb47d238e6488a56e8"
+        },
+        {
+            "code": "J-6702",
+            "variant_key": "DF",
+            "page_start": 1317,
+            "page_end": 1317,
+            "entry_digest": "11737f2724891bbd21c72c71125ef474fa19d394a36ccc6f956ab6f2fdea925c"
+        },
+        {
+            "code": "J-6703",
+            "variant_key": "DF",
+            "page_start": 1317,
+            "page_end": 1317,
+            "entry_digest": "78f7fd8f699e20181dc067fe1752bf983660f6a1bd2c9e499f3d4ccec7c1c9ad"
+        },
+        {
+            "code": "J-6704",
+            "variant_key": "DF",
+            "page_start": 1317,
+            "page_end": 1317,
+            "entry_digest": "d2aae0531febe597f49223ec5bf20572bb6cb7ea2b25984c98906b48b5da2915"
+        },
+        {
+            "code": "J-6705",
+            "variant_key": "DF",
+            "page_start": 1317,
+            "page_end": 1317,
+            "entry_digest": "f8cfde8c4a7146cae6f8776ce26130efa265a194c9b7f6e530785204b11e5374"
+        },
+        {
+            "code": "J-7101",
+            "variant_key": "FS",
+            "page_start": 1317,
+            "page_end": 1317,
+            "entry_digest": "9597d4b65c7a1490d8a90b4edc7799cdfe6b5df6ded191327389255766951e46"
+        },
+        {
+            "code": "J-7102",
+            "variant_key": "RU",
+            "page_start": 1317,
+            "page_end": 1317,
+            "entry_digest": "100818e5988bf6969d287da136ea88b0307197bb6b99a9c621fd3ad27ab66bfe"
+        },
+        {
+            "code": "J-7103",
+            "variant_key": "LS_1ST_TANDEM",
+            "page_start": 1317,
+            "page_end": 1317,
+            "entry_digest": "d51afba44f2427df066809dbe6de8e433681eed321f15b176a7f464dad5b8175"
+        },
+        {
+            "code": "J-7104",
+            "variant_key": "LS_2ND_TANDEM",
+            "page_start": 1317,
+            "page_end": 1317,
+            "entry_digest": "98902355f8f568cc413f66ec113e22b25e38abbe413e7a160d7c5bd38f45b00b"
+        },
+        {
+            "code": "J-7105",
+            "variant_key": "FD",
+            "page_start": 1317,
+            "page_end": 1317,
+            "entry_digest": "e80fabe8611e595264808e250414da2c980f4c8e46c1207f3de8aedab7d8f2b9"
+        },
+        {
+            "code": "J-7107",
+            "variant_key": "SD_-506",
+            "page_start": 1317,
+            "page_end": 1317,
+            "entry_digest": "bbd378e91269a68b93bdb248b7aaf85d3a44c7eb54df628d8b479ba7f7edd4f5"
+        },
+        {
+            "code": "J-7108",
+            "variant_key": "PB",
+            "page_start": 1317,
+            "page_end": 1317,
+            "entry_digest": "690052ba003075ae83b7dc6da8cccc6006186b8d186fe61c13cb34331054c475"
+        },
+        {
+            "code": "J-7109",
+            "variant_key": "GP-501",
+            "page_start": 1317,
+            "page_end": 1317,
+            "entry_digest": "eb01be27e5f535facb845051bf2969a143ed52767cb55bec357450deb0fff5e0"
+        },
+        {
+            "code": "J-7110",
+            "variant_key": "RU",
+            "page_start": 1317,
+            "page_end": 1317,
+            "entry_digest": "f0513e519a7c1db58f2a16e8bc0d439bd11996bd744d67af3c572feeae24449a"
+        },
+        {
+            "code": "J-7111",
+            "variant_key": "GP-502",
+            "page_start": 1317,
+            "page_end": 1317,
+            "entry_digest": "7d2f5f80e3af492d0ec45d2da2d4bb615cca644e4f7c83ed3371793f9b39b98c"
+        },
+        {
+            "code": "J-7216",
+            "variant_key": "FS",
+            "page_start": 1317,
+            "page_end": 1317,
+            "entry_digest": "249839abf4d3cd49981ef4ea26beaa013722949edbc429fed80e3adc78621870"
+        },
+        {
+            "code": "J-7217",
+            "variant_key": "FS",
+            "page_start": 1318,
+            "page_end": 1318,
+            "entry_digest": "44f047afe3431ce75b1f25d5b9182350811f15f10ce48d3db82e57d7f057fa12"
+        },
+        {
+            "code": "J-7218",
+            "variant_key": "FS",
+            "page_start": 1318,
+            "page_end": 1318,
+            "entry_digest": "54e0fb35a7e61b8cee5852350e815c36d82334c1f381ad95d51736d21a54a513"
+        },
+        {
+            "code": "J-7219",
+            "variant_key": "FS",
+            "page_start": 1318,
+            "page_end": 1318,
+            "entry_digest": "b22ce960ccc15214fae840be898bcecbb81c10ab3550cc87810580031a24187c"
+        },
+        {
+            "code": "J-7220",
+            "variant_key": "FS",
+            "page_start": 1318,
+            "page_end": 1318,
+            "entry_digest": "206bdb98ca1f4a5bf5393481c773732dd5fc7abc4e49752439a4954e8ff72a1a"
+        },
+        {
+            "code": "J-7221",
+            "variant_key": "FS",
+            "page_start": 1318,
+            "page_end": 1318,
+            "entry_digest": "4770b77469e3ae4de3498e9d0032f4c0439d958084ddc0172db49188b7dc2e9e"
+        },
+        {
+            "code": "J-7222",
+            "variant_key": "FS",
+            "page_start": 1318,
+            "page_end": 1318,
+            "entry_digest": "8ca1f9892499e7293695fd8f0a7d725f394c3b23d006461c6e70197ff2bae30b"
+        },
+        {
+            "code": "J-7223",
+            "variant_key": "FS",
+            "page_start": 1319,
+            "page_end": 1319,
+            "entry_digest": "b7e80adc95e87076e3bd43f1f57e95a8f0d070af45ddb3e80590f95e2886c791"
+        },
+        {
+            "code": "J-7224",
+            "variant_key": "FS",
+            "page_start": 1319,
+            "page_end": 1319,
+            "entry_digest": "e066acf32ce690e08a3dbd79a0dde088725524c4800c5057b15ff90d336ac854"
+        },
+        {
+            "code": "J-7225",
+            "variant_key": "FS",
+            "page_start": 1319,
+            "page_end": 1319,
+            "entry_digest": "dde0269f2b06349c839e891afa0e8af82a89e02881982df33284d3cf7e01913d"
+        },
+        {
+            "code": "J-7225",
+            "variant_key": "SD-510",
+            "page_start": 1319,
+            "page_end": 1319,
+            "entry_digest": "3b5c4839540d5061991ff9099d6e4e739d3a9fbab3b0abbedf1487be29b41a5f"
+        },
+        {
+            "code": "J-7226",
+            "variant_key": "FS",
+            "page_start": 1319,
+            "page_end": 1319,
+            "entry_digest": "635f93df689d9b8c9dc3eb9ef67fa7dceb02efc5c3e7e07cf8b00974f25fa999"
+        },
+        {
+            "code": "J-7226",
+            "variant_key": "SD-510",
+            "page_start": 1319,
+            "page_end": 1319,
+            "entry_digest": "975f52454f504c15235cae2e84ac1ea829a28bdfa091f532d4e8478110f5c9a9"
+        },
+        {
+            "code": "J-7227",
+            "variant_key": "FS",
+            "page_start": 1319,
+            "page_end": 1319,
+            "entry_digest": "1a3a68b6cdd960c1cd8c771f4ac6ffbc43823056da168c8126012c615e6152cd"
+        },
+        {
+            "code": "J-7228",
+            "variant_key": "FS",
+            "page_start": 1319,
+            "page_end": 1319,
+            "entry_digest": "fc0ce4d46fd68c01dbbd1b32c2ae8099aed309ad171db7dd0c3da7b2fe658e34"
+        },
+        {
+            "code": "J-7229",
+            "variant_key": "FS",
+            "page_start": 1320,
+            "page_end": 1320,
+            "entry_digest": "5315e6fc49cf7795250a343d17f1354854d2a59cbc617fe1372378613c018bcd"
+        },
+        {
+            "code": "J-7230",
+            "variant_key": "FS",
+            "page_start": 1320,
+            "page_end": 1320,
+            "entry_digest": "9611c94230472f8540ae9ce86fe8393f43d4361d89e5f3f461367b19ecdd0748"
+        },
+        {
+            "code": "J-7231",
+            "variant_key": "FS",
+            "page_start": 1320,
+            "page_end": 1320,
+            "entry_digest": "573d7ee4f1c14d56c6fa50ade0084af6cb244610a12309b1070266d23f83648c"
+        },
+        {
+            "code": "J-7235",
+            "variant_key": "PI",
+            "page_start": 1320,
+            "page_end": 1320,
+            "entry_digest": "fd4fa9a8678d763b4d7d623957bfa6e3c25ba8f20e3c954b424008becd16715f"
+        },
+        {
+            "code": "J-7236",
+            "variant_key": "FS",
+            "page_start": 1320,
+            "page_end": 1320,
+            "entry_digest": "f31b554adc4874d008834aad1335158b7f731d00621ef1870d34d36a851b37e4"
+        },
+        {
+            "code": "J-7237",
+            "variant_key": "SD-510",
+            "page_start": 1320,
+            "page_end": 1320,
+            "entry_digest": "05efa09b657a9c0a5e5918cc4dcc6ed47c48fa1b4d922c674a6e308aff8e3e0c"
+        },
+        {
+            "code": "J-7243",
+            "variant_key": "PK",
+            "page_start": 1320,
+            "page_end": 1321,
+            "entry_digest": "571d86a70a195747f18c87815838a76718b351e9bc1350ce5dd75f2d4a1503f4"
+        },
+        {
+            "code": "J-7248",
+            "variant_key": "FS",
+            "page_start": 1321,
+            "page_end": 1321,
+            "entry_digest": "96b886a530cd7b8a58480710457287291b7da4085737ff9ff076858c4eb54ce8"
+        },
+        {
+            "code": "J-7248",
+            "variant_key": "SD-510",
+            "page_start": 1321,
+            "page_end": 1321,
+            "entry_digest": "86c4f61115217e07a2620aa751153088cf8f61cb2b4cb7a70af7c78e65bf546e"
+        },
+        {
+            "code": "J-7249",
+            "variant_key": "PI",
+            "page_start": 1321,
+            "page_end": 1321,
+            "entry_digest": "5c7ad8bccf4529dd297bfdc0214e831193cdfd81fbb409441b8378ed76bedc7a"
+        },
+        {
+            "code": "J-7250",
+            "variant_key": "PI",
+            "page_start": 1321,
+            "page_end": 1321,
+            "entry_digest": "f9e4ab3f78bc60ce925db245f124d0fc4507b81ae6c4e1efe58e3b7d760750c4"
+        },
+        {
+            "code": "J-7251",
+            "variant_key": "PI",
+            "page_start": 1321,
+            "page_end": 1321,
+            "entry_digest": "01cf2f8fc140dbea57e4c5feb22664a62148ad53021cf0d1bb66cf30beb1639e"
+        },
+        {
+            "code": "J-7265",
+            "variant_key": "SD-510",
+            "page_start": 1321,
+            "page_end": 1321,
+            "entry_digest": "b2c452a1b2fd32a46af8ee449de76c760fed82d6363d7a199272eb3c875ed53f"
+        },
+        {
+            "code": "J-7266",
+            "variant_key": "SD-510",
+            "page_start": 1321,
+            "page_end": 1321,
+            "entry_digest": "1b0a36fbf851254753ee968a91e1072033790ddbdd19b35eef7d27b781517160"
+        },
+        {
+            "code": "J-7281",
+            "variant_key": "FS",
+            "page_start": 1321,
+            "page_end": 1321,
+            "entry_digest": "1e64e14d5eca65e7535d7cb4b28cecd9f7a39c1caab987d19d534a8d6b5c2a56"
+        },
+        {
+            "code": "J-7282",
+            "variant_key": "FS",
+            "page_start": 1321,
+            "page_end": 1321,
+            "entry_digest": "a4aedfbc5f72f3e9711895c879aee168d81cc9dbeb3c2a163bcea37e9154a565"
+        },
+        {
+            "code": "J-7283",
+            "variant_key": "FS",
+            "page_start": 1321,
+            "page_end": 1321,
+            "entry_digest": "f00d601c97f4b1f724362f11736d9cb6947e4221aa6ca0efa44884bb3bb2a11b"
+        },
+        {
+            "code": "J-7290",
+            "variant_key": "FS",
+            "page_start": 1322,
+            "page_end": 1322,
+            "entry_digest": "a9a668dfd85cd18367b9159b70a82208aa80edca432a869cd6a4316862c399df"
+        },
+        {
+            "code": "J-7301",
+            "variant_key": "FS",
+            "page_start": 1322,
+            "page_end": 1322,
+            "entry_digest": "54df33e6752150eeaa3d6578cfa3108543f7bb465dd89f492512a08d0de977d7"
+        },
+        {
+            "code": "J-7302",
+            "variant_key": "FS",
+            "page_start": 1322,
+            "page_end": 1322,
+            "entry_digest": "f2034aea4976e8c3037f9ac59f26a76dc9a54984cf5b943d525a3755175a53ff"
+        },
+        {
+            "code": "J-7303",
+            "variant_key": "FS",
+            "page_start": 1322,
+            "page_end": 1322,
+            "entry_digest": "2d0eff6882fe4212c7352cdc7714307b6506c68a5a9b987815097c8c02048fdf"
+        },
+        {
+            "code": "J-7304",
+            "variant_key": "FS",
+            "page_start": 1322,
+            "page_end": 1322,
+            "entry_digest": "37b0b45079f07ee9ed8c96b6c0dd5f6499d965c25e6b75e64e515fbefdd38d16"
+        },
+        {
+            "code": "J-7305",
+            "variant_key": "FS",
+            "page_start": 1322,
+            "page_end": 1322,
+            "entry_digest": "b2693cb9e28c97c9a40afc628193733b8bc07ded5cfa39a1c479e37674cb1cad"
+        },
+        {
+            "code": "J-7307",
+            "variant_key": "FS",
+            "page_start": 1322,
+            "page_end": 1322,
+            "entry_digest": "c7a435dc200cd9a799e610c5d2db299e0d30782cde0639cf1a4254a1b00ad7cd"
+        },
+        {
+            "code": "J-7308",
+            "variant_key": "FS",
+            "page_start": 1322,
+            "page_end": 1322,
+            "entry_digest": "402f677b33802be5fd533118ff23916dcb9639a3e82ecb71b2cafdfa5b01258f"
+        },
+        {
+            "code": "J-7309",
+            "variant_key": "FS",
+            "page_start": 1322,
+            "page_end": 1322,
+            "entry_digest": "6b4f5ba39c1655ca4ee8d2fb735d817e34258a43476367683331f1035028b08e"
+        },
+        {
+            "code": "J-7309",
+            "variant_key": "SD-510",
+            "page_start": 1322,
+            "page_end": 1322,
+            "entry_digest": "feb151cd2ed1ee8b72423479a0fb08cb31d5c701f94771c1bb8251de4b1293d3"
+        },
+        {
+            "code": "J-7310",
+            "variant_key": "FS",
+            "page_start": 1322,
+            "page_end": 1322,
+            "entry_digest": "355540d2e3c65652d8b3a75fa2a945b20d3882e2c19ae93c26074468b9678eca"
+        },
+        {
+            "code": "J-7310",
+            "variant_key": "SD-510",
+            "page_start": 1322,
+            "page_end": 1322,
+            "entry_digest": "4246cff9c88e3f196e25c5ba22b33611337b856685f3dc343020e40e8aa7b290"
+        },
+        {
+            "code": "J-7314",
+            "variant_key": "PI",
+            "page_start": 1322,
+            "page_end": 1322,
+            "entry_digest": "cd4d8ef6efaec6462d5d7db7792af334a1d6c958d76bf7a0feb6facf3a910a51"
+        },
+        {
+            "code": "J-7316",
+            "variant_key": "FS",
+            "page_start": 1322,
+            "page_end": 1322,
+            "entry_digest": "deb48e5da2898e01517550dce26d7ae31d780952e5d534d50d1647a4e094c706"
+        },
+        {
+            "code": "J-7317",
+            "variant_key": "PI",
+            "page_start": 1323,
+            "page_end": 1323,
+            "entry_digest": "ad7897fa8ee7f54abe293aa61bb91431cac615ec749e85eaa5222f2ba7ae6c90"
+        },
+        {
+            "code": "J-7318",
+            "variant_key": "SD-510",
+            "page_start": 1323,
+            "page_end": 1323,
+            "entry_digest": "5fd16b8e3fc0b435b8377ba3f11ca2cb1be3752e7b7f0663901ea974a166c039"
+        },
+        {
+            "code": "J-7319",
+            "variant_key": "SD-510",
+            "page_start": 1323,
+            "page_end": 1323,
+            "entry_digest": "0d3d4cc5945db5dfe357fca32fe9746b7ef8f63e5dc62bfbbf956d1ce764099a"
+        },
+        {
+            "code": "J-7320",
+            "variant_key": "GP-502",
+            "page_start": 1323,
+            "page_end": 1323,
+            "entry_digest": "3242f6a0c36386d4b12f0060277423b8ff4824f451a36be4ed2d54e6a10c69c3"
+        },
+        {
+            "code": "J-7321",
+            "variant_key": "GP-502",
+            "page_start": 1323,
+            "page_end": 1323,
+            "entry_digest": "4e91934fce74f9a9d237bc46bd34f218371670f878ea595fdfc976bc42592f2b"
+        },
+        {
+            "code": "J-7322",
+            "variant_key": "GP-502",
+            "page_start": 1323,
+            "page_end": 1323,
+            "entry_digest": "39b7d27ada93dce64f20f3c5b30b826d05ea44dfd15aed108d86b210dfc6a301"
+        },
+        {
+            "code": "J-7323",
+            "variant_key": "GP-502",
+            "page_start": 1323,
+            "page_end": 1323,
+            "entry_digest": "cb0c69f364785984e59cb58066e89c697fc378bedcc64f435fa78d5f392e07fe"
+        },
+        {
+            "code": "J-7324",
+            "variant_key": "GP-502",
+            "page_start": 1323,
+            "page_end": 1323,
+            "entry_digest": "0ff57506aa88037c9bafe137ca3fe48b027040fe9268e9a5230fcd11bc05a0b6"
+        },
+        {
+            "code": "J-7325",
+            "variant_key": "GP-502",
+            "page_start": 1323,
+            "page_end": 1323,
+            "entry_digest": "8c16e952f5385e502cf75df0262409e116d640f86b5e2557aeffee997091067a"
+        },
+        {
+            "code": "J-7326",
+            "variant_key": "GP-502",
+            "page_start": 1323,
+            "page_end": 1323,
+            "entry_digest": "54370376153aaba98cd80c397866c29770a7b18bbf4e3cc8dd32c6086e3748c5"
+        },
+        {
+            "code": "J-7340",
+            "variant_key": "RU",
+            "page_start": 1323,
+            "page_end": 1323,
+            "entry_digest": "71e4277630f52af68572675aa295954977e4a37e14749a6e840b1912b6e56d09"
+        },
+        {
+            "code": "J-7341",
+            "variant_key": "RU",
+            "page_start": 1323,
+            "page_end": 1323,
+            "entry_digest": "38a75a5ec9b0326c4e7d577acf4f935bcb1cb16a2a5190922ce2e7fa77d4464f"
+        },
+        {
+            "code": "J-7342",
+            "variant_key": "RU",
+            "page_start": 1323,
+            "page_end": 1323,
+            "entry_digest": "dfbba14046ffdd7b0f05d532ef983000aad80140189d0775b5191314d7b0cbe7"
+        },
+        {
+            "code": "J-7350",
+            "variant_key": "LS_1ST_TANDEM",
+            "page_start": 1323,
+            "page_end": 1323,
+            "entry_digest": "727c23be30a132cf8a8709060d80050132838001e2df9753653e429c796f1294"
+        },
+        {
+            "code": "J-7351",
+            "variant_key": "LS_1ST_TANDEM",
+            "page_start": 1323,
+            "page_end": 1323,
+            "entry_digest": "f8d2fbc4134c70f9412b57a6bfe0caa3f1e6c06d6fd4482fd0a1204ae3eaeb45"
+        },
+        {
+            "code": "J-7352",
+            "variant_key": "LS_1ST_TANDEM",
+            "page_start": 1323,
+            "page_end": 1323,
+            "entry_digest": "264a00cbcaefa12bc228e2db1476f087808f2a25874e479073af9e642c4c9371"
+        },
+        {
+            "code": "J-7353",
+            "variant_key": "LS_1ST_TANDEM",
+            "page_start": 1323,
+            "page_end": 1323,
+            "entry_digest": "e074a45d58bd74c7c00ff9226837ad7ea566a32f3782cbec1460961cfa4bbce6"
+        },
+        {
+            "code": "J-7354",
+            "variant_key": "LS_2ND_TANDEM",
+            "page_start": 1323,
+            "page_end": 1323,
+            "entry_digest": "88097192239f12ff4b9ac937c0683552d05e3efd2f1ff178ca40b9f690b581e5"
+        },
+        {
+            "code": "J-7355",
+            "variant_key": "LS_2ND_TANDEM",
+            "page_start": 1323,
+            "page_end": 1323,
+            "entry_digest": "999b8de4b7dcf5ec3d78937da902effa7e72117c7d2b7b2c9e9bed861bdf1c89"
+        },
+        {
+            "code": "J-7356",
+            "variant_key": "LS_2ND_TANDEM",
+            "page_start": 1323,
+            "page_end": 1323,
+            "entry_digest": "e354268cd2168eaffe017a319e9c10df67c97a464bff4e42eca997af0f556a3c"
+        },
+        {
+            "code": "J-7357",
+            "variant_key": "LS_2ND_TANDEM",
+            "page_start": 1323,
+            "page_end": 1323,
+            "entry_digest": "d0b38f26f2aa380ba4ec843a877773badf491a22ee720ef116bbe99ef13fc4f5"
+        },
+        {
+            "code": "J-7358",
+            "variant_key": "FD",
+            "page_start": 1324,
+            "page_end": 1324,
+            "entry_digest": "0e243e3820b84ea2b839979661b7edf1c1f146744d3c83dd0c4a0bbc87fb54a8"
+        },
+        {
+            "code": "J-7359",
+            "variant_key": "FD",
+            "page_start": 1324,
+            "page_end": 1324,
+            "entry_digest": "28446971224aea596bb992445c64c5084a9adb3442efe037914a561b4cbf8183"
+        },
+        {
+            "code": "J-7360",
+            "variant_key": "FD",
+            "page_start": 1324,
+            "page_end": 1324,
+            "entry_digest": "d1bbc97b16fb74155c9752d7d278bae85f70816e45681548ff33fa55a99f7116"
+        },
+        {
+            "code": "J-7361",
+            "variant_key": "FD",
+            "page_start": 1324,
+            "page_end": 1324,
+            "entry_digest": "36abfeb0bec378823830634ee8ebf3d3dbca7eef526cfb609a6f48c96eb5c4dc"
+        },
+        {
+            "code": "J-7365",
+            "variant_key": "RU",
+            "page_start": 1324,
+            "page_end": 1324,
+            "entry_digest": "446dba6cee024f28bee134ddaae6d4501783000900c51fae63d60234729d56c6"
+        },
+        {
+            "code": "J-7366",
+            "variant_key": "RU",
+            "page_start": 1324,
+            "page_end": 1324,
+            "entry_digest": "37b8477c700b1a07f8b412e748613f44b5558e003877375399fc8711b5b96b39"
+        },
+        {
+            "code": "J-7367",
+            "variant_key": "RU",
+            "page_start": 1324,
+            "page_end": 1324,
+            "entry_digest": "60958180f8fa6f4c021106dd475d016dabfe72df2a9509da72fb040a7ad03713"
+        },
+        {
+            "code": "J-7368",
+            "variant_key": "SD-506",
+            "page_start": 1324,
+            "page_end": 1324,
+            "entry_digest": "bd65d306fafd447eb1d5b6d99d1016733312b2fd93376fc69990fd246b5e7ee2"
+        },
+        {
+            "code": "J-7369",
+            "variant_key": "SD-506",
+            "page_start": 1324,
+            "page_end": 1324,
+            "entry_digest": "9211d5e517b6e9b8e86bb7f3406eba409cbe6fb9d5744be69598e3b451a76ea0"
+        },
+        {
+            "code": "J-7370",
+            "variant_key": "SD-506",
+            "page_start": 1324,
+            "page_end": 1324,
+            "entry_digest": "3102904369bf0eab67c15863542b4b7130151352e3833a2049b32c24ae1f37e0"
+        },
+        {
+            "code": "J-7371",
+            "variant_key": "SD-506",
+            "page_start": 1324,
+            "page_end": 1324,
+            "entry_digest": "89e5c38c693f38044774c5fd0e2957be8fe37d43ea1639eac21b3a5ac62caed6"
+        },
+        {
+            "code": "J-7372",
+            "variant_key": "SD-506",
+            "page_start": 1324,
+            "page_end": 1324,
+            "entry_digest": "057cc5f78033f66c0da90c67662f6ab26b2612546d1c25d541186ebd51ef662d"
+        },
+        {
+            "code": "J-7373",
+            "variant_key": "SD-506",
+            "page_start": 1324,
+            "page_end": 1324,
+            "entry_digest": "02695f38ab9c4a5b59d7ba53acc1c8b14a92fadfb5adc613f66df67121d455fd"
+        },
+        {
+            "code": "J-7374",
+            "variant_key": "SD-506",
+            "page_start": 1325,
+            "page_end": 1325,
+            "entry_digest": "bb9086fd97e8f4fb6087e27463a08ed9a24b45d032ec9524742e13686acf2f3e"
+        },
+        {
+            "code": "J-7380",
+            "variant_key": "PB",
+            "page_start": 1325,
+            "page_end": 1325,
+            "entry_digest": "22e664adbe9b880ff51c0b0c819a23315eed43061dbeb814e580d034e4c39d1a"
+        },
+        {
+            "code": "J-7381",
+            "variant_key": "PB",
+            "page_start": 1325,
+            "page_end": 1325,
+            "entry_digest": "5293b92be9134e53e24d2adf54a799d8f75e419c190444e19daf66a262d0818f"
+        },
+        {
+            "code": "J-7382",
+            "variant_key": "PB",
+            "page_start": 1325,
+            "page_end": 1325,
+            "entry_digest": "678856b25068e182305e801cc817cd7b4f7ec820eb008d75174a71b885c4540b"
+        },
+        {
+            "code": "J-7383",
+            "variant_key": "PB",
+            "page_start": 1325,
+            "page_end": 1325,
+            "entry_digest": "8cdf39b7e73144a89a85cba90de8fb58c66f83d704bfd01663792cd04a1dc145"
+        },
+        {
+            "code": "J-7384",
+            "variant_key": "PB",
+            "page_start": 1325,
+            "page_end": 1325,
+            "entry_digest": "eeeccbc4676daa1aec7bf8695243c531bae290bad39623defc7c0b03817d9c89"
+        },
+        {
+            "code": "J-7385",
+            "variant_key": "PB",
+            "page_start": 1325,
+            "page_end": 1325,
+            "entry_digest": "e59ebf00ac0aff99e777a0d9e4268e523792b722b6198cf5f61812ce4becad59"
+        },
+        {
+            "code": "J-7386",
+            "variant_key": "PB",
+            "page_start": 1325,
+            "page_end": 1325,
+            "entry_digest": "f7c3565c30ffa5e631527a25307004749ce4dda695a2ea66cad93bca8bfeacbc"
+        },
+        {
+            "code": "J-7390",
+            "variant_key": "GP-501",
+            "page_start": 1325,
+            "page_end": 1325,
+            "entry_digest": "491bb496aae144b1ac1b5fffc48ee44e6f31f86da24d5e28f6c2e77c9fd3cf62"
+        },
+        {
+            "code": "J-7391",
+            "variant_key": "GP-501",
+            "page_start": 1325,
+            "page_end": 1325,
+            "entry_digest": "1f6b202d965d2a6aaac396cccbe1c2dd1b05db7fe99726650ec9c29213bd622b"
+        },
+        {
+            "code": "J-7392",
+            "variant_key": "GP-501",
+            "page_start": 1325,
+            "page_end": 1325,
+            "entry_digest": "4edf9c452f292bf92ee5f4b43a4c7daf7978898f46f41f95feb46bcde7e00d68"
+        },
+        {
+            "code": "J-7393",
+            "variant_key": "GP-501",
+            "page_start": 1325,
+            "page_end": 1325,
+            "entry_digest": "e1f167aae29ebd8530528193b78749df8dcbe39325b953f654a5d8d286b5e3e1"
+        },
+        {
+            "code": "J-7394",
+            "variant_key": "GP-501",
+            "page_start": 1325,
+            "page_end": 1325,
+            "entry_digest": "a646c80432a3db6068e9d7099e810d5212a4b31985f2c1fe1966b5286095c70e"
+        },
+        {
+            "code": "J-7395",
+            "variant_key": "GP-501",
+            "page_start": 1325,
+            "page_end": 1325,
+            "entry_digest": "aba67f793e63b81f8b8d202908d42091bf29874f0d85ede492d18615f9988af8"
+        },
+        {
+            "code": "J-7396",
+            "variant_key": "GP-501",
+            "page_start": 1325,
+            "page_end": 1325,
+            "entry_digest": "d2e934f6fc88b0f41c1f83ef6abf23ee80bbdb9ee9c7dee8fb0937a584777025"
+        },
+        {
+            "code": "J-7397",
+            "variant_key": "GP-501",
+            "page_start": 1325,
+            "page_end": 1325,
+            "entry_digest": "3e9e9ac6ab49627602ea871a3772e01e744b9e0e2aceba5e6a1c2c41bd7472b3"
+        },
+        {
+            "code": "J-7401",
+            "variant_key": "LS_1ST_TANDEM",
+            "page_start": 1325,
+            "page_end": 1325,
+            "entry_digest": "9270e6e1ed4389463e8a85a3edbb79dbf496e4c8809f7276b5aab39aead154e0"
+        },
+        {
+            "code": "J-7402",
+            "variant_key": "LS_1ST_TANDEM",
+            "page_start": 1325,
+            "page_end": 1325,
+            "entry_digest": "f2247f9c6da4c4b35c4528f041458c139a0b84abdb2e6924a04bb414d69343e8"
+        },
+        {
+            "code": "J-7403",
+            "variant_key": "LS_1ST_TANDEM",
+            "page_start": 1325,
+            "page_end": 1325,
+            "entry_digest": "11e9cddeec28bee811ff96e6faf3258db8c316ef8f2a90b3cfd93247405b0555"
+        },
+        {
+            "code": "J-7404",
+            "variant_key": "LS_1ST_TANDEM",
+            "page_start": 1326,
+            "page_end": 1326,
+            "entry_digest": "113cc506a54864920ad4c3353bfa4a92014c9f57209937bb85b80c0f1807073d"
+        },
+        {
+            "code": "J-7405",
+            "variant_key": "LS_1ST_TANDEM",
+            "page_start": 1326,
+            "page_end": 1326,
+            "entry_digest": "31aba7e8d55bf33b210d9184b0a62c34971d4b2ab6c6c804323a274b9908af74"
+        },
+        {
+            "code": "J-7406",
+            "variant_key": "LS_1ST_TANDEM",
+            "page_start": 1326,
+            "page_end": 1326,
+            "entry_digest": "cac9086d01d905b5384ae4646950244c81cc1de17425be65c85515fd6bde9bb8"
+        },
+        {
+            "code": "J-7407",
+            "variant_key": "LS_1ST_TANDEM",
+            "page_start": 1326,
+            "page_end": 1326,
+            "entry_digest": "34a029b42862fb7cb718b887270986b89db3561824051d9f719a17d45ffbbdd7"
+        },
+        {
+            "code": "J-7408",
+            "variant_key": "LS_1ST_TANDEM",
+            "page_start": 1326,
+            "page_end": 1326,
+            "entry_digest": "6316027384489a5b3d2aa6ab2a09b075026db6072d6934538a2f563e0d314454"
+        },
+        {
+            "code": "J-7409",
+            "variant_key": "LS_1ST_TANDEM",
+            "page_start": 1326,
+            "page_end": 1326,
+            "entry_digest": "7426650ad0a9f1aa5989dcab6554bc1ccc208ae660bcfaead1bf3c6743fa0312"
+        },
+        {
+            "code": "J-7410",
+            "variant_key": "LS_1ST_TANDEM",
+            "page_start": 1326,
+            "page_end": 1326,
+            "entry_digest": "a76c9ef2ce26279288cc895db8f63cf8a19a40c1e93202b563811320efe9209f"
+        },
+        {
+            "code": "J-7411",
+            "variant_key": "LS_1ST_TANDEM",
+            "page_start": 1326,
+            "page_end": 1326,
+            "entry_digest": "572147305a287fe1c9f2df0c76c7fb324534d68cbd4651f4292448b4dbdcbac6"
+        },
+        {
+            "code": "J-7412",
+            "variant_key": "LS_1ST_TANDEM",
+            "page_start": 1326,
+            "page_end": 1326,
+            "entry_digest": "1097f60e386273b548f17d0ade007b09c42157cfcb1d360adeec2fcfcb2fe037"
+        },
+        {
+            "code": "J-7431",
+            "variant_key": "LS_2ND_TANDEM",
+            "page_start": 1326,
+            "page_end": 1326,
+            "entry_digest": "c565afe26c552c3806cb8d61a2b15f2e94f45f2099deedf3fa54cae350393e14"
+        },
+        {
+            "code": "J-7432",
+            "variant_key": "LS_2ND_TANDEM",
+            "page_start": 1326,
+            "page_end": 1326,
+            "entry_digest": "65d332bbd524e70db25938eb49e6f78f3f76d53bcb123273345c2a2024dbe90b"
+        },
+        {
+            "code": "J-7433",
+            "variant_key": "LS_2ND_TANDEM",
+            "page_start": 1326,
+            "page_end": 1326,
+            "entry_digest": "bbeeee685221f680ebe0f07cb864e5af09172691fedaf270381c3e43a451a616"
+        },
+        {
+            "code": "J-7434",
+            "variant_key": "LS_2ND_TANDEM",
+            "page_start": 1326,
+            "page_end": 1326,
+            "entry_digest": "75d86b73bfffaa24e0a59743f4a6ed20380be1b166b8af785597a1c9bc2c593d"
+        },
+        {
+            "code": "J-7435",
+            "variant_key": "LS_2ND_TANDEM",
+            "page_start": 1326,
+            "page_end": 1326,
+            "entry_digest": "395824bcd16fcd773c4fb4f81adcd0cfcfe17143f0100e603e7f4b0a8039678a"
+        },
+        {
+            "code": "J-7436",
+            "variant_key": "LS_2ND_TANDEM",
+            "page_start": 1326,
+            "page_end": 1326,
+            "entry_digest": "0b9604a459bf2665425fd8c74973819c122810d96bdb0e7df88d4f7f16cb8850"
+        },
+        {
+            "code": "J-7437",
+            "variant_key": "LS_2ND_TANDEM",
+            "page_start": 1326,
+            "page_end": 1326,
+            "entry_digest": "884eaf8f13fae304e66fa3538d539468dfb68d6abf3713395d26b8ad0c55212a"
+        },
+        {
+            "code": "J-7438",
+            "variant_key": "LS_2ND_TANDEM",
+            "page_start": 1326,
+            "page_end": 1326,
+            "entry_digest": "4bedf2608dc77b48d42e425ae099754f7c3cebe1f68b4b827522cdd4f685eee6"
+        },
+        {
+            "code": "J-7439",
+            "variant_key": "LS_2ND_TANDEM",
+            "page_start": 1326,
+            "page_end": 1326,
+            "entry_digest": "c5c17aef3b3219c145ddef202a88ab67b8c7d932e5f46bf729d06be5f3d7a240"
+        },
+        {
+            "code": "J-7440",
+            "variant_key": "LS_2ND_TANDEM",
+            "page_start": 1326,
+            "page_end": 1326,
+            "entry_digest": "86858588ba0260d5549c269b55949ec9bd85a2cd5a0d7395fdc8809e1cd08e13"
+        },
+        {
+            "code": "J-7441",
+            "variant_key": "LS_2ND_TANDEM",
+            "page_start": 1327,
+            "page_end": 1327,
+            "entry_digest": "9871182aa579ceb822167a6e2875be077f2ae190d5833780f28b164fdbb448c9"
+        },
+        {
+            "code": "J-7442",
+            "variant_key": "LS_2ND_TANDEM",
+            "page_start": 1327,
+            "page_end": 1327,
+            "entry_digest": "96b9a12b65469c3a660060e6c4123ad406d17ad08ed364fb357d3bfbefb102e3"
+        },
+        {
+            "code": "J-7501",
+            "variant_key": "FD",
+            "page_start": 1327,
+            "page_end": 1327,
+            "entry_digest": "5cc159be4df80f12552255672c9fb8790feddf80f6fcf55baf6abc8c61533f2c"
+        },
+        {
+            "code": "J-7502",
+            "variant_key": "FD",
+            "page_start": 1327,
+            "page_end": 1327,
+            "entry_digest": "b96ec3f7729d4560bb4763b1c1171c15c8da07ec7ff9173992522e540d898a04"
+        },
+        {
+            "code": "J-7503",
+            "variant_key": "FD",
+            "page_start": 1327,
+            "page_end": 1327,
+            "entry_digest": "3a3e609da0492d6ddc145142e7a1f0bb1b7183e80ee383eebd5850aaf0a695d5"
+        },
+        {
+            "code": "J-7504",
+            "variant_key": "FD",
+            "page_start": 1327,
+            "page_end": 1327,
+            "entry_digest": "d3cffd5174a20272a8c88d3e0a58995ba8b44eba0137e50a95135ca46a1fc89a"
+        },
+        {
+            "code": "J-7505",
+            "variant_key": "FD",
+            "page_start": 1327,
+            "page_end": 1327,
+            "entry_digest": "e5f4b46d32c080def8516926f25b2fddc78af95be84ca61ee715ce3aa7d9fe40"
+        },
+        {
+            "code": "J-7506",
+            "variant_key": "FD",
+            "page_start": 1327,
+            "page_end": 1327,
+            "entry_digest": "568738616e86afc6ffa08751ac6b99eb799605c85d9fea4e3223476275e01a17"
+        },
+        {
+            "code": "J-7507",
+            "variant_key": "FD",
+            "page_start": 1327,
+            "page_end": 1327,
+            "entry_digest": "ec4fa5e0e3dae00e224e91705504a6143390d9ae01fdbd6ffcc0e0395125a87e"
+        },
+        {
+            "code": "J-7508",
+            "variant_key": "FD",
+            "page_start": 1327,
+            "page_end": 1327,
+            "entry_digest": "e9b9c21a5715888c29b7794bc2f2cad788d6d3da541c4b8907131a0939e3f20d"
+        },
+        {
+            "code": "J-7509",
+            "variant_key": "FD",
+            "page_start": 1327,
+            "page_end": 1327,
+            "entry_digest": "7468cf89050c2d6e4e0075bc6afccf3e5009c8c4c2a46f0273901d55bda2f5bf"
+        },
+        {
+            "code": "J-7510",
+            "variant_key": "FD",
+            "page_start": 1327,
+            "page_end": 1327,
+            "entry_digest": "de51967b25260e044f14d4e9393a6882bba0c0d69a0d5b80cfa0ebe876d540de"
+        },
+        {
+            "code": "J-7511",
+            "variant_key": "FD",
+            "page_start": 1327,
+            "page_end": 1327,
+            "entry_digest": "55d1f705da98476ec405756fd672f6be4ea3872aa1962da607a5055666950878"
+        },
+        {
+            "code": "J-7512",
+            "variant_key": "FD",
+            "page_start": 1327,
+            "page_end": 1327,
+            "entry_digest": "df594fae0b2bb61f521bfd6db8db9a745ee8d69d6ccc36c685e137756c6b79f4"
+        },
+        {
+            "code": "J-7513",
+            "variant_key": "FD",
+            "page_start": 1327,
+            "page_end": 1327,
+            "entry_digest": "daa7b823b76076b3d97e05f0d079899c680f2ee0a7e59ebdb367dcdabc58bb1f"
+        },
+        {
+            "code": "J-7514",
+            "variant_key": "FD",
+            "page_start": 1327,
+            "page_end": 1327,
+            "entry_digest": "5d15175de95104e525b9cc9700313d924f4c0dbff76c2c39dd12447c8cd3fe99"
+        },
+        {
+            "code": "J-7515",
+            "variant_key": "FD",
+            "page_start": 1327,
+            "page_end": 1327,
+            "entry_digest": "ba3746f8b93c6c88875e188bf29d911c7f565e3aa83598722ea16c5673ada2c4"
+        },
+        {
+            "code": "J-7516",
+            "variant_key": "FD",
+            "page_start": 1328,
+            "page_end": 1328,
+            "entry_digest": "775cb52773c35c202147d2c658d8a53b21ca16e40b366a209648d415f6d980f7"
+        },
+        {
+            "code": "J-7517",
+            "variant_key": "FD",
+            "page_start": 1328,
+            "page_end": 1328,
+            "entry_digest": "beda562902f8d2242365df6fcb5d4b7a7b45a7cd8ed35cec1c08be2df52f4da9"
+        },
+        {
+            "code": "J-7518",
+            "variant_key": "FD",
+            "page_start": 1328,
+            "page_end": 1328,
+            "entry_digest": "197c870752c38a929e89f904bd5b8c38c5601cf5f4982a93bdbe0dc2e622c12d"
+        },
+        {
+            "code": "J-7519",
+            "variant_key": "FD",
+            "page_start": 1328,
+            "page_end": 1328,
+            "entry_digest": "313b86b6259a46cdf1fef0541cf4c61d3274be0689c8c2c83d847b46d3af2eb6"
+        },
+        {
+            "code": "J-7520",
+            "variant_key": "FD",
+            "page_start": 1328,
+            "page_end": 1328,
+            "entry_digest": "80b07c9731341f4d040d75590070405c8efdc12dd5786ad876dbb3b08fedaa40"
+        },
+        {
+            "code": "J-7521",
+            "variant_key": "FD",
+            "page_start": 1328,
+            "page_end": 1328,
+            "entry_digest": "dff4dfbff8d9997464217ecc9c49291579171ba743d06ea0b8430558215fb416"
+        },
+        {
+            "code": "J-7522",
+            "variant_key": "FD",
+            "page_start": 1328,
+            "page_end": 1328,
+            "entry_digest": "8b0383af780044a1861bd994f7b3c6d13ef485a12994199c3bb2e7682bc970cc"
+        },
+        {
+            "code": "J-7523",
+            "variant_key": "FD",
+            "page_start": 1328,
+            "page_end": 1328,
+            "entry_digest": "73550a43b3507d6da11ff444adeb6a1fa3a3f3e650997ba1dd7dfc2cc9ea5417"
+        },
+        {
+            "code": "J-7530",
+            "variant_key": "RU",
+            "page_start": 1328,
+            "page_end": 1328,
+            "entry_digest": "58e7f2c9a2caee597f532f3387f18a3ed29f8a13ea268fafa0feddc611313e7d"
+        },
+        {
+            "code": "J-7531",
+            "variant_key": "RU",
+            "page_start": 1328,
+            "page_end": 1328,
+            "entry_digest": "be65a96a76f3c3b948d81c166a398db2ef3127e4f06292d894b4336c448a4c55"
+        },
+        {
+            "code": "J-7532",
+            "variant_key": "RU",
+            "page_start": 1328,
+            "page_end": 1328,
+            "entry_digest": "8b3570d4f69c5cef488319650244fc529501081e2daaf7a91b02ec6ece520078"
+        },
+        {
+            "code": "J-7533",
+            "variant_key": "RU",
+            "page_start": 1328,
+            "page_end": 1328,
+            "entry_digest": "33599f80001f0a03cc20011079e8b611a63b5e53e5b43574a3d090b27eea35ac"
+        },
+        {
+            "code": "J-7535",
+            "variant_key": "RU",
+            "page_start": 1328,
+            "page_end": 1328,
+            "entry_digest": "bc310a19499434c7cfd84c174ae43797efd104804c0b5aa46d79f3f551f62a8f"
+        },
+        {
+            "code": "J-7550",
+            "variant_key": "RU",
+            "page_start": 1328,
+            "page_end": 1328,
+            "entry_digest": "913b06f9d7df6dee1e2fa4018f13cb294d1030979431421fd3e0dc7c268dd35c"
+        },
+        {
+            "code": "J-7551",
+            "variant_key": "RU",
+            "page_start": 1329,
+            "page_end": 1329,
+            "entry_digest": "99059726da90e56fb09bcb9a77150c39e3e1ada82fd2362da87f33f70445cb9f"
+        },
+        {
+            "code": "J-7552",
+            "variant_key": "RU",
+            "page_start": 1329,
+            "page_end": 1329,
+            "entry_digest": "e563da6a547f6ea19cccae846f1f448f74c82013dc45a2cd255e60dce36af538"
+        },
+        {
+            "code": "J-7553",
+            "variant_key": "RU",
+            "page_start": 1329,
+            "page_end": 1329,
+            "entry_digest": "7a5a7665a9aa878885ac7d9700e3a5e350232ee49ce487237f722ba994e9d51e"
+        },
+        {
+            "code": "J-7554",
+            "variant_key": "RU",
+            "page_start": 1329,
+            "page_end": 1329,
+            "entry_digest": "2472c61da1e7c8bf9e27fc41f919b80b83baf1e2d5453b1d2ceb83923099aa1f"
+        },
+        {
+            "code": "J-7555",
+            "variant_key": "RU",
+            "page_start": 1329,
+            "page_end": 1329,
+            "entry_digest": "d79269a2c8ea879076627ba4548d8ee4f0dde300355a1012908d0054d377b8a6"
+        },
+        {
+            "code": "J-7556",
+            "variant_key": "RU",
+            "page_start": 1329,
+            "page_end": 1329,
+            "entry_digest": "bbe53fe621ba0e26ffefb89812821ac01936a09933cf15432523200383aa8479"
+        },
+        {
+            "code": "J-7561",
+            "variant_key": "SD-506",
+            "page_start": 1329,
+            "page_end": 1329,
+            "entry_digest": "0332b10150a044b6ee64c3ddde890e60cc8f4a2efc78da3b312cd87279f5edfc"
+        },
+        {
+            "code": "J-7562",
+            "variant_key": "SD-506",
+            "page_start": 1329,
+            "page_end": 1329,
+            "entry_digest": "c314204ae2380309c0827737590537b21cde3647293232f296c4413a87deda63"
+        },
+        {
+            "code": "J-7563",
+            "variant_key": "SD-506",
+            "page_start": 1329,
+            "page_end": 1329,
+            "entry_digest": "5dfdc21b53a54b780de9fe516dfb4aad49e8c63414e1cc157e11107681ee7881"
+        },
+        {
+            "code": "J-7564",
+            "variant_key": "SD-506",
+            "page_start": 1329,
+            "page_end": 1329,
+            "entry_digest": "39a9e156dd5ba2e873d128af33b73def7a23bcdd89aff5b996ee99ee3dd4ccbe"
+        },
+        {
+            "code": "J-7565",
+            "variant_key": "SD-506",
+            "page_start": 1329,
+            "page_end": 1329,
+            "entry_digest": "c17b93fc4b74937d4b37bce5d03f5c8e8cf3e3827a0b23086b376fc3bb607727"
+        },
+        {
+            "code": "J-7566",
+            "variant_key": "SD-506",
+            "page_start": 1329,
+            "page_end": 1329,
+            "entry_digest": "4e0f3243f76a507fb26b4b1fe5d7256f625360727219c23aa7efbd7c07d70ca9"
+        },
+        {
+            "code": "J-7567",
+            "variant_key": "SD-506",
+            "page_start": 1329,
+            "page_end": 1329,
+            "entry_digest": "eb263a95d87600a178dd08854657c19989b6e629a5df1f3351da9fe99859e44a"
+        },
+        {
+            "code": "J-7568",
+            "variant_key": "SD-506",
+            "page_start": 1329,
+            "page_end": 1329,
+            "entry_digest": "66fa7d48b82f84e40b192bef22d17225f3140e51f5c2a87772e47c3b55fe30fb"
+        },
+        {
+            "code": "J-7569",
+            "variant_key": "SD-506",
+            "page_start": 1329,
+            "page_end": 1329,
+            "entry_digest": "e4ecc4c4715e9af16d0216ec1df473f8ea072f45921d22e3e4458cf48ac5b110"
+        },
+        {
+            "code": "J-7570",
+            "variant_key": "SD-506",
+            "page_start": 1329,
+            "page_end": 1329,
+            "entry_digest": "5913064c9ff5993e6f5f3ed104048bfc901b6d7aca029d1e528a79a69535b138"
+        },
+        {
+            "code": "J-7571",
+            "variant_key": "SD-506",
+            "page_start": 1329,
+            "page_end": 1329,
+            "entry_digest": "ad2bfdc11f39f6c5a5a4805bff4fa8add170db45548fc70a1fc609f4a079634d"
+        },
+        {
+            "code": "J-7572",
+            "variant_key": "SD-506",
+            "page_start": 1330,
+            "page_end": 1330,
+            "entry_digest": "eb7023514be54657cfe5fdb3c6069c284cf362eb9b4fcf24a54ffb7d7fc5d8d9"
+        },
+        {
+            "code": "J-7573",
+            "variant_key": "SD-506",
+            "page_start": 1330,
+            "page_end": 1330,
+            "entry_digest": "3147c53e4206ce306662b03f7d3a67369a276b9f570fd1245e4376703435a74c"
+        },
+        {
+            "code": "J-7574",
+            "variant_key": "SD-506",
+            "page_start": 1330,
+            "page_end": 1330,
+            "entry_digest": "c9dd97b4b1d35d448a3d331bca7926cafac75e2c9b3dd56da4041a82bbabd20c"
+        },
+        {
+            "code": "J-7575",
+            "variant_key": "SD-506",
+            "page_start": 1330,
+            "page_end": 1330,
+            "entry_digest": "9a81650dbecf92b786105641cebefd7630cf097c5d059d64e7051d3a96b5cb25"
+        },
+        {
+            "code": "J-7576",
+            "variant_key": "SD-506",
+            "page_start": 1330,
+            "page_end": 1330,
+            "entry_digest": "747f897d7208c7f85a36579719577261dd62f247d6c0486985458fcc49f6fe4f"
+        },
+        {
+            "code": "J-7577",
+            "variant_key": "SD-506",
+            "page_start": 1330,
+            "page_end": 1330,
+            "entry_digest": "7849244ee2865946f3f6f1b03120d6ca28fe9f87f8a0904fa7d777d53b14ea4f"
+        },
+        {
+            "code": "J-7578",
+            "variant_key": "SD-506",
+            "page_start": 1330,
+            "page_end": 1330,
+            "entry_digest": "90c5baaa18d9bae0f9e152e973c08aa30ae8ad14b1027519c786e72625334fa4"
+        },
+        {
+            "code": "J-7579",
+            "variant_key": "SD-506",
+            "page_start": 1330,
+            "page_end": 1330,
+            "entry_digest": "bc6f168871c1cce3984447438be188951e237d5f73f930e1461e21db1f4e1845"
+        },
+        {
+            "code": "J-7580",
+            "variant_key": "SD-506",
+            "page_start": 1330,
+            "page_end": 1330,
+            "entry_digest": "c6e4351a4d185c737ab588dd614d73e73b62835eb06b9b7996e56c3704cee1ee"
+        },
+        {
+            "code": "J-7581",
+            "variant_key": "SD-506",
+            "page_start": 1330,
+            "page_end": 1330,
+            "entry_digest": "245be6486362ed34b6f21ebf6344e8330a6a9ee0447305d093429fe49108ac64"
+        },
+        {
+            "code": "J-7582",
+            "variant_key": "SD-506",
+            "page_start": 1330,
+            "page_end": 1330,
+            "entry_digest": "ca759093698ff0a9a087630db6745311e45b1d9d48b5ce29bb42f2c207580fb9"
+        },
+        {
+            "code": "J-7583",
+            "variant_key": "SD-506",
+            "page_start": 1330,
+            "page_end": 1330,
+            "entry_digest": "b608d64701f2bf47e043b9dd235917556fd8a09654d74f15050e7faf32934d95"
+        },
+        {
+            "code": "J-7584",
+            "variant_key": "SD-506",
+            "page_start": 1330,
+            "page_end": 1330,
+            "entry_digest": "fdfc1308b57b9c6a0e0208acac1f058c059bba465f9276091e691ed4d3b4d5d2"
+        },
+        {
+            "code": "J-7585",
+            "variant_key": "SD-506",
+            "page_start": 1330,
+            "page_end": 1330,
+            "entry_digest": "e20acd8437fe776004b8040a012c4fc1a5eeb2e520f5f7d55f576c0179caf4f9"
+        },
+        {
+            "code": "J-7590",
+            "variant_key": "GP-501",
+            "page_start": 1330,
+            "page_end": 1330,
+            "entry_digest": "79059e83f4547f9fd78605790d35c27f55a2a0d42fc46dbfbd1c6086e18cc895"
+        },
+        {
+            "code": "J-7591",
+            "variant_key": "GP-501",
+            "page_start": 1330,
+            "page_end": 1330,
+            "entry_digest": "bf155bb65c1b3a2c13329ea02ecda9a6273fda1a2bda9efdac648da83882918d"
+        },
+        {
+            "code": "J-7592",
+            "variant_key": "GP-501",
+            "page_start": 1330,
+            "page_end": 1330,
+            "entry_digest": "711645465212adb818b10cf14e01762222d53f8ddf79a6dc281ddbf09109ff3f"
+        },
+        {
+            "code": "J-7593",
+            "variant_key": "GP-501",
+            "page_start": 1330,
+            "page_end": 1330,
+            "entry_digest": "30352693074d59d912c612d805b0df7606070dcb42602ae61edcfd33f28e2763"
+        },
+        {
+            "code": "J-7594",
+            "variant_key": "GP-501",
+            "page_start": 1330,
+            "page_end": 1330,
+            "entry_digest": "99590961517a9b4ca37d26e7f65e98fc1d7cb65e609419d1c51f63e74a13ccb6"
+        },
+        {
+            "code": "J-7595",
+            "variant_key": "GP-501",
+            "page_start": 1331,
+            "page_end": 1331,
+            "entry_digest": "7fd44b0a533acccaaff1f884947ac28f6973c22bf04ae7e3a98e1407ce7c42ca"
+        },
+        {
+            "code": "J-7596",
+            "variant_key": "GP-501",
+            "page_start": 1331,
+            "page_end": 1331,
+            "entry_digest": "340a0157d841c3ccfd58c115731df8c1c2ba0c93746a096d9f4a681de2667418"
+        },
+        {
+            "code": "J-7597",
+            "variant_key": "GP-501",
+            "page_start": 1331,
+            "page_end": 1331,
+            "entry_digest": "3d918e378a82c50e580f088d8f5a0828a4cb24ca13606a8fcd9fd100df4a9218"
+        },
+        {
+            "code": "J-7601",
+            "variant_key": "GP-502",
+            "page_start": 1331,
+            "page_end": 1331,
+            "entry_digest": "f9f6d08c6b13223c968e59951bb5a533d9d5889934a994c2931a0c87eb857b1f"
+        },
+        {
+            "code": "J-7602",
+            "variant_key": "GP-502",
+            "page_start": 1331,
+            "page_end": 1331,
+            "entry_digest": "189dd972fdd83c40fb44a750a6bf6384918ff1b1e31d8b2a508d12f62bd4672b"
+        },
+        {
+            "code": "J-7603",
+            "variant_key": "GP-502",
+            "page_start": 1331,
+            "page_end": 1331,
+            "entry_digest": "99e62b884871d4a6db18ab5219e90c8e70bb1da0c9531645737a421849f5258a"
+        },
+        {
+            "code": "J-7604",
+            "variant_key": "GP-502",
+            "page_start": 1331,
+            "page_end": 1331,
+            "entry_digest": "ed212c84c9644e9d6dd0ee33d078261548e2fb19eac46f91f77ca13e9c26e97e"
+        },
+        {
+            "code": "J-7605",
+            "variant_key": "GP-502",
+            "page_start": 1331,
+            "page_end": 1331,
+            "entry_digest": "0c0776e33da23911d7c7cbaa749472e32bd08e50f748240eebbcc3169a80feff"
+        },
+        {
+            "code": "J-7606",
+            "variant_key": "GP-502",
+            "page_start": 1331,
+            "page_end": 1331,
+            "entry_digest": "76d5c29ef8079da8bd4b9ea8e21f6727fed20c45a7340b25f924bc04c9b4fa20"
+        },
+        {
+            "code": "J-7607",
+            "variant_key": "GP-502",
+            "page_start": 1331,
+            "page_end": 1331,
+            "entry_digest": "5ff15ff6765d195a81a32164a347d533428412b2fad768d47251833007d94f90"
+        },
+        {
+            "code": "J-7608",
+            "variant_key": "GP-502",
+            "page_start": 1331,
+            "page_end": 1331,
+            "entry_digest": "25635994c97ef253c341bf66d38eded3b18f98ccf2ec4c913ace869b790af025"
+        },
+        {
+            "code": "J-7611",
+            "variant_key": "GP-502",
+            "page_start": 1331,
+            "page_end": 1331,
+            "entry_digest": "0f57e2a5ba0d2b4a77219723eb5f344998b8a1e08865093bf07b2d36a56bd85a"
+        },
+        {
+            "code": "J-7612",
+            "variant_key": "GP-502",
+            "page_start": 1331,
+            "page_end": 1331,
+            "entry_digest": "d3050d64b39339c467359ab055a3e8718013fd082ff397a766b8d77fe9b9e2df"
+        },
+        {
+            "code": "J-7660",
+            "variant_key": "PB",
+            "page_start": 1331,
+            "page_end": 1331,
+            "entry_digest": "5c284d6ec4de8a7a530a92c8554eb8156ef39516f81c864c3020da1278eb4c4c"
+        },
+        {
+            "code": "J-7661",
+            "variant_key": "PB",
+            "page_start": 1331,
+            "page_end": 1331,
+            "entry_digest": "f3d324f54657cfe68e432f284b8b7ef669b9f797ca63bedeb3ee698b7254698d"
+        },
+        {
+            "code": "J-7662",
+            "variant_key": "PB",
+            "page_start": 1332,
+            "page_end": 1332,
+            "entry_digest": "8f939144290169a2de65a640d3d3aab5a55c6859ea8af7e03b0ac8dcad6beb31"
+        },
+        {
+            "code": "J-7663",
+            "variant_key": "PB",
+            "page_start": 1332,
+            "page_end": 1332,
+            "entry_digest": "e51488054346a4cd6de31dae6c7c6dc4778538323c2d67e1b23c19ced501455c"
+        },
+        {
+            "code": "J-7664",
+            "variant_key": "PB",
+            "page_start": 1332,
+            "page_end": 1332,
+            "entry_digest": "c5755e72335780d1aad0d0b81b1180baad2584f6c2b28e8ec1e13a4b7e93a3f1"
+        },
+        {
+            "code": "J-7665",
+            "variant_key": "PB",
+            "page_start": 1332,
+            "page_end": 1332,
+            "entry_digest": "34d8f0e0b4c9d89449c891ef10fabb14234e28762548ff3e6a2bb92d1bc54737"
+        },
+        {
+            "code": "J-7666",
+            "variant_key": "PB",
+            "page_start": 1332,
+            "page_end": 1332,
+            "entry_digest": "e52eb08bd0dad17eb3e77fa19104b2bdbaebb37a7544541ba6b18f8be3d33e0c"
+        },
+        {
+            "code": "J-7667",
+            "variant_key": "PB",
+            "page_start": 1332,
+            "page_end": 1332,
+            "entry_digest": "474fc95e51cd8dc4c5c0dfb503608e8ebb0014d0fd867341c79824ff61a94a5f"
+        },
+        {
+            "code": "J-7668",
+            "variant_key": "PB",
+            "page_start": 1332,
+            "page_end": 1332,
+            "entry_digest": "b6a38422e2a6964c9b315ddd559f052dc53f998c9b0b82647f955edc2d7cd84b"
+        },
+        {
+            "code": "J-7669",
+            "variant_key": "PB",
+            "page_start": 1332,
+            "page_end": 1332,
+            "entry_digest": "345282dd990ab852c8b686e8b2cdd058b8ca237dcb191fb0f9de8f3c0dd25802"
+        },
+        {
+            "code": "J-7670",
+            "variant_key": "PB",
+            "page_start": 1332,
+            "page_end": 1332,
+            "entry_digest": "7c4448f722d576f1e59ec33e7573a13a4c06f0d9a6021b095799a4719c7ae585"
+        },
+        {
+            "code": "J-7671",
+            "variant_key": "PB",
+            "page_start": 1332,
+            "page_end": 1332,
+            "entry_digest": "bfdec0d21648e7445f5927a70a192ed4eef7256621cfb8b252df7fef7df70dbd"
+        },
+        {
+            "code": "J-7673",
+            "variant_key": "PB-503",
+            "page_start": 1332,
+            "page_end": 1332,
+            "entry_digest": "0c6b67029cb3fdb487a92b4cb01e8b4d9c706ef1e4c2371a6202d4a713a09ced"
+        },
+        {
+            "code": "J-7674",
+            "variant_key": "PB",
+            "page_start": 1332,
+            "page_end": 1332,
+            "entry_digest": "0476486cd3fa2c6bc5f72f970e60d7a719619de7e85a4991ccb082afe470bdef"
+        },
+        {
+            "code": "J-7675",
+            "variant_key": "PB",
+            "page_start": 1332,
+            "page_end": 1332,
+            "entry_digest": "92c94fdec8227bc1c1a7466f91e19dfbfb8ac1762a3feabda37922800acb33de"
+        },
+        {
+            "code": "J-7676",
+            "variant_key": "PB",
+            "page_start": 1332,
+            "page_end": 1332,
+            "entry_digest": "68701d1bddad457e42c2a98b57127950169148c542d564920e3a3b534693d8e3"
+        },
+        {
+            "code": "J-7677",
+            "variant_key": "PB",
+            "page_start": 1332,
+            "page_end": 1332,
+            "entry_digest": "89741a9c9befbb0d4e56fd7a46131fdcc2ad35f63275b86980e7280fc76a982a"
+        },
+        {
+            "code": "J-7678",
+            "variant_key": "PB",
+            "page_start": 1333,
+            "page_end": 1333,
+            "entry_digest": "b49a67237de9898c582b1306e037062d86c786346356b7b5461c739c85fffc91"
+        },
+        {
+            "code": "J-7679",
+            "variant_key": "PB",
+            "page_start": 1333,
+            "page_end": 1333,
+            "entry_digest": "7d4f1e6cd0abf5bf507aa318caa48b1daba5c57ca2b551237148e64126f7c5be"
+        },
+        {
+            "code": "J-7680",
+            "variant_key": "PB",
+            "page_start": 1333,
+            "page_end": 1333,
+            "entry_digest": "9a4e43e7f1e3270fb512cffec629d36bd71272a44c4bd9c1fde11146d77d5363"
+        },
+        {
+            "code": "J-7681",
+            "variant_key": "PB",
+            "page_start": 1333,
+            "page_end": 1333,
+            "entry_digest": "34a94d73e81afc2f60a26743436959fa4fa87bd0faf7d24a9292412fb6542a7f"
+        },
+        {
+            "code": "J-7682",
+            "variant_key": "PB",
+            "page_start": 1333,
+            "page_end": 1333,
+            "entry_digest": "a82e5afe55adc0a7aff9456c12a1e4fe455270f252ca44c586b707620ffa201a"
+        },
+        {
+            "code": "J-7683",
+            "variant_key": "PB",
+            "page_start": 1333,
+            "page_end": 1333,
+            "entry_digest": "031b3462d338e564803c2fee8cdf317de74dfa9d3982a327b86222e12e43377e"
+        },
+        {
+            "code": "J-7684",
+            "variant_key": "PB",
+            "page_start": 1333,
+            "page_end": 1333,
+            "entry_digest": "2186dd9bc95c961a1a31182223d6cb4aef34aeb3936a69d695c0bee13d869e3d"
+        },
+        {
+            "code": "J-7685",
+            "variant_key": "PB",
+            "page_start": 1333,
+            "page_end": 1333,
+            "entry_digest": "fb6292e8973e7e89cf66e28dea758e5db80e284c3923fd99290c653b1fe62cb1"
+        },
+        {
+            "code": "J-7686",
+            "variant_key": "PB",
+            "page_start": 1333,
+            "page_end": 1333,
+            "entry_digest": "19b6e86c783e33090aca237a0d8e34d0c9c519fdf007eb8ed5130fad42092690"
+        },
+        {
+            "code": "J-7687",
+            "variant_key": "PB",
+            "page_start": 1333,
+            "page_end": 1333,
+            "entry_digest": "14d8507e9a7d7c934e32a55b7704ebde0466d875ad6201731697ebfcbda217f5"
+        },
+        {
+            "code": "J-7688",
+            "variant_key": "PB",
+            "page_start": 1333,
+            "page_end": 1333,
+            "entry_digest": "7d9de059e03f874f4b6bd835b61731ca4ca560018eadebf2e5a17d582a95ed80"
+        },
+        {
+            "code": "J-7689",
+            "variant_key": "PB",
+            "page_start": 1333,
+            "page_end": 1333,
+            "entry_digest": "810624418a00dac8c6f1f1189cbf5d042e58658c6ee7341018fe1dcfe073e59c"
+        },
+        {
+            "code": "J-7690",
+            "variant_key": "PB",
+            "page_start": 1333,
+            "page_end": 1333,
+            "entry_digest": "d9a7205f630c84b4afe55b07f0abf23f6132055186d4254c9942023a3e3e5606"
+        },
+        {
+            "code": "J-7691",
+            "variant_key": "PB",
+            "page_start": 1334,
+            "page_end": 1334,
+            "entry_digest": "f3169e34e34301caaa4df8af460478244b298161664459c5aadf913b2c65870e"
+        },
+        {
+            "code": "J-7692",
+            "variant_key": "PB",
+            "page_start": 1334,
+            "page_end": 1334,
+            "entry_digest": "3435f30f98fc93351e82e55e63b16d61f217854f81cdb7f8a9cde8eca0de17a6"
+        },
+        {
+            "code": "J-7693",
+            "variant_key": "PB",
+            "page_start": 1334,
+            "page_end": 1334,
+            "entry_digest": "0eeea2100901b36b943d759b3b39c7cd149a24e7bfb335d9ff57e692d25bf4de"
+        },
+        {
+            "code": "J-7694",
+            "variant_key": "PB",
+            "page_start": 1334,
+            "page_end": 1334,
+            "entry_digest": "b929a452e257a83648fb62c1d1ab5bcd8c32c43b14ff77f3942f44ec845a31f5"
+        },
+        {
+            "code": "J-7695",
+            "variant_key": "PB",
+            "page_start": 1334,
+            "page_end": 1334,
+            "entry_digest": "b4cabd78b25f5b273cf69ff21af6670e810ab3460fefa5b0281c1a13ce4f8b97"
+        },
+        {
+            "code": "J-7696",
+            "variant_key": "PB",
+            "page_start": 1334,
+            "page_end": 1334,
+            "entry_digest": "c88f2a656cb200499de23fe06a75c37b37e4de770ad6221c9ec36b45fe55fa30"
+        },
+        {
+            "code": "J-7697",
+            "variant_key": "PB",
+            "page_start": 1334,
+            "page_end": 1334,
+            "entry_digest": "82170d1e76e477a7ca29ecb9082a47e0d8ecd3c4cf7896474d02b0903bffc5bf"
+        },
+        {
+            "code": "J-7698",
+            "variant_key": "PB",
+            "page_start": 1334,
+            "page_end": 1334,
+            "entry_digest": "db2fcdd7ec8c565acde925a7ff0fcc983f36ea9e52551f8dec8ceb69834a532b"
+        },
+        {
+            "code": "J-9201",
+            "variant_key": "ADU",
+            "page_start": 1334,
+            "page_end": 1334,
+            "entry_digest": "f476e17175fbae7a0a9e3a481ad791e4df879d9002d4a2889f51ef49468eff79"
+        },
+        {
+            "code": "J-9202",
+            "variant_key": "ADU",
+            "page_start": 1334,
+            "page_end": 1334,
+            "entry_digest": "a36bdb92f993f49e93d8d5345bca47d43a2aae04ef3b67b1c3965da231b8544e"
+        },
+        {
+            "code": "J-9251",
+            "variant_key": "ADU",
+            "page_start": 1334,
+            "page_end": 1334,
+            "entry_digest": "e9cbf16fe31061ed4057eaf42f73bb387c69338dc6eca36395402db1c7215826"
+        },
+        {
+            "code": "J-9252",
+            "variant_key": "ADU",
+            "page_start": 1334,
+            "page_end": 1334,
+            "entry_digest": "aebd333add726bfbc9f61f2b2fbb94ce2b5615ed6591fa550a5b2f2a6b5dc45b"
+        },
+        {
+            "code": "J-9301",
+            "variant_key": "ADU",
+            "page_start": 1334,
+            "page_end": 1334,
+            "entry_digest": "aa49aeea22ce4fbb82f0c1c5b96553d993428bef6d1c21a26539546185aa96dc"
+        },
+        {
+            "code": "J-9351",
+            "variant_key": "ADU",
+            "page_start": 1334,
+            "page_end": 1334,
+            "entry_digest": "87cabad344e2620be0b64a54fe617ba133c1e1a9ce98ac1e0fd6a8499ea1acc9"
+        },
+        {
+            "code": "J-9401",
+            "variant_key": "ADU",
+            "page_start": 1334,
+            "page_end": 1334,
+            "entry_digest": "159d1c09ad1af0c8494f91e3b55b3d2471337a943bf4318bef3791964ffc896d"
+        },
+        {
+            "code": "J-9451",
+            "variant_key": "ADU",
+            "page_start": 1334,
+            "page_end": 1334,
+            "entry_digest": "ff58f323155c770194622b6f8e2fca80f6a99a08b792ee955935ba92fe2c906e"
+        }
+    ],
+    "quarantine": [
+        {
+            "code": "J-7272",
+            "page": 1321,
+            "reason": "ambiguous_merged_cells"
+        },
+        {
+            "code": "J-7524",
+            "page": 1328,
+            "reason": "ambiguous_merged_cells"
+        }
+    ]
+}
