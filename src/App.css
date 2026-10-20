@@ -2252,3 +2252,50 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   .ticket-card-head > button, .ticket-subsection-head > button, .ticket-activity-correct { min-height: 44px; }
   .ticket-card-head > button { width: 100%; justify-content: center; }
 }
+
+/* ---- Combined troubleshooting search: two independent, compact result groups ---- */
+.troubleshooting-groups { display: grid; gap: 22px; padding-top: 4px; }
+.troubleshooting-group { min-width: 0; display: grid; gap: 12px; padding-top: 16px; border-top: 1px solid var(--border-subtle); }
+.troubleshooting-group .troubleshooting-results { padding-top: 0; border-top: 0; }
+.troubleshooting-group-head h2 { margin: 5px 0 0; font-size: 20px; letter-spacing: -0.03em; }
+.troubleshooting-group-field .card-kicker { color: var(--warning); }
+.troubleshooting-group-disclaimer { margin: -4px 0 0; color: var(--text-soft); font-size: 12px; }
+.troubleshooting-group-note { margin: 0; display: flex; align-items: flex-start; gap: 8px; color: var(--text-soft); font-size: 13px; line-height: 1.5; }
+.troubleshooting-group-note svg { flex: 0 0 auto; margin-top: 2px; }
+.troubleshooting-state-compact { min-height: 0; padding: 18px; gap: 6px; }
+.troubleshooting-state-compact strong { font-size: 15px; }
+.troubleshooting-state-compact p { margin: 0 0 4px; font-size: 13px; }
+.troubleshooting-numeric-note { display: flex; align-items: flex-start; gap: 9px; padding: 12px 14px; color: var(--text-soft); background: var(--blue-soft); border-radius: 14px; font-size: 12px; line-height: 1.55; }
+.troubleshooting-numeric-note svg { flex: 0 0 auto; margin-top: 2px; color: var(--blue); }
+.troubleshooting-numeric-note strong { color: var(--text); }
+.troubleshooting-more { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 14px; }
+.troubleshooting-more small { color: var(--text-muted); font-size: 11px; }
+.troubleshooting-more p { margin: 0; flex-basis: 100%; }
+.field-experience-card { min-width: 0; display: grid; gap: 8px; padding: 14px 16px; border-radius: 16px; background: var(--surface-muted); border-left: 3px solid var(--warning); }
+.field-experience-head { min-width: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 9px; }
+.field-experience-head small { color: var(--text-muted); font-size: 10px; }
+.field-experience-source { color: var(--warning); font-size: 9px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.field-experience-card h3 { margin: 0; overflow-wrap: anywhere; font-size: 15px; }
+.field-experience-problem { margin: 0; overflow-wrap: anywhere; color: var(--text-soft); font-size: 12px; line-height: 1.55; white-space: pre-wrap; }
+.field-experience-resolution { margin: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 18px; }
+.field-experience-resolution > div { min-width: 0; }
+.field-experience-resolution dt { color: var(--text-muted); font-size: 9px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; }
+.field-experience-resolution dd { margin: 3px 0 0; overflow-wrap: anywhere; font-size: 13px; font-weight: 600; line-height: 1.5; white-space: pre-wrap; }
+.field-experience-meta { margin: 0; overflow-wrap: anywhere; color: var(--text-muted); font-size: 11px; }
+
+@media (max-width: 760px) {
+  .field-experience-resolution { grid-template-columns: minmax(0, 1fr); }
+  .troubleshooting-more .secondary-button, .troubleshooting-state-compact .secondary-button { min-height: 44px; }
+  .troubleshooting-more .secondary-button { width: 100%; }
+}
+/* The search box now takes free text (codes and symptoms), so it no longer forces uppercase. */
+.troubleshooting-search input { text-transform: none; font-size: 18px; font-weight: 650; letter-spacing: 0; }
+.field-experience-detail-card { padding: 16px 18px; }
+.field-experience-detail-card h1 { margin: 0; overflow-wrap: anywhere; font-size: 18px; }
+.field-experience-block h2 { margin: 0 0 3px; color: var(--text-muted); font-size: 9px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; }
+.field-experience-block p { margin: 0; overflow-wrap: anywhere; font-size: 13px; line-height: 1.55; white-space: pre-wrap; }
+.field-experience-monitoring { margin: 0; display: flex; align-items: flex-start; gap: 6px; color: var(--warning); font-size: 12px; font-weight: 600; }
+.field-experience-activities { margin: 0; padding: 0; display: grid; gap: 10px; list-style: none; }
+.field-experience-activities li { min-width: 0; display: grid; gap: 2px; padding-left: 10px; border-left: 2px solid var(--border, rgba(128, 128, 128, .3)); }
+.field-experience-activities p { margin: 0; overflow-wrap: anywhere; font-size: 13px; line-height: 1.5; white-space: pre-wrap; }
+.field-experience-activities small, .field-experience-findings { color: var(--text-muted); font-size: 11px; }

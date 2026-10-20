@@ -5,6 +5,7 @@ const machineDetailPattern = /^\/machines\/([0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f
 const incidentDetailPattern = /^\/errors\/([0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})$/i
 const maintenanceTicketDetailPattern = /^\/maintenance\/tickets\/([0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})$/i
 const troubleshootingDetailPattern = /^\/maintenance\/troubleshooting\/([0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})$/i
+const fieldExperienceDetailPattern = /^\/maintenance\/troubleshooting\/experience\/([0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})$/i
 // The live display is a fixed deep link opened directly on a TV, not a page
 // reached through in-app navigation - it is matched here (so a direct load
 // isn't bounced to Overview) but rendered outside AppShell entirely (see
@@ -13,7 +14,7 @@ const troubleshootingDetailPattern = /^\/maintenance\/troubleshooting\/([0-9a-f]
 // than this routing layer silently redirecting a TV to the normal app shell.
 const liveDisplayPattern = /^\/display\/live(?:\/([^/]*))?$/
 export const machineIdPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
-const isSupportedPath = (path) => supportedRoutes.has(path) || machineDetailPattern.test(path) || incidentDetailPattern.test(path) || maintenanceTicketDetailPattern.test(path) || troubleshootingDetailPattern.test(path) || liveDisplayPattern.test(path)
+const isSupportedPath = (path) => supportedRoutes.has(path) || machineDetailPattern.test(path) || incidentDetailPattern.test(path) || maintenanceTicketDetailPattern.test(path) || troubleshootingDetailPattern.test(path) || fieldExperienceDetailPattern.test(path) || liveDisplayPattern.test(path)
 const readLocation = () => isSupportedPath(window.location.pathname) ? { path: window.location.pathname, search: window.location.search } : { path: '/', search: '' }
 
 export function useAppRoute() {
@@ -50,6 +51,10 @@ export function getMaintenanceTicketIdFromPath(path) {
 
 export function getTroubleshootingEntryIdFromPath(path) {
   return path.match(troubleshootingDetailPattern)?.[1] ?? null
+}
+
+export function getFieldExperienceIdFromPath(path) {
+  return path.match(fieldExperienceDetailPattern)?.[1] ?? null
 }
 
 export function isLiveDisplayRoute(path) {

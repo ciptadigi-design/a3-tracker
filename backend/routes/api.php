@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\IncidentsController;
 use App\Http\Controllers\Api\InventoryController;
 use App\Http\Controllers\Api\MachineCostController;
 use App\Http\Controllers\Api\MaintenanceDocumentController;
+use App\Http\Controllers\Api\MaintenanceFieldExperienceController;
 use App\Http\Controllers\Api\MaintenanceKnowledgeBaseController;
 use App\Http\Controllers\Api\MaintenanceKnowledgeController;
 use App\Http\Controllers\Api\MaintenanceOfficialErrorEntryController;
@@ -165,6 +166,8 @@ Route::prefix('v1')->middleware('request.id')->group(function () {
             Route::put('maintenance/error-codes/{errorCode}/solutions/{solution}', [MaintenanceKnowledgeBaseController::class, 'updateSolution']);
             Route::delete('maintenance/error-codes/{errorCode}/solutions/{solution}', [MaintenanceKnowledgeBaseController::class, 'deleteSolution']);
             Route::get('maintenance/machines/{machine}/history', [MaintenanceTicketsController::class, 'machineHistory']);
+            Route::get('maintenance/field-experiences', [MaintenanceFieldExperienceController::class, 'index']);
+            Route::get('maintenance/field-experiences/{ticket}', [MaintenanceFieldExperienceController::class, 'show'])->whereUuid('ticket');
             Route::get('maintenance/tickets', [MaintenanceTicketsController::class, 'index']);
             Route::post('maintenance/tickets', [MaintenanceTicketsController::class, 'store']);
             Route::get('maintenance/tickets/{id}', [MaintenanceTicketsController::class, 'show']);

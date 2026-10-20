@@ -5,6 +5,9 @@ import { apiClient } from './apiClient.js'
 // (services/dataBackend.js) that older domains still use for Supabase parity.
 export const laravelMaintenance = {
   officialErrorEntries: (params = '') => apiClient.get(`/maintenance/official-error-entries${params ? `?${params}` : ''}`),
+  // Pengalaman Lapangan (Phase 3.3B): read-only, account-scoped projection of completed repairs.
+  fieldExperiences: (params = '') => apiClient.get(`/maintenance/field-experiences${params ? `?${params}` : ''}`),
+  fieldExperience: (ticketId, params = '') => apiClient.get(`/maintenance/field-experiences/${ticketId}${params ? `?${params}` : ''}`),
   officialErrorEntry: (id) => apiClient.get(`/maintenance/official-error-entries/${id}`),
 
   documents: (params = '') => apiClient.get(`/maintenance/documents${params ? `?${params}` : ''}`),

@@ -56,3 +56,65 @@ export const technicalReferenceLabels = {
 export function technicalReferenceLabel(type) {
   return technicalReferenceLabels[type] || String(type || 'Reference').replaceAll('_', ' ')
 }
+
+// ---- Combined search (Pengetahuan Resmi + Pengalaman Lapangan) ----------------------------------
+// One input feeds two independent sources. Routing is decided here, once:
+//   code     C-0213 / J-2113 (any format)  -> both sources
+//   numeric  exactly 4 digits              -> both sources; official keeps its legacy "C" default,
+//                                             field experiences search C and J separately
+//   partial  short fragments with a digit  -> unchanged legacy official search + field text search
+//   text     everything else               -> field experiences only (never turned into a fake code)
+export const FIELD_MIN_QUERY_LENGTH = 2
+
+export function classifyTroubleshootingQuery(rawValue) {
+  const trimmed = String(rawValue ?? '').trim().replace(/\s+/g, ' ')
+  if (!trimmed) return { kind: 'empty', query: '', officialQuery: null, fieldQuery: null, codes: [], fieldSkipReason: null }
+
+  const codeChars = /^[a-z0-9\s-]+$/i.test(trimmed)
+  const compact = codeChars ? trimmed.toUpperCase().replace(/[\s-]+/g, '') : ''
+  let kind = 'text'
+  if (/^\d{4}$/.test(compact)) kind = 'numeric'
+  else if (/^[CJ][A-Z0-9]{4}$/.test(compact) && /\d/.test(compact.slice(1))) kind = 'code'
+  else if (compact.length >= 2 && compact.length <= 5 && /^[CJ]?[A-Z0-9]+$/.test(compact) && /\d/.test(compact)) kind = 'partial'
+
+  const official = kind === 'text' ? null : normalizeErrorCodeInput(trimmed)
+  const codes = kind === 'numeric' ? [`C-${compact}`, `J-${compact}`] : kind === 'code' ? [`${compact[0]}-${compact.slice(1)}`] : []
+  // The backend needs 2+ characters and, for text, at least one word of 2+ characters.
+  const tooShort = trimmed.length < FIELD_MIN_QUERY_LENGTH || (kind === 'text' && !trimmed.split(' ').some((word) => word.length >= 2))
+  return {
+    kind,
+    query: kind === 'code' ? codes[0] : trimmed,
+    officialQuery: official,
+    fieldQuery: tooShort ? null : trimmed,
+    codes,
+    fieldSkipReason: tooShort ? 'too_short' : null,
+  }
+}
+
+export const fieldTestResultLabels = { normal: 'Normal', monitoring: 'Perlu Monitoring' }
+// Existing status-pill palette: green for a normal result, amber for "needs monitoring".
+export const fieldTestResultTone = { normal: 'done', monitoring: 'in_progress' }
+
+// ---- Field experience detail ---------------------------------------------------------------------
+// The result keeps the search (q, machine) in the URL so "Kembali" restores it. A ticket the viewer may
+// open goes to the existing ticket detail; everyone else gets the read-only projection.
+export function fieldExperienceUrl(ticketId, { query = '', machineId = '' } = {}) {
+  const params = new URLSearchParams()
+  if (query) params.set('q', query)
+  if (machineId) params.set('machine', machineId)
+  const search = params.toString()
+  return `/maintenance/troubleshooting/experience/${ticketId}${search ? `?${search}` : ''}`
+}
+
+export function fieldExperienceTarget(item, context) {
+  return item.can_open === true ? `/maintenance/tickets/${item.id}` : fieldExperienceUrl(item.id, context)
+}
+
+// Indonesian messages that say what the user can do, without revealing why the server refused.
+export function fieldExperienceFailure(error) {
+  const status = error?.status
+  if (status === 403) return { kind: 'denied', title: 'Akses tidak tersedia', detail: 'Akun aktif Anda tidak dapat melihat pengalaman lapangan ini.', retry: false }
+  if (status === 404 || status === 422) return { kind: 'not_found', title: 'Pengalaman tidak ditemukan', detail: 'Pengalaman ini tidak tersedia atau sudah tidak memenuhi syarat untuk ditampilkan.', retry: false }
+  if (/failed to fetch|networkerror|load failed|fetch failed/i.test(error?.message ?? '')) return { kind: 'network', title: 'Tidak dapat terhubung', detail: 'Periksa koneksi Anda lalu coba lagi.', retry: true }
+  return { kind: 'server', title: 'Pengalaman belum dapat dimuat', detail: 'Layanan sementara tidak tersedia. Silakan coba lagi.', retry: true }
+}

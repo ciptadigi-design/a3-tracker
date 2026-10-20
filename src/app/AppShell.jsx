@@ -3,7 +3,7 @@ import { Sidebar } from '../components/layout/Sidebar.jsx'
 import { TopBar } from '../components/layout/TopBar.jsx'
 import { useAuth } from '../features/auth/useAuth.js'
 import { useTenant } from '../features/account/useTenant.js'
-import { getIncidentIdFromPath, getMachineIdFromPath, getMaintenanceTicketIdFromPath, getTroubleshootingEntryIdFromPath, useAppRoute } from '../hooks/useAppRoute.js'
+import { getFieldExperienceIdFromPath, getIncidentIdFromPath, getMachineIdFromPath, getMaintenanceTicketIdFromPath, getTroubleshootingEntryIdFromPath, useAppRoute } from '../hooks/useAppRoute.js'
 import { useTheme } from '../hooks/useTheme.js'
 import { OverviewPage } from '../pages/OverviewPage.jsx'
 import { MachinesPage } from '../pages/MachinesPage.jsx'
@@ -15,6 +15,7 @@ import { IncidentDetailPage } from '../features/incidents/IncidentDetailPage.jsx
 import { ComponentsPage } from '../pages/ComponentsPage.jsx'
 import { MaintenancePage } from '../pages/MaintenancePage.jsx'
 import { MaintenanceTicketDetailPage } from '../features/maintenance/MaintenanceTicketDetailPage.jsx'
+import { FieldExperienceDetailPage } from '../features/maintenance/troubleshooting/FieldExperienceDetailPage.jsx'
 import { TroubleshootingDetailPage } from '../features/maintenance/troubleshooting/TroubleshootingDetailPage.jsx'
 import { SettingsPage } from '../pages/SettingsPage.jsx'
 import { ClickTargetSettingsPage } from '../pages/ClickTargetSettingsPage.jsx'
@@ -66,6 +67,8 @@ export function AppShell() {
   else if (getIncidentIdFromPath(path)) page = <IncidentDetailPage incidentId={getIncidentIdFromPath(path)} navigate={handleNavigate} />
   else if (['/maintenance', '/maintenance/machine-condition', '/maintenance/troubleshooting', '/maintenance/tickets', '/maintenance/documents'].includes(path) && tenant.can('maintenance.view')) page = <MaintenancePage path={path} search={search} navigate={handleNavigate} />
   else if (['/maintenance', '/maintenance/machine-condition', '/maintenance/troubleshooting', '/maintenance/tickets', '/maintenance/documents'].includes(path)) page = <ComingSoonPage title="Access denied" description="Your current workspace capabilities do not include Maintenance." />
+  else if (getFieldExperienceIdFromPath(path) && tenant.can('maintenance.view')) page = <FieldExperienceDetailPage key={`${tenant.account.id}:${getFieldExperienceIdFromPath(path)}`} ticketId={getFieldExperienceIdFromPath(path)} search={search} navigate={handleNavigate} />
+  else if (getFieldExperienceIdFromPath(path)) page = <ComingSoonPage title="Access denied" description="Your current workspace capabilities do not include Maintenance." />
   else if (getTroubleshootingEntryIdFromPath(path) && tenant.can('maintenance.view')) page = <TroubleshootingDetailPage entryId={getTroubleshootingEntryIdFromPath(path)} search={search} navigate={handleNavigate} />
   else if (getTroubleshootingEntryIdFromPath(path)) page = <ComingSoonPage title="Access denied" description="Your current workspace capabilities do not include Maintenance." />
   else if (getMaintenanceTicketIdFromPath(path) && tenant.can('maintenance.view')) page = <MaintenanceTicketDetailPage ticketId={getMaintenanceTicketIdFromPath(path)} navigate={handleNavigate} />

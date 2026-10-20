@@ -36,7 +36,8 @@ test('applicability labels preserve every server-provided variant choice', () =>
 test('search has keyboard/mobile submit, bounded API loading, and clear loading/empty/error/variant states', () => {
   assert.match(section, /<form className="troubleshooting-search" role="search" onSubmit=\{submit\}>/)
   assert.match(section, /enterKeyHint="search"/)
-  assert.match(section, /searchOfficialErrorEntries\(normalized, 20\)/)
+  // Phase 3.3C: the same bounded official search, now page-aware (OFFICIAL_PAGE_SIZE = 20, asserted in troubleshootingSearch.test.js).
+  assert.match(section, /searchOfficial: searchOfficialErrorEntryPage/)
   assert.match(section, /Mencari penanganan resmi/)
   assert.match(section, /Kode error tidak ditemukan di manual yang tersedia/)
   assert.match(section, /Pencarian belum dapat dimuat/)

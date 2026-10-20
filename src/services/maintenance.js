@@ -10,6 +10,18 @@ function toQueryString(params = {}) {
 }
 
 export const searchOfficialErrorEntries = async (search, perPage = 20) => unwrapCollection(await laravelMaintenance.officialErrorEntries(toQueryString({ search, per_page: perPage })))
+// Paginated variant used by the combined search: keeps the backend page meta that unwrapCollection drops.
+export const searchOfficialErrorEntryPage = async (search, { page = 1, perPage = 20 } = {}) => {
+  const payload = await laravelMaintenance.officialErrorEntries(toQueryString({ search, per_page: perPage, page }))
+  return { data: unwrapCollection(payload), meta: payload?.meta ?? null }
+}
+// Field experiences: the backend interprets the query (C/J codes, 4-digit numbers, text). Page size is capped at 25 server-side.
+export const searchFieldExperiences = async ({ accountId, query, machineId, page = 1, perPage = 10 }) => {
+  const payload = await laravelMaintenance.fieldExperiences(toQueryString({ account_id: accountId, q: query, machine_id: machineId, page, per_page: perPage }))
+  return { data: payload?.data ?? [], meta: payload?.meta ?? null, query: payload?.query ?? null }
+}
+// Safe read-only projection of one completed repair (Phase 3.3B detail endpoint).
+export const loadFieldExperience = async ({ accountId, ticketId }) => unwrapData(await laravelMaintenance.fieldExperience(ticketId, toQueryString({ account_id: accountId })))
 export const loadOfficialErrorEntry = async (id) => unwrapData(await laravelMaintenance.officialErrorEntry(id))
 
 export const loadMachineErrorCodes = async ({ machineModelId, search } = {}) => unwrapCollection(await laravelMaintenance.errorCodes(toQueryString({ machine_model_id: machineModelId, search })))
