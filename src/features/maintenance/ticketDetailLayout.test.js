@@ -80,7 +80,8 @@ test('UI refinement: timeline sits in one card and the PIC form has no detached 
 test('ticket detail retouch: bounded PIC form, balanced info grid, compact header', () => {
   const css = read('../../App.css')
   const formRule = css.match(/\.ticket-responsible-form \{[^}]*\}/g).join('\n')
-  assert.match(formRule, /max-width: 640px/)
+  assert.doesNotMatch(formRule, /max-width/, 'the form uses the full card content width')
+  assert.match(formRule, /width: 100%/)
   assert.doesNotMatch(formRule, /background|border|radius|padding|shadow/, 'the form is not a nested card')
   assert.doesNotMatch(responsible, /<span><UserRound/, 'no icon above the PIC label')
   assert.match(css, /\.ticket-fields-info \{ grid-template-columns: repeat\(3, minmax\(0, 1fr\)\)/)

@@ -407,7 +407,16 @@ jobs:
 
           ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" \
             "cp '${{ env.APP_ROOT }}/current/scripts/deployment/reset-opcache.php' '${remote_file}'"
-          body="$(curl -fsS "https://${{ env.PROD_DOMAIN }}/${token}.php" || true)"
+          # The edge occasionally answers a freshly copied file with a transient 403 (seen once, after
+          # three clean runs the same day); retry a few times before failing. The filename stays random
+          # and is removed by the trap on every exit path.
+          body=""
+          for attempt in 1 2 3 4 5; do
+            body="$(curl -fsS "https://${{ env.PROD_DOMAIN }}/${token}.php" || true)"
+            echo "$body" | grep -q '^OPCACHE_RESET_OK$' && break
+            echo "OPcache reset attempt ${attempt} did not succeed; retrying"
+            sleep 6
+          done
           echo "$body" | grep -q '^OPCACHE_RESET_OK$' || { echo "::error::OPcache reset did not report OPCACHE_RESET_OK: $body"; exit 1; }
 
       - name: Health and version smoke tests
