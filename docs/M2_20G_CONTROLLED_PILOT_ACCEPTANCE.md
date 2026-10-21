@@ -103,3 +103,7 @@ The real external customer receives credentials only after all of these are true
 - Support staff have this recovery matrix and the tenant-export allowlist.
 - Pilot exports remain manually reviewed until CSV formula neutralization is delivered.
 - A named operator owns monitoring, incident response, rollback authority, and customer communication for the controlled window.
+
+## Production acceptance status (2026-10-21)
+
+A–G is deployed (Production `c3a7def`). Acceptance is PARTIAL: unauthenticated and CI evidence pass; the authenticated Production rows of the matrix above are not yet independently verified. See `PRODUCTION_ACCEPTANCE_2026-10-21.md`.

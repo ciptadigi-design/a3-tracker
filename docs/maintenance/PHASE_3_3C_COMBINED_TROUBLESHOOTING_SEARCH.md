@@ -21,3 +21,5 @@ Field cards render only the server's safe projection (code, problem, machine/mod
 
 ## Still pending
 3.3D detail/navigation, 3.3E deployment, official J-code ingestion (parser only recognises `C-` headings), Phase 3.2 acceptance, Financial Impact, M2.12F, M2.20 acceptance, assisted-knowledge coverage, other deferred items.
+
+> Update 2026-10-21: official J-code ingestion and Financial Impact are deployed. Phase 3.2 and M2.20 acceptance are PARTIAL - see `docs/PRODUCTION_ACCEPTANCE_2026-10-21.md`. M2.12F, assisted-knowledge coverage, J-code team feedback, M2.20D and other deferred items remain pending.
