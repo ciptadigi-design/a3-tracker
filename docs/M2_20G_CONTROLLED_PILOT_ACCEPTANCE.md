@@ -41,6 +41,8 @@ M2.20F did not rewrite historical timestamps. Pre-F CG rows entered through brow
 
 CSV formula neutralization is G-P1, required before general commercial sale. For the controlled pilot, exports remain staff-generated, manually reviewed, and opened only by trusted recipients. It is not a G-P0 provided this handling control remains in force.
 
+**G-P1 status: RESOLVED (2026-10-21, code + automated tests; not yet exercised in a spreadsheet application).** The only CSV writer is `src/features/reports/reportExport.js` (Reports page; there is no backend CSV export). `csvCell` now passes every cell through `neutralizeCsvFormula`: text whose first visible character is `=`, `+`, `-` or `@` (after leading whitespace, control, zero-width or BOM characters), or that starts with a tab, CR or NUL, is prefixed with an apostrophe so spreadsheets read it as text. Plain numbers (including negatives and exponents), dates, ordinary text, empty/null values and already-apostrophe-prefixed values are unchanged; quoting, UTF-8 BOM, headers and column order are unchanged; stored data is never modified (export-time only). Evidence: `src/features/reports/reportExport.test.js` G-P1 tests (formula prefixes, hidden leading characters, numbers/dates/text/empty/Unicode, quoting with commas/quotes/newlines, no double neutralization, hostile description/PIC through the report export). This does not change the overall M2.20 Production Acceptance status (PARTIAL).
+
 ## Production compatibility read-only result
 
 The exact Production release `a51c81f74af8e463d7676a4f7536e0bfb3506f5f` was verified before aggregate-only MariaDB queries ran inside a `READ ONLY` transaction. The transaction was rolled back. No business rows, credentials, or private values were printed.
@@ -101,7 +103,7 @@ The real external customer receives credentials only after all of these are true
 - Synthetic two-tenant and branch-isolation acceptance remains green with no G-P0 finding.
 - Owner self-sufficiency, effective capabilities, revocation, audit, timezone/report correctness, inventory/FIFO reconciliation, and IDR enforcement pass.
 - Support staff have this recovery matrix and the tenant-export allowlist.
-- Pilot exports remain manually reviewed until CSV formula neutralization is delivered.
+- Pilot exports remain manually reviewed until the G-P1 fix (delivered 2026-10-21) is confirmed in Production use.
 - A named operator owns monitoring, incident response, rollback authority, and customer communication for the controlled window.
 
 ## Production acceptance status (2026-10-21)

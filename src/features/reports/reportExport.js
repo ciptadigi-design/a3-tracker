@@ -102,8 +102,23 @@ function exportValue(value) {
   return String(value)
 }
 
+// A plain number (e.g. a negative amount) is data, not a formula; anything else that starts
+// with a formula trigger is prefixed with an apostrophe so spreadsheets read it as text.
+const PLAIN_NUMBER = /^-?\d+(?:\.\d+)?(?:[eE][-+]?\d+)?$/
+// Formula triggers, plus tab/CR/NUL which some spreadsheets treat as a cell-start, plus
+// invisible leading characters (whitespace, control, zero-width, BOM) that can hide a trigger.
+const LEADING_HIDDEN = /^[\s\u0000-\u001f\u007f-\u009f\u00a0\u200b-\u200f\u2028\u2029\u2060\ufeff]*/
+
+export function neutralizeCsvFormula(text) {
+  if (!text || PLAIN_NUMBER.test(text)) return text
+  const first = text[0]
+  if (first === '\t' || first === '\r' || first === '\u0000') return `'${text}`
+  const visible = text.slice(text.match(LEADING_HIDDEN)[0].length)
+  return /^[=+\-@]/.test(visible) ? `'${text}` : text
+}
+
 function csvCell(value) {
-  const text = exportValue(value)
+  const text = neutralizeCsvFormula(exportValue(value))
   return /[",\r\n]/.test(text) ? `"${text.replaceAll('"', '""')}"` : text
 }
 

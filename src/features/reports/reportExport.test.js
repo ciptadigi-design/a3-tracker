@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { buildReportExport, createCsv } from './reportExport.js'
+import { buildReportExport, createCsv, neutralizeCsvFormula } from './reportExport.js'
 
 const report = {
   machineComparison: [{ machine_code: 'RPT-A1', machine_name: 'Alpha', branch_code: 'JKT', branch_name: 'Jakarta', total_clicks: 120,
@@ -45,4 +45,40 @@ test('inventory/purchasing export keeps optional SKU and location context readab
   assert.match(exported.csv, /Inventory/)
   assert.match(exported.csv, /No SKU/)
   assert.match(exported.csv, /Main Warehouse: 2/)
+})
+
+test('G-P1: formula-like text is neutralized with a leading apostrophe', () => {
+  for (const value of ['=SUM(1,1)', '+1+2', '-1+2', '@SUM(1,1)', "=cmd|' /C calc'!A0", '-  5', '+62 812']) {
+    assert.equal(neutralizeCsvFormula(value), `'${value}`, value)
+  }
+})
+
+test('G-P1: leading spaces, tabs, control and invisible characters cannot hide a formula prefix', () => {
+  for (const value of ['  =1+1', '\t=1+1', '\r=1+1', '\n+1', '\u0000=1', '\u00a0@SUM(1)', '\u200b=1+1', '\ufeff-1+2', ' \t -2+3']) {
+    assert.equal(neutralizeCsvFormula(value), `'${value}`, JSON.stringify(value))
+  }
+  assert.equal(neutralizeCsvFormula('\tplain'), "'\tplain", 'a leading tab is itself a trigger')
+})
+
+test('G-P1: legitimate numbers, dates, text, empty values and already-safe values are untouched', () => {
+  for (const value of ['-1500', '-12.5', '-1e-5', '120', '98.8542', '2026-08-18T03:00:00Z', 'Tinta hitam habis', 'Cabang Jakarta · Alpha', 'Ünïcode — 漢字 ✓', "'=1+1", 'a=b', 'x-1', '']) {
+    assert.equal(neutralizeCsvFormula(value), value, value)
+  }
+  assert.equal(createCsv([{ A: -1500, B: -12.5, C: null, D: undefined, E: '' }]).split('\r\n')[1], '-1500,-12.5,,,')
+})
+
+test('G-P1: createCsv neutralizes cells and keeps quoting, UTF-8 BOM, headers and column order', () => {
+  const csv = createCsv([{ Nama: '=SUM(1,1)', Catatan: '+1\n"kutip", koma', Teks: 'Mesin rusak — kertas macet', Angka: -42 }])
+  const [header, row] = [csv.slice(0, csv.indexOf('\r\n')), csv.slice(csv.indexOf('\r\n') + 2)]
+  assert.equal(header, '\uFEFFNama,Catatan,Teks,Angka')
+  assert.equal(row, `"'=SUM(1,1)","'+1\n""kutip"", koma",Mesin rusak — kertas macet,-42`)
+  assert.equal(neutralizeCsvFormula(neutralizeCsvFormula('=1+1')), "'=1+1", 'a value that starts with an apostrophe is not neutralized twice')
+})
+
+test('G-P1: report exports neutralize user-controlled fields (description, PIC) but not source rows', () => {
+  const hostile = { ...report, errors: [{ ...report.errors[0], description: '=HYPERLINK("http://x","y")', responsible_name: '@evil' }] }
+  const out = buildReportExport({ tab: 'errors', report: hostile, periodStart: '2026-08-01', periodEnd: '2026-08-31', branchLabel: 'JKT' })
+  assert.match(out.csv, /"'=HYPERLINK\(""http:\/\/x"",""y""\)"/)
+  assert.match(out.csv, /,'@evil,/)
+  assert.equal(hostile.errors[0].description, '=HYPERLINK("http://x","y")', 'stored/source value is unchanged')
 })
