@@ -287,7 +287,8 @@ export function effectiveScheduleBranchId(branches, selectedId) {
   return branches.some((item) => item.id === selectedId) ? selectedId : (branches[0]?.id ?? '')
 }
 
-export const FINANCIAL_ESTIMATE_NOTE = 'Estimasi berdasarkan tarif per jam yang dikonfigurasi, bukan kerugian akuntansi yang terkonfirmasi.'
+export const FINANCIAL_ESTIMATE_NOTE = 'Estimasi memakai tarif per jam yang dikonfigurasi saat ini (bukan tarif historis), bukan kerugian akuntansi yang terkonfirmasi.'
+export const FINANCIAL_OVERLAP_NOTE = 'Downtime produksi yang tumpang tindih dialokasikan ke insiden yang mulai lebih dulu, sehingga total insiden sama dengan total mesin.'
 
 /** Rupiah estimate; a missing (null) amount is "Belum dikonfigurasi", never Rp0. */
 export function formatFinancialAmount(amount) {
@@ -317,6 +318,7 @@ export function describeFinancialBreakdown(row) {
   if (!row) return null
   const rate = (value) => (value == null ? NOT_CONFIGURED_LABEL : `${formatIdrTotal(value)}/jam`)
   return {
+    allocatedMinutes: row.allocated_production_minutes == null ? NOT_CONFIGURED_LABEL : formatElapsedMinutes(row.allocated_production_minutes),
     costRate: rate(row.operating_cost_per_hour),
     revenueRate: rate(row.estimated_revenue_per_hour),
     operatingCost: formatFinancialAmount(row.operating_cost_impact),

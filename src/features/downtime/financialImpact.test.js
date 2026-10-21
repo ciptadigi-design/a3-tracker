@@ -27,7 +27,8 @@ test('operating cost and lost revenue are separate indicators; partial coverage 
 })
 
 test('breakdown shows applied hourly rates', () => {
-  const b = describeFinancialBreakdown({ operating_cost_per_hour: 30000, estimated_revenue_per_hour: null, operating_cost_impact: 60000, potential_lost_revenue: null })
+  const b = describeFinancialBreakdown({ allocated_production_minutes: 90, operating_cost_per_hour: 30000, estimated_revenue_per_hour: null, operating_cost_impact: 60000, potential_lost_revenue: null })
+  assert.equal(b.allocatedMinutes, '1j 30m')
   assert.equal(b.costRate, `${rupiah(30000)}/jam`)
   assert.equal(b.revenueRate, 'Belum dikonfigurasi')
   assert.equal(b.lostRevenue, 'Belum dikonfigurasi')
@@ -38,4 +39,10 @@ test('rate form: blank -> null, whole Rupiah only', () => {
   assert.equal(ratesFromForm({ operatingCostPerHour: '12.5', estimatedRevenuePerHour: '' }), null)
   assert.equal(ratesFromForm({ operatingCostPerHour: '-1', estimatedRevenuePerHour: '' }), null)
   assert.deepEqual(ratesToForm({ operating_cost_per_hour: 5, estimated_revenue_per_hour: null }), { operatingCostPerHour: '5', estimatedRevenuePerHour: '' })
+})
+
+test('estimate note states current (non-historical) rates and overlap allocation', async () => {
+  const { FINANCIAL_ESTIMATE_NOTE, FINANCIAL_OVERLAP_NOTE } = await import('./downtimeModel.js')
+  assert.match(FINANCIAL_ESTIMATE_NOTE, /saat ini/)
+  assert.match(FINANCIAL_OVERLAP_NOTE, /tumpang tindih/)
 })

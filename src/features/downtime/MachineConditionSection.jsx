@@ -4,7 +4,7 @@ import { useTenant } from '../account/useTenant.js'
 import { machineIdPattern } from '../../hooks/useAppRoute.js'
 import { useMachines } from '../machines/useMachines.js'
 import { AddNoteDialog } from './AddNoteDialog.jsx'
-import { currentMonthValue, describeActiveEntry, describeEventDurations, describeEventStatus, describeFinancialBreakdown, formatAvailabilityPercent, formatDowntimeDateTime, formatProductionDowntimeMinutes, monthToPeriod, causeLabel, NOT_CONFIGURED_LABEL } from './downtimeModel.js'
+import { currentMonthValue, describeActiveEntry, describeEventDurations, describeEventStatus, describeFinancialBreakdown, FINANCIAL_ESTIMATE_NOTE, FINANCIAL_OVERLAP_NOTE, formatAvailabilityPercent, formatDowntimeDateTime, formatProductionDowntimeMinutes, monthToPeriod, causeLabel, NOT_CONFIGURED_LABEL } from './downtimeModel.js'
 import { ticketStatusLabels } from '../maintenance/maintenanceUtils.js'
 import { EndDowntimeDialog } from './EndDowntimeDialog.jsx'
 import { StartDowntimeDialog } from './StartDowntimeDialog.jsx'
@@ -53,9 +53,11 @@ function HistoryEntry({ event, timezone, onOpenTicket }) {
         <div><dt>Downtime Produksi</dt><dd>{durations.productionText}</dd></div>
       </dl>
       {money && <dl className="downtime-history-meta downtime-history-financial" aria-label="Estimasi dampak finansial">
-        <div><dt>Biaya Operasional Terdampak</dt><dd>{money.operatingCost}<small>Tarif {money.costRate}</small></dd></div>
-        <div><dt>Potensi Pendapatan Hilang</dt><dd>{money.lostRevenue}<small>Tarif {money.revenueRate}</small></dd></div>
+        <div><dt>Downtime Produksi Dialokasikan</dt><dd>{money.allocatedMinutes}<small>{FINANCIAL_OVERLAP_NOTE}</small></dd></div>
+        <div><dt>Biaya Operasional Terdampak</dt><dd>{money.operatingCost}<small>Tarif saat ini {money.costRate}</small></dd></div>
+        <div><dt>Potensi Pendapatan Hilang</dt><dd>{money.lostRevenue}<small>Tarif saat ini {money.revenueRate}</small></dd></div>
       </dl>}
+      {money && <small className="financial-note">{FINANCIAL_ESTIMATE_NOTE}</small>}
       <div className="downtime-history-ticket">
         <span className={`machine-status ${state.state === 'active' ? 'machine-status-down' : ''}`}>{state.label}</span>
         {event.maintenance_ticket

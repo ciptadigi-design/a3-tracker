@@ -355,6 +355,52 @@ class DowntimeKpiAnalyticsTest extends TestCase
         $this->rates($this->m1, 30000, 90000);
         $this->downtime($this->m1, '2026-10-05 09:00', '2026-10-05 11:00');
         $row = $this->actingAs($this->owner)->getJson('/api/v1/downtime/events')->assertOk()->json('data.data.0');
-        $this->assertSame(['operating_cost_per_hour' => 30000, 'estimated_revenue_per_hour' => 90000, 'operating_cost_impact' => 60000, 'potential_lost_revenue' => 180000], $row['financial']);
+        $this->assertSame(['operating_cost_per_hour' => 30000, 'estimated_revenue_per_hour' => 90000, 'allocated_production_minutes' => 120, 'operating_cost_impact' => 60000, 'potential_lost_revenue' => 180000], $row['financial']);
+    }
+
+    public function test_overlapping_incidents_reconcile_exactly_with_the_machine_total(): void
+    {
+        $this->schedule($this->main);
+        $this->rates($this->m1, 33333, 77777); // odd rates exercise cumulative rounding
+        $a = $this->downtime($this->m1, '2026-10-05 08:00', '2026-10-05 10:30'); // 150
+        $b = $this->downtime($this->m1, '2026-10-05 09:00', '2026-10-05 10:00'); // fully inside a: owns 0
+        $c = $this->downtime($this->m1, '2026-10-05 10:00', '2026-10-05 12:07'); // extends 10:30-12:07 = 97
+        $d = $this->downtime($this->m1, '2026-10-05 18:00', '2026-10-05 22:00'); // off-shift: 0
+        $machine = $this->kpi('2026-10-01', '2026-10-31', ['machine_id' => (string) $this->m1->id])['financial'];
+        $this->assertSame(247, $machine['production_downtime_minutes']);
+
+        $qs = http_build_query(['machine_id' => (string) $this->m1->id, 'period_start' => '2026-10-01', 'period_end' => '2026-10-31']);
+        $rows = collect($this->actingAs($this->owner)->getJson("/api/v1/downtime/events?$qs")->assertOk()->json('data.data'))->keyBy('id');
+        $fin = fn ($e) => $rows[$e->id]['financial'];
+
+        $this->assertSame([150, 0, 97, 0], [$fin($a)['allocated_production_minutes'], $fin($b)['allocated_production_minutes'], $fin($c)['allocated_production_minutes'], $fin($d)['allocated_production_minutes']]);
+        $this->assertSame($machine['operating_cost_impact']['amount'], $rows->sum('financial.operating_cost_impact'));
+        $this->assertSame($machine['potential_lost_revenue']['amount'], $rows->sum('financial.potential_lost_revenue'));
+        $this->assertSame((int) round(247 * 33333 / 60), $rows->sum('financial.operating_cost_impact'));
+    }
+
+    public function test_incident_allocation_is_stable_across_pagination_and_status_filters(): void
+    {
+        $this->schedule($this->main);
+        $this->rates($this->m1, 60000, null);
+        $a = $this->downtime($this->m1, '2026-10-05 08:00', '2026-10-05 10:00');
+        $b = $this->downtime($this->m1, '2026-10-05 09:00', '2026-10-05 11:00'); // owns 10:00-11:00
+        $page = $this->actingAs($this->owner)->getJson('/api/v1/downtime/events?per_page=1&machine_id='.$this->m1->id)->assertOk()->json('data.data.0');
+        $this->assertSame($b->id, $page['id']); // newest first, alone on its page
+        $this->assertSame(60, $page['financial']['allocated_production_minutes']);
+        $this->assertSame(60000, $page['financial']['operating_cost_impact']);
+        $this->assertNull($page['financial']['potential_lost_revenue']);
+    }
+
+    public function test_incident_financials_are_clipped_to_the_selected_period_like_the_machine_total(): void
+    {
+        $this->schedule($this->main);
+        $this->rates($this->m1, 60000, null);
+        $this->downtime($this->m1, '2026-09-30 16:00', '2026-10-01 10:00'); // only 08:00-10:00 of Oct 1 is in October
+        $machine = $this->kpi('2026-10-01', '2026-10-31', ['machine_id' => (string) $this->m1->id])['financial'];
+        $qs = http_build_query(['machine_id' => (string) $this->m1->id, 'period_start' => '2026-10-01', 'period_end' => '2026-10-31']);
+        $rows = $this->actingAs($this->owner)->getJson("/api/v1/downtime/events?$qs")->assertOk()->json('data.data');
+        $this->assertSame(120, $machine['production_downtime_minutes']);
+        $this->assertSame($machine['operating_cost_impact']['amount'], $rows[0]['financial']['operating_cost_impact']);
     }
 }

@@ -10,7 +10,7 @@ use App\Models\Machine;
 use App\Services\AccountAccessResolver;
 use App\Services\BranchAccessResolver;
 use App\Services\DowntimeDurationCalculator;
-use App\Services\DowntimeFinancialImpact;
+use App\Services\DowntimeIncidentAllocator;
 use App\Services\DowntimeService;
 use App\Services\EffectiveCapabilityResolver;
 use App\Services\GovernanceAudit;
@@ -158,7 +158,11 @@ class DowntimeController extends Controller
         $calc = app(DowntimeDurationCalculator::class);
         $page = $q->orderByDesc('actual_start_at')->paginate((int) ($v['per_page'] ?? 25));
         $canSeeFinancial = [];
-        $page->getCollection()->transform(function (DowntimeEvent $e) use ($calc, $r, &$canSeeFinancial) {
+        $allocations = [];
+        $now = CarbonImmutable::now();
+        $tzr = app(MachineTimezoneResolver::class);
+        $allocator = app(DowntimeIncidentAllocator::class);
+        $page->getCollection()->transform(function (DowntimeEvent $e) use ($calc, $r, $v, $now, $tzr, $allocator, &$canSeeFinancial, &$allocations) {
             $start = CarbonImmutable::parse($e->actual_start_at);
             $end = $e->actual_end_at ? CarbonImmutable::parse($e->actual_end_at) : CarbonImmutable::now();
             $note = $e->notes->last();
@@ -169,7 +173,23 @@ class DowntimeController extends Controller
             $row['elapsed_minutes'] = $calc->elapsedMinutes($start, $end);
             $row['production_downtime_minutes'] = $e->machine ? $calc->productionDowntimeMinutes($e->machine, $start, $end) : null;
             $canSeeFinancial[$e->account_id] ??= $e->machine && app(EffectiveCapabilityResolver::class)->allows($r->user(), $e->machine->account, 'machine_cost.view');
-            $row['financial'] = $canSeeFinancial[$e->account_id] ? DowntimeFinancialImpact::forMachine($e->machine->financialRate, $row['production_downtime_minutes']) : null;
+            $row['financial'] = null;
+            if ($canSeeFinancial[$e->account_id]) {
+                // Overlapping incidents share one merged production downtime; each owns only its non-overlapping part.
+                if (! isset($allocations[$e->machine_id])) {
+                    [$from, $to] = ! empty($v['period_start']) && ! empty($v['period_end']) ? $tzr->range($e->machine, $v['period_start'], $v['period_end']) : [null, null];
+                    $allocations[$e->machine_id] = $allocator->allocate($e->machine, $from, $to && $to->greaterThan($now) ? $now : $to, $now);
+                }
+                $share = $allocations[$e->machine_id][$e->id] ?? ['production_minutes' => null, 'operating_cost_impact' => null, 'potential_lost_revenue' => null];
+                $rate = $e->machine->financialRate;
+                $row['financial'] = [
+                    'operating_cost_per_hour' => $rate?->operating_cost_per_hour,
+                    'estimated_revenue_per_hour' => $rate?->estimated_revenue_per_hour,
+                    'allocated_production_minutes' => $share['production_minutes'],
+                    'operating_cost_impact' => $share['operating_cost_impact'],
+                    'potential_lost_revenue' => $share['potential_lost_revenue'],
+                ];
+            }
             $row['note_count'] = $e->notes->count();
             $row['latest_note'] = $note ? ['note' => $note->note, 'occurred_at' => $note->occurred_at] : null;
 
