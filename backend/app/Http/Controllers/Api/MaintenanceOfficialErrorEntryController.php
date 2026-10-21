@@ -8,6 +8,7 @@ use App\Http\Resources\MaintenanceOfficialErrorEntryResource;
 use App\Models\MaintenanceOfficialErrorEntry;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class MaintenanceOfficialErrorEntryController extends Controller
 {
@@ -29,13 +30,18 @@ class MaintenanceOfficialErrorEntryController extends Controller
             ->orderBy('id');
 
         if (isset($filters['code'])) {
-            $query->whereRaw("REPLACE(UPPER(code), '-', '') = ?", [$this->compactCode($filters['code'])]);
+            $codes = $this->compactCodes($filters['code']);
+            $query->whereIn(DB::raw("REPLACE(UPPER(code), '-', '')"), $codes);
         }
         if (isset($filters['search'])) {
-            $compact = $this->compactCode($filters['search']);
-            $query->whereRaw("REPLACE(UPPER(code), '-', '') LIKE ?", ['%'.$compact.'%'])
+            $compacts = $this->compactCodes($filters['search']);
+            $query->where(function (Builder $match) use ($compacts) {
+                foreach ($compacts as $compact) {
+                    $match->orWhereRaw("REPLACE(UPPER(code), '-', '') LIKE ?", ['%'.$compact.'%']);
+                }
+            })
                 ->reorder()
-                ->orderByRaw("CASE WHEN REPLACE(UPPER(code), '-', '') = ? THEN 0 ELSE 1 END", [$compact])
+                ->orderByRaw("CASE WHEN REPLACE(UPPER(code), '-', '') IN (".implode(',', array_fill(0, count($compacts), '?')).') THEN 0 ELSE 1 END', $compacts)
                 ->orderBy('code')
                 ->orderBy('variant_key')
                 ->orderBy('id');
@@ -66,13 +72,17 @@ class MaintenanceOfficialErrorEntryController extends Controller
         return new MaintenanceOfficialErrorEntryResource($entry);
     }
 
-    private function compactCode(string $value): string
+    /**
+     * An explicit C- or J-code prefix keeps that family only. Bare digits are
+     * ambiguous (the manual reuses numbers across the C and J families), so they
+     * match both; each record keeps its own code identity.
+     *
+     * @return list<string>
+     */
+    private function compactCodes(string $value): array
     {
         $compact = preg_replace('/[\s-]+/', '', strtoupper(trim($value))) ?? '';
 
-        // An explicit C- or J-code prefix is kept as-is; bare digits keep the
-        // legacy default of assuming a C-code (the only prefix that existed
-        // before J-code support was added).
-        return preg_match('/^[CJ]/', $compact) === 1 ? $compact : 'C'.$compact;
+        return preg_match('/^[CJ]/', $compact) === 1 ? [$compact] : ['C'.$compact, 'J'.$compact];
     }
 }

@@ -35,7 +35,7 @@ test('query classification routes codes, 4-digit numbers, partial codes and desc
   assert.deepEqual(classifyTroubleshootingQuery('j2113').codes, ['J-2113'])
   assert.deepEqual(classifyTroubleshootingQuery('0213').codes, ['C-0213', 'J-0213'])
   // Official keeps its legacy default (bare digits = C); descriptions are never turned into fake codes.
-  assert.equal(classifyTroubleshootingQuery('0213').officialQuery, 'C-0213')
+  assert.equal(classifyTroubleshootingQuery('0213').officialQuery, '0213', 'digits go unprefixed so official search returns C and J')
   assert.equal(classifyTroubleshootingQuery('J-2113').officialQuery, 'J-2113')
   for (const q of ['hasil kotor', 'paper exit', 'motor tidak berfungsi']) assert.equal(classifyTroubleshootingQuery(q).officialQuery, null)
   assert.equal(classifyTroubleshootingQuery('a').fieldSkipReason, 'too_short')
@@ -59,7 +59,7 @@ test('explicit C-code and J-code search both sources with the normalized code fo
 test('numeric-only search keeps C and J apart: official stays C, field gets the raw digits', async () => {
   const { controller, calls } = harness({ officialImpl: async () => page([official('o1')]), fieldImpl: async () => page([experience('f1', { error_code: 'C-0213' }), experience('f2', { error_code: 'J-0213' })]) })
   await controller.run('0213')
-  assert.equal(calls.official[0].query, 'C-0213')
+  assert.equal(calls.official[0].query, '0213')
   assert.equal(calls.field[0].query, '0213')
   const state = controller.getState()
   assert.equal(state.kind, 'numeric')

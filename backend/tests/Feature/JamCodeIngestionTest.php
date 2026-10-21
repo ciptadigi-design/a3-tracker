@@ -280,6 +280,19 @@ class JamCodeIngestionTest extends TestCase
             $both = $this->actingAs($user)->getJson('/api/v1/maintenance/official-error-entries?search=J-1001')->json('data');
             $this->assertCount(2, $both, 'both option-specific J-1001 procedures are returned, never collapsed');
             $this->assertEqualsCanonicalizing(['Jam indication: Alpha', 'Jam indication: Gamma'], array_column($both, 'classification'));
+
+            // Bare digits are ambiguous between the families: both are returned, each keeping its own identity.
+            $this->assertSame(['C-1101', 'J-1101'], $codes('1101'));
+            $this->assertSame(['C-1101', 'J-1101'], $codes(' 11-01 '));
+            $this->assertSame(['C-1101'], $codes('C1101'));
+            $this->assertSame(['J-1101'], $codes('J1101'));
+            $this->assertSame(['J-1001'], $codes('1001'), 'only one family has this number');
+            $variants = $this->actingAs($user)->getJson('/api/v1/maintenance/official-error-entries?search=1001')->json('data');
+            $this->assertEqualsCanonicalizing(['ALPHA', 'GAMMA'], array_column($variants, 'variant_key'), 'option variants stay separate');
+            $this->assertSame([], $codes('C1001'), 'an explicit C prefix never falls through to the J family');
+            $this->assertSame([], $codes('9999'));
+            $byCode = collect($this->actingAs($user)->getJson('/api/v1/maintenance/official-error-entries?code=1101')->assertOk()->json('data'))->pluck('code')->all();
+            $this->assertSame(['C-1101', 'J-1101'], $byCode);
         } finally {
             File::deleteDirectory($dir);
         }

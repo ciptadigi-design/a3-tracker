@@ -36,7 +36,7 @@ Mechanical cross-check on the full datasets: 628/628 C and 375/376 J entries mat
 | Exact code (`C-3913`, `J-1101`) | PASS | CI `MaintenanceOfficialKnowledgeTest`, `JamCodeIngestionTest` |
 | Hyphen/case/space variants (`C3913`, `c-3913`, `j1101`, `cc152`, ` c 0213 `) | PASS | CI backend + 44 frontend node tests |
 | C/J identity separation (official and field) | PASS | CI: J-1101 vs C-1101; field `C`/`J` never match each other |
-| Numeric-only `0213` | PARTIAL | Field experience lists `C-0213` and `J-0213` separately. Official knowledge treats bare digits as the C code only (`MaintenanceOfficialErrorEntryController`), so a J procedure is reachable only by typing the J prefix. The UI note says so. 14 codes exist in both families (1101, 1201, 1251, 1501, 1502, 1551, 1552, 3101, 3102, 5101, 6702, 6703, 6704, 9401) |
+| Numeric-only `0213` | PARTIAL → RESOLVED (see Resolved findings) | Field experience lists `C-0213` and `J-0213` separately. Official knowledge treats bare digits as the C code only (`MaintenanceOfficialErrorEntryController`), so a J procedure is reachable only by typing the J prefix. The UI note says so. 14 codes exist in both families (1101, 1201, 1251, 1501, 1502, 1551, 1552, 3101, 3102, 5101, 6702, 6703, 6704, 9401) |
 | Official vs field distinguishable | PASS | separate groups "Pengetahuan Resmi" / "Pengalaman Lapangan", independent errors (CI `combinedSearchUi`) |
 | Account-wide field experience | PASS | CI `test_search_spans_all_branches_of_the_account_and_never_another_account` |
 | Ticket detail permissions | PASS | CI `test_can_open_mirrors_ticket_detail_access…`, restricted viewers get no names |
@@ -51,3 +51,7 @@ Backend maintenance suites (Jam, Official Knowledge, Ingestion, Field Experience
 
 ## Still pending
 Phase 3.2 Production Acceptance (PARTIAL) · M2.20 Production Acceptance (PARTIAL) · J-code Team Feedback · M2.20D Deferred Audit Events · CSV formula neutralization G-P1 · M2.12F historical data decisions · other deferred V2+ milestones. Optional follow-ups from this check (not started): decide whether numeric-only official search should also offer the J twin; decide on the 2 quarantined J rows (needs manual review of the printed cells).
+
+## Resolved findings
+- **Numeric-only official search (was PARTIAL): RESOLVED 2026-10-21.** `GET /maintenance/official-error-entries` (`search` and `code`) now matches both `C` and `J` for bare digits and returns each record under its own code, variants and references. Explicit `C…` stays C-only and `J…` stays J-only; a number with a single family returns only that family; unknown numbers return an empty list. The UI sends bare digits unprefixed and its numeric note was shortened. Backend tests in `JamCodeIngestionTest` (1101 → C-1101 + J-1101, 1001 → J-1001 with both option variants, C1001 → empty, 9999 → empty, `code=1101`) and the frontend routing tests cover it. No ingestion, content or permission change.
+- Still open: J-7272 (SD-510) and J-7524 (FD) remain quarantined with no official entry (GAP, unchanged).

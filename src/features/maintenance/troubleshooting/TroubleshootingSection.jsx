@@ -142,7 +142,7 @@ export function TroubleshootingSection({ initialQuery = '', initialMachineId = '
       {search.kind !== 'empty' && (
         <div className="troubleshooting-groups">
           {search.kind === 'numeric' && (
-            <div className="troubleshooting-numeric-note" role="note"><Info size={16} /><span>Angka <strong>{search.query}</strong> bisa berarti kode C atau J. Pengalaman Lapangan menampilkan <strong>{search.codes.join(' dan ')}</strong> secara terpisah; Pengetahuan Resmi mencari <strong>{search.codes[0]}</strong> (angka tanpa huruf dianggap kode C). Hasilnya bisa berbeda.</span></div>
+            <div className="troubleshooting-numeric-note" role="note"><Info size={16} /><span>Angka <strong>{search.query}</strong> bisa berarti kode C atau J. Hasil <strong>{search.codes.join(' dan ')}</strong> ditampilkan secara terpisah.</span></div>
           )}
 
           <section className="troubleshooting-group" aria-label="Pengetahuan Resmi">

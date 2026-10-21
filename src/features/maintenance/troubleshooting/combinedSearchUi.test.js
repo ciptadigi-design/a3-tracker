@@ -34,11 +34,11 @@ test('both groups are labelled and clearly separated; experiences are never pres
   assert.match(styles, /\.field-experience-card \{[^}]*border-left: 3px solid var\(--warning\)/)
 })
 
-test('numeric searches explain that C and J are separate and may differ', () => {
+test('numeric searches explain that C and J are both searched and shown separately', () => {
   assert.match(section, /search\.kind === 'numeric'/)
   assert.match(section, /bisa berarti kode C atau J/)
   assert.match(section, /secara terpisah/)
-  assert.match(section, /Hasilnya bisa berbeda/)
+  assert.doesNotMatch(section, /Hasilnya bisa berbeda|dianggap kode C/, 'official search now covers both families')
   assert.match(section, /search\.codes\.join\(' dan '\)/)
 })
 

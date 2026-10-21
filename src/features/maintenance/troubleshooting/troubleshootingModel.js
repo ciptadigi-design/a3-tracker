@@ -77,7 +77,8 @@ export function classifyTroubleshootingQuery(rawValue) {
   else if (/^[CJ][A-Z0-9]{4}$/.test(compact) && /\d/.test(compact.slice(1))) kind = 'code'
   else if (compact.length >= 2 && compact.length <= 5 && /^[CJ]?[A-Z0-9]+$/.test(compact) && /\d/.test(compact)) kind = 'partial'
 
-  const official = kind === 'text' ? null : normalizeErrorCodeInput(trimmed)
+  // Digits only are ambiguous between C and J: send them unprefixed so the backend returns both families.
+  const official = kind === 'text' ? null : /^\d+$/.test(compact) ? compact : normalizeErrorCodeInput(trimmed)
   const codes = kind === 'numeric' ? [`C-${compact}`, `J-${compact}`] : kind === 'code' ? [`${compact[0]}-${compact.slice(1)}`] : []
   // The backend needs 2+ characters and, for text, at least one word of 2+ characters.
   const tooShort = trimmed.length < FIELD_MIN_QUERY_LENGTH || (kind === 'text' && !trimmed.split(' ').some((word) => word.length >= 2))
