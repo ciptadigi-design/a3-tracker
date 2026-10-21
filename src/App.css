@@ -2193,13 +2193,18 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 }
 
 /* ---- Downtime history rows: one aligned grid (identity | timings | status + ticket) ---- */
-.downtime-history-list li { grid-template-columns: minmax(0, 1.2fr) minmax(0, 2.4fr) minmax(170px, 0.9fr); align-items: start; gap: 12px 22px; }
-.downtime-history-meta { margin: 0; min-width: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px 18px; }
+.downtime-history-list li.downtime-history-item { display: grid; grid-template-columns: minmax(0, 1fr); align-items: start; gap: 10px; }
+.downtime-history-top { min-width: 0; display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.downtime-history-top .machine-status { flex: none; }
+.downtime-history-finance { min-width: 0; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; padding-top: 10px; border-top: 1px solid var(--border-subtle); }
+.downtime-history-ticket { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-left: auto; }
+.downtime-history-finance small { color: var(--text-muted); font-size: 11px; }
+.downtime-history-financial { margin: 0; min-width: 0; display: grid; grid-template-columns: repeat(2, minmax(max-content, 1fr)); gap: 6px 28px; }
+.downtime-history-financial > div { min-width: 0; }
+.downtime-history-meta { margin: 0; min-width: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px 18px; }
 .downtime-history-meta > div { min-width: 0; }
 .downtime-history-meta dt { color: var(--text-muted); font-size: 9px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
 .downtime-history-meta dd { margin: 3px 0 0; overflow-wrap: anywhere; font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums; }
-.downtime-history-ticket { min-width: 0; display: grid; justify-items: start; gap: 7px; }
-.downtime-history-ticket small { color: var(--text-muted); font-size: 11px; overflow-wrap: anywhere; }
 
 /* ---- Maintenance ticket detail: content-driven cards (no min-heights) ---- */
 .ticket-page { gap: 16px; }
@@ -2258,13 +2263,11 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .ticket-activity-correct { margin-top: 2px; }
 
 @media (max-width: 1180px) {
-  .downtime-history-list li { grid-template-columns: minmax(0, 1fr); }
-  .downtime-history-ticket { grid-auto-flow: column; justify-content: start; align-items: center; justify-items: start; gap: 8px 14px; flex-wrap: wrap; }
 }
 @media (max-width: 760px) {
   .downtime-history-meta { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .downtime-history-ticket { grid-auto-flow: row; justify-items: stretch; }
-  .downtime-history-ticket .machine-status { justify-self: start; }
+  .downtime-history-financial { grid-template-columns: minmax(0, 1fr); width: 100%; }
+  .downtime-history-ticket { margin-left: 0; width: 100%; }
   .downtime-history-ticket button { width: 100%; min-height: 44px; }
   .ticket-card { padding: 16px; border-radius: 20px; }
   .ticket-fields { grid-template-columns: minmax(0, 1fr); gap: 12px; }
@@ -2341,8 +2344,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .financial-breakdown dl { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 6px 0 0; }
 .financial-breakdown dt, .downtime-history-financial dt { color: var(--text-muted); font-size: 10px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; }
 .financial-breakdown dd, .downtime-history-financial dd { margin: 4px 0 0; font-weight: 680; }
-.financial-breakdown dd small, .downtime-history-financial dd small { display: block; font-size: 10px; font-weight: 600; color: var(--text-muted); }
-.financial-rates-panel > header { padding-bottom: 12px; }
+.financial-breakdown dd small, .financial-rates-panel > header { padding-bottom: 12px; }
 .financial-rates-panel h2 { display: flex; align-items: center; gap: 6px; margin: 0; }
 .financial-rates-panel form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)) auto; gap: 12px; align-items: end; margin-top: 14px; }
 .financial-rates-panel label { min-width: 0; display: grid; gap: 6px; }

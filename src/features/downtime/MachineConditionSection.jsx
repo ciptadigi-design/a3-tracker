@@ -4,7 +4,8 @@ import { useTenant } from '../account/useTenant.js'
 import { machineIdPattern } from '../../hooks/useAppRoute.js'
 import { useMachines } from '../machines/useMachines.js'
 import { AddNoteDialog } from './AddNoteDialog.jsx'
-import { currentMonthValue, describeActiveEntry, describeEventDurations, describeEventStatus, describeFinancialBreakdown, FINANCIAL_ESTIMATE_NOTE, FINANCIAL_OVERLAP_NOTE, formatAvailabilityPercent, formatDowntimeDateTime, formatProductionDowntimeMinutes, monthToPeriod, causeLabel, NOT_CONFIGURED_LABEL } from './downtimeModel.js'
+import { InfoTip } from '../../components/ui/InfoTip.jsx'
+import { currentMonthValue, describeActiveEntry, describeEventDurations, describeEventStatus, describeFinancialBreakdown, formatAvailabilityPercent, formatDowntimeDateTime, formatProductionDowntimeMinutes, monthToPeriod, causeLabel, NOT_CONFIGURED_LABEL } from './downtimeModel.js'
 import { ticketStatusLabels } from '../maintenance/maintenanceUtils.js'
 import { EndDowntimeDialog } from './EndDowntimeDialog.jsx'
 import { StartDowntimeDialog } from './StartDowntimeDialog.jsx'
@@ -42,27 +43,28 @@ function HistoryEntry({ event, timezone, onOpenTicket }) {
   const durations = describeEventDurations(event)
   const machine = event.machine
   const money = describeFinancialBreakdown(event.financial)
+  const amount = (value) => (value === NOT_CONFIGURED_LABEL ? 'Belum diatur' : value)
   const identity = [machine?.machine_code && machine?.display_name ? machine.machine_code : null, event.branch_name, causeLabel(event.cause), event.error_code_text].filter(Boolean).join(' · ')
   return (
-    <li>
-      <div className="downtime-attention-main"><strong>{machine?.display_name || machine?.machine_code || 'Mesin'}</strong><span>{identity}</span></div>
+    <li className="downtime-history-item">
+      <div className="downtime-history-top">
+        <div className="downtime-attention-main"><strong>{machine?.display_name || machine?.machine_code || 'Mesin'}</strong><span>{identity}</span></div>
+        <span className={`machine-status ${state.state === 'active' ? 'machine-status-down' : ''}`}>{state.label}</span>
+      </div>
       <dl className="downtime-history-meta">
         <div><dt>Mulai</dt><dd>{formatDowntimeDateTime(event.actual_start_at, timezone)}</dd></div>
         <div><dt>Selesai</dt><dd>{event.actual_end_at ? formatDowntimeDateTime(event.actual_end_at, timezone) : '—'}</dd></div>
         <div><dt>Durasi</dt><dd>{durations.elapsedText}</dd></div>
-        <div><dt>Downtime Produksi</dt><dd>{durations.productionText}</dd></div>
+        <div><dt>Downtime Produksi</dt><dd>{money ? money.allocatedMinutes : durations.productionText}</dd></div>
       </dl>
-      {money && <dl className="downtime-history-meta downtime-history-financial" aria-label="Estimasi dampak finansial">
-        <div><dt>Downtime Produksi Dialokasikan</dt><dd>{money.allocatedMinutes}<small>{FINANCIAL_OVERLAP_NOTE}</small></dd></div>
-        <div><dt>Biaya Operasional Terdampak</dt><dd>{money.operatingCost}<small>Tarif saat ini {money.costRate}</small></dd></div>
-        <div><dt>Potensi Pendapatan Hilang</dt><dd>{money.lostRevenue}<small>Tarif saat ini {money.revenueRate}</small></dd></div>
-      </dl>}
-      {money && <small className="financial-note">{FINANCIAL_ESTIMATE_NOTE}</small>}
-      <div className="downtime-history-ticket">
-        <span className={`machine-status ${state.state === 'active' ? 'machine-status-down' : ''}`}>{state.label}</span>
+      <div className="downtime-history-finance">
+        {money && <dl className="downtime-history-financial" aria-label="Estimasi dampak finansial">
+          <div><dt>Biaya Operasional</dt><dd>{amount(money.operatingCost)}</dd></div>
+          <div><dt>Potensi Pendapatan Hilang</dt><dd>{amount(money.lostRevenue)}</dd></div>
+        </dl>}
         {event.maintenance_ticket
-          ? <><small>Ticket {event.maintenance_ticket.id.slice(0, 8).toUpperCase()} · {ticketStatusLabels[event.maintenance_ticket.status]}</small><button className="secondary-button compact-button" type="button" onClick={onOpenTicket}>Lihat Ticket</button></>
-          : <small>Belum ada ticket terkait</small>}
+          ? <span className="downtime-history-ticket"><small>Ticket {event.maintenance_ticket.id.slice(0, 8).toUpperCase()} · {ticketStatusLabels[event.maintenance_ticket.status]}</small><button className="secondary-button compact-button" type="button" onClick={onOpenTicket}>Lihat Ticket</button></span>
+          : <small className="downtime-history-ticket">Belum ada ticket terkait</small>}
       </div>
     </li>
   )
@@ -188,7 +190,7 @@ export function MachineConditionSection({ navigate, initialMachineId: requestedM
 
           <section className="downtime-attention glass-surface" aria-label="Riwayat downtime">
             <header className="downtime-card-header">
-              <div><span className="card-kicker">Periode {period.periodStart} → {period.periodEnd}</span><h2>Riwayat Downtime</h2></div>
+              <div><span className="card-kicker">Periode {period.periodStart} → {period.periodEnd}</span><h2>Riwayat Downtime <InfoTip text="Estimasi memakai tarif saat ini. Downtime yang tumpang tindih dihitung sekali." /></h2></div>
               <label className="downtime-history-filter"><span>Status</span><select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}><option value="">Semua status</option><option value="active">Berhenti</option><option value="closed">Selesai</option></select></label>
             </header>
             {history.rows.length === 0 ? (
