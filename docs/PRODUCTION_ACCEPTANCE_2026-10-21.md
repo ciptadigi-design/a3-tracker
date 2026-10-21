@@ -28,4 +28,4 @@ Evidence labels: **PROD** verified in Production now · **CI** verified by autom
 
 ## Still tracked (not complete)
 
-M2.12F Reconciliation: implemented scope closed (see `M2_12F_FULL_DOMAIN_RECONCILIATION.md`); open owner decisions: 2 deferred historical counters (need atomic relink), 76 ambiguous records · CSV formula neutralization (G-P1) still open · Assisted Knowledge Coverage Verification · J-code Team Feedback · M2.20D Deferred Audit Events · other deferred V2+ milestones.
+M2.12F Reconciliation: implemented scope closed (see `M2_12F_FULL_DOMAIN_RECONCILIATION.md`); open owner decisions: 2 deferred historical counters (need atomic relink), 76 ambiguous records · CSV formula neutralization (G-P1) still open · Assisted Knowledge Coverage Verification: sampled and checked 2026-10-21, mostly PASS with 1 PARTIAL (numeric-only official search is C-only) and 1 GAP (J-7272 SD-510, J-7524 FD quarantined) - see `maintenance/ASSISTED_KNOWLEDGE_COVERAGE_VERIFICATION.md` · J-code Team Feedback · M2.20D Deferred Audit Events · other deferred V2+ milestones.
