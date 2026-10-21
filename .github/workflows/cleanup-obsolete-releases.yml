@@ -113,12 +113,18 @@ jobs:
           chmod 600 ~/.ssh/known_hosts
 
       - name: Dry-run checks, then (only if mode=delete) guarded removal
+        env:
+          PROTECTED_LIST: ${{ env.PROTECTED }}
+          ALLOW_LIST: ${{ env.ALLOWLIST }}
         run: |
+          # ssh re-splits arguments on spaces, so the lists travel comma-separated.
+          PROTECTED_CSV="${PROTECTED_LIST// /,}"; ALLOW_CSV="${ALLOW_LIST// /,}"
           ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes -p "${{ secrets.HOSTINGER_SSH_PORT }}" \
             "${{ secrets.HOSTINGER_SSH_USER }}@${{ secrets.HOSTINGER_SSH_HOST }}" bash -s -- \
-            "${{ env.APP_ROOT }}" "${{ env.EXPECTED_ACTIVE }}" "${{ inputs.mode }}" "${{ env.PROTECTED }}" "${{ env.ALLOWLIST }}" <<'REMOTE'
+            "${{ env.APP_ROOT }}" "${{ env.EXPECTED_ACTIVE }}" "${{ inputs.mode }}" "$PROTECTED_CSV" "$ALLOW_CSV" <<'REMOTE'
           set -euo pipefail
-          APP="$1"; EXPECTED_ACTIVE="$2"; MODE="$3"; PROTECTED="$4"; ALLOW="$5"
+          APP="$1"; EXPECTED_ACTIVE="$2"; MODE="$3"; PROTECTED="${4//,/ }"; ALLOW="${5//,/ }"
+          [ "$(echo $PROTECTED | wc -w)" = "5" ] || { echo "SAFETY_CHECK_FAILED: expected 5 protected releases"; exit 1; }
           fail() { echo "SAFETY_CHECK_FAILED: $*"; exit 1; }
           cnt() { find "$1" -xdev 2>/dev/null | wc -l; }
 
