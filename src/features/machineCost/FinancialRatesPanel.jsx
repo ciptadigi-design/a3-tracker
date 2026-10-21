@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react'
 import { Save } from 'lucide-react'
 import { userErrorMessage } from '../../lib/appErrors.js'
 import { loadMachineFinancialRates, saveMachineFinancialRates } from '../../services/downtime.js'
-import { FINANCIAL_ESTIMATE_NOTE } from '../downtime/downtimeModel.js'
-import { ratesFromForm, ratesToForm } from './financialRatesModel.js'
+import { InfoTip } from '../../components/ui/InfoTip.jsx'
+import { formatRateInput, parseRateInput, ratesFromForm, ratesToForm } from './financialRatesModel.js'
 
 /** Configured hourly estimates behind Owner "Dampak Finansial". Blank = Belum dikonfigurasi (never Rp0). */
 export function FinancialRatesPanel({ machineId, canManage }) {
@@ -22,7 +22,7 @@ export function FinancialRatesPanel({ machineId, canManage }) {
   async function submit(event) {
     event.preventDefault()
     const payload = ratesFromForm(form)
-    if (!payload) { setError(new Error('Isi tarif dengan bilangan bulat Rupiah (≥ 0), atau kosongkan jika belum dikonfigurasi.')); return }
+    if (!payload) { setError(new Error('Tarif harus berupa bilangan bulat Rupiah.')); return }
     setIsSaving(true); setError(null); setSaved(false)
     try {
       setForm(ratesToForm(await saveMachineFinancialRates(machineId, payload)))
@@ -34,17 +34,17 @@ export function FinancialRatesPanel({ machineId, canManage }) {
     }
   }
 
-  const field = (key, label) => <label><span>{label}</span><input type="number" inputMode="numeric" min="0" step="1" placeholder="Belum dikonfigurasi" value={form?.[key] ?? ''} disabled={!form || !canManage} onChange={(event) => { setSaved(false); setForm((current) => ({ ...current, [key]: event.target.value })) }} /></label>
+  const field = (key, label) => <label><span>{label}</span><input type="text" inputMode="numeric" autoComplete="off" placeholder="Belum diatur" value={formatRateInput(form?.[key])} disabled={!form || !canManage} onChange={(event) => { setSaved(false); setForm((current) => ({ ...current, [key]: parseRateInput(event.target.value) })) }} /></label>
 
   return (
     <section className="machine-cost-panel glass-surface financial-rates-panel" aria-label="Tarif per jam">
-      <header><div><span className="card-kicker">Dampak Finansial</span><h2>Tarif Per Jam (Estimasi)</h2><p>Dipakai untuk Biaya Operasional Terdampak dan Potensi Pendapatan Hilang di Overview. {FINANCIAL_ESTIMATE_NOTE}</p></div></header>
+      <header><div><h2>Tarif Per Jam <small className="estimate-badge">Estimasi</small><InfoTip text="Perhitungan menggunakan tarif per jam saat ini." /></h2></div></header>
       <form onSubmit={submit}>
-        {field('operatingCostPerHour', 'Biaya operasional per jam (Rp)')}
-        {field('estimatedRevenuePerHour', 'Estimasi pendapatan per jam (Rp)')}
+        {field('operatingCostPerHour', 'Biaya Operasional')}
+        {field('estimatedRevenuePerHour', 'Potensi Pendapatan')}
         {canManage && <button className="primary-button" type="submit" disabled={!form || isSaving}><Save size={15} />{isSaving ? 'Menyimpan…' : 'Simpan'}</button>}
       </form>
-      {saved && <p role="status">Tarif disimpan.</p>}
+      {saved && <small role="status">Tarif disimpan.</small>}
       {error && <div className="inline-error" role="alert">{userErrorMessage(error, 'Tarif per jam tidak dapat diproses.')}</div>}
     </section>
   )

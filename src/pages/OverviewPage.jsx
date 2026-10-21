@@ -2,6 +2,7 @@ import { PeriodFields } from '../features/periods/PeriodFields.jsx'
 import { createOverviewRequestGate, overviewContextTimezone, overviewInitialPeriod, overviewPeriod, overviewRangeError } from '../features/overview/overviewPeriod.js'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { CalendarRange, Gauge, RefreshCcw, Settings as SettingsIcon, TrendingUp } from 'lucide-react'
+import { InfoTip } from '../components/ui/InfoTip.jsx'
 import { PageHeader } from '../components/ui/PageHeader.jsx'
 import { useAuth } from '../features/auth/useAuth.js'
 import { useTenant } from '../features/account/useTenant.js'
@@ -16,7 +17,7 @@ import { loadClickTargetProjection } from '../services/clickTargets.js'
 import { createUIStateKey } from '../features/uiState/uiStateKeys.js'
 import { usePersistentUIState } from '../features/uiState/usePersistentUIState.js'
 import { userErrorMessage } from '../lib/appErrors.js'
-import { describeFinancialImpact, describeOwnerKpis, FINANCIAL_ESTIMATE_NOTE, summarizeMachineHealth } from '../features/downtime/downtimeModel.js'
+import { describeFinancialImpact, describeOwnerKpis, summarizeMachineHealth } from '../features/downtime/downtimeModel.js'
 import { loadDowntimeOverview } from '../services/downtime.js'
 
 function MachineHealthSection({ account, branch, machine, period }) {
@@ -63,13 +64,12 @@ function MachineHealthSection({ account, branch, machine, period }) {
 
       {!error && money && (
         <div className="financial-impact" aria-label="Dampak finansial">
-          <h3>Dampak Finansial <small>Estimasi</small></h3>
+          <h3>Dampak Finansial <small className="estimate-badge">Estimasi</small><InfoTip text="Perhitungan menggunakan tarif per jam saat ini." /></h3>
           <dl className="overview-target-metrics">
             <div><dt>Downtime Produksi</dt><dd>{money.productionDowntime}</dd></div>
-            <div><dt>Biaya Operasional Terdampak</dt><dd>{money.operatingCost.value}{money.operatingCost.partialNote && <small>{money.operatingCost.partialNote}</small>}</dd></div>
+            <div><dt>Biaya Operasional</dt><dd>{money.operatingCost.value}{money.operatingCost.partialNote && <small>{money.operatingCost.partialNote}</small>}</dd></div>
             <div><dt>Potensi Pendapatan Hilang</dt><dd>{money.lostRevenue.value}{money.lostRevenue.partialNote && <small>{money.lostRevenue.partialNote}</small>}</dd></div>
           </dl>
-          <p>{FINANCIAL_ESTIMATE_NOTE} Diatur di Machine Cost › Tarif Per Jam.</p>
         </div>
       )}
     </section>

@@ -2331,10 +2331,10 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .field-experience-activities small, .field-experience-findings { color: var(--text-muted); font-size: 11px; }
 
 /* Financial Impact (estimates) - reuses .overview-target-metrics / .downtime-history-meta */
-.financial-impact { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--border, rgba(128,128,128,.25)); }
+.financial-impact { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border-subtle); }
 .financial-impact h3 { margin: 0; font-size: 13px; font-weight: 720; }
-.financial-impact h3 small { margin-left: 6px; font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: .05em; }
-.financial-impact .overview-target-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); margin-top: 12px; }
+.financial-impact h3 { display: flex; align-items: center; gap: 6px; }
+.financial-impact .overview-target-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); margin-top: 10px; }
 .financial-impact > p, .financial-note { margin: 10px 0 0; font-size: 11px; color: var(--text-muted); }
 .financial-breakdown ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
 .financial-breakdown li > strong { font-size: 13px; }
@@ -2342,7 +2342,21 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .financial-breakdown dt, .downtime-history-financial dt { color: var(--text-muted); font-size: 10px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; }
 .financial-breakdown dd, .downtime-history-financial dd { margin: 4px 0 0; font-weight: 680; }
 .financial-breakdown dd small, .downtime-history-financial dd small { display: block; font-size: 10px; font-weight: 600; color: var(--text-muted); }
-.financial-rates-panel form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)) auto; gap: 12px; align-items: end; }
+.financial-rates-panel > header { padding-bottom: 12px; }
+.financial-rates-panel h2 { display: flex; align-items: center; gap: 6px; margin: 0; }
+.financial-rates-panel form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)) auto; gap: 12px; align-items: end; margin-top: 14px; }
+.financial-rates-panel label { min-width: 0; display: grid; gap: 6px; }
+.financial-rates-panel label > span { color: var(--text-muted); font-size: 9px; font-weight: 780; letter-spacing: .06em; text-transform: uppercase; }
+.financial-rates-panel input { width: 100%; min-width: 0; min-height: 42px; box-sizing: border-box; padding: 0 11px; color: var(--text); border: 1px solid var(--border-subtle); border-radius: 11px; background: var(--surface-muted); font: inherit; font-size: 11px; }
+.financial-rates-panel form .primary-button { min-height: 42px; }
+.financial-rates-panel > small { display: block; margin-top: 8px; color: var(--text-muted); }
+.estimate-badge { font-size: 10px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--text-muted); }
+.info-tip { position: relative; display: inline-flex; }
+.info-tip-button { display: inline-grid; place-items: center; padding: 2px; border: 0; background: none; color: var(--text-muted); cursor: help; border-radius: 50%; }
+.info-tip-text { position: absolute; z-index: 5; left: 50%; bottom: calc(100% + 6px); transform: translateX(-50%); width: max-content; max-width: 220px; padding: 6px 9px; border-radius: 9px; background: var(--text, #111); color: var(--surface, #fff); font-size: 11px; font-weight: 500; letter-spacing: 0; text-transform: none; line-height: 1.35; visibility: hidden; opacity: 0; transition: opacity .12s; pointer-events: none; }
+.info-tip:hover .info-tip-text, .info-tip:focus-within .info-tip-text { visibility: visible; opacity: 1; }
 @media (max-width: 720px) {
-  .financial-impact .overview-target-metrics, .financial-breakdown dl, .financial-rates-panel form { grid-template-columns: minmax(0, 1fr); }
+  .financial-impact .overview-target-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+  .financial-breakdown dl, .financial-rates-panel form { grid-template-columns: minmax(0, 1fr); }
+  .financial-rates-panel form .primary-button { width: 100%; justify-content: center; }
 }

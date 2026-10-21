@@ -1,3 +1,5 @@
+import { formatIdrTotal } from './currencyFormat.js'
+
 const toText = (value) => (value == null ? '' : String(value))
 
 export function ratesToForm(rates) {
@@ -15,4 +17,13 @@ export function ratesFromForm(form) {
   const cost = parseRate(form?.operatingCostPerHour)
   const revenue = parseRate(form?.estimatedRevenuePerHour)
   return cost.ok && revenue.ok ? { operating_cost_per_hour: cost.value, estimated_revenue_per_hour: revenue.value } : null
+}
+
+/** Input shows Rupiah (e.g. "Rp 50.000"); state keeps plain digits. Blank stays blank (not configured), never 0. */
+export function formatRateInput(digits) {
+  return digits === '' || digits == null ? '' : formatIdrTotal(Number(digits))
+}
+
+export function parseRateInput(text) {
+  return String(text ?? '').replace(/\D/g, '').replace(/^0+(?=\d)/, '').slice(0, 13)
 }

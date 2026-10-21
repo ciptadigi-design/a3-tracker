@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import { describeFinancialBreakdown, describeFinancialImpact, formatFinancialAmount } from './downtimeModel.js'
-import { ratesFromForm, ratesToForm } from '../machineCost/financialRatesModel.js'
+import { formatRateInput, parseRateInput, ratesFromForm, ratesToForm } from '../machineCost/financialRatesModel.js'
 
 const rupiah = (n) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(n)
 
@@ -45,4 +45,15 @@ test('estimate note states current (non-historical) rates and overlap allocation
   const { FINANCIAL_ESTIMATE_NOTE, FINANCIAL_OVERLAP_NOTE } = await import('./downtimeModel.js')
   assert.match(FINANCIAL_ESTIMATE_NOTE, /saat ini/)
   assert.match(FINANCIAL_OVERLAP_NOTE, /tumpang tindih/)
+})
+
+test('rate input formats Rupiah, strips non-digits, and keeps blank (missing) distinct from a typed zero', () => {
+  assert.equal(parseRateInput('Rp 50.000'), '50000')
+  assert.equal(parseRateInput('12,5abc'), '125')
+  assert.equal(parseRateInput(''), '')
+  assert.equal(formatRateInput(''), '')
+  assert.equal(formatRateInput(null), '')
+  assert.equal(formatRateInput('50000'), rupiah(50000))
+  assert.equal(formatRateInput('0'), rupiah(0))
+  assert.deepEqual(ratesFromForm({ operatingCostPerHour: '0', estimatedRevenuePerHour: '' }), { operating_cost_per_hour: 0, estimated_revenue_per_hour: null })
 })
