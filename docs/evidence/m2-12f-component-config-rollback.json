@@ -1,0 +1,3855 @@
+{
+  "checkpoint": "M2.12F_COMPONENT_CONFIG_PATCH",
+  "status": "READY",
+  "plan_only": true,
+  "executed": false,
+  "capture_identity": {
+    "new_supabase_sha256": "94bfe30b539fb490b59e349e2d271ba594de882863f2f17dc34351482786bc5e",
+    "production_mariadb_sha256": "6c79b0be60bc62e622f348c660a29aaf9191062b20793ada304222fd886e5e16"
+  },
+  "safety": {
+    "network_access": false,
+    "database_access": false,
+    "production_mutation": false,
+    "public_html_mutation": false,
+    "deployment": false
+  },
+  "allowed_tracking_methods": [
+    "counter_based",
+    "consumption_based",
+    "inspection_based"
+  ],
+  "dependency_order": [
+    {
+      "order": 1,
+      "domain": "component_catalogs",
+      "reason": "Catalog defaults are upstream of profile and assignment projections."
+    },
+    {
+      "order": 2,
+      "domain": "model_profile_slots",
+      "reason": "Profile slots are the authoritative model configuration referenced by machine components."
+    },
+    {
+      "order": 3,
+      "domain": "machine_components",
+      "reason": "Existing physical projections are aligned last; IDs, foreign keys, and lifecycle children remain untouched."
+    }
+  ],
+  "idempotency": {
+    "semantics": "Read current value first: proposed value => no-op; captured old value => execute compare-and-set; any other value => fail closed. Every executed statement must affect exactly one row."
+  },
+  "invariants": {
+    "before": {
+      "component_catalogs": 28,
+      "model_profiles": 1,
+      "model_profile_slots": 28,
+      "machine_components": 28,
+      "component_lifecycles": 47,
+      "active_lifecycles": 0,
+      "closed_lifecycles": 47,
+      "latest_counter": 1441597
+    },
+    "expected_after": {
+      "component_catalogs": 28,
+      "model_profiles": 1,
+      "model_profile_slots": 28,
+      "machine_components": 28,
+      "component_lifecycles": 47,
+      "active_lifecycles": 0,
+      "closed_lifecycles": 47,
+      "latest_counter": 1441597
+    },
+    "expected_row_count_change": 0,
+    "creates": {
+      "component_catalogs": 0,
+      "model_profile_slots": 0,
+      "machine_components": 0,
+      "component_lifecycles": 0
+    }
+  },
+  "plan_type": "ROLLBACK_UPDATE_ONLY_COMPARE_AND_SET",
+  "update_count": 126,
+  "updates": [
+    {
+      "sequence": 1,
+      "domain": "machine_components",
+      "operation": "UPDATE",
+      "semantic_key": "TONER_Y:TONER_Y",
+      "production_id": "64db17ee-aeab-595c-a720-0a23331b7634",
+      "field": "tracking_method",
+      "current_value": "consumption_based",
+      "proposed_value": "counter_based",
+      "classification": "RUNTIME_REQUIRED",
+      "runtime_impact": "Reverts only machine_components.tracking_method to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 1,
+      "rollback_value": "consumption_based",
+      "precondition": {
+        "expected_current_value": "consumption_based",
+        "already_rolled_back_value": "counter_based",
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE machine_components SET tracking_method = ? WHERE id = ? AND tracking_method <=> ?",
+        "parameters": [
+          "counter_based",
+          "64db17ee-aeab-595c-a720-0a23331b7634",
+          "consumption_based"
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 2,
+      "domain": "machine_components",
+      "operation": "UPDATE",
+      "semantic_key": "TONER_Y:TONER_Y",
+      "production_id": "64db17ee-aeab-595c-a720-0a23331b7634",
+      "field": "source_type",
+      "current_value": "inherited",
+      "proposed_value": "configured",
+      "classification": "RUNTIME_REQUIRED",
+      "runtime_impact": "Reverts only machine_components.source_type to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 1,
+      "rollback_value": "inherited",
+      "precondition": {
+        "expected_current_value": "inherited",
+        "already_rolled_back_value": "configured",
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE machine_components SET source_type = ? WHERE id = ? AND source_type <=> ?",
+        "parameters": [
+          "configured",
+          "64db17ee-aeab-595c-a720-0a23331b7634",
+          "inherited"
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 3,
+      "domain": "machine_components",
+      "operation": "UPDATE",
+      "semantic_key": "TONER_Y:TONER_Y",
+      "production_id": "64db17ee-aeab-595c-a720-0a23331b7634",
+      "field": "display_order",
+      "current_value": 27,
+      "proposed_value": 28,
+      "classification": "CANONICAL_METADATA",
+      "runtime_impact": "Reverts only machine_components.display_order to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 1,
+      "rollback_value": 27,
+      "precondition": {
+        "expected_current_value": 27,
+        "already_rolled_back_value": 28,
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE machine_components SET display_order = ? WHERE id = ? AND display_order <=> ?",
+        "parameters": [
+          28,
+          "64db17ee-aeab-595c-a720-0a23331b7634",
+          27
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 4,
+      "domain": "machine_components",
+      "operation": "UPDATE",
+      "semantic_key": "TONER_Y:TONER_Y",
+      "production_id": "64db17ee-aeab-595c-a720-0a23331b7634",
+      "field": "baseline_expected_clicks",
+      "current_value": 14000,
+      "proposed_value": null,
+      "classification": "RUNTIME_REQUIRED",
+      "runtime_impact": "Reverts only machine_components.baseline_expected_clicks to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 1,
+      "rollback_value": 14000,
+      "precondition": {
+        "expected_current_value": 14000,
+        "already_rolled_back_value": null,
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE machine_components SET baseline_expected_clicks = ? WHERE id = ? AND baseline_expected_clicks <=> ?",
+        "parameters": [
+          null,
+          "64db17ee-aeab-595c-a720-0a23331b7634",
+          14000
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 5,
+      "domain": "machine_components",
+      "operation": "UPDATE",
+      "semantic_key": "TONER_M:TONER_M",
+      "production_id": "224f699a-189d-5245-837b-4bd38d5da8f8",
+      "field": "tracking_method",
+      "current_value": "consumption_based",
+      "proposed_value": "counter_based",
+      "classification": "RUNTIME_REQUIRED",
+      "runtime_impact": "Reverts only machine_components.tracking_method to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 1,
+      "rollback_value": "consumption_based",
+      "precondition": {
+        "expected_current_value": "consumption_based",
+        "already_rolled_back_value": "counter_based",
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE machine_components SET tracking_method = ? WHERE id = ? AND tracking_method <=> ?",
+        "parameters": [
+          "counter_based",
+          "224f699a-189d-5245-837b-4bd38d5da8f8",
+          "consumption_based"
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 6,
+      "domain": "machine_components",
+      "operation": "UPDATE",
+      "semantic_key": "TONER_M:TONER_M",
+      "production_id": "224f699a-189d-5245-837b-4bd38d5da8f8",
+      "field": "source_type",
+      "current_value": "inherited",
+      "proposed_value": "configured",
+      "classification": "RUNTIME_REQUIRED",
+      "runtime_impact": "Reverts only machine_components.source_type to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 1,
+      "rollback_value": "inherited",
+      "precondition": {
+        "expected_current_value": "inherited",
+        "already_rolled_back_value": "configured",
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE machine_components SET source_type = ? WHERE id = ? AND source_type <=> ?",
+        "parameters": [
+          "configured",
+          "224f699a-189d-5245-837b-4bd38d5da8f8",
+          "inherited"
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 7,
+      "domain": "machine_components",
+      "operation": "UPDATE",
+      "semantic_key": "TONER_M:TONER_M",
+      "production_id": "224f699a-189d-5245-837b-4bd38d5da8f8",
+      "field": "display_order",
+      "current_value": 26,
+      "proposed_value": 27,
+      "classification": "CANONICAL_METADATA",
+      "runtime_impact": "Reverts only machine_components.display_order to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 1,
+      "rollback_value": 26,
+      "precondition": {
+        "expected_current_value": 26,
+        "already_rolled_back_value": 27,
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE machine_components SET display_order = ? WHERE id = ? AND display_order <=> ?",
+        "parameters": [
+          27,
+          "224f699a-189d-5245-837b-4bd38d5da8f8",
+          26
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 8,
+      "domain": "machine_components",
+      "operation": "UPDATE",
+      "semantic_key": "TONER_M:TONER_M",
+      "production_id": "224f699a-189d-5245-837b-4bd38d5da8f8",
+      "field": "baseline_expected_clicks",
+      "current_value": 14000,
+      "proposed_value": null,
+      "classification": "RUNTIME_REQUIRED",
+      "runtime_impact": "Reverts only machine_components.baseline_expected_clicks to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 1,
+      "rollback_value": 14000,
+      "precondition": {
+        "expected_current_value": 14000,
+        "already_rolled_back_value": null,
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE machine_components SET baseline_expected_clicks = ? WHERE id = ? AND baseline_expected_clicks <=> ?",
+        "parameters": [
+          null,
+          "224f699a-189d-5245-837b-4bd38d5da8f8",
+          14000
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 9,
+      "domain": "machine_components",
+      "operation": "UPDATE",
+      "semantic_key": "TONER_K:TONER_K",
+      "production_id": "4bd113a6-7c63-5a1e-996e-a148a618c3e6",
+      "field": "tracking_method",
+      "current_value": "consumption_based",
+      "proposed_value": "counter_based",
+      "classification": "RUNTIME_REQUIRED",
+      "runtime_impact": "Reverts only machine_components.tracking_method to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 1,
+      "rollback_value": "consumption_based",
+      "precondition": {
+        "expected_current_value": "consumption_based",
+        "already_rolled_back_value": "counter_based",
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE machine_components SET tracking_method = ? WHERE id = ? AND tracking_method <=> ?",
+        "parameters": [
+          "counter_based",
+          "4bd113a6-7c63-5a1e-996e-a148a618c3e6",
+          "consumption_based"
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 10,
+      "domain": "machine_components",
+      "operation": "UPDATE",
+      "semantic_key": "TONER_K:TONER_K",
+      "production_id": "4bd113a6-7c63-5a1e-996e-a148a618c3e6",
+      "field": "source_type",
+      "current_value": "inherited",
+      "proposed_value": "configured",
+      "classification": "RUNTIME_REQUIRED",
+      "runtime_impact": "Reverts only machine_components.source_type to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 1,
+      "rollback_value": "inherited",
+      "precondition": {
+        "expected_current_value": "inherited",
+        "already_rolled_back_value": "configured",
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE machine_components SET source_type = ? WHERE id = ? AND source_type <=> ?",
+        "parameters": [
+          "configured",
+          "4bd113a6-7c63-5a1e-996e-a148a618c3e6",
+          "inherited"
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 11,
+      "domain": "machine_components",
+      "operation": "UPDATE",
+      "semantic_key": "TONER_K:TONER_K",
+      "production_id": "4bd113a6-7c63-5a1e-996e-a148a618c3e6",
+      "field": "display_order",
+      "current_value": 28,
+      "proposed_value": 26,
+      "classification": "CANONICAL_METADATA",
+      "runtime_impact": "Reverts only machine_components.display_order to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 1,
+      "rollback_value": 28,
+      "precondition": {
+        "expected_current_value": 28,
+        "already_rolled_back_value": 26,
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE machine_components SET display_order = ? WHERE id = ? AND display_order <=> ?",
+        "parameters": [
+          26,
+          "4bd113a6-7c63-5a1e-996e-a148a618c3e6",
+          28
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 12,
+      "domain": "machine_components",
+      "operation": "UPDATE",
+      "semantic_key": "TONER_K:TONER_K",
+      "production_id": "4bd113a6-7c63-5a1e-996e-a148a618c3e6",
+      "field": "baseline_expected_clicks",
+      "current_value": 14000,
+      "proposed_value": null,
+      "classification": "RUNTIME_REQUIRED",
+      "runtime_impact": "Reverts only machine_components.baseline_expected_clicks to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 1,
+      "rollback_value": 14000,
+      "precondition": {
+        "expected_current_value": 14000,
+        "already_rolled_back_value": null,
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE machine_components SET baseline_expected_clicks = ? WHERE id = ? AND baseline_expected_clicks <=> ?",
+        "parameters": [
+          null,
+          "4bd113a6-7c63-5a1e-996e-a148a618c3e6",
+          14000
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 13,
+      "domain": "machine_components",
+      "operation": "UPDATE",
+      "semantic_key": "TONER_C:TONER_C",
+      "production_id": "a5847ed8-669d-53e9-9adc-0b3597735484",
+      "field": "tracking_method",
+      "current_value": "consumption_based",
+      "proposed_value": "counter_based",
+      "classification": "RUNTIME_REQUIRED",
+      "runtime_impact": "Reverts only machine_components.tracking_method to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 1,
+      "rollback_value": "consumption_based",
+      "precondition": {
+        "expected_current_value": "consumption_based",
+        "already_rolled_back_value": "counter_based",
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE machine_components SET tracking_method = ? WHERE id = ? AND tracking_method <=> ?",
+        "parameters": [
+          "counter_based",
+          "a5847ed8-669d-53e9-9adc-0b3597735484",
+          "consumption_based"
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 14,
+      "domain": "machine_components",
+      "operation": "UPDATE",
+      "semantic_key": "TONER_C:TONER_C",
+      "production_id": "a5847ed8-669d-53e9-9adc-0b3597735484",
+      "field": "source_type",
+      "current_value": "inherited",
+      "proposed_value": "configured",
+      "classification": "RUNTIME_REQUIRED",
+      "runtime_impact": "Reverts only machine_components.source_type to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 1,
+      "rollback_value": "inherited",
+      "precondition": {
+        "expected_current_value": "inherited",
+        "already_rolled_back_value": "configured",
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE machine_components SET source_type = ? WHERE id = ? AND source_type <=> ?",
+        "parameters": [
+          "configured",
+          "a5847ed8-669d-53e9-9adc-0b3597735484",
+          "inherited"
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 15,
+      "domain": "machine_components",
+      "operation": "UPDATE",
+      "semantic_key": "TONER_C:TONER_C",
+      "production_id": "a5847ed8-669d-53e9-9adc-0b3597735484",
+      "field": "baseline_expected_clicks",
+      "current_value": 14000,
+      "proposed_value": null,
+      "classification": "RUNTIME_REQUIRED",
+      "runtime_impact": "Reverts only machine_components.baseline_expected_clicks to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 1,
+      "rollback_value": 14000,
+      "precondition": {
+        "expected_current_value": 14000,
+        "already_rolled_back_value": null,
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE machine_components SET baseline_expected_clicks = ? WHERE id = ? AND baseline_expected_clicks <=> ?",
+        "parameters": [
+          null,
+          "a5847ed8-669d-53e9-9adc-0b3597735484",
+          14000
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 16,
+      "domain": "machine_components",
+      "operation": "UPDATE",
+      "semantic_key": "SENSOR:SENSOR",
+      "production_id": "5a72fbc7-b2fb-5c69-ac4c-8f4b9d4971a1",
+      "field": "source_type",
+      "current_value": "inherited",
+      "proposed_value": "configured",
+      "classification": "RUNTIME_REQUIRED",
+      "runtime_impact": "Reverts only machine_components.source_type to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 1,
+      "rollback_value": "inherited",
+      "precondition": {
+        "expected_current_value": "inherited",
+        "already_rolled_back_value": "configured",
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE machine_components SET source_type = ? WHERE id = ? AND source_type <=> ?",
+        "parameters": [
+          "configured",
+          "5a72fbc7-b2fb-5c69-ac4c-8f4b9d4971a1",
+          "inherited"
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 17,
+      "domain": "machine_components",
+      "operation": "UPDATE",
+      "semantic_key": "SENSOR:SENSOR",
+      "production_id": "5a72fbc7-b2fb-5c69-ac4c-8f4b9d4971a1",
+      "field": "baseline_expected_clicks",
+      "current_value": 250000,
+      "proposed_value": null,
+      "classification": "RUNTIME_REQUIRED",
+      "runtime_impact": "Reverts only machine_components.baseline_expected_clicks to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 1,
+      "rollback_value": 250000,
+      "precondition": {
+        "expected_current_value": 250000,
+        "already_rolled_back_value": null,
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE machine_components SET baseline_expected_clicks = ? WHERE id = ? AND baseline_expected_clicks <=> ?",
+        "parameters": [
+          null,
+          "5a72fbc7-b2fb-5c69-ac4c-8f4b9d4971a1",
+          250000
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 18,
+      "domain": "machine_components",
+      "operation": "UPDATE",
+      "semantic_key": "ROLL_MESIN:ROLL_MESIN",
+      "production_id": "e583745a-0ab9-585e-87bb-40b6763b6d7a",
+      "field": "source_type",
+      "current_value": "inherited",
+      "proposed_value": "configured",
+      "classification": "RUNTIME_REQUIRED",
+      "runtime_impact": "Reverts only machine_components.source_type to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 1,
+      "rollback_value": "inherited",
+      "precondition": {
+        "expected_current_value": "inherited",
+        "already_rolled_back_value": "configured",
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE machine_components SET source_type = ? WHERE id = ? AND source_type <=> ?",
+        "parameters": [
+          "configured",
+          "e583745a-0ab9-585e-87bb-40b6763b6d7a",
+          "inherited"
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 19,
+      "domain": "machine_components",
+      "operation": "UPDATE",
+      "semantic_key": "ROLL_MESIN:ROLL_MESIN",
+      "production_id": "e583745a-0ab9-585e-87bb-40b6763b6d7a",
+      "field": "baseline_expected_clicks",
+      "current_value": 150000,
+      "proposed_value": null,
+      "classification": "RUNTIME_REQUIRED",
+      "runtime_impact": "Reverts only machine_components.baseline_expected_clicks to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 1,
+      "rollback_value": 150000,
+      "precondition": {
+        "expected_current_value": 150000,
+        "already_rolled_back_value": null,
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE machine_components SET baseline_expected_clicks = ? WHERE id = ? AND baseline_expected_clicks <=> ?",
+        "parameters": [
+          null,
+          "e583745a-0ab9-585e-87bb-40b6763b6d7a",
+          150000
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 20,
+      "domain": "machine_components",
+      "operation": "UPDATE",
+      "semantic_key": "LASER_UNIT:LASER_UNIT",
+      "production_id": "46855819-3df8-51a5-931c-072244382ac0",
+      "field": "source_type",
+      "current_value": "inherited",
+      "proposed_value": "configured",
+      "classification": "RUNTIME_REQUIRED",
+      "runtime_impact": "Reverts only machine_components.source_type to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 1,
+      "rollback_value": "inherited",
+      "precondition": {
+        "expected_current_value": "inherited",
+        "already_rolled_back_value": "configured",
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE machine_components SET source_type = ? WHERE id = ? AND source_type <=> ?",
+        "parameters": [
+          "configured",
+          "46855819-3df8-51a5-931c-072244382ac0",
+          "inherited"
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 21,
+      "domain": "machine_components",
+      "operation": "UPDATE",
+      "semantic_key": "LASER_UNIT:LASER_UNIT",
+      "production_id": "46855819-3df8-51a5-931c-072244382ac0",
+      "field": "baseline_expected_clicks",
+      "current_value": 300000,
+      "proposed_value": null,
+      "classification": "RUNTIME_REQUIRED",
+      "runtime_impact": "Reverts only machine_components.baseline_expected_clicks to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 1,
+      "rollback_value": 300000,
+      "precondition": {
+        "expected_current_value": 300000,
+        "already_rolled_back_value": null,
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE machine_components SET baseline_expected_clicks = ? WHERE id = ? AND baseline_expected_clicks <=> ?",
+        "parameters": [
+          null,
+          "46855819-3df8-51a5-931c-072244382ac0",
+          300000
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 22,
+      "domain": "machine_components",
+      "operation": "UPDATE",
+      "semantic_key": "IBT:IBT",
+      "production_id": "f26c011e-e501-53db-9098-87e7a0f3dc63",
+      "field": "source_type",
+      "current_value": "inherited",
+      "proposed_value": "configured",
+      "classification": "RUNTIME_REQUIRED",
+      "runtime_impact": "Reverts only machine_components.source_type to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 1,
+      "rollback_value": "inherited",
+      "precondition": {
+        "expected_current_value": "inherited",
+        "already_rolled_back_value": "configured",
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE machine_components SET source_type = ? WHERE id = ? AND source_type <=> ?",
+        "parameters": [
+          "configured",
+          "f26c011e-e501-53db-9098-87e7a0f3dc63",
+          "inherited"
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 23,
+      "domain": "machine_components",
+      "operation": "UPDATE",
+      "semantic_key": "IBT:IBT",
+      "production_id": "f26c011e-e501-53db-9098-87e7a0f3dc63",
+      "field": "baseline_expected_clicks",
+      "current_value": 200000,
+      "proposed_value": null,
+      "classification": "RUNTIME_REQUIRED",
+      "runtime_impact": "Reverts only machine_components.baseline_expected_clicks to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 1,
+      "rollback_value": 200000,
+      "precondition": {
+        "expected_current_value": 200000,
+        "already_rolled_back_value": null,
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE machine_components SET baseline_expected_clicks = ? WHERE id = ? AND baseline_expected_clicks <=> ?",
+        "parameters": [
+          null,
+          "f26c011e-e501-53db-9098-87e7a0f3dc63",
+          200000
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 24,
+      "domain": "machine_components",
+      "operation": "UPDATE",
+      "semantic_key": "GEAR:GEAR",
+      "production_id": "dab5a080-92fb-59b0-99c9-92e852280586",
+      "field": "source_type",
+      "current_value": "inherited",
+      "proposed_value": "configured",
+      "classification": "RUNTIME_REQUIRED",
+      "runtime_impact": "Reverts only machine_components.source_type to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 1,
+      "rollback_value": "inherited",
+      "precondition": {
+        "expected_current_value": "inherited",
+        "already_rolled_back_value": "configured",
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE machine_components SET source_type = ? WHERE id = ? AND source_type <=> ?",
+        "parameters": [
+          "configured",
+          "dab5a080-92fb-59b0-99c9-92e852280586",
+          "inherited"
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 25,
+      "domain": "machine_components",
+      "operation": "UPDATE",
+      "semantic_key": "GEAR:GEAR",
+      "production_id": "dab5a080-92fb-59b0-99c9-92e852280586",
+      "field": "baseline_expected_clicks",
+      "current_value": 150000,
+      "proposed_value": null,
+      "classification": "RUNTIME_REQUIRED",
+      "runtime_impact": "Reverts only machine_components.baseline_expected_clicks to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 1,
+      "rollback_value": 150000,
+      "precondition": {
+        "expected_current_value": 150000,
+        "already_rolled_back_value": null,
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE machine_components SET baseline_expected_clicks = ? WHERE id = ? AND baseline_expected_clicks <=> ?",
+        "parameters": [
+          null,
+          "dab5a080-92fb-59b0-99c9-92e852280586",
+          150000
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 26,
+      "domain": "machine_components",
+      "operation": "UPDATE",
+      "semantic_key": "FUSER_BELT:FUSER_BELT",
+      "production_id": "cd9b1e65-c435-509e-b9e7-8c912963f91e",
+      "field": "source_type",
+      "current_value": "inherited",
+      "proposed_value": "configured",
+      "classification": "RUNTIME_REQUIRED",
+      "runtime_impact": "Reverts only machine_components.source_type to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 1,
+      "rollback_value": "inherited",
+      "precondition": {
+        "expected_current_value": "inherited",
+        "already_rolled_back_value": "configured",
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE machine_components SET source_type = ? WHERE id = ? AND source_type <=> ?",
+        "parameters": [
+          "configured",
+          "cd9b1e65-c435-509e-b9e7-8c912963f91e",
+          "inherited"
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 27,
+      "domain": "machine_components",
+      "operation": "UPDATE",
+      "semantic_key": "FUSER_BELT:FUSER_BELT",
+      "production_id": "cd9b1e65-c435-509e-b9e7-8c912963f91e",
+      "field": "baseline_expected_clicks",
+      "current_value": 200000,
+      "proposed_value": null,
+      "classification": "RUNTIME_REQUIRED",
+      "runtime_impact": "Reverts only machine_components.baseline_expected_clicks to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 1,
+      "rollback_value": 200000,
+      "precondition": {
+        "expected_current_value": 200000,
+        "already_rolled_back_value": null,
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE machine_components SET baseline_expected_clicks = ? WHERE id = ? AND baseline_expected_clicks <=> ?",
+        "parameters": [
+          null,
+          "cd9b1e65-c435-509e-b9e7-8c912963f91e",
+          200000
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 28,
+      "domain": "machine_components",
+      "operation": "UPDATE",
+      "semantic_key": "DRUM_Y:DRUM_Y",
+      "production_id": "cda2c386-233b-5ca3-adcf-7b2e868a8ea6",
+      "field": "source_type",
+      "current_value": "inherited",
+      "proposed_value": "configured",
+      "classification": "RUNTIME_REQUIRED",
+      "runtime_impact": "Reverts only machine_components.source_type to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 1,
+      "rollback_value": "inherited",
+      "precondition": {
+        "expected_current_value": "inherited",
+        "already_rolled_back_value": "configured",
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE machine_components SET source_type = ? WHERE id = ? AND source_type <=> ?",
+        "parameters": [
+          "configured",
+          "cda2c386-233b-5ca3-adcf-7b2e868a8ea6",
+          "inherited"
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 29,
+      "domain": "machine_components",
+      "operation": "UPDATE",
+      "semantic_key": "DRUM_Y:DRUM_Y",
+      "production_id": "cda2c386-233b-5ca3-adcf-7b2e868a8ea6",
+      "field": "display_order",
+      "current_value": 17,
+      "proposed_value": 18,
+      "classification": "CANONICAL_METADATA",
+      "runtime_impact": "Reverts only machine_components.display_order to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 1,
+      "rollback_value": 17,
+      "precondition": {
+        "expected_current_value": 17,
+        "already_rolled_back_value": 18,
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE machine_components SET display_order = ? WHERE id = ? AND display_order <=> ?",
+        "parameters": [
+          18,
+          "cda2c386-233b-5ca3-adcf-7b2e868a8ea6",
+          17
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 30,
+      "domain": "machine_components",
+      "operation": "UPDATE",
+      "semantic_key": "DRUM_Y:DRUM_Y",
+      "production_id": "cda2c386-233b-5ca3-adcf-7b2e868a8ea6",
+      "field": "baseline_expected_clicks",
+      "current_value": 40000,
+      "proposed_value": null,
+      "classification": "RUNTIME_REQUIRED",
+      "runtime_impact": "Reverts only machine_components.baseline_expected_clicks to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 1,
+      "rollback_value": 40000,
+      "precondition": {
+        "expected_current_value": 40000,
+        "already_rolled_back_value": null,
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE machine_components SET baseline_expected_clicks = ? WHERE id = ? AND baseline_expected_clicks <=> ?",
+        "parameters": [
+          null,
+          "cda2c386-233b-5ca3-adcf-7b2e868a8ea6",
+          40000
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 31,
+      "domain": "machine_components",
+      "operation": "UPDATE",
+      "semantic_key": "DRUM_M:DRUM_M",
+      "production_id": "47ce9b75-cc81-5ddd-967b-9f3203445d74",
+      "field": "source_type",
+      "current_value": "inherited",
+      "proposed_value": "configured",
+      "classification": "RUNTIME_REQUIRED",
+      "runtime_impact": "Reverts only machine_components.source_type to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 1,
+      "rollback_value": "inherited",
+      "precondition": {
+        "expected_current_value": "inherited",
+        "already_rolled_back_value": "configured",
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE machine_components SET source_type = ? WHERE id = ? AND source_type <=> ?",
+        "parameters": [
+          "configured",
+          "47ce9b75-cc81-5ddd-967b-9f3203445d74",
+          "inherited"
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 32,
+      "domain": "machine_components",
+      "operation": "UPDATE",
+      "semantic_key": "DRUM_M:DRUM_M",
+      "production_id": "47ce9b75-cc81-5ddd-967b-9f3203445d74",
+      "field": "display_order",
+      "current_value": 16,
+      "proposed_value": 17,
+      "classification": "CANONICAL_METADATA",
+      "runtime_impact": "Reverts only machine_components.display_order to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 1,
+      "rollback_value": 16,
+      "precondition": {
+        "expected_current_value": 16,
+        "already_rolled_back_value": 17,
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE machine_components SET display_order = ? WHERE id = ? AND display_order <=> ?",
+        "parameters": [
+          17,
+          "47ce9b75-cc81-5ddd-967b-9f3203445d74",
+          16
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 33,
+      "domain": "machine_components",
+      "operation": "UPDATE",
+      "semantic_key": "DRUM_M:DRUM_M",
+      "production_id": "47ce9b75-cc81-5ddd-967b-9f3203445d74",
+      "field": "baseline_expected_clicks",
+      "current_value": 40000,
+      "proposed_value": null,
+      "classification": "RUNTIME_REQUIRED",
+      "runtime_impact": "Reverts only machine_components.baseline_expected_clicks to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 1,
+      "rollback_value": 40000,
+      "precondition": {
+        "expected_current_value": 40000,
+        "already_rolled_back_value": null,
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE machine_components SET baseline_expected_clicks = ? WHERE id = ? AND baseline_expected_clicks <=> ?",
+        "parameters": [
+          null,
+          "47ce9b75-cc81-5ddd-967b-9f3203445d74",
+          40000
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 34,
+      "domain": "machine_components",
+      "operation": "UPDATE",
+      "semantic_key": "DRUM_K:DRUM_K",
+      "production_id": "f13b8dcb-4144-531f-9754-af977350fe10",
+      "field": "source_type",
+      "current_value": "inherited",
+      "proposed_value": "configured",
+      "classification": "RUNTIME_REQUIRED",
+      "runtime_impact": "Reverts only machine_components.source_type to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 1,
+      "rollback_value": "inherited",
+      "precondition": {
+        "expected_current_value": "inherited",
+        "already_rolled_back_value": "configured",
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE machine_components SET source_type = ? WHERE id = ? AND source_type <=> ?",
+        "parameters": [
+          "configured",
+          "f13b8dcb-4144-531f-9754-af977350fe10",
+          "inherited"
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 35,
+      "domain": "machine_components",
+      "operation": "UPDATE",
+      "semantic_key": "DRUM_K:DRUM_K",
+      "production_id": "f13b8dcb-4144-531f-9754-af977350fe10",
+      "field": "display_order",
+      "current_value": 18,
+      "proposed_value": 16,
+      "classification": "CANONICAL_METADATA",
+      "runtime_impact": "Reverts only machine_components.display_order to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 1,
+      "rollback_value": 18,
+      "precondition": {
+        "expected_current_value": 18,
+        "already_rolled_back_value": 16,
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE machine_components SET display_order = ? WHERE id = ? AND display_order <=> ?",
+        "parameters": [
+          16,
+          "f13b8dcb-4144-531f-9754-af977350fe10",
+          18
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 36,
+      "domain": "machine_components",
+      "operation": "UPDATE",
+      "semantic_key": "DRUM_K:DRUM_K",
+      "production_id": "f13b8dcb-4144-531f-9754-af977350fe10",
+      "field": "baseline_expected_clicks",
+      "current_value": 40000,
+      "proposed_value": null,
+      "classification": "RUNTIME_REQUIRED",
+      "runtime_impact": "Reverts only machine_components.baseline_expected_clicks to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 1,
+      "rollback_value": 40000,
+      "precondition": {
+        "expected_current_value": 40000,
+        "already_rolled_back_value": null,
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE machine_components SET baseline_expected_clicks = ? WHERE id = ? AND baseline_expected_clicks <=> ?",
+        "parameters": [
+          null,
+          "f13b8dcb-4144-531f-9754-af977350fe10",
+          40000
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 37,
+      "domain": "machine_components",
+      "operation": "UPDATE",
+      "semantic_key": "DRUM_C:DRUM_C",
+      "production_id": "92589f2e-b431-5bca-b1d9-872f862b7263",
+      "field": "source_type",
+      "current_value": "inherited",
+      "proposed_value": "configured",
+      "classification": "RUNTIME_REQUIRED",
+      "runtime_impact": "Reverts only machine_components.source_type to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 1,
+      "rollback_value": "inherited",
+      "precondition": {
+        "expected_current_value": "inherited",
+        "already_rolled_back_value": "configured",
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE machine_components SET source_type = ? WHERE id = ? AND source_type <=> ?",
+        "parameters": [
+          "configured",
+          "92589f2e-b431-5bca-b1d9-872f862b7263",
+          "inherited"
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 38,
+      "domain": "machine_components",
+      "operation": "UPDATE",
+      "semantic_key": "DRUM_C:DRUM_C",
+      "production_id": "92589f2e-b431-5bca-b1d9-872f862b7263",
+      "field": "baseline_expected_clicks",
+      "current_value": 40000,
+      "proposed_value": null,
+      "classification": "RUNTIME_REQUIRED",
+      "runtime_impact": "Reverts only machine_components.baseline_expected_clicks to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 1,
+      "rollback_value": 40000,
+      "precondition": {
+        "expected_current_value": 40000,
+        "already_rolled_back_value": null,
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE machine_components SET baseline_expected_clicks = ? WHERE id = ? AND baseline_expected_clicks <=> ?",
+        "parameters": [
+          null,
+          "92589f2e-b431-5bca-b1d9-872f862b7263",
+          40000
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 39,
+      "domain": "machine_components",
+      "operation": "UPDATE",
+      "semantic_key": "DEVELOPING_UNIT_Y:DEVELOPING_UNIT_Y",
+      "production_id": "b6fab789-d529-5da8-a370-22308a4c89bb",
+      "field": "source_type",
+      "current_value": "inherited",
+      "proposed_value": "configured",
+      "classification": "RUNTIME_REQUIRED",
+      "runtime_impact": "Reverts only machine_components.source_type to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 1,
+      "rollback_value": "inherited",
+      "precondition": {
+        "expected_current_value": "inherited",
+        "already_rolled_back_value": "configured",
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE machine_components SET source_type = ? WHERE id = ? AND source_type <=> ?",
+        "parameters": [
+          "configured",
+          "b6fab789-d529-5da8-a370-22308a4c89bb",
+          "inherited"
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 40,
+      "domain": "machine_components",
+      "operation": "UPDATE",
+      "semantic_key": "DEVELOPING_UNIT_Y:DEVELOPING_UNIT_Y",
+      "production_id": "b6fab789-d529-5da8-a370-22308a4c89bb",
+      "field": "display_order",
+      "current_value": 13,
+      "proposed_value": 14,
+      "classification": "CANONICAL_METADATA",
+      "runtime_impact": "Reverts only machine_components.display_order to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 1,
+      "rollback_value": 13,
+      "precondition": {
+        "expected_current_value": 13,
+        "already_rolled_back_value": 14,
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE machine_components SET display_order = ? WHERE id = ? AND display_order <=> ?",
+        "parameters": [
+          14,
+          "b6fab789-d529-5da8-a370-22308a4c89bb",
+          13
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 41,
+      "domain": "machine_components",
+      "operation": "UPDATE",
+      "semantic_key": "DEVELOPING_UNIT_Y:DEVELOPING_UNIT_Y",
+      "production_id": "b6fab789-d529-5da8-a370-22308a4c89bb",
+      "field": "baseline_expected_clicks",
+      "current_value": 200000,
+      "proposed_value": null,
+      "classification": "RUNTIME_REQUIRED",
+      "runtime_impact": "Reverts only machine_components.baseline_expected_clicks to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 1,
+      "rollback_value": 200000,
+      "precondition": {
+        "expected_current_value": 200000,
+        "already_rolled_back_value": null,
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE machine_components SET baseline_expected_clicks = ? WHERE id = ? AND baseline_expected_clicks <=> ?",
+        "parameters": [
+          null,
+          "b6fab789-d529-5da8-a370-22308a4c89bb",
+          200000
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 42,
+      "domain": "machine_components",
+      "operation": "UPDATE",
+      "semantic_key": "DEVELOPING_UNIT_M:DEVELOPING_UNIT_M",
+      "production_id": "e5fa2c2b-998b-5825-b78f-ec2cc7b74fcb",
+      "field": "source_type",
+      "current_value": "inherited",
+      "proposed_value": "configured",
+      "classification": "RUNTIME_REQUIRED",
+      "runtime_impact": "Reverts only machine_components.source_type to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 1,
+      "rollback_value": "inherited",
+      "precondition": {
+        "expected_current_value": "inherited",
+        "already_rolled_back_value": "configured",
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE machine_components SET source_type = ? WHERE id = ? AND source_type <=> ?",
+        "parameters": [
+          "configured",
+          "e5fa2c2b-998b-5825-b78f-ec2cc7b74fcb",
+          "inherited"
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 43,
+      "domain": "machine_components",
+      "operation": "UPDATE",
+      "semantic_key": "DEVELOPING_UNIT_M:DEVELOPING_UNIT_M",
+      "production_id": "e5fa2c2b-998b-5825-b78f-ec2cc7b74fcb",
+      "field": "display_order",
+      "current_value": 12,
+      "proposed_value": 13,
+      "classification": "CANONICAL_METADATA",
+      "runtime_impact": "Reverts only machine_components.display_order to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 1,
+      "rollback_value": 12,
+      "precondition": {
+        "expected_current_value": 12,
+        "already_rolled_back_value": 13,
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE machine_components SET display_order = ? WHERE id = ? AND display_order <=> ?",
+        "parameters": [
+          13,
+          "e5fa2c2b-998b-5825-b78f-ec2cc7b74fcb",
+          12
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 44,
+      "domain": "machine_components",
+      "operation": "UPDATE",
+      "semantic_key": "DEVELOPING_UNIT_M:DEVELOPING_UNIT_M",
+      "production_id": "e5fa2c2b-998b-5825-b78f-ec2cc7b74fcb",
+      "field": "baseline_expected_clicks",
+      "current_value": 200000,
+      "proposed_value": null,
+      "classification": "RUNTIME_REQUIRED",
+      "runtime_impact": "Reverts only machine_components.baseline_expected_clicks to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 1,
+      "rollback_value": 200000,
+      "precondition": {
+        "expected_current_value": 200000,
+        "already_rolled_back_value": null,
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE machine_components SET baseline_expected_clicks = ? WHERE id = ? AND baseline_expected_clicks <=> ?",
+        "parameters": [
+          null,
+          "e5fa2c2b-998b-5825-b78f-ec2cc7b74fcb",
+          200000
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 45,
+      "domain": "machine_components",
+      "operation": "UPDATE",
+      "semantic_key": "DEVELOPING_UNIT_K:DEVELOPING_UNIT_K",
+      "production_id": "31728a4b-9da9-578d-bd3a-3c00d96c5f3f",
+      "field": "source_type",
+      "current_value": "inherited",
+      "proposed_value": "configured",
+      "classification": "RUNTIME_REQUIRED",
+      "runtime_impact": "Reverts only machine_components.source_type to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 1,
+      "rollback_value": "inherited",
+      "precondition": {
+        "expected_current_value": "inherited",
+        "already_rolled_back_value": "configured",
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE machine_components SET source_type = ? WHERE id = ? AND source_type <=> ?",
+        "parameters": [
+          "configured",
+          "31728a4b-9da9-578d-bd3a-3c00d96c5f3f",
+          "inherited"
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 46,
+      "domain": "machine_components",
+      "operation": "UPDATE",
+      "semantic_key": "DEVELOPING_UNIT_K:DEVELOPING_UNIT_K",
+      "production_id": "31728a4b-9da9-578d-bd3a-3c00d96c5f3f",
+      "field": "display_order",
+      "current_value": 14,
+      "proposed_value": 12,
+      "classification": "CANONICAL_METADATA",
+      "runtime_impact": "Reverts only machine_components.display_order to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 1,
+      "rollback_value": 14,
+      "precondition": {
+        "expected_current_value": 14,
+        "already_rolled_back_value": 12,
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE machine_components SET display_order = ? WHERE id = ? AND display_order <=> ?",
+        "parameters": [
+          12,
+          "31728a4b-9da9-578d-bd3a-3c00d96c5f3f",
+          14
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 47,
+      "domain": "machine_components",
+      "operation": "UPDATE",
+      "semantic_key": "DEVELOPING_UNIT_K:DEVELOPING_UNIT_K",
+      "production_id": "31728a4b-9da9-578d-bd3a-3c00d96c5f3f",
+      "field": "baseline_expected_clicks",
+      "current_value": 200000,
+      "proposed_value": null,
+      "classification": "RUNTIME_REQUIRED",
+      "runtime_impact": "Reverts only machine_components.baseline_expected_clicks to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 1,
+      "rollback_value": 200000,
+      "precondition": {
+        "expected_current_value": 200000,
+        "already_rolled_back_value": null,
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE machine_components SET baseline_expected_clicks = ? WHERE id = ? AND baseline_expected_clicks <=> ?",
+        "parameters": [
+          null,
+          "31728a4b-9da9-578d-bd3a-3c00d96c5f3f",
+          200000
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 48,
+      "domain": "machine_components",
+      "operation": "UPDATE",
+      "semantic_key": "DEVELOPING_UNIT_C:DEVELOPING_UNIT_C",
+      "production_id": "c8eef596-a2b3-5a71-9cb9-5412f63e9bbe",
+      "field": "source_type",
+      "current_value": "inherited",
+      "proposed_value": "configured",
+      "classification": "RUNTIME_REQUIRED",
+      "runtime_impact": "Reverts only machine_components.source_type to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 1,
+      "rollback_value": "inherited",
+      "precondition": {
+        "expected_current_value": "inherited",
+        "already_rolled_back_value": "configured",
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE machine_components SET source_type = ? WHERE id = ? AND source_type <=> ?",
+        "parameters": [
+          "configured",
+          "c8eef596-a2b3-5a71-9cb9-5412f63e9bbe",
+          "inherited"
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 49,
+      "domain": "machine_components",
+      "operation": "UPDATE",
+      "semantic_key": "DEVELOPING_UNIT_C:DEVELOPING_UNIT_C",
+      "production_id": "c8eef596-a2b3-5a71-9cb9-5412f63e9bbe",
+      "field": "baseline_expected_clicks",
+      "current_value": 200000,
+      "proposed_value": null,
+      "classification": "RUNTIME_REQUIRED",
+      "runtime_impact": "Reverts only machine_components.baseline_expected_clicks to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 1,
+      "rollback_value": 200000,
+      "precondition": {
+        "expected_current_value": 200000,
+        "already_rolled_back_value": null,
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE machine_components SET baseline_expected_clicks = ? WHERE id = ? AND baseline_expected_clicks <=> ?",
+        "parameters": [
+          null,
+          "c8eef596-a2b3-5a71-9cb9-5412f63e9bbe",
+          200000
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 50,
+      "domain": "machine_components",
+      "operation": "UPDATE",
+      "semantic_key": "DEVELOPER_Y:DEVELOPER_Y",
+      "production_id": "4810892d-9cfb-5275-90b3-1b30e7083732",
+      "field": "source_type",
+      "current_value": "inherited",
+      "proposed_value": "configured",
+      "classification": "RUNTIME_REQUIRED",
+      "runtime_impact": "Reverts only machine_components.source_type to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 1,
+      "rollback_value": "inherited",
+      "precondition": {
+        "expected_current_value": "inherited",
+        "already_rolled_back_value": "configured",
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE machine_components SET source_type = ? WHERE id = ? AND source_type <=> ?",
+        "parameters": [
+          "configured",
+          "4810892d-9cfb-5275-90b3-1b30e7083732",
+          "inherited"
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 51,
+      "domain": "machine_components",
+      "operation": "UPDATE",
+      "semantic_key": "DEVELOPER_Y:DEVELOPER_Y",
+      "production_id": "4810892d-9cfb-5275-90b3-1b30e7083732",
+      "field": "display_order",
+      "current_value": 9,
+      "proposed_value": 10,
+      "classification": "CANONICAL_METADATA",
+      "runtime_impact": "Reverts only machine_components.display_order to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 1,
+      "rollback_value": 9,
+      "precondition": {
+        "expected_current_value": 9,
+        "already_rolled_back_value": 10,
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE machine_components SET display_order = ? WHERE id = ? AND display_order <=> ?",
+        "parameters": [
+          10,
+          "4810892d-9cfb-5275-90b3-1b30e7083732",
+          9
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 52,
+      "domain": "machine_components",
+      "operation": "UPDATE",
+      "semantic_key": "DEVELOPER_Y:DEVELOPER_Y",
+      "production_id": "4810892d-9cfb-5275-90b3-1b30e7083732",
+      "field": "baseline_expected_clicks",
+      "current_value": 100000,
+      "proposed_value": null,
+      "classification": "RUNTIME_REQUIRED",
+      "runtime_impact": "Reverts only machine_components.baseline_expected_clicks to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 1,
+      "rollback_value": 100000,
+      "precondition": {
+        "expected_current_value": 100000,
+        "already_rolled_back_value": null,
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE machine_components SET baseline_expected_clicks = ? WHERE id = ? AND baseline_expected_clicks <=> ?",
+        "parameters": [
+          null,
+          "4810892d-9cfb-5275-90b3-1b30e7083732",
+          100000
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 53,
+      "domain": "machine_components",
+      "operation": "UPDATE",
+      "semantic_key": "DEVELOPER_M:DEVELOPER_M",
+      "production_id": "27051b91-837c-5728-8d42-3fbebdb75f2e",
+      "field": "source_type",
+      "current_value": "inherited",
+      "proposed_value": "configured",
+      "classification": "RUNTIME_REQUIRED",
+      "runtime_impact": "Reverts only machine_components.source_type to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 1,
+      "rollback_value": "inherited",
+      "precondition": {
+        "expected_current_value": "inherited",
+        "already_rolled_back_value": "configured",
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE machine_components SET source_type = ? WHERE id = ? AND source_type <=> ?",
+        "parameters": [
+          "configured",
+          "27051b91-837c-5728-8d42-3fbebdb75f2e",
+          "inherited"
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 54,
+      "domain": "machine_components",
+      "operation": "UPDATE",
+      "semantic_key": "DEVELOPER_M:DEVELOPER_M",
+      "production_id": "27051b91-837c-5728-8d42-3fbebdb75f2e",
+      "field": "display_order",
+      "current_value": 8,
+      "proposed_value": 9,
+      "classification": "CANONICAL_METADATA",
+      "runtime_impact": "Reverts only machine_components.display_order to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 1,
+      "rollback_value": 8,
+      "precondition": {
+        "expected_current_value": 8,
+        "already_rolled_back_value": 9,
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE machine_components SET display_order = ? WHERE id = ? AND display_order <=> ?",
+        "parameters": [
+          9,
+          "27051b91-837c-5728-8d42-3fbebdb75f2e",
+          8
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 55,
+      "domain": "machine_components",
+      "operation": "UPDATE",
+      "semantic_key": "DEVELOPER_M:DEVELOPER_M",
+      "production_id": "27051b91-837c-5728-8d42-3fbebdb75f2e",
+      "field": "baseline_expected_clicks",
+      "current_value": 100000,
+      "proposed_value": null,
+      "classification": "RUNTIME_REQUIRED",
+      "runtime_impact": "Reverts only machine_components.baseline_expected_clicks to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 1,
+      "rollback_value": 100000,
+      "precondition": {
+        "expected_current_value": 100000,
+        "already_rolled_back_value": null,
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE machine_components SET baseline_expected_clicks = ? WHERE id = ? AND baseline_expected_clicks <=> ?",
+        "parameters": [
+          null,
+          "27051b91-837c-5728-8d42-3fbebdb75f2e",
+          100000
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 56,
+      "domain": "machine_components",
+      "operation": "UPDATE",
+      "semantic_key": "DEVELOPER_K:DEVELOPER_K",
+      "production_id": "9ab69895-1fc8-5ae6-bc0e-076796c95469",
+      "field": "source_type",
+      "current_value": "inherited",
+      "proposed_value": "configured",
+      "classification": "RUNTIME_REQUIRED",
+      "runtime_impact": "Reverts only machine_components.source_type to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 1,
+      "rollback_value": "inherited",
+      "precondition": {
+        "expected_current_value": "inherited",
+        "already_rolled_back_value": "configured",
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE machine_components SET source_type = ? WHERE id = ? AND source_type <=> ?",
+        "parameters": [
+          "configured",
+          "9ab69895-1fc8-5ae6-bc0e-076796c95469",
+          "inherited"
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 57,
+      "domain": "machine_components",
+      "operation": "UPDATE",
+      "semantic_key": "DEVELOPER_K:DEVELOPER_K",
+      "production_id": "9ab69895-1fc8-5ae6-bc0e-076796c95469",
+      "field": "display_order",
+      "current_value": 10,
+      "proposed_value": 8,
+      "classification": "CANONICAL_METADATA",
+      "runtime_impact": "Reverts only machine_components.display_order to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 1,
+      "rollback_value": 10,
+      "precondition": {
+        "expected_current_value": 10,
+        "already_rolled_back_value": 8,
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE machine_components SET display_order = ? WHERE id = ? AND display_order <=> ?",
+        "parameters": [
+          8,
+          "9ab69895-1fc8-5ae6-bc0e-076796c95469",
+          10
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 58,
+      "domain": "machine_components",
+      "operation": "UPDATE",
+      "semantic_key": "DEVELOPER_K:DEVELOPER_K",
+      "production_id": "9ab69895-1fc8-5ae6-bc0e-076796c95469",
+      "field": "baseline_expected_clicks",
+      "current_value": 100000,
+      "proposed_value": null,
+      "classification": "RUNTIME_REQUIRED",
+      "runtime_impact": "Reverts only machine_components.baseline_expected_clicks to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 1,
+      "rollback_value": 100000,
+      "precondition": {
+        "expected_current_value": 100000,
+        "already_rolled_back_value": null,
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE machine_components SET baseline_expected_clicks = ? WHERE id = ? AND baseline_expected_clicks <=> ?",
+        "parameters": [
+          null,
+          "9ab69895-1fc8-5ae6-bc0e-076796c95469",
+          100000
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 59,
+      "domain": "machine_components",
+      "operation": "UPDATE",
+      "semantic_key": "DEVELOPER_C:DEVELOPER_C",
+      "production_id": "d2a71703-1181-5d1f-b425-3d34fb0724f1",
+      "field": "source_type",
+      "current_value": "inherited",
+      "proposed_value": "configured",
+      "classification": "RUNTIME_REQUIRED",
+      "runtime_impact": "Reverts only machine_components.source_type to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 1,
+      "rollback_value": "inherited",
+      "precondition": {
+        "expected_current_value": "inherited",
+        "already_rolled_back_value": "configured",
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE machine_components SET source_type = ? WHERE id = ? AND source_type <=> ?",
+        "parameters": [
+          "configured",
+          "d2a71703-1181-5d1f-b425-3d34fb0724f1",
+          "inherited"
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 60,
+      "domain": "machine_components",
+      "operation": "UPDATE",
+      "semantic_key": "DEVELOPER_C:DEVELOPER_C",
+      "production_id": "d2a71703-1181-5d1f-b425-3d34fb0724f1",
+      "field": "baseline_expected_clicks",
+      "current_value": 100000,
+      "proposed_value": null,
+      "classification": "RUNTIME_REQUIRED",
+      "runtime_impact": "Reverts only machine_components.baseline_expected_clicks to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 1,
+      "rollback_value": 100000,
+      "precondition": {
+        "expected_current_value": 100000,
+        "already_rolled_back_value": null,
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE machine_components SET baseline_expected_clicks = ? WHERE id = ? AND baseline_expected_clicks <=> ?",
+        "parameters": [
+          null,
+          "d2a71703-1181-5d1f-b425-3d34fb0724f1",
+          100000
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 61,
+      "domain": "machine_components",
+      "operation": "UPDATE",
+      "semantic_key": "CLEANING_UNIT:CLEANING_UNIT",
+      "production_id": "1a514537-c83a-518d-86a7-d88a4e2c0db6",
+      "field": "source_type",
+      "current_value": "inherited",
+      "proposed_value": "configured",
+      "classification": "RUNTIME_REQUIRED",
+      "runtime_impact": "Reverts only machine_components.source_type to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 1,
+      "rollback_value": "inherited",
+      "precondition": {
+        "expected_current_value": "inherited",
+        "already_rolled_back_value": "configured",
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE machine_components SET source_type = ? WHERE id = ? AND source_type <=> ?",
+        "parameters": [
+          "configured",
+          "1a514537-c83a-518d-86a7-d88a4e2c0db6",
+          "inherited"
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 62,
+      "domain": "machine_components",
+      "operation": "UPDATE",
+      "semantic_key": "CLEANING_UNIT:CLEANING_UNIT",
+      "production_id": "1a514537-c83a-518d-86a7-d88a4e2c0db6",
+      "field": "baseline_expected_clicks",
+      "current_value": 200000,
+      "proposed_value": null,
+      "classification": "RUNTIME_REQUIRED",
+      "runtime_impact": "Reverts only machine_components.baseline_expected_clicks to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 1,
+      "rollback_value": 200000,
+      "precondition": {
+        "expected_current_value": 200000,
+        "already_rolled_back_value": null,
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE machine_components SET baseline_expected_clicks = ? WHERE id = ? AND baseline_expected_clicks <=> ?",
+        "parameters": [
+          null,
+          "1a514537-c83a-518d-86a7-d88a4e2c0db6",
+          200000
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 63,
+      "domain": "machine_components",
+      "operation": "UPDATE",
+      "semantic_key": "CLEANING_BLADE:CLEANING_BLADE",
+      "production_id": "a9b9558f-4d9b-5b27-a921-667a7501c403",
+      "field": "source_type",
+      "current_value": "inherited",
+      "proposed_value": "configured",
+      "classification": "RUNTIME_REQUIRED",
+      "runtime_impact": "Reverts only machine_components.source_type to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 1,
+      "rollback_value": "inherited",
+      "precondition": {
+        "expected_current_value": "inherited",
+        "already_rolled_back_value": "configured",
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE machine_components SET source_type = ? WHERE id = ? AND source_type <=> ?",
+        "parameters": [
+          "configured",
+          "a9b9558f-4d9b-5b27-a921-667a7501c403",
+          "inherited"
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 64,
+      "domain": "machine_components",
+      "operation": "UPDATE",
+      "semantic_key": "CLEANING_BLADE:CLEANING_BLADE",
+      "production_id": "a9b9558f-4d9b-5b27-a921-667a7501c403",
+      "field": "baseline_expected_clicks",
+      "current_value": 100000,
+      "proposed_value": null,
+      "classification": "RUNTIME_REQUIRED",
+      "runtime_impact": "Reverts only machine_components.baseline_expected_clicks to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 1,
+      "rollback_value": 100000,
+      "precondition": {
+        "expected_current_value": 100000,
+        "already_rolled_back_value": null,
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE machine_components SET baseline_expected_clicks = ? WHERE id = ? AND baseline_expected_clicks <=> ?",
+        "parameters": [
+          null,
+          "a9b9558f-4d9b-5b27-a921-667a7501c403",
+          100000
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 65,
+      "domain": "machine_components",
+      "operation": "UPDATE",
+      "semantic_key": "CHARGING_CORONA_Y:CHARGING_CORONA_Y",
+      "production_id": "38aee41e-19f5-5b6f-9b31-e6acc0a7ae86",
+      "field": "source_type",
+      "current_value": "inherited",
+      "proposed_value": "configured",
+      "classification": "RUNTIME_REQUIRED",
+      "runtime_impact": "Reverts only machine_components.source_type to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 1,
+      "rollback_value": "inherited",
+      "precondition": {
+        "expected_current_value": "inherited",
+        "already_rolled_back_value": "configured",
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE machine_components SET source_type = ? WHERE id = ? AND source_type <=> ?",
+        "parameters": [
+          "configured",
+          "38aee41e-19f5-5b6f-9b31-e6acc0a7ae86",
+          "inherited"
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 66,
+      "domain": "machine_components",
+      "operation": "UPDATE",
+      "semantic_key": "CHARGING_CORONA_Y:CHARGING_CORONA_Y",
+      "production_id": "38aee41e-19f5-5b6f-9b31-e6acc0a7ae86",
+      "field": "display_order",
+      "current_value": 3,
+      "proposed_value": 4,
+      "classification": "CANONICAL_METADATA",
+      "runtime_impact": "Reverts only machine_components.display_order to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 1,
+      "rollback_value": 3,
+      "precondition": {
+        "expected_current_value": 3,
+        "already_rolled_back_value": 4,
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE machine_components SET display_order = ? WHERE id = ? AND display_order <=> ?",
+        "parameters": [
+          4,
+          "38aee41e-19f5-5b6f-9b31-e6acc0a7ae86",
+          3
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 67,
+      "domain": "machine_components",
+      "operation": "UPDATE",
+      "semantic_key": "CHARGING_CORONA_Y:CHARGING_CORONA_Y",
+      "production_id": "38aee41e-19f5-5b6f-9b31-e6acc0a7ae86",
+      "field": "baseline_expected_clicks",
+      "current_value": 40000,
+      "proposed_value": null,
+      "classification": "RUNTIME_REQUIRED",
+      "runtime_impact": "Reverts only machine_components.baseline_expected_clicks to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 1,
+      "rollback_value": 40000,
+      "precondition": {
+        "expected_current_value": 40000,
+        "already_rolled_back_value": null,
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE machine_components SET baseline_expected_clicks = ? WHERE id = ? AND baseline_expected_clicks <=> ?",
+        "parameters": [
+          null,
+          "38aee41e-19f5-5b6f-9b31-e6acc0a7ae86",
+          40000
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 68,
+      "domain": "machine_components",
+      "operation": "UPDATE",
+      "semantic_key": "CHARGING_CORONA_M:CHARGING_CORONA_M",
+      "production_id": "3e086464-5746-5fcb-91e2-913d7f238601",
+      "field": "source_type",
+      "current_value": "inherited",
+      "proposed_value": "configured",
+      "classification": "RUNTIME_REQUIRED",
+      "runtime_impact": "Reverts only machine_components.source_type to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 1,
+      "rollback_value": "inherited",
+      "precondition": {
+        "expected_current_value": "inherited",
+        "already_rolled_back_value": "configured",
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE machine_components SET source_type = ? WHERE id = ? AND source_type <=> ?",
+        "parameters": [
+          "configured",
+          "3e086464-5746-5fcb-91e2-913d7f238601",
+          "inherited"
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 69,
+      "domain": "machine_components",
+      "operation": "UPDATE",
+      "semantic_key": "CHARGING_CORONA_M:CHARGING_CORONA_M",
+      "production_id": "3e086464-5746-5fcb-91e2-913d7f238601",
+      "field": "display_order",
+      "current_value": 2,
+      "proposed_value": 3,
+      "classification": "CANONICAL_METADATA",
+      "runtime_impact": "Reverts only machine_components.display_order to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 1,
+      "rollback_value": 2,
+      "precondition": {
+        "expected_current_value": 2,
+        "already_rolled_back_value": 3,
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE machine_components SET display_order = ? WHERE id = ? AND display_order <=> ?",
+        "parameters": [
+          3,
+          "3e086464-5746-5fcb-91e2-913d7f238601",
+          2
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 70,
+      "domain": "machine_components",
+      "operation": "UPDATE",
+      "semantic_key": "CHARGING_CORONA_M:CHARGING_CORONA_M",
+      "production_id": "3e086464-5746-5fcb-91e2-913d7f238601",
+      "field": "baseline_expected_clicks",
+      "current_value": 40000,
+      "proposed_value": null,
+      "classification": "RUNTIME_REQUIRED",
+      "runtime_impact": "Reverts only machine_components.baseline_expected_clicks to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 1,
+      "rollback_value": 40000,
+      "precondition": {
+        "expected_current_value": 40000,
+        "already_rolled_back_value": null,
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE machine_components SET baseline_expected_clicks = ? WHERE id = ? AND baseline_expected_clicks <=> ?",
+        "parameters": [
+          null,
+          "3e086464-5746-5fcb-91e2-913d7f238601",
+          40000
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 71,
+      "domain": "machine_components",
+      "operation": "UPDATE",
+      "semantic_key": "CHARGING_CORONA_K:CHARGING_CORONA_K",
+      "production_id": "1bd46c6e-6843-5a09-b198-2b49146040c4",
+      "field": "source_type",
+      "current_value": "inherited",
+      "proposed_value": "configured",
+      "classification": "RUNTIME_REQUIRED",
+      "runtime_impact": "Reverts only machine_components.source_type to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 1,
+      "rollback_value": "inherited",
+      "precondition": {
+        "expected_current_value": "inherited",
+        "already_rolled_back_value": "configured",
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE machine_components SET source_type = ? WHERE id = ? AND source_type <=> ?",
+        "parameters": [
+          "configured",
+          "1bd46c6e-6843-5a09-b198-2b49146040c4",
+          "inherited"
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 72,
+      "domain": "machine_components",
+      "operation": "UPDATE",
+      "semantic_key": "CHARGING_CORONA_K:CHARGING_CORONA_K",
+      "production_id": "1bd46c6e-6843-5a09-b198-2b49146040c4",
+      "field": "display_order",
+      "current_value": 4,
+      "proposed_value": 2,
+      "classification": "CANONICAL_METADATA",
+      "runtime_impact": "Reverts only machine_components.display_order to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 1,
+      "rollback_value": 4,
+      "precondition": {
+        "expected_current_value": 4,
+        "already_rolled_back_value": 2,
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE machine_components SET display_order = ? WHERE id = ? AND display_order <=> ?",
+        "parameters": [
+          2,
+          "1bd46c6e-6843-5a09-b198-2b49146040c4",
+          4
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 73,
+      "domain": "machine_components",
+      "operation": "UPDATE",
+      "semantic_key": "CHARGING_CORONA_K:CHARGING_CORONA_K",
+      "production_id": "1bd46c6e-6843-5a09-b198-2b49146040c4",
+      "field": "baseline_expected_clicks",
+      "current_value": 40000,
+      "proposed_value": null,
+      "classification": "RUNTIME_REQUIRED",
+      "runtime_impact": "Reverts only machine_components.baseline_expected_clicks to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 1,
+      "rollback_value": 40000,
+      "precondition": {
+        "expected_current_value": 40000,
+        "already_rolled_back_value": null,
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE machine_components SET baseline_expected_clicks = ? WHERE id = ? AND baseline_expected_clicks <=> ?",
+        "parameters": [
+          null,
+          "1bd46c6e-6843-5a09-b198-2b49146040c4",
+          40000
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 74,
+      "domain": "machine_components",
+      "operation": "UPDATE",
+      "semantic_key": "CHARGING_CORONA_C:CHARGING_CORONA_C",
+      "production_id": "9afdc32c-efbd-5a9d-859b-c8bd0a0e8cd7",
+      "field": "source_type",
+      "current_value": "inherited",
+      "proposed_value": "configured",
+      "classification": "RUNTIME_REQUIRED",
+      "runtime_impact": "Reverts only machine_components.source_type to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 1,
+      "rollback_value": "inherited",
+      "precondition": {
+        "expected_current_value": "inherited",
+        "already_rolled_back_value": "configured",
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE machine_components SET source_type = ? WHERE id = ? AND source_type <=> ?",
+        "parameters": [
+          "configured",
+          "9afdc32c-efbd-5a9d-859b-c8bd0a0e8cd7",
+          "inherited"
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 75,
+      "domain": "machine_components",
+      "operation": "UPDATE",
+      "semantic_key": "CHARGING_CORONA_C:CHARGING_CORONA_C",
+      "production_id": "9afdc32c-efbd-5a9d-859b-c8bd0a0e8cd7",
+      "field": "baseline_expected_clicks",
+      "current_value": 40000,
+      "proposed_value": null,
+      "classification": "RUNTIME_REQUIRED",
+      "runtime_impact": "Reverts only machine_components.baseline_expected_clicks to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 1,
+      "rollback_value": 40000,
+      "precondition": {
+        "expected_current_value": 40000,
+        "already_rolled_back_value": null,
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE machine_components SET baseline_expected_clicks = ? WHERE id = ? AND baseline_expected_clicks <=> ?",
+        "parameters": [
+          null,
+          "9afdc32c-efbd-5a9d-859b-c8bd0a0e8cd7",
+          40000
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 76,
+      "domain": "model_profile_slots",
+      "operation": "UPDATE",
+      "semantic_key": "TONER_Y:TONER_Y",
+      "production_id": "67ef2ace-e28d-561e-b433-6647178dcbad",
+      "field": "tracking_method",
+      "current_value": "consumption_based",
+      "proposed_value": "counter_based",
+      "classification": "RUNTIME_REQUIRED",
+      "runtime_impact": "Reverts only model_profile_slots.tracking_method to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 2,
+      "rollback_value": "consumption_based",
+      "precondition": {
+        "expected_current_value": "consumption_based",
+        "already_rolled_back_value": "counter_based",
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE model_profile_slots SET tracking_method = ? WHERE id = ? AND tracking_method <=> ?",
+        "parameters": [
+          "counter_based",
+          "67ef2ace-e28d-561e-b433-6647178dcbad",
+          "consumption_based"
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 77,
+      "domain": "model_profile_slots",
+      "operation": "UPDATE",
+      "semantic_key": "TONER_Y:TONER_Y",
+      "production_id": "67ef2ace-e28d-561e-b433-6647178dcbad",
+      "field": "display_order",
+      "current_value": 27,
+      "proposed_value": 28,
+      "classification": "CANONICAL_METADATA",
+      "runtime_impact": "Reverts only model_profile_slots.display_order to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 2,
+      "rollback_value": 27,
+      "precondition": {
+        "expected_current_value": 27,
+        "already_rolled_back_value": 28,
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE model_profile_slots SET display_order = ? WHERE id = ? AND display_order <=> ?",
+        "parameters": [
+          28,
+          "67ef2ace-e28d-561e-b433-6647178dcbad",
+          27
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 78,
+      "domain": "model_profile_slots",
+      "operation": "UPDATE",
+      "semantic_key": "TONER_Y:TONER_Y",
+      "production_id": "67ef2ace-e28d-561e-b433-6647178dcbad",
+      "field": "baseline_expected_clicks",
+      "current_value": 14000,
+      "proposed_value": null,
+      "classification": "RUNTIME_REQUIRED",
+      "runtime_impact": "Reverts only model_profile_slots.baseline_expected_clicks to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 2,
+      "rollback_value": 14000,
+      "precondition": {
+        "expected_current_value": 14000,
+        "already_rolled_back_value": null,
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE model_profile_slots SET baseline_expected_clicks = ? WHERE id = ? AND baseline_expected_clicks <=> ?",
+        "parameters": [
+          null,
+          "67ef2ace-e28d-561e-b433-6647178dcbad",
+          14000
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 79,
+      "domain": "model_profile_slots",
+      "operation": "UPDATE",
+      "semantic_key": "TONER_M:TONER_M",
+      "production_id": "a0146fc0-b117-5ee4-99ee-6acda227fec6",
+      "field": "tracking_method",
+      "current_value": "consumption_based",
+      "proposed_value": "counter_based",
+      "classification": "RUNTIME_REQUIRED",
+      "runtime_impact": "Reverts only model_profile_slots.tracking_method to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 2,
+      "rollback_value": "consumption_based",
+      "precondition": {
+        "expected_current_value": "consumption_based",
+        "already_rolled_back_value": "counter_based",
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE model_profile_slots SET tracking_method = ? WHERE id = ? AND tracking_method <=> ?",
+        "parameters": [
+          "counter_based",
+          "a0146fc0-b117-5ee4-99ee-6acda227fec6",
+          "consumption_based"
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 80,
+      "domain": "model_profile_slots",
+      "operation": "UPDATE",
+      "semantic_key": "TONER_M:TONER_M",
+      "production_id": "a0146fc0-b117-5ee4-99ee-6acda227fec6",
+      "field": "display_order",
+      "current_value": 26,
+      "proposed_value": 27,
+      "classification": "CANONICAL_METADATA",
+      "runtime_impact": "Reverts only model_profile_slots.display_order to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 2,
+      "rollback_value": 26,
+      "precondition": {
+        "expected_current_value": 26,
+        "already_rolled_back_value": 27,
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE model_profile_slots SET display_order = ? WHERE id = ? AND display_order <=> ?",
+        "parameters": [
+          27,
+          "a0146fc0-b117-5ee4-99ee-6acda227fec6",
+          26
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 81,
+      "domain": "model_profile_slots",
+      "operation": "UPDATE",
+      "semantic_key": "TONER_M:TONER_M",
+      "production_id": "a0146fc0-b117-5ee4-99ee-6acda227fec6",
+      "field": "baseline_expected_clicks",
+      "current_value": 14000,
+      "proposed_value": null,
+      "classification": "RUNTIME_REQUIRED",
+      "runtime_impact": "Reverts only model_profile_slots.baseline_expected_clicks to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 2,
+      "rollback_value": 14000,
+      "precondition": {
+        "expected_current_value": 14000,
+        "already_rolled_back_value": null,
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE model_profile_slots SET baseline_expected_clicks = ? WHERE id = ? AND baseline_expected_clicks <=> ?",
+        "parameters": [
+          null,
+          "a0146fc0-b117-5ee4-99ee-6acda227fec6",
+          14000
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 82,
+      "domain": "model_profile_slots",
+      "operation": "UPDATE",
+      "semantic_key": "TONER_K:TONER_K",
+      "production_id": "1065af1e-a8a5-57ac-9644-db4d32663f6e",
+      "field": "tracking_method",
+      "current_value": "consumption_based",
+      "proposed_value": "counter_based",
+      "classification": "RUNTIME_REQUIRED",
+      "runtime_impact": "Reverts only model_profile_slots.tracking_method to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 2,
+      "rollback_value": "consumption_based",
+      "precondition": {
+        "expected_current_value": "consumption_based",
+        "already_rolled_back_value": "counter_based",
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE model_profile_slots SET tracking_method = ? WHERE id = ? AND tracking_method <=> ?",
+        "parameters": [
+          "counter_based",
+          "1065af1e-a8a5-57ac-9644-db4d32663f6e",
+          "consumption_based"
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 83,
+      "domain": "model_profile_slots",
+      "operation": "UPDATE",
+      "semantic_key": "TONER_K:TONER_K",
+      "production_id": "1065af1e-a8a5-57ac-9644-db4d32663f6e",
+      "field": "display_order",
+      "current_value": 28,
+      "proposed_value": 26,
+      "classification": "CANONICAL_METADATA",
+      "runtime_impact": "Reverts only model_profile_slots.display_order to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 2,
+      "rollback_value": 28,
+      "precondition": {
+        "expected_current_value": 28,
+        "already_rolled_back_value": 26,
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE model_profile_slots SET display_order = ? WHERE id = ? AND display_order <=> ?",
+        "parameters": [
+          26,
+          "1065af1e-a8a5-57ac-9644-db4d32663f6e",
+          28
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 84,
+      "domain": "model_profile_slots",
+      "operation": "UPDATE",
+      "semantic_key": "TONER_K:TONER_K",
+      "production_id": "1065af1e-a8a5-57ac-9644-db4d32663f6e",
+      "field": "baseline_expected_clicks",
+      "current_value": 14000,
+      "proposed_value": null,
+      "classification": "RUNTIME_REQUIRED",
+      "runtime_impact": "Reverts only model_profile_slots.baseline_expected_clicks to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 2,
+      "rollback_value": 14000,
+      "precondition": {
+        "expected_current_value": 14000,
+        "already_rolled_back_value": null,
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE model_profile_slots SET baseline_expected_clicks = ? WHERE id = ? AND baseline_expected_clicks <=> ?",
+        "parameters": [
+          null,
+          "1065af1e-a8a5-57ac-9644-db4d32663f6e",
+          14000
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 85,
+      "domain": "model_profile_slots",
+      "operation": "UPDATE",
+      "semantic_key": "TONER_C:TONER_C",
+      "production_id": "7020ec42-9c3f-5582-aec9-ebb0f45eb2fc",
+      "field": "tracking_method",
+      "current_value": "consumption_based",
+      "proposed_value": "counter_based",
+      "classification": "RUNTIME_REQUIRED",
+      "runtime_impact": "Reverts only model_profile_slots.tracking_method to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 2,
+      "rollback_value": "consumption_based",
+      "precondition": {
+        "expected_current_value": "consumption_based",
+        "already_rolled_back_value": "counter_based",
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE model_profile_slots SET tracking_method = ? WHERE id = ? AND tracking_method <=> ?",
+        "parameters": [
+          "counter_based",
+          "7020ec42-9c3f-5582-aec9-ebb0f45eb2fc",
+          "consumption_based"
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 86,
+      "domain": "model_profile_slots",
+      "operation": "UPDATE",
+      "semantic_key": "TONER_C:TONER_C",
+      "production_id": "7020ec42-9c3f-5582-aec9-ebb0f45eb2fc",
+      "field": "baseline_expected_clicks",
+      "current_value": 14000,
+      "proposed_value": null,
+      "classification": "RUNTIME_REQUIRED",
+      "runtime_impact": "Reverts only model_profile_slots.baseline_expected_clicks to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 2,
+      "rollback_value": 14000,
+      "precondition": {
+        "expected_current_value": 14000,
+        "already_rolled_back_value": null,
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE model_profile_slots SET baseline_expected_clicks = ? WHERE id = ? AND baseline_expected_clicks <=> ?",
+        "parameters": [
+          null,
+          "7020ec42-9c3f-5582-aec9-ebb0f45eb2fc",
+          14000
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 87,
+      "domain": "model_profile_slots",
+      "operation": "UPDATE",
+      "semantic_key": "SENSOR:SENSOR",
+      "production_id": "4452ef17-0373-568f-bd51-12f18dc85212",
+      "field": "baseline_expected_clicks",
+      "current_value": 250000,
+      "proposed_value": null,
+      "classification": "RUNTIME_REQUIRED",
+      "runtime_impact": "Reverts only model_profile_slots.baseline_expected_clicks to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 2,
+      "rollback_value": 250000,
+      "precondition": {
+        "expected_current_value": 250000,
+        "already_rolled_back_value": null,
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE model_profile_slots SET baseline_expected_clicks = ? WHERE id = ? AND baseline_expected_clicks <=> ?",
+        "parameters": [
+          null,
+          "4452ef17-0373-568f-bd51-12f18dc85212",
+          250000
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 88,
+      "domain": "model_profile_slots",
+      "operation": "UPDATE",
+      "semantic_key": "ROLL_MESIN:ROLL_MESIN",
+      "production_id": "b329af66-4003-584a-8da7-711aa42d8683",
+      "field": "baseline_expected_clicks",
+      "current_value": 150000,
+      "proposed_value": null,
+      "classification": "RUNTIME_REQUIRED",
+      "runtime_impact": "Reverts only model_profile_slots.baseline_expected_clicks to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 2,
+      "rollback_value": 150000,
+      "precondition": {
+        "expected_current_value": 150000,
+        "already_rolled_back_value": null,
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE model_profile_slots SET baseline_expected_clicks = ? WHERE id = ? AND baseline_expected_clicks <=> ?",
+        "parameters": [
+          null,
+          "b329af66-4003-584a-8da7-711aa42d8683",
+          150000
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 89,
+      "domain": "model_profile_slots",
+      "operation": "UPDATE",
+      "semantic_key": "LASER_UNIT:LASER_UNIT",
+      "production_id": "c6242aef-c3b5-5941-989d-7f3c270b73d8",
+      "field": "baseline_expected_clicks",
+      "current_value": 300000,
+      "proposed_value": null,
+      "classification": "RUNTIME_REQUIRED",
+      "runtime_impact": "Reverts only model_profile_slots.baseline_expected_clicks to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 2,
+      "rollback_value": 300000,
+      "precondition": {
+        "expected_current_value": 300000,
+        "already_rolled_back_value": null,
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE model_profile_slots SET baseline_expected_clicks = ? WHERE id = ? AND baseline_expected_clicks <=> ?",
+        "parameters": [
+          null,
+          "c6242aef-c3b5-5941-989d-7f3c270b73d8",
+          300000
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 90,
+      "domain": "model_profile_slots",
+      "operation": "UPDATE",
+      "semantic_key": "IBT:IBT",
+      "production_id": "f3b077d5-429b-5bc8-825b-6c661c92b52e",
+      "field": "baseline_expected_clicks",
+      "current_value": 200000,
+      "proposed_value": null,
+      "classification": "RUNTIME_REQUIRED",
+      "runtime_impact": "Reverts only model_profile_slots.baseline_expected_clicks to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 2,
+      "rollback_value": 200000,
+      "precondition": {
+        "expected_current_value": 200000,
+        "already_rolled_back_value": null,
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE model_profile_slots SET baseline_expected_clicks = ? WHERE id = ? AND baseline_expected_clicks <=> ?",
+        "parameters": [
+          null,
+          "f3b077d5-429b-5bc8-825b-6c661c92b52e",
+          200000
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 91,
+      "domain": "model_profile_slots",
+      "operation": "UPDATE",
+      "semantic_key": "GEAR:GEAR",
+      "production_id": "21a36881-fac4-5b7f-9c6b-775f89059053",
+      "field": "baseline_expected_clicks",
+      "current_value": 150000,
+      "proposed_value": null,
+      "classification": "RUNTIME_REQUIRED",
+      "runtime_impact": "Reverts only model_profile_slots.baseline_expected_clicks to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 2,
+      "rollback_value": 150000,
+      "precondition": {
+        "expected_current_value": 150000,
+        "already_rolled_back_value": null,
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE model_profile_slots SET baseline_expected_clicks = ? WHERE id = ? AND baseline_expected_clicks <=> ?",
+        "parameters": [
+          null,
+          "21a36881-fac4-5b7f-9c6b-775f89059053",
+          150000
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 92,
+      "domain": "model_profile_slots",
+      "operation": "UPDATE",
+      "semantic_key": "FUSER_BELT:FUSER_BELT",
+      "production_id": "2e380348-dda1-5755-90d3-79ffc5db661e",
+      "field": "baseline_expected_clicks",
+      "current_value": 200000,
+      "proposed_value": null,
+      "classification": "RUNTIME_REQUIRED",
+      "runtime_impact": "Reverts only model_profile_slots.baseline_expected_clicks to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 2,
+      "rollback_value": 200000,
+      "precondition": {
+        "expected_current_value": 200000,
+        "already_rolled_back_value": null,
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE model_profile_slots SET baseline_expected_clicks = ? WHERE id = ? AND baseline_expected_clicks <=> ?",
+        "parameters": [
+          null,
+          "2e380348-dda1-5755-90d3-79ffc5db661e",
+          200000
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 93,
+      "domain": "model_profile_slots",
+      "operation": "UPDATE",
+      "semantic_key": "DRUM_Y:DRUM_Y",
+      "production_id": "7664f483-0b0e-5762-b31b-f0b0387ec034",
+      "field": "display_order",
+      "current_value": 17,
+      "proposed_value": 18,
+      "classification": "CANONICAL_METADATA",
+      "runtime_impact": "Reverts only model_profile_slots.display_order to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 2,
+      "rollback_value": 17,
+      "precondition": {
+        "expected_current_value": 17,
+        "already_rolled_back_value": 18,
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE model_profile_slots SET display_order = ? WHERE id = ? AND display_order <=> ?",
+        "parameters": [
+          18,
+          "7664f483-0b0e-5762-b31b-f0b0387ec034",
+          17
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 94,
+      "domain": "model_profile_slots",
+      "operation": "UPDATE",
+      "semantic_key": "DRUM_Y:DRUM_Y",
+      "production_id": "7664f483-0b0e-5762-b31b-f0b0387ec034",
+      "field": "baseline_expected_clicks",
+      "current_value": 40000,
+      "proposed_value": null,
+      "classification": "RUNTIME_REQUIRED",
+      "runtime_impact": "Reverts only model_profile_slots.baseline_expected_clicks to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 2,
+      "rollback_value": 40000,
+      "precondition": {
+        "expected_current_value": 40000,
+        "already_rolled_back_value": null,
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE model_profile_slots SET baseline_expected_clicks = ? WHERE id = ? AND baseline_expected_clicks <=> ?",
+        "parameters": [
+          null,
+          "7664f483-0b0e-5762-b31b-f0b0387ec034",
+          40000
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 95,
+      "domain": "model_profile_slots",
+      "operation": "UPDATE",
+      "semantic_key": "DRUM_M:DRUM_M",
+      "production_id": "81b1064b-f7ea-53ba-b0ad-1a6f9b05327f",
+      "field": "display_order",
+      "current_value": 16,
+      "proposed_value": 17,
+      "classification": "CANONICAL_METADATA",
+      "runtime_impact": "Reverts only model_profile_slots.display_order to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 2,
+      "rollback_value": 16,
+      "precondition": {
+        "expected_current_value": 16,
+        "already_rolled_back_value": 17,
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE model_profile_slots SET display_order = ? WHERE id = ? AND display_order <=> ?",
+        "parameters": [
+          17,
+          "81b1064b-f7ea-53ba-b0ad-1a6f9b05327f",
+          16
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 96,
+      "domain": "model_profile_slots",
+      "operation": "UPDATE",
+      "semantic_key": "DRUM_M:DRUM_M",
+      "production_id": "81b1064b-f7ea-53ba-b0ad-1a6f9b05327f",
+      "field": "baseline_expected_clicks",
+      "current_value": 40000,
+      "proposed_value": null,
+      "classification": "RUNTIME_REQUIRED",
+      "runtime_impact": "Reverts only model_profile_slots.baseline_expected_clicks to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 2,
+      "rollback_value": 40000,
+      "precondition": {
+        "expected_current_value": 40000,
+        "already_rolled_back_value": null,
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE model_profile_slots SET baseline_expected_clicks = ? WHERE id = ? AND baseline_expected_clicks <=> ?",
+        "parameters": [
+          null,
+          "81b1064b-f7ea-53ba-b0ad-1a6f9b05327f",
+          40000
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 97,
+      "domain": "model_profile_slots",
+      "operation": "UPDATE",
+      "semantic_key": "DRUM_K:DRUM_K",
+      "production_id": "15d56292-4859-5c8d-bf21-71e7b2a7e034",
+      "field": "display_order",
+      "current_value": 18,
+      "proposed_value": 16,
+      "classification": "CANONICAL_METADATA",
+      "runtime_impact": "Reverts only model_profile_slots.display_order to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 2,
+      "rollback_value": 18,
+      "precondition": {
+        "expected_current_value": 18,
+        "already_rolled_back_value": 16,
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE model_profile_slots SET display_order = ? WHERE id = ? AND display_order <=> ?",
+        "parameters": [
+          16,
+          "15d56292-4859-5c8d-bf21-71e7b2a7e034",
+          18
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 98,
+      "domain": "model_profile_slots",
+      "operation": "UPDATE",
+      "semantic_key": "DRUM_K:DRUM_K",
+      "production_id": "15d56292-4859-5c8d-bf21-71e7b2a7e034",
+      "field": "baseline_expected_clicks",
+      "current_value": 40000,
+      "proposed_value": null,
+      "classification": "RUNTIME_REQUIRED",
+      "runtime_impact": "Reverts only model_profile_slots.baseline_expected_clicks to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 2,
+      "rollback_value": 40000,
+      "precondition": {
+        "expected_current_value": 40000,
+        "already_rolled_back_value": null,
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE model_profile_slots SET baseline_expected_clicks = ? WHERE id = ? AND baseline_expected_clicks <=> ?",
+        "parameters": [
+          null,
+          "15d56292-4859-5c8d-bf21-71e7b2a7e034",
+          40000
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 99,
+      "domain": "model_profile_slots",
+      "operation": "UPDATE",
+      "semantic_key": "DRUM_C:DRUM_C",
+      "production_id": "4e544f7d-86bb-5e58-8d10-c8a9ef6a6223",
+      "field": "baseline_expected_clicks",
+      "current_value": 40000,
+      "proposed_value": null,
+      "classification": "RUNTIME_REQUIRED",
+      "runtime_impact": "Reverts only model_profile_slots.baseline_expected_clicks to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 2,
+      "rollback_value": 40000,
+      "precondition": {
+        "expected_current_value": 40000,
+        "already_rolled_back_value": null,
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE model_profile_slots SET baseline_expected_clicks = ? WHERE id = ? AND baseline_expected_clicks <=> ?",
+        "parameters": [
+          null,
+          "4e544f7d-86bb-5e58-8d10-c8a9ef6a6223",
+          40000
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 100,
+      "domain": "model_profile_slots",
+      "operation": "UPDATE",
+      "semantic_key": "DEVELOPING_UNIT_Y:DEVELOPING_UNIT_Y",
+      "production_id": "825b40be-251a-58ad-8d11-8e6773c99d64",
+      "field": "display_order",
+      "current_value": 13,
+      "proposed_value": 14,
+      "classification": "CANONICAL_METADATA",
+      "runtime_impact": "Reverts only model_profile_slots.display_order to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 2,
+      "rollback_value": 13,
+      "precondition": {
+        "expected_current_value": 13,
+        "already_rolled_back_value": 14,
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE model_profile_slots SET display_order = ? WHERE id = ? AND display_order <=> ?",
+        "parameters": [
+          14,
+          "825b40be-251a-58ad-8d11-8e6773c99d64",
+          13
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 101,
+      "domain": "model_profile_slots",
+      "operation": "UPDATE",
+      "semantic_key": "DEVELOPING_UNIT_Y:DEVELOPING_UNIT_Y",
+      "production_id": "825b40be-251a-58ad-8d11-8e6773c99d64",
+      "field": "baseline_expected_clicks",
+      "current_value": 200000,
+      "proposed_value": null,
+      "classification": "RUNTIME_REQUIRED",
+      "runtime_impact": "Reverts only model_profile_slots.baseline_expected_clicks to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 2,
+      "rollback_value": 200000,
+      "precondition": {
+        "expected_current_value": 200000,
+        "already_rolled_back_value": null,
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE model_profile_slots SET baseline_expected_clicks = ? WHERE id = ? AND baseline_expected_clicks <=> ?",
+        "parameters": [
+          null,
+          "825b40be-251a-58ad-8d11-8e6773c99d64",
+          200000
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 102,
+      "domain": "model_profile_slots",
+      "operation": "UPDATE",
+      "semantic_key": "DEVELOPING_UNIT_M:DEVELOPING_UNIT_M",
+      "production_id": "014126c2-2fe1-5736-9220-720826943035",
+      "field": "display_order",
+      "current_value": 12,
+      "proposed_value": 13,
+      "classification": "CANONICAL_METADATA",
+      "runtime_impact": "Reverts only model_profile_slots.display_order to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 2,
+      "rollback_value": 12,
+      "precondition": {
+        "expected_current_value": 12,
+        "already_rolled_back_value": 13,
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE model_profile_slots SET display_order = ? WHERE id = ? AND display_order <=> ?",
+        "parameters": [
+          13,
+          "014126c2-2fe1-5736-9220-720826943035",
+          12
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 103,
+      "domain": "model_profile_slots",
+      "operation": "UPDATE",
+      "semantic_key": "DEVELOPING_UNIT_M:DEVELOPING_UNIT_M",
+      "production_id": "014126c2-2fe1-5736-9220-720826943035",
+      "field": "baseline_expected_clicks",
+      "current_value": 200000,
+      "proposed_value": null,
+      "classification": "RUNTIME_REQUIRED",
+      "runtime_impact": "Reverts only model_profile_slots.baseline_expected_clicks to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 2,
+      "rollback_value": 200000,
+      "precondition": {
+        "expected_current_value": 200000,
+        "already_rolled_back_value": null,
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE model_profile_slots SET baseline_expected_clicks = ? WHERE id = ? AND baseline_expected_clicks <=> ?",
+        "parameters": [
+          null,
+          "014126c2-2fe1-5736-9220-720826943035",
+          200000
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 104,
+      "domain": "model_profile_slots",
+      "operation": "UPDATE",
+      "semantic_key": "DEVELOPING_UNIT_K:DEVELOPING_UNIT_K",
+      "production_id": "7ed94820-d201-5040-8915-9c7fac6b292d",
+      "field": "display_order",
+      "current_value": 14,
+      "proposed_value": 12,
+      "classification": "CANONICAL_METADATA",
+      "runtime_impact": "Reverts only model_profile_slots.display_order to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 2,
+      "rollback_value": 14,
+      "precondition": {
+        "expected_current_value": 14,
+        "already_rolled_back_value": 12,
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE model_profile_slots SET display_order = ? WHERE id = ? AND display_order <=> ?",
+        "parameters": [
+          12,
+          "7ed94820-d201-5040-8915-9c7fac6b292d",
+          14
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 105,
+      "domain": "model_profile_slots",
+      "operation": "UPDATE",
+      "semantic_key": "DEVELOPING_UNIT_K:DEVELOPING_UNIT_K",
+      "production_id": "7ed94820-d201-5040-8915-9c7fac6b292d",
+      "field": "baseline_expected_clicks",
+      "current_value": 200000,
+      "proposed_value": null,
+      "classification": "RUNTIME_REQUIRED",
+      "runtime_impact": "Reverts only model_profile_slots.baseline_expected_clicks to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 2,
+      "rollback_value": 200000,
+      "precondition": {
+        "expected_current_value": 200000,
+        "already_rolled_back_value": null,
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE model_profile_slots SET baseline_expected_clicks = ? WHERE id = ? AND baseline_expected_clicks <=> ?",
+        "parameters": [
+          null,
+          "7ed94820-d201-5040-8915-9c7fac6b292d",
+          200000
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 106,
+      "domain": "model_profile_slots",
+      "operation": "UPDATE",
+      "semantic_key": "DEVELOPING_UNIT_C:DEVELOPING_UNIT_C",
+      "production_id": "fb7be3df-45e0-540e-b820-07700f4947d5",
+      "field": "baseline_expected_clicks",
+      "current_value": 200000,
+      "proposed_value": null,
+      "classification": "RUNTIME_REQUIRED",
+      "runtime_impact": "Reverts only model_profile_slots.baseline_expected_clicks to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 2,
+      "rollback_value": 200000,
+      "precondition": {
+        "expected_current_value": 200000,
+        "already_rolled_back_value": null,
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE model_profile_slots SET baseline_expected_clicks = ? WHERE id = ? AND baseline_expected_clicks <=> ?",
+        "parameters": [
+          null,
+          "fb7be3df-45e0-540e-b820-07700f4947d5",
+          200000
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 107,
+      "domain": "model_profile_slots",
+      "operation": "UPDATE",
+      "semantic_key": "DEVELOPER_Y:DEVELOPER_Y",
+      "production_id": "b593db9d-39bf-5bfa-8afd-2d4b29d9d502",
+      "field": "display_order",
+      "current_value": 9,
+      "proposed_value": 10,
+      "classification": "CANONICAL_METADATA",
+      "runtime_impact": "Reverts only model_profile_slots.display_order to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 2,
+      "rollback_value": 9,
+      "precondition": {
+        "expected_current_value": 9,
+        "already_rolled_back_value": 10,
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE model_profile_slots SET display_order = ? WHERE id = ? AND display_order <=> ?",
+        "parameters": [
+          10,
+          "b593db9d-39bf-5bfa-8afd-2d4b29d9d502",
+          9
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 108,
+      "domain": "model_profile_slots",
+      "operation": "UPDATE",
+      "semantic_key": "DEVELOPER_Y:DEVELOPER_Y",
+      "production_id": "b593db9d-39bf-5bfa-8afd-2d4b29d9d502",
+      "field": "baseline_expected_clicks",
+      "current_value": 100000,
+      "proposed_value": null,
+      "classification": "RUNTIME_REQUIRED",
+      "runtime_impact": "Reverts only model_profile_slots.baseline_expected_clicks to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 2,
+      "rollback_value": 100000,
+      "precondition": {
+        "expected_current_value": 100000,
+        "already_rolled_back_value": null,
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE model_profile_slots SET baseline_expected_clicks = ? WHERE id = ? AND baseline_expected_clicks <=> ?",
+        "parameters": [
+          null,
+          "b593db9d-39bf-5bfa-8afd-2d4b29d9d502",
+          100000
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 109,
+      "domain": "model_profile_slots",
+      "operation": "UPDATE",
+      "semantic_key": "DEVELOPER_M:DEVELOPER_M",
+      "production_id": "a4627c1a-5d85-5802-8bee-7be2435a1551",
+      "field": "display_order",
+      "current_value": 8,
+      "proposed_value": 9,
+      "classification": "CANONICAL_METADATA",
+      "runtime_impact": "Reverts only model_profile_slots.display_order to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 2,
+      "rollback_value": 8,
+      "precondition": {
+        "expected_current_value": 8,
+        "already_rolled_back_value": 9,
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE model_profile_slots SET display_order = ? WHERE id = ? AND display_order <=> ?",
+        "parameters": [
+          9,
+          "a4627c1a-5d85-5802-8bee-7be2435a1551",
+          8
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 110,
+      "domain": "model_profile_slots",
+      "operation": "UPDATE",
+      "semantic_key": "DEVELOPER_M:DEVELOPER_M",
+      "production_id": "a4627c1a-5d85-5802-8bee-7be2435a1551",
+      "field": "baseline_expected_clicks",
+      "current_value": 100000,
+      "proposed_value": null,
+      "classification": "RUNTIME_REQUIRED",
+      "runtime_impact": "Reverts only model_profile_slots.baseline_expected_clicks to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 2,
+      "rollback_value": 100000,
+      "precondition": {
+        "expected_current_value": 100000,
+        "already_rolled_back_value": null,
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE model_profile_slots SET baseline_expected_clicks = ? WHERE id = ? AND baseline_expected_clicks <=> ?",
+        "parameters": [
+          null,
+          "a4627c1a-5d85-5802-8bee-7be2435a1551",
+          100000
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 111,
+      "domain": "model_profile_slots",
+      "operation": "UPDATE",
+      "semantic_key": "DEVELOPER_K:DEVELOPER_K",
+      "production_id": "2aad1ad6-9d96-5b2c-9de6-e3202ee1bea8",
+      "field": "display_order",
+      "current_value": 10,
+      "proposed_value": 8,
+      "classification": "CANONICAL_METADATA",
+      "runtime_impact": "Reverts only model_profile_slots.display_order to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 2,
+      "rollback_value": 10,
+      "precondition": {
+        "expected_current_value": 10,
+        "already_rolled_back_value": 8,
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE model_profile_slots SET display_order = ? WHERE id = ? AND display_order <=> ?",
+        "parameters": [
+          8,
+          "2aad1ad6-9d96-5b2c-9de6-e3202ee1bea8",
+          10
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 112,
+      "domain": "model_profile_slots",
+      "operation": "UPDATE",
+      "semantic_key": "DEVELOPER_K:DEVELOPER_K",
+      "production_id": "2aad1ad6-9d96-5b2c-9de6-e3202ee1bea8",
+      "field": "baseline_expected_clicks",
+      "current_value": 100000,
+      "proposed_value": null,
+      "classification": "RUNTIME_REQUIRED",
+      "runtime_impact": "Reverts only model_profile_slots.baseline_expected_clicks to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 2,
+      "rollback_value": 100000,
+      "precondition": {
+        "expected_current_value": 100000,
+        "already_rolled_back_value": null,
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE model_profile_slots SET baseline_expected_clicks = ? WHERE id = ? AND baseline_expected_clicks <=> ?",
+        "parameters": [
+          null,
+          "2aad1ad6-9d96-5b2c-9de6-e3202ee1bea8",
+          100000
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 113,
+      "domain": "model_profile_slots",
+      "operation": "UPDATE",
+      "semantic_key": "DEVELOPER_C:DEVELOPER_C",
+      "production_id": "ca9e6e38-9903-520e-9bdc-172bf3623274",
+      "field": "baseline_expected_clicks",
+      "current_value": 100000,
+      "proposed_value": null,
+      "classification": "RUNTIME_REQUIRED",
+      "runtime_impact": "Reverts only model_profile_slots.baseline_expected_clicks to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 2,
+      "rollback_value": 100000,
+      "precondition": {
+        "expected_current_value": 100000,
+        "already_rolled_back_value": null,
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE model_profile_slots SET baseline_expected_clicks = ? WHERE id = ? AND baseline_expected_clicks <=> ?",
+        "parameters": [
+          null,
+          "ca9e6e38-9903-520e-9bdc-172bf3623274",
+          100000
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 114,
+      "domain": "model_profile_slots",
+      "operation": "UPDATE",
+      "semantic_key": "CLEANING_UNIT:CLEANING_UNIT",
+      "production_id": "768b4d40-3b7e-548e-a362-059429d8a219",
+      "field": "baseline_expected_clicks",
+      "current_value": 200000,
+      "proposed_value": null,
+      "classification": "RUNTIME_REQUIRED",
+      "runtime_impact": "Reverts only model_profile_slots.baseline_expected_clicks to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 2,
+      "rollback_value": 200000,
+      "precondition": {
+        "expected_current_value": 200000,
+        "already_rolled_back_value": null,
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE model_profile_slots SET baseline_expected_clicks = ? WHERE id = ? AND baseline_expected_clicks <=> ?",
+        "parameters": [
+          null,
+          "768b4d40-3b7e-548e-a362-059429d8a219",
+          200000
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 115,
+      "domain": "model_profile_slots",
+      "operation": "UPDATE",
+      "semantic_key": "CLEANING_BLADE:CLEANING_BLADE",
+      "production_id": "1298037e-20f7-5e52-85cf-d1519e8bdc42",
+      "field": "baseline_expected_clicks",
+      "current_value": 100000,
+      "proposed_value": null,
+      "classification": "RUNTIME_REQUIRED",
+      "runtime_impact": "Reverts only model_profile_slots.baseline_expected_clicks to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 2,
+      "rollback_value": 100000,
+      "precondition": {
+        "expected_current_value": 100000,
+        "already_rolled_back_value": null,
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE model_profile_slots SET baseline_expected_clicks = ? WHERE id = ? AND baseline_expected_clicks <=> ?",
+        "parameters": [
+          null,
+          "1298037e-20f7-5e52-85cf-d1519e8bdc42",
+          100000
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 116,
+      "domain": "model_profile_slots",
+      "operation": "UPDATE",
+      "semantic_key": "CHARGING_CORONA_Y:CHARGING_CORONA_Y",
+      "production_id": "9279779b-a17c-5099-911c-dee89a6c49f3",
+      "field": "display_order",
+      "current_value": 3,
+      "proposed_value": 4,
+      "classification": "CANONICAL_METADATA",
+      "runtime_impact": "Reverts only model_profile_slots.display_order to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 2,
+      "rollback_value": 3,
+      "precondition": {
+        "expected_current_value": 3,
+        "already_rolled_back_value": 4,
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE model_profile_slots SET display_order = ? WHERE id = ? AND display_order <=> ?",
+        "parameters": [
+          4,
+          "9279779b-a17c-5099-911c-dee89a6c49f3",
+          3
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 117,
+      "domain": "model_profile_slots",
+      "operation": "UPDATE",
+      "semantic_key": "CHARGING_CORONA_Y:CHARGING_CORONA_Y",
+      "production_id": "9279779b-a17c-5099-911c-dee89a6c49f3",
+      "field": "baseline_expected_clicks",
+      "current_value": 40000,
+      "proposed_value": null,
+      "classification": "RUNTIME_REQUIRED",
+      "runtime_impact": "Reverts only model_profile_slots.baseline_expected_clicks to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 2,
+      "rollback_value": 40000,
+      "precondition": {
+        "expected_current_value": 40000,
+        "already_rolled_back_value": null,
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE model_profile_slots SET baseline_expected_clicks = ? WHERE id = ? AND baseline_expected_clicks <=> ?",
+        "parameters": [
+          null,
+          "9279779b-a17c-5099-911c-dee89a6c49f3",
+          40000
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 118,
+      "domain": "model_profile_slots",
+      "operation": "UPDATE",
+      "semantic_key": "CHARGING_CORONA_M:CHARGING_CORONA_M",
+      "production_id": "3b92068b-db24-53ff-a28c-50fd7bd67aac",
+      "field": "display_order",
+      "current_value": 2,
+      "proposed_value": 3,
+      "classification": "CANONICAL_METADATA",
+      "runtime_impact": "Reverts only model_profile_slots.display_order to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 2,
+      "rollback_value": 2,
+      "precondition": {
+        "expected_current_value": 2,
+        "already_rolled_back_value": 3,
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE model_profile_slots SET display_order = ? WHERE id = ? AND display_order <=> ?",
+        "parameters": [
+          3,
+          "3b92068b-db24-53ff-a28c-50fd7bd67aac",
+          2
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 119,
+      "domain": "model_profile_slots",
+      "operation": "UPDATE",
+      "semantic_key": "CHARGING_CORONA_M:CHARGING_CORONA_M",
+      "production_id": "3b92068b-db24-53ff-a28c-50fd7bd67aac",
+      "field": "baseline_expected_clicks",
+      "current_value": 40000,
+      "proposed_value": null,
+      "classification": "RUNTIME_REQUIRED",
+      "runtime_impact": "Reverts only model_profile_slots.baseline_expected_clicks to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 2,
+      "rollback_value": 40000,
+      "precondition": {
+        "expected_current_value": 40000,
+        "already_rolled_back_value": null,
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE model_profile_slots SET baseline_expected_clicks = ? WHERE id = ? AND baseline_expected_clicks <=> ?",
+        "parameters": [
+          null,
+          "3b92068b-db24-53ff-a28c-50fd7bd67aac",
+          40000
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 120,
+      "domain": "model_profile_slots",
+      "operation": "UPDATE",
+      "semantic_key": "CHARGING_CORONA_K:CHARGING_CORONA_K",
+      "production_id": "5dc2c7e4-3a9b-56f1-8b7c-8eb129a94f71",
+      "field": "display_order",
+      "current_value": 4,
+      "proposed_value": 2,
+      "classification": "CANONICAL_METADATA",
+      "runtime_impact": "Reverts only model_profile_slots.display_order to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 2,
+      "rollback_value": 4,
+      "precondition": {
+        "expected_current_value": 4,
+        "already_rolled_back_value": 2,
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE model_profile_slots SET display_order = ? WHERE id = ? AND display_order <=> ?",
+        "parameters": [
+          2,
+          "5dc2c7e4-3a9b-56f1-8b7c-8eb129a94f71",
+          4
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 121,
+      "domain": "model_profile_slots",
+      "operation": "UPDATE",
+      "semantic_key": "CHARGING_CORONA_K:CHARGING_CORONA_K",
+      "production_id": "5dc2c7e4-3a9b-56f1-8b7c-8eb129a94f71",
+      "field": "baseline_expected_clicks",
+      "current_value": 40000,
+      "proposed_value": null,
+      "classification": "RUNTIME_REQUIRED",
+      "runtime_impact": "Reverts only model_profile_slots.baseline_expected_clicks to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 2,
+      "rollback_value": 40000,
+      "precondition": {
+        "expected_current_value": 40000,
+        "already_rolled_back_value": null,
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE model_profile_slots SET baseline_expected_clicks = ? WHERE id = ? AND baseline_expected_clicks <=> ?",
+        "parameters": [
+          null,
+          "5dc2c7e4-3a9b-56f1-8b7c-8eb129a94f71",
+          40000
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 122,
+      "domain": "model_profile_slots",
+      "operation": "UPDATE",
+      "semantic_key": "CHARGING_CORONA_C:CHARGING_CORONA_C",
+      "production_id": "bf8ceb7c-6766-5898-bd4d-7aa4f0e0ee1b",
+      "field": "baseline_expected_clicks",
+      "current_value": 40000,
+      "proposed_value": null,
+      "classification": "RUNTIME_REQUIRED",
+      "runtime_impact": "Reverts only model_profile_slots.baseline_expected_clicks to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 2,
+      "rollback_value": 40000,
+      "precondition": {
+        "expected_current_value": 40000,
+        "already_rolled_back_value": null,
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE model_profile_slots SET baseline_expected_clicks = ? WHERE id = ? AND baseline_expected_clicks <=> ?",
+        "parameters": [
+          null,
+          "bf8ceb7c-6766-5898-bd4d-7aa4f0e0ee1b",
+          40000
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 123,
+      "domain": "component_catalogs",
+      "operation": "UPDATE",
+      "semantic_key": "TONER_Y",
+      "production_id": "a642ca29-0cc1-5e84-965e-c68c9b920521",
+      "field": "tracking_method",
+      "current_value": "consumption_based",
+      "proposed_value": "counter_based",
+      "classification": "RUNTIME_REQUIRED",
+      "runtime_impact": "Reverts only component_catalogs.tracking_method to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 3,
+      "rollback_value": "consumption_based",
+      "precondition": {
+        "expected_current_value": "consumption_based",
+        "already_rolled_back_value": "counter_based",
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE component_catalogs SET tracking_method = ? WHERE id = ? AND tracking_method <=> ?",
+        "parameters": [
+          "counter_based",
+          "a642ca29-0cc1-5e84-965e-c68c9b920521",
+          "consumption_based"
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 124,
+      "domain": "component_catalogs",
+      "operation": "UPDATE",
+      "semantic_key": "TONER_M",
+      "production_id": "a4c7ff16-d0cd-5721-b250-5b71eba5781e",
+      "field": "tracking_method",
+      "current_value": "consumption_based",
+      "proposed_value": "counter_based",
+      "classification": "RUNTIME_REQUIRED",
+      "runtime_impact": "Reverts only component_catalogs.tracking_method to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 3,
+      "rollback_value": "consumption_based",
+      "precondition": {
+        "expected_current_value": "consumption_based",
+        "already_rolled_back_value": "counter_based",
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE component_catalogs SET tracking_method = ? WHERE id = ? AND tracking_method <=> ?",
+        "parameters": [
+          "counter_based",
+          "a4c7ff16-d0cd-5721-b250-5b71eba5781e",
+          "consumption_based"
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 125,
+      "domain": "component_catalogs",
+      "operation": "UPDATE",
+      "semantic_key": "TONER_K",
+      "production_id": "9bb09fd5-ca96-5a49-ad1d-8b7b6204e38a",
+      "field": "tracking_method",
+      "current_value": "consumption_based",
+      "proposed_value": "counter_based",
+      "classification": "RUNTIME_REQUIRED",
+      "runtime_impact": "Reverts only component_catalogs.tracking_method to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 3,
+      "rollback_value": "consumption_based",
+      "precondition": {
+        "expected_current_value": "consumption_based",
+        "already_rolled_back_value": "counter_based",
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE component_catalogs SET tracking_method = ? WHERE id = ? AND tracking_method <=> ?",
+        "parameters": [
+          "counter_based",
+          "9bb09fd5-ca96-5a49-ad1d-8b7b6204e38a",
+          "consumption_based"
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    },
+    {
+      "sequence": 126,
+      "domain": "component_catalogs",
+      "operation": "UPDATE",
+      "semantic_key": "TONER_C",
+      "production_id": "c42fe878-ab48-5188-9d28-16e33cad0e46",
+      "field": "tracking_method",
+      "current_value": "consumption_based",
+      "proposed_value": "counter_based",
+      "classification": "RUNTIME_REQUIRED",
+      "runtime_impact": "Reverts only component_catalogs.tracking_method to the exact captured Production value.",
+      "reason": "Offline rollback of the corresponding planned component configuration update.",
+      "dependency_order": 3,
+      "rollback_value": "consumption_based",
+      "precondition": {
+        "expected_current_value": "consumption_based",
+        "already_rolled_back_value": "counter_based",
+        "unexpected_state_action": "FAIL_CLOSED"
+      },
+      "compare_and_set": {
+        "sql_template": "UPDATE component_catalogs SET tracking_method = ? WHERE id = ? AND tracking_method <=> ?",
+        "parameters": [
+          "counter_based",
+          "c42fe878-ab48-5188-9d28-16e33cad0e46",
+          "consumption_based"
+        ],
+        "required_affected_rows": 1,
+        "idempotent_already_rolled_back_result": "NO_OP_AFTER_READ_VERIFICATION"
+      }
+    }
+  ]
+}

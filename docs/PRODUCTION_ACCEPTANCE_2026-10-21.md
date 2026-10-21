@@ -28,4 +28,4 @@ Evidence labels: **PROD** verified in Production now · **CI** verified by autom
 
 ## Still tracked (not complete)
 
-M2.12F Reconciliation (next priority) · Assisted Knowledge Coverage Verification · J-code Team Feedback · M2.20D Deferred Audit Events · other deferred V2+ milestones.
+M2.12F Reconciliation: implemented scope closed (see `M2_12F_FULL_DOMAIN_RECONCILIATION.md`); open owner decisions: 2 deferred historical counters (need atomic relink), 76 ambiguous records · CSV formula neutralization (G-P1) still open · Assisted Knowledge Coverage Verification · J-code Team Feedback · M2.20D Deferred Audit Events · other deferred V2+ milestones.

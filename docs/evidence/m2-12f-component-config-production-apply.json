@@ -1,0 +1,77 @@
+{
+  "checkpoint": "M2.12F_COMPONENT_CONFIG_PRODUCTION_APPLY",
+  "status": "READY",
+  "executed_at_utc": "2026-09-03T21:29:33Z",
+  "target": {
+    "database": "u777904340_a3production",
+    "machine_code": "CG-TUP-A3-01",
+    "machine_id": "708e199e-7f77-4219-b278-37d0b94821d4"
+  },
+  "artifact_validation": {
+    "patch": "PASS",
+    "rollback": "PASS",
+    "field_update_count": 126,
+    "distinct_row_count": 60
+  },
+  "pre_patch_backup": {
+    "status": "PASS",
+    "private_path": "/home/u777904340/m2-12f-backups/component-config-20260903T212931Z/production-pre-component-config.sql.gz",
+    "captured_at_utc": "2026-09-03T21:29:33Z",
+    "size_bytes": 65899,
+    "sha256": "e189d0c7de6e61d9acda7f1f41e3c3a8510cfc557b650ea2bac590ee38a6ab4f"
+  },
+  "precondition_audit": {
+    "status": "PASS",
+    "match": 126,
+    "already_target": 0,
+    "unexpected": 0
+  },
+  "transaction": {
+    "status": "COMMITTED",
+    "applied_fields": 126,
+    "already_target": 0,
+    "failed_compare_and_set": 0
+  },
+  "post_patch": {
+    "component_catalogs": 28,
+    "model_profiles": 1,
+    "model_profile_slots": 28,
+    "machine_components": 28,
+    "configured_c1070_slots": 28,
+    "lifecycles": 47,
+    "active_lifecycles": 0,
+    "closed_lifecycles": 47,
+    "latest_counter": 1441597,
+    "target_value_matches": 126,
+    "production_row_count_change": 0,
+    "prohibited_table_fingerprints_unchanged": true,
+    "immutable_target_fields_unchanged": true
+  },
+  "runtime_shape_read_only_validation": {
+    "status": "PASS",
+    "configured_c1070_slots": 28,
+    "closed_lifecycles": 47,
+    "active_lifecycles": 0,
+    "latest_counter": 1441597,
+    "machine_identity_unchanged": true
+  },
+  "rollback_plan_ready": true,
+  "post_patch_backup": {
+    "status": "PASS",
+    "private_path": "/home/u777904340/m2-12f-backups/component-config-20260903T212931Z/production-post-component-config.sql.gz",
+    "captured_at_utc": "2026-09-03T21:29:33Z",
+    "size_bytes": 65998,
+    "sha256": "3c03569c036fd37d4fd9e736b13ab2ee1c5c7e4b47b9d832110ecf77384229a1"
+  },
+  "prohibited_actions": {
+    "production_schema_mutation": false,
+    "public_html_mutation": false,
+    "application_deployment": false,
+    "counter_backfill": false,
+    "lifecycle_mutation": false,
+    "inventory_mutation": false,
+    "selling_price_write": false,
+    "auth_mutation": false
+  },
+  "legacy_freeze": "REMAINS_ACTIVE"
+}

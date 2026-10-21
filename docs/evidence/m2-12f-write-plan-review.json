@@ -1,0 +1,1320 @@
+{
+  "checkpoint": "M2.12F",
+  "status": "READY",
+  "mode": "STRICT_OFFLINE_WRITE_PLAN_AND_COMPONENT_DIFF_REVIEW",
+  "capture_identity": {
+    "invalid_rendered_value": "94bfe30b539fb490b59e349e2d271ba594de882863f2f17dc34351482786bc5e16",
+    "invalid_rendered_length": 66,
+    "operator_observed_value_length": 64,
+    "new_supabase_capture_path": "/Users/imadprakoso/Projects/konica-tracker-next/.migration-private/m2-12f/20260903T094556Z/new-supabase.json",
+    "new_supabase_sha256_verified": "94bfe30b539fb490b59e349e2d271ba594de882863f2f17dc34351482786bc5e",
+    "production_mariadb_capture_path": "/Users/imadprakoso/Projects/konica-tracker-next/.migration-private/m2-12f/20260903T094556Z/production-mariadb.json",
+    "production_mariadb_sha256_verified": "6c79b0be60bc62e622f348c660a29aaf9191062b20793ada304222fd886e5e16",
+    "reconciliation_artifact_input_match": true,
+    "public_evidence_capture_is_not_reconciliation_input": true,
+    "verification": "PASS"
+  },
+  "write_reviews": [
+    {
+      "domain": "counters",
+      "proposed_operation": "CREATE historical effective counter fact (not executed)",
+      "source_semantic_identity": "CG-TUP-A3-01:total_impressions:2026-08-26T11:15:00+00:00:1437283",
+      "source_value": 1437283,
+      "source_timestamp_effective_timestamp": "2026-08-26T11:15:00+00:00",
+      "source_status": "effective",
+      "source_method": "manual",
+      "production_semantic_target": "CG-TUP-A3-01 / total_impressions",
+      "current_production_value_state": "ABSENT; exact machine/type/value/effective-time fact is not present",
+      "counter_type_validation": {
+        "code": "total_impressions",
+        "source_unit": "impressions",
+        "production_unit": "count",
+        "mapped": true,
+        "monotonic": true
+      },
+      "immediately_previous_production_counter": {
+        "value": 1436493,
+        "observed_at": "2026-08-24 13:00:59"
+      },
+      "immediately_next_production_counter": {
+        "value": 1437911,
+        "observed_at": "2026-08-26 14:19:59"
+      },
+      "proposed_delta_from_previous": 790,
+      "proposed_delta_to_next": 628,
+      "why_not_already_represented": "No Production counter has this semantic machine, type, value, and effective date/time; the exact value is absent.",
+      "why_not_legacy_duplicate": "The fact is a unique manual source row, and no legacy-import Production row has its value or source semantic identity.",
+      "why_not_dev_test_data": "It belongs to the canonical Tuparev machine, is effective/manual, contains no test marker, and is inside the accepted operational chronology.",
+      "why_canonical_or_operationally_valid": "The machine and monotonic counter type resolve semantically; the value lies strictly between surrounding effective Production values.",
+      "duplicate_checks": {
+        "migrated_legacy_counter": false,
+        "existing_production_counter": false,
+        "another_supabase_uuid": false
+      },
+      "historical_parity_required": true,
+      "why_historical_parity_requires_the_fact": "The captured source history contains this unique effective Tuparev reading and Production does not; row-level historical parity cannot be reached without representing it.",
+      "impossible_click_delta_check": "VALUE_ORDER_PASS_BUT_LINKAGE_PLAN_INCOMPLETE",
+      "linkage_risk": "Production usage follows previous_reading_id. A CREATE-only backfill does not re-link the successor (2026-08-26 14:19:59); derived daily/period clicks can diverge or double-count. The normal create service also rejects timestamps older than the latest effective reading.",
+      "downstream_effect_if_applied": "With an explicit atomic predecessor/successor relink, restores the missing historical reading while preserving total click continuity; CREATE alone is unsafe.",
+      "downstream_effect_if_skipped": "Production remains two facts short of source history, while its existing aggregate counter progression remains internally consistent.",
+      "confidence": "HIGH_VALID_FACT_HIGH_UNSAFE_CREATE_ONLY",
+      "operator_approval_recommendation": "DEFER"
+    },
+    {
+      "domain": "counters",
+      "proposed_operation": "CREATE historical effective counter fact (not executed)",
+      "source_semantic_identity": "CG-TUP-A3-01:total_impressions:2026-08-27T15:08:00+00:00:1438992",
+      "source_value": 1438992,
+      "source_timestamp_effective_timestamp": "2026-08-27T15:08:00+00:00",
+      "source_status": "effective",
+      "source_method": "manual",
+      "production_semantic_target": "CG-TUP-A3-01 / total_impressions",
+      "current_production_value_state": "ABSENT; exact machine/type/value/effective-time fact is not present",
+      "counter_type_validation": {
+        "code": "total_impressions",
+        "source_unit": "impressions",
+        "production_unit": "count",
+        "mapped": true,
+        "monotonic": true
+      },
+      "immediately_previous_production_counter": {
+        "value": 1437911,
+        "observed_at": "2026-08-26 14:19:59"
+      },
+      "immediately_next_production_counter": {
+        "value": 1440211,
+        "observed_at": "2026-08-28 12:09:54"
+      },
+      "proposed_delta_from_previous": 1081,
+      "proposed_delta_to_next": 1219,
+      "why_not_already_represented": "No Production counter has this semantic machine, type, value, and effective date/time; the exact value is absent.",
+      "why_not_legacy_duplicate": "The fact is a unique manual source row, and no legacy-import Production row has its value or source semantic identity.",
+      "why_not_dev_test_data": "It belongs to the canonical Tuparev machine, is effective/manual, contains no test marker, and is inside the accepted operational chronology.",
+      "why_canonical_or_operationally_valid": "The machine and monotonic counter type resolve semantically; the value lies strictly between surrounding effective Production values.",
+      "duplicate_checks": {
+        "migrated_legacy_counter": false,
+        "existing_production_counter": false,
+        "another_supabase_uuid": false
+      },
+      "historical_parity_required": true,
+      "why_historical_parity_requires_the_fact": "The captured source history contains this unique effective Tuparev reading and Production does not; row-level historical parity cannot be reached without representing it.",
+      "impossible_click_delta_check": "VALUE_ORDER_PASS_BUT_LINKAGE_PLAN_INCOMPLETE",
+      "linkage_risk": "Production usage follows previous_reading_id. A CREATE-only backfill does not re-link the successor (2026-08-28 12:09:54); derived daily/period clicks can diverge or double-count. The normal create service also rejects timestamps older than the latest effective reading.",
+      "downstream_effect_if_applied": "With an explicit atomic predecessor/successor relink, restores the missing historical reading while preserving total click continuity; CREATE alone is unsafe.",
+      "downstream_effect_if_skipped": "Production remains two facts short of source history, while its existing aggregate counter progression remains internally consistent.",
+      "confidence": "HIGH_VALID_FACT_HIGH_UNSAFE_CREATE_ONLY",
+      "operator_approval_recommendation": "DEFER"
+    }
+  ],
+  "selling_price_review": {
+    "domain": "machine_cost_source_facts",
+    "proposed_operation": "CREATE",
+    "supabase_owner": "public.machine_selling_prices / machine selling-price domain",
+    "source_semantic_identity": "CG-TUP-A3-01 / selling price",
+    "value_and_units": "1000 IDR per click",
+    "source_value": 1000,
+    "source_units": "IDR per click",
+    "source_timestamp_effective_timestamp": "2026-08-28T12:55:00+00:00",
+    "effective_from": "2026-08-28T12:55:00+00:00",
+    "source_state": "voided",
+    "test_evidence": "void_reason=\"test set selling price\"",
+    "production_semantic_target": "CG-TUP-A3-01 / machine_selling_prices effective-dated fact",
+    "current_production_value_state": "Production machine_selling_prices is empty; no equivalent posted or voided value exists elsewhere in the captured machine-cost fact tables.",
+    "fact_classification": "effective-dated persisted configuration/historical evidence, not a derived value",
+    "application_consumption": "Laravel reads this table for selling-price history, but the current Laravel period summary does not apply it to current price/revenue/contribution calculations. A voided row would only add test history, not runtime parity.",
+    "runtime_parity_required": false,
+    "dev_only_risk": "PROVEN_TEST_DATA",
+    "why_not_already_represented": "No Production row exists.",
+    "why_not_legacy_duplicate": "No Production equivalent exists, but absence does not make a voided test row canonical.",
+    "why_not_dev_test_data": "It is DEV/test data: the source itself says it was voided for “test set selling price.”",
+    "why_canonical_or_operationally_valid": "It is neither canonical nor operationally valid for Production.",
+    "downstream_effect_if_applied": "Would import a voided DEV test artifact and expose misleading price history without providing current-price runtime parity.",
+    "downstream_effect_if_skipped": "Production correctly remains without a selling price until an operator creates a real posted Production value.",
+    "confidence": "HIGH",
+    "operator_approval_recommendation": "REJECT",
+    "write_plan_modified": true
+  },
+  "component_diff_review": {
+    "classification": "DIFF_FOUND",
+    "reconciliation_required": "YES",
+    "causes": {
+      "uuid_differences": "representational only; ignored for semantic matching and never updated",
+      "nullable_default_representation": "present, but baseline nulls are runtime-significant rather than harmless defaults",
+      "ordering": "15 profile slots and the same 15 machine assignments differ",
+      "naming": "catalog display names/categories and source-type vocabulary differ; catalog metadata is audit context, while source_type maps semantically to inherited",
+      "tracking_method": "4 toner rows differ at catalog, profile-slot, and assignment levels",
+      "metadata": "timestamps, creator IDs, adaptive fields absent from the Laravel schema, and display metadata are not identity mismatches",
+      "model_profile_structure": "Supabase direct model-component rows map to the sole Production model profile and its slots",
+      "actual_missing_canonical_semantics": "expected-life baselines, canonical order, toner tracking, and inherited assignment semantics"
+    },
+    "catalog_tracking_differences": [
+      {
+        "semantic_key": "TONER_C",
+        "supabase_tracking_value": "consumption_based",
+        "production_tracking_value": "counter_based",
+        "runtime_behavior": "Changes the catalog default and rendered tracking classification from counter-based to toner yield/consumption-based.",
+        "canonical_recommendation": "UPDATE_TO_CANONICAL_SOURCE_VALUE"
+      },
+      {
+        "semantic_key": "TONER_K",
+        "supabase_tracking_value": "consumption_based",
+        "production_tracking_value": "counter_based",
+        "runtime_behavior": "Changes the catalog default and rendered tracking classification from counter-based to toner yield/consumption-based.",
+        "canonical_recommendation": "UPDATE_TO_CANONICAL_SOURCE_VALUE"
+      },
+      {
+        "semantic_key": "TONER_M",
+        "supabase_tracking_value": "consumption_based",
+        "production_tracking_value": "counter_based",
+        "runtime_behavior": "Changes the catalog default and rendered tracking classification from counter-based to toner yield/consumption-based.",
+        "canonical_recommendation": "UPDATE_TO_CANONICAL_SOURCE_VALUE"
+      },
+      {
+        "semantic_key": "TONER_Y",
+        "supabase_tracking_value": "consumption_based",
+        "production_tracking_value": "counter_based",
+        "runtime_behavior": "Changes the catalog default and rendered tracking classification from counter-based to toner yield/consumption-based.",
+        "canonical_recommendation": "UPDATE_TO_CANONICAL_SOURCE_VALUE"
+      }
+    ],
+    "profile_slot_differences_by_field": [
+      {
+        "field": "baseline_expected_clicks",
+        "affected_rows": 28,
+        "supabase_values": {
+          "14000": 4,
+          "40000": 8,
+          "100000": 5,
+          "150000": 2,
+          "200000": 7,
+          "250000": 1,
+          "300000": 1
+        },
+        "production_values": {
+          "null": 28
+        },
+        "cause": "actual missing canonical expected-life semantics",
+        "runtime_affecting": true
+      },
+      {
+        "field": "display_order",
+        "affected_rows": 15,
+        "cause": "ordering; Production orders K before M/Y while canonical C1070 order is C/M/Y/K",
+        "runtime_affecting": true
+      },
+      {
+        "field": "tracking_method",
+        "affected_rows": 4,
+        "semantic_keys": [
+          "TONER_C",
+          "TONER_K",
+          "TONER_M",
+          "TONER_Y"
+        ],
+        "cause": "tracking method",
+        "runtime_affecting": true
+      }
+    ],
+    "machine_component_differences_by_field": [
+      {
+        "field": "baseline_expected_clicks",
+        "affected_rows": 28,
+        "supabase_values": {
+          "14000": 4,
+          "40000": 8,
+          "100000": 5,
+          "150000": 2,
+          "200000": 7,
+          "250000": 1,
+          "300000": 1
+        },
+        "production_values": {
+          "null": 28
+        },
+        "cause": "actual missing canonical expected-life semantics",
+        "runtime_affecting": true
+      },
+      {
+        "field": "source_type",
+        "affected_rows": 28,
+        "supabase_value": "model_profile",
+        "production_value": "configured",
+        "target_semantic_value": "inherited",
+        "cause": "naming/vocabulary plus actual lifecycle-management behavior",
+        "runtime_affecting": true
+      },
+      {
+        "field": "display_order",
+        "affected_rows": 15,
+        "cause": "ordering",
+        "runtime_affecting": true
+      },
+      {
+        "field": "tracking_method",
+        "affected_rows": 4,
+        "semantic_keys": [
+          "TONER_C",
+          "TONER_K",
+          "TONER_M",
+          "TONER_Y"
+        ],
+        "cause": "tracking method",
+        "runtime_affecting": true
+      }
+    ],
+    "matching_fields": {
+      "profile_slots": [
+        "semantic model/slot/component identity",
+        "active state"
+      ],
+      "machine_components": [
+        "semantic machine/slot/component identity",
+        "status",
+        "active state",
+        "threshold percentages"
+      ]
+    },
+    "lifecycle_safety": {
+      "create_lifecycle": false,
+      "duplicate_catalog_profile_slot_or_assignment": false,
+      "existing_assignments_preserved": 28,
+      "closed_lifecycles_preserved": 47,
+      "ambiguous_incomplete_reference_lifecycles_excluded": 28
+    },
+    "update_only_candidates": [
+      {
+        "domain": "component_catalogs",
+        "candidates": [
+          {
+            "domain": "component_catalogs",
+            "operation": "UPDATE",
+            "semantic_key": "TONER_C",
+            "current": {
+              "tracking_method": "counter_based"
+            },
+            "proposed": {
+              "tracking_method": "consumption_based"
+            },
+            "runtime_effect": "Changes the catalog default and rendered tracking classification from counter-based to toner yield/consumption-based.",
+            "canonical_recommendation": "UPDATE_TO_CANONICAL_SOURCE_VALUE"
+          },
+          {
+            "domain": "component_catalogs",
+            "operation": "UPDATE",
+            "semantic_key": "TONER_K",
+            "current": {
+              "tracking_method": "counter_based"
+            },
+            "proposed": {
+              "tracking_method": "consumption_based"
+            },
+            "runtime_effect": "Changes the catalog default and rendered tracking classification from counter-based to toner yield/consumption-based.",
+            "canonical_recommendation": "UPDATE_TO_CANONICAL_SOURCE_VALUE"
+          },
+          {
+            "domain": "component_catalogs",
+            "operation": "UPDATE",
+            "semantic_key": "TONER_M",
+            "current": {
+              "tracking_method": "counter_based"
+            },
+            "proposed": {
+              "tracking_method": "consumption_based"
+            },
+            "runtime_effect": "Changes the catalog default and rendered tracking classification from counter-based to toner yield/consumption-based.",
+            "canonical_recommendation": "UPDATE_TO_CANONICAL_SOURCE_VALUE"
+          },
+          {
+            "domain": "component_catalogs",
+            "operation": "UPDATE",
+            "semantic_key": "TONER_Y",
+            "current": {
+              "tracking_method": "counter_based"
+            },
+            "proposed": {
+              "tracking_method": "consumption_based"
+            },
+            "runtime_effect": "Changes the catalog default and rendered tracking classification from counter-based to toner yield/consumption-based.",
+            "canonical_recommendation": "UPDATE_TO_CANONICAL_SOURCE_VALUE"
+          }
+        ]
+      },
+      {
+        "domain": "model_profile_slots",
+        "candidates": [
+          {
+            "domain": "model_profile_slots",
+            "operation": "UPDATE",
+            "semantic_key": "CHARGING_CORONA_C:CHARGING_CORONA_C",
+            "current": {
+              "tracking_method": "counter_based",
+              "baseline_expected_clicks": null,
+              "display_order": 1
+            },
+            "proposed": {
+              "tracking_method": "counter_based",
+              "baseline_expected_clicks": 40000,
+              "display_order": 1
+            }
+          },
+          {
+            "domain": "model_profile_slots",
+            "operation": "UPDATE",
+            "semantic_key": "CHARGING_CORONA_M:CHARGING_CORONA_M",
+            "current": {
+              "tracking_method": "counter_based",
+              "baseline_expected_clicks": null,
+              "display_order": 3
+            },
+            "proposed": {
+              "tracking_method": "counter_based",
+              "baseline_expected_clicks": 40000,
+              "display_order": 2
+            }
+          },
+          {
+            "domain": "model_profile_slots",
+            "operation": "UPDATE",
+            "semantic_key": "CHARGING_CORONA_Y:CHARGING_CORONA_Y",
+            "current": {
+              "tracking_method": "counter_based",
+              "baseline_expected_clicks": null,
+              "display_order": 4
+            },
+            "proposed": {
+              "tracking_method": "counter_based",
+              "baseline_expected_clicks": 40000,
+              "display_order": 3
+            }
+          },
+          {
+            "domain": "model_profile_slots",
+            "operation": "UPDATE",
+            "semantic_key": "CHARGING_CORONA_K:CHARGING_CORONA_K",
+            "current": {
+              "tracking_method": "counter_based",
+              "baseline_expected_clicks": null,
+              "display_order": 2
+            },
+            "proposed": {
+              "tracking_method": "counter_based",
+              "baseline_expected_clicks": 40000,
+              "display_order": 4
+            }
+          },
+          {
+            "domain": "model_profile_slots",
+            "operation": "UPDATE",
+            "semantic_key": "CLEANING_BLADE:CLEANING_BLADE",
+            "current": {
+              "tracking_method": "counter_based",
+              "baseline_expected_clicks": null,
+              "display_order": 5
+            },
+            "proposed": {
+              "tracking_method": "counter_based",
+              "baseline_expected_clicks": 100000,
+              "display_order": 5
+            }
+          },
+          {
+            "domain": "model_profile_slots",
+            "operation": "UPDATE",
+            "semantic_key": "CLEANING_UNIT:CLEANING_UNIT",
+            "current": {
+              "tracking_method": "counter_based",
+              "baseline_expected_clicks": null,
+              "display_order": 6
+            },
+            "proposed": {
+              "tracking_method": "counter_based",
+              "baseline_expected_clicks": 200000,
+              "display_order": 6
+            }
+          },
+          {
+            "domain": "model_profile_slots",
+            "operation": "UPDATE",
+            "semantic_key": "DEVELOPER_C:DEVELOPER_C",
+            "current": {
+              "tracking_method": "counter_based",
+              "baseline_expected_clicks": null,
+              "display_order": 7
+            },
+            "proposed": {
+              "tracking_method": "counter_based",
+              "baseline_expected_clicks": 100000,
+              "display_order": 7
+            }
+          },
+          {
+            "domain": "model_profile_slots",
+            "operation": "UPDATE",
+            "semantic_key": "DEVELOPER_M:DEVELOPER_M",
+            "current": {
+              "tracking_method": "counter_based",
+              "baseline_expected_clicks": null,
+              "display_order": 9
+            },
+            "proposed": {
+              "tracking_method": "counter_based",
+              "baseline_expected_clicks": 100000,
+              "display_order": 8
+            }
+          },
+          {
+            "domain": "model_profile_slots",
+            "operation": "UPDATE",
+            "semantic_key": "DEVELOPER_Y:DEVELOPER_Y",
+            "current": {
+              "tracking_method": "counter_based",
+              "baseline_expected_clicks": null,
+              "display_order": 10
+            },
+            "proposed": {
+              "tracking_method": "counter_based",
+              "baseline_expected_clicks": 100000,
+              "display_order": 9
+            }
+          },
+          {
+            "domain": "model_profile_slots",
+            "operation": "UPDATE",
+            "semantic_key": "DEVELOPER_K:DEVELOPER_K",
+            "current": {
+              "tracking_method": "counter_based",
+              "baseline_expected_clicks": null,
+              "display_order": 8
+            },
+            "proposed": {
+              "tracking_method": "counter_based",
+              "baseline_expected_clicks": 100000,
+              "display_order": 10
+            }
+          },
+          {
+            "domain": "model_profile_slots",
+            "operation": "UPDATE",
+            "semantic_key": "DEVELOPING_UNIT_C:DEVELOPING_UNIT_C",
+            "current": {
+              "tracking_method": "counter_based",
+              "baseline_expected_clicks": null,
+              "display_order": 11
+            },
+            "proposed": {
+              "tracking_method": "counter_based",
+              "baseline_expected_clicks": 200000,
+              "display_order": 11
+            }
+          },
+          {
+            "domain": "model_profile_slots",
+            "operation": "UPDATE",
+            "semantic_key": "DEVELOPING_UNIT_M:DEVELOPING_UNIT_M",
+            "current": {
+              "tracking_method": "counter_based",
+              "baseline_expected_clicks": null,
+              "display_order": 13
+            },
+            "proposed": {
+              "tracking_method": "counter_based",
+              "baseline_expected_clicks": 200000,
+              "display_order": 12
+            }
+          },
+          {
+            "domain": "model_profile_slots",
+            "operation": "UPDATE",
+            "semantic_key": "DEVELOPING_UNIT_Y:DEVELOPING_UNIT_Y",
+            "current": {
+              "tracking_method": "counter_based",
+              "baseline_expected_clicks": null,
+              "display_order": 14
+            },
+            "proposed": {
+              "tracking_method": "counter_based",
+              "baseline_expected_clicks": 200000,
+              "display_order": 13
+            }
+          },
+          {
+            "domain": "model_profile_slots",
+            "operation": "UPDATE",
+            "semantic_key": "DEVELOPING_UNIT_K:DEVELOPING_UNIT_K",
+            "current": {
+              "tracking_method": "counter_based",
+              "baseline_expected_clicks": null,
+              "display_order": 12
+            },
+            "proposed": {
+              "tracking_method": "counter_based",
+              "baseline_expected_clicks": 200000,
+              "display_order": 14
+            }
+          },
+          {
+            "domain": "model_profile_slots",
+            "operation": "UPDATE",
+            "semantic_key": "DRUM_C:DRUM_C",
+            "current": {
+              "tracking_method": "counter_based",
+              "baseline_expected_clicks": null,
+              "display_order": 15
+            },
+            "proposed": {
+              "tracking_method": "counter_based",
+              "baseline_expected_clicks": 40000,
+              "display_order": 15
+            }
+          },
+          {
+            "domain": "model_profile_slots",
+            "operation": "UPDATE",
+            "semantic_key": "DRUM_M:DRUM_M",
+            "current": {
+              "tracking_method": "counter_based",
+              "baseline_expected_clicks": null,
+              "display_order": 17
+            },
+            "proposed": {
+              "tracking_method": "counter_based",
+              "baseline_expected_clicks": 40000,
+              "display_order": 16
+            }
+          },
+          {
+            "domain": "model_profile_slots",
+            "operation": "UPDATE",
+            "semantic_key": "DRUM_Y:DRUM_Y",
+            "current": {
+              "tracking_method": "counter_based",
+              "baseline_expected_clicks": null,
+              "display_order": 18
+            },
+            "proposed": {
+              "tracking_method": "counter_based",
+              "baseline_expected_clicks": 40000,
+              "display_order": 17
+            }
+          },
+          {
+            "domain": "model_profile_slots",
+            "operation": "UPDATE",
+            "semantic_key": "DRUM_K:DRUM_K",
+            "current": {
+              "tracking_method": "counter_based",
+              "baseline_expected_clicks": null,
+              "display_order": 16
+            },
+            "proposed": {
+              "tracking_method": "counter_based",
+              "baseline_expected_clicks": 40000,
+              "display_order": 18
+            }
+          },
+          {
+            "domain": "model_profile_slots",
+            "operation": "UPDATE",
+            "semantic_key": "FUSER_BELT:FUSER_BELT",
+            "current": {
+              "tracking_method": "counter_based",
+              "baseline_expected_clicks": null,
+              "display_order": 19
+            },
+            "proposed": {
+              "tracking_method": "counter_based",
+              "baseline_expected_clicks": 200000,
+              "display_order": 19
+            }
+          },
+          {
+            "domain": "model_profile_slots",
+            "operation": "UPDATE",
+            "semantic_key": "GEAR:GEAR",
+            "current": {
+              "tracking_method": "counter_based",
+              "baseline_expected_clicks": null,
+              "display_order": 20
+            },
+            "proposed": {
+              "tracking_method": "counter_based",
+              "baseline_expected_clicks": 150000,
+              "display_order": 20
+            }
+          },
+          {
+            "domain": "model_profile_slots",
+            "operation": "UPDATE",
+            "semantic_key": "IBT:IBT",
+            "current": {
+              "tracking_method": "counter_based",
+              "baseline_expected_clicks": null,
+              "display_order": 21
+            },
+            "proposed": {
+              "tracking_method": "counter_based",
+              "baseline_expected_clicks": 200000,
+              "display_order": 21
+            }
+          },
+          {
+            "domain": "model_profile_slots",
+            "operation": "UPDATE",
+            "semantic_key": "LASER_UNIT:LASER_UNIT",
+            "current": {
+              "tracking_method": "counter_based",
+              "baseline_expected_clicks": null,
+              "display_order": 22
+            },
+            "proposed": {
+              "tracking_method": "counter_based",
+              "baseline_expected_clicks": 300000,
+              "display_order": 22
+            }
+          },
+          {
+            "domain": "model_profile_slots",
+            "operation": "UPDATE",
+            "semantic_key": "ROLL_MESIN:ROLL_MESIN",
+            "current": {
+              "tracking_method": "counter_based",
+              "baseline_expected_clicks": null,
+              "display_order": 23
+            },
+            "proposed": {
+              "tracking_method": "counter_based",
+              "baseline_expected_clicks": 150000,
+              "display_order": 23
+            }
+          },
+          {
+            "domain": "model_profile_slots",
+            "operation": "UPDATE",
+            "semantic_key": "SENSOR:SENSOR",
+            "current": {
+              "tracking_method": "counter_based",
+              "baseline_expected_clicks": null,
+              "display_order": 24
+            },
+            "proposed": {
+              "tracking_method": "counter_based",
+              "baseline_expected_clicks": 250000,
+              "display_order": 24
+            }
+          },
+          {
+            "domain": "model_profile_slots",
+            "operation": "UPDATE",
+            "semantic_key": "TONER_C:TONER_C",
+            "current": {
+              "tracking_method": "counter_based",
+              "baseline_expected_clicks": null,
+              "display_order": 25
+            },
+            "proposed": {
+              "tracking_method": "consumption_based",
+              "baseline_expected_clicks": 14000,
+              "display_order": 25
+            }
+          },
+          {
+            "domain": "model_profile_slots",
+            "operation": "UPDATE",
+            "semantic_key": "TONER_M:TONER_M",
+            "current": {
+              "tracking_method": "counter_based",
+              "baseline_expected_clicks": null,
+              "display_order": 27
+            },
+            "proposed": {
+              "tracking_method": "consumption_based",
+              "baseline_expected_clicks": 14000,
+              "display_order": 26
+            }
+          },
+          {
+            "domain": "model_profile_slots",
+            "operation": "UPDATE",
+            "semantic_key": "TONER_Y:TONER_Y",
+            "current": {
+              "tracking_method": "counter_based",
+              "baseline_expected_clicks": null,
+              "display_order": 28
+            },
+            "proposed": {
+              "tracking_method": "consumption_based",
+              "baseline_expected_clicks": 14000,
+              "display_order": 27
+            }
+          },
+          {
+            "domain": "model_profile_slots",
+            "operation": "UPDATE",
+            "semantic_key": "TONER_K:TONER_K",
+            "current": {
+              "tracking_method": "counter_based",
+              "baseline_expected_clicks": null,
+              "display_order": 26
+            },
+            "proposed": {
+              "tracking_method": "consumption_based",
+              "baseline_expected_clicks": 14000,
+              "display_order": 28
+            }
+          }
+        ]
+      },
+      {
+        "domain": "machine_components",
+        "candidates": [
+          {
+            "domain": "machine_components",
+            "operation": "UPDATE",
+            "machine_semantic_identity": "CG-TUP-A3-01",
+            "semantic_key": "CHARGING_CORONA_C:CHARGING_CORONA_C",
+            "current": {
+              "tracking_method": "counter_based",
+              "baseline_expected_clicks": null,
+              "display_order": 1,
+              "source_type": "configured"
+            },
+            "proposed": {
+              "tracking_method": "counter_based",
+              "baseline_expected_clicks": 40000,
+              "display_order": 1,
+              "source_type": "inherited"
+            }
+          },
+          {
+            "domain": "machine_components",
+            "operation": "UPDATE",
+            "machine_semantic_identity": "CG-TUP-A3-01",
+            "semantic_key": "CHARGING_CORONA_M:CHARGING_CORONA_M",
+            "current": {
+              "tracking_method": "counter_based",
+              "baseline_expected_clicks": null,
+              "display_order": 3,
+              "source_type": "configured"
+            },
+            "proposed": {
+              "tracking_method": "counter_based",
+              "baseline_expected_clicks": 40000,
+              "display_order": 2,
+              "source_type": "inherited"
+            }
+          },
+          {
+            "domain": "machine_components",
+            "operation": "UPDATE",
+            "machine_semantic_identity": "CG-TUP-A3-01",
+            "semantic_key": "CHARGING_CORONA_Y:CHARGING_CORONA_Y",
+            "current": {
+              "tracking_method": "counter_based",
+              "baseline_expected_clicks": null,
+              "display_order": 4,
+              "source_type": "configured"
+            },
+            "proposed": {
+              "tracking_method": "counter_based",
+              "baseline_expected_clicks": 40000,
+              "display_order": 3,
+              "source_type": "inherited"
+            }
+          },
+          {
+            "domain": "machine_components",
+            "operation": "UPDATE",
+            "machine_semantic_identity": "CG-TUP-A3-01",
+            "semantic_key": "CHARGING_CORONA_K:CHARGING_CORONA_K",
+            "current": {
+              "tracking_method": "counter_based",
+              "baseline_expected_clicks": null,
+              "display_order": 2,
+              "source_type": "configured"
+            },
+            "proposed": {
+              "tracking_method": "counter_based",
+              "baseline_expected_clicks": 40000,
+              "display_order": 4,
+              "source_type": "inherited"
+            }
+          },
+          {
+            "domain": "machine_components",
+            "operation": "UPDATE",
+            "machine_semantic_identity": "CG-TUP-A3-01",
+            "semantic_key": "CLEANING_BLADE:CLEANING_BLADE",
+            "current": {
+              "tracking_method": "counter_based",
+              "baseline_expected_clicks": null,
+              "display_order": 5,
+              "source_type": "configured"
+            },
+            "proposed": {
+              "tracking_method": "counter_based",
+              "baseline_expected_clicks": 100000,
+              "display_order": 5,
+              "source_type": "inherited"
+            }
+          },
+          {
+            "domain": "machine_components",
+            "operation": "UPDATE",
+            "machine_semantic_identity": "CG-TUP-A3-01",
+            "semantic_key": "CLEANING_UNIT:CLEANING_UNIT",
+            "current": {
+              "tracking_method": "counter_based",
+              "baseline_expected_clicks": null,
+              "display_order": 6,
+              "source_type": "configured"
+            },
+            "proposed": {
+              "tracking_method": "counter_based",
+              "baseline_expected_clicks": 200000,
+              "display_order": 6,
+              "source_type": "inherited"
+            }
+          },
+          {
+            "domain": "machine_components",
+            "operation": "UPDATE",
+            "machine_semantic_identity": "CG-TUP-A3-01",
+            "semantic_key": "DEVELOPER_C:DEVELOPER_C",
+            "current": {
+              "tracking_method": "counter_based",
+              "baseline_expected_clicks": null,
+              "display_order": 7,
+              "source_type": "configured"
+            },
+            "proposed": {
+              "tracking_method": "counter_based",
+              "baseline_expected_clicks": 100000,
+              "display_order": 7,
+              "source_type": "inherited"
+            }
+          },
+          {
+            "domain": "machine_components",
+            "operation": "UPDATE",
+            "machine_semantic_identity": "CG-TUP-A3-01",
+            "semantic_key": "DEVELOPER_M:DEVELOPER_M",
+            "current": {
+              "tracking_method": "counter_based",
+              "baseline_expected_clicks": null,
+              "display_order": 9,
+              "source_type": "configured"
+            },
+            "proposed": {
+              "tracking_method": "counter_based",
+              "baseline_expected_clicks": 100000,
+              "display_order": 8,
+              "source_type": "inherited"
+            }
+          },
+          {
+            "domain": "machine_components",
+            "operation": "UPDATE",
+            "machine_semantic_identity": "CG-TUP-A3-01",
+            "semantic_key": "DEVELOPER_Y:DEVELOPER_Y",
+            "current": {
+              "tracking_method": "counter_based",
+              "baseline_expected_clicks": null,
+              "display_order": 10,
+              "source_type": "configured"
+            },
+            "proposed": {
+              "tracking_method": "counter_based",
+              "baseline_expected_clicks": 100000,
+              "display_order": 9,
+              "source_type": "inherited"
+            }
+          },
+          {
+            "domain": "machine_components",
+            "operation": "UPDATE",
+            "machine_semantic_identity": "CG-TUP-A3-01",
+            "semantic_key": "DEVELOPER_K:DEVELOPER_K",
+            "current": {
+              "tracking_method": "counter_based",
+              "baseline_expected_clicks": null,
+              "display_order": 8,
+              "source_type": "configured"
+            },
+            "proposed": {
+              "tracking_method": "counter_based",
+              "baseline_expected_clicks": 100000,
+              "display_order": 10,
+              "source_type": "inherited"
+            }
+          },
+          {
+            "domain": "machine_components",
+            "operation": "UPDATE",
+            "machine_semantic_identity": "CG-TUP-A3-01",
+            "semantic_key": "DEVELOPING_UNIT_C:DEVELOPING_UNIT_C",
+            "current": {
+              "tracking_method": "counter_based",
+              "baseline_expected_clicks": null,
+              "display_order": 11,
+              "source_type": "configured"
+            },
+            "proposed": {
+              "tracking_method": "counter_based",
+              "baseline_expected_clicks": 200000,
+              "display_order": 11,
+              "source_type": "inherited"
+            }
+          },
+          {
+            "domain": "machine_components",
+            "operation": "UPDATE",
+            "machine_semantic_identity": "CG-TUP-A3-01",
+            "semantic_key": "DEVELOPING_UNIT_M:DEVELOPING_UNIT_M",
+            "current": {
+              "tracking_method": "counter_based",
+              "baseline_expected_clicks": null,
+              "display_order": 13,
+              "source_type": "configured"
+            },
+            "proposed": {
+              "tracking_method": "counter_based",
+              "baseline_expected_clicks": 200000,
+              "display_order": 12,
+              "source_type": "inherited"
+            }
+          },
+          {
+            "domain": "machine_components",
+            "operation": "UPDATE",
+            "machine_semantic_identity": "CG-TUP-A3-01",
+            "semantic_key": "DEVELOPING_UNIT_Y:DEVELOPING_UNIT_Y",
+            "current": {
+              "tracking_method": "counter_based",
+              "baseline_expected_clicks": null,
+              "display_order": 14,
+              "source_type": "configured"
+            },
+            "proposed": {
+              "tracking_method": "counter_based",
+              "baseline_expected_clicks": 200000,
+              "display_order": 13,
+              "source_type": "inherited"
+            }
+          },
+          {
+            "domain": "machine_components",
+            "operation": "UPDATE",
+            "machine_semantic_identity": "CG-TUP-A3-01",
+            "semantic_key": "DEVELOPING_UNIT_K:DEVELOPING_UNIT_K",
+            "current": {
+              "tracking_method": "counter_based",
+              "baseline_expected_clicks": null,
+              "display_order": 12,
+              "source_type": "configured"
+            },
+            "proposed": {
+              "tracking_method": "counter_based",
+              "baseline_expected_clicks": 200000,
+              "display_order": 14,
+              "source_type": "inherited"
+            }
+          },
+          {
+            "domain": "machine_components",
+            "operation": "UPDATE",
+            "machine_semantic_identity": "CG-TUP-A3-01",
+            "semantic_key": "DRUM_C:DRUM_C",
+            "current": {
+              "tracking_method": "counter_based",
+              "baseline_expected_clicks": null,
+              "display_order": 15,
+              "source_type": "configured"
+            },
+            "proposed": {
+              "tracking_method": "counter_based",
+              "baseline_expected_clicks": 40000,
+              "display_order": 15,
+              "source_type": "inherited"
+            }
+          },
+          {
+            "domain": "machine_components",
+            "operation": "UPDATE",
+            "machine_semantic_identity": "CG-TUP-A3-01",
+            "semantic_key": "DRUM_M:DRUM_M",
+            "current": {
+              "tracking_method": "counter_based",
+              "baseline_expected_clicks": null,
+              "display_order": 17,
+              "source_type": "configured"
+            },
+            "proposed": {
+              "tracking_method": "counter_based",
+              "baseline_expected_clicks": 40000,
+              "display_order": 16,
+              "source_type": "inherited"
+            }
+          },
+          {
+            "domain": "machine_components",
+            "operation": "UPDATE",
+            "machine_semantic_identity": "CG-TUP-A3-01",
+            "semantic_key": "DRUM_Y:DRUM_Y",
+            "current": {
+              "tracking_method": "counter_based",
+              "baseline_expected_clicks": null,
+              "display_order": 18,
+              "source_type": "configured"
+            },
+            "proposed": {
+              "tracking_method": "counter_based",
+              "baseline_expected_clicks": 40000,
+              "display_order": 17,
+              "source_type": "inherited"
+            }
+          },
+          {
+            "domain": "machine_components",
+            "operation": "UPDATE",
+            "machine_semantic_identity": "CG-TUP-A3-01",
+            "semantic_key": "DRUM_K:DRUM_K",
+            "current": {
+              "tracking_method": "counter_based",
+              "baseline_expected_clicks": null,
+              "display_order": 16,
+              "source_type": "configured"
+            },
+            "proposed": {
+              "tracking_method": "counter_based",
+              "baseline_expected_clicks": 40000,
+              "display_order": 18,
+              "source_type": "inherited"
+            }
+          },
+          {
+            "domain": "machine_components",
+            "operation": "UPDATE",
+            "machine_semantic_identity": "CG-TUP-A3-01",
+            "semantic_key": "FUSER_BELT:FUSER_BELT",
+            "current": {
+              "tracking_method": "counter_based",
+              "baseline_expected_clicks": null,
+              "display_order": 19,
+              "source_type": "configured"
+            },
+            "proposed": {
+              "tracking_method": "counter_based",
+              "baseline_expected_clicks": 200000,
+              "display_order": 19,
+              "source_type": "inherited"
+            }
+          },
+          {
+            "domain": "machine_components",
+            "operation": "UPDATE",
+            "machine_semantic_identity": "CG-TUP-A3-01",
+            "semantic_key": "GEAR:GEAR",
+            "current": {
+              "tracking_method": "counter_based",
+              "baseline_expected_clicks": null,
+              "display_order": 20,
+              "source_type": "configured"
+            },
+            "proposed": {
+              "tracking_method": "counter_based",
+              "baseline_expected_clicks": 150000,
+              "display_order": 20,
+              "source_type": "inherited"
+            }
+          },
+          {
+            "domain": "machine_components",
+            "operation": "UPDATE",
+            "machine_semantic_identity": "CG-TUP-A3-01",
+            "semantic_key": "IBT:IBT",
+            "current": {
+              "tracking_method": "counter_based",
+              "baseline_expected_clicks": null,
+              "display_order": 21,
+              "source_type": "configured"
+            },
+            "proposed": {
+              "tracking_method": "counter_based",
+              "baseline_expected_clicks": 200000,
+              "display_order": 21,
+              "source_type": "inherited"
+            }
+          },
+          {
+            "domain": "machine_components",
+            "operation": "UPDATE",
+            "machine_semantic_identity": "CG-TUP-A3-01",
+            "semantic_key": "LASER_UNIT:LASER_UNIT",
+            "current": {
+              "tracking_method": "counter_based",
+              "baseline_expected_clicks": null,
+              "display_order": 22,
+              "source_type": "configured"
+            },
+            "proposed": {
+              "tracking_method": "counter_based",
+              "baseline_expected_clicks": 300000,
+              "display_order": 22,
+              "source_type": "inherited"
+            }
+          },
+          {
+            "domain": "machine_components",
+            "operation": "UPDATE",
+            "machine_semantic_identity": "CG-TUP-A3-01",
+            "semantic_key": "ROLL_MESIN:ROLL_MESIN",
+            "current": {
+              "tracking_method": "counter_based",
+              "baseline_expected_clicks": null,
+              "display_order": 23,
+              "source_type": "configured"
+            },
+            "proposed": {
+              "tracking_method": "counter_based",
+              "baseline_expected_clicks": 150000,
+              "display_order": 23,
+              "source_type": "inherited"
+            }
+          },
+          {
+            "domain": "machine_components",
+            "operation": "UPDATE",
+            "machine_semantic_identity": "CG-TUP-A3-01",
+            "semantic_key": "SENSOR:SENSOR",
+            "current": {
+              "tracking_method": "counter_based",
+              "baseline_expected_clicks": null,
+              "display_order": 24,
+              "source_type": "configured"
+            },
+            "proposed": {
+              "tracking_method": "counter_based",
+              "baseline_expected_clicks": 250000,
+              "display_order": 24,
+              "source_type": "inherited"
+            }
+          },
+          {
+            "domain": "machine_components",
+            "operation": "UPDATE",
+            "machine_semantic_identity": "CG-TUP-A3-01",
+            "semantic_key": "TONER_C:TONER_C",
+            "current": {
+              "tracking_method": "counter_based",
+              "baseline_expected_clicks": null,
+              "display_order": 25,
+              "source_type": "configured"
+            },
+            "proposed": {
+              "tracking_method": "consumption_based",
+              "baseline_expected_clicks": 14000,
+              "display_order": 25,
+              "source_type": "inherited"
+            }
+          },
+          {
+            "domain": "machine_components",
+            "operation": "UPDATE",
+            "machine_semantic_identity": "CG-TUP-A3-01",
+            "semantic_key": "TONER_M:TONER_M",
+            "current": {
+              "tracking_method": "counter_based",
+              "baseline_expected_clicks": null,
+              "display_order": 27,
+              "source_type": "configured"
+            },
+            "proposed": {
+              "tracking_method": "consumption_based",
+              "baseline_expected_clicks": 14000,
+              "display_order": 26,
+              "source_type": "inherited"
+            }
+          },
+          {
+            "domain": "machine_components",
+            "operation": "UPDATE",
+            "machine_semantic_identity": "CG-TUP-A3-01",
+            "semantic_key": "TONER_Y:TONER_Y",
+            "current": {
+              "tracking_method": "counter_based",
+              "baseline_expected_clicks": null,
+              "display_order": 28,
+              "source_type": "configured"
+            },
+            "proposed": {
+              "tracking_method": "consumption_based",
+              "baseline_expected_clicks": 14000,
+              "display_order": 27,
+              "source_type": "inherited"
+            }
+          },
+          {
+            "domain": "machine_components",
+            "operation": "UPDATE",
+            "machine_semantic_identity": "CG-TUP-A3-01",
+            "semantic_key": "TONER_K:TONER_K",
+            "current": {
+              "tracking_method": "counter_based",
+              "baseline_expected_clicks": null,
+              "display_order": 26,
+              "source_type": "configured"
+            },
+            "proposed": {
+              "tracking_method": "consumption_based",
+              "baseline_expected_clicks": 14000,
+              "display_order": 28,
+              "source_type": "inherited"
+            }
+          }
+        ]
+      }
+    ],
+    "runtime_diff_counts": {
+      "component_catalogs": 4,
+      "model_profile_slots": 28,
+      "machine_components": 28,
+      "update_candidate_rows": 60
+    },
+    "added_to_approved_write_plan": false
+  },
+  "approval_breakdown": {
+    "original_requires_user_approval": 200,
+    "actual_write_count": 2,
+    "deferred_count": 62,
+    "ambiguous_count": 76,
+    "audit_only_count": 60,
+    "sum_check": 200,
+    "explanation": "The old total counted every fail-closed review item. Only two counter facts remain in the plan; 61 records were policy-deferred, the invalid selling-price fact is now rejected/deferred from execution, 76 are non-component ambiguities, and 60 are component UPDATE-only audit candidates held outside the plan."
+  },
+  "final_report": {
+    "CHECKPOINT_M2_12F_WRITE_PLAN_REVIEW": "READY",
+    "CAPTURE_IDENTITY_VERIFICATION": "PASS",
+    "NEW_SUPABASE_CAPTURE_SHA256_VERIFIED": "94bfe30b539fb490b59e349e2d271ba594de882863f2f17dc34351482786bc5e",
+    "PRODUCTION_MARIADB_CAPTURE_SHA256_VERIFIED": "6c79b0be60bc62e622f348c660a29aaf9191062b20793ada304222fd886e5e16",
+    "COUNTER_WRITE_1_RECOMMENDATION": "DEFER",
+    "COUNTER_WRITE_2_RECOMMENDATION": "DEFER",
+    "SELLING_PRICE_WRITE_RECOMMENDATION": "REJECT",
+    "COMPONENT_CONFIG_PARITY_AUDIT": "DIFF_FOUND",
+    "COMPONENT_CONFIG_RECONCILIATION_REQUIRED": "YES",
+    "COMPONENT_CATALOG_RUNTIME_DIFF_COUNT": 4,
+    "PROFILE_SLOT_RUNTIME_DIFF_COUNT": 28,
+    "MACHINE_COMPONENT_RUNTIME_DIFF_COUNT": 28,
+    "COMPONENT_UPDATE_CANDIDATE_COUNT": 60,
+    "APPROVAL_REQUIRED_ACTUAL_WRITE_COUNT": 2,
+    "APPROVAL_REQUIRED_DEFERRED_COUNT": 62,
+    "APPROVAL_REQUIRED_AMBIGUOUS_COUNT": 76,
+    "APPROVAL_REQUIRED_AUDIT_ONLY_COUNT": 60,
+    "FINAL_PROPOSED_WRITE_COUNT": 2,
+    "NETWORK_ACCESS": "NO",
+    "DATABASE_ACCESS": "NO",
+    "PRODUCTION_MUTATION": "NO",
+    "PRODUCTION_DATABASE_MUTATION": "NO",
+    "PUBLIC_HTML_MUTATION": "NO",
+    "PRODUCTION_DEPLOYMENT": "NO"
+  }
+}

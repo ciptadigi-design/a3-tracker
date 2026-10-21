@@ -1,0 +1,33 @@
+{
+  "auth_user_copy": false,
+  "checkpoint": "M2.12F",
+  "execute": false,
+  "production_identity_policy": "PRODUCTION_ASSIGNED_IDS_ONLY",
+  "status": "READY_REQUIRES_USER_APPROVAL",
+  "writes": [
+    {
+      "classification": "SUPABASE_ONLY_OPERATIONAL_VALID",
+      "confidence": "OPERATOR_APPROVAL_REQUIRED",
+      "dependency_order": 180,
+      "domain": "counters",
+      "operation": "CREATE",
+      "production_target_identity": "PRODUCTION_ASSIGNED_ON_APPROVED_EXECUTION",
+      "reason": "Reference-only canonical record is absent from Production and requires operator approval.",
+      "requires_user_approval": true,
+      "semantic_key": "cg-tup-a3-01:total-impressions:2026-08-26:1437283",
+      "source_identity": "cg-tup-a3-01:total-impressions:2026-08-26:1437283"
+    },
+    {
+      "classification": "SUPABASE_ONLY_OPERATIONAL_VALID",
+      "confidence": "OPERATOR_APPROVAL_REQUIRED",
+      "dependency_order": 180,
+      "domain": "counters",
+      "operation": "CREATE",
+      "production_target_identity": "PRODUCTION_ASSIGNED_ON_APPROVED_EXECUTION",
+      "reason": "Reference-only canonical record is absent from Production and requires operator approval.",
+      "requires_user_approval": true,
+      "semantic_key": "cg-tup-a3-01:total-impressions:2026-08-27:1438992",
+      "source_identity": "cg-tup-a3-01:total-impressions:2026-08-27:1438992"
+    }
+  ]
+}
