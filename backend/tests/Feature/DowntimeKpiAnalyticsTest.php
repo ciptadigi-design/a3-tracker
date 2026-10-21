@@ -9,6 +9,7 @@ use App\Models\Branch;
 use App\Models\BranchProductionSchedule;
 use App\Models\DowntimeEvent;
 use App\Models\Machine;
+use App\Models\MachineFinancialRate;
 use App\Models\MachineModel;
 use App\Models\Manufacturer;
 use App\Models\User;
@@ -286,5 +287,74 @@ class DowntimeKpiAnalyticsTest extends TestCase
         $counts = collect($d['causes'])->pluck('count', 'cause')->all();
         $this->assertSame(['paper_jam' => 2, 'mechanical' => 1], $counts);
         $this->assertSame(['cause' => 'paper_jam', 'count' => 2], $d['causes'][0]);
+    }
+
+    private function rates(Machine $machine, ?int $cost, ?int $revenue): void
+    {
+        MachineFinancialRate::create(['account_id' => $this->account->id, 'machine_id' => $machine->id, 'operating_cost_per_hour' => $cost, 'estimated_revenue_per_hour' => $revenue]);
+    }
+
+    public function test_financial_impact_uses_production_downtime_hours_times_rate_and_keeps_both_estimates_separate(): void
+    {
+        $this->schedule($this->main);
+        $this->rates($this->m1, 50000, 200000);
+        $this->downtime($this->m1, '2026-10-05 08:00', '2026-10-05 10:30'); // 150 min in shift
+        $this->downtime($this->m1, '2026-10-05 09:00', '2026-10-05 10:00'); // overlaps the first: merged, not double counted
+        $this->downtime($this->m1, '2026-10-06 18:00', '2026-10-06 22:00'); // off-shift: no production downtime
+        $f = $this->kpi('2026-10-01', '2026-10-31', ['machine_id' => (string) $this->m1->id, 'detail' => 1]);
+
+        $this->assertSame(150, $f['financial']['production_downtime_minutes']);
+        $this->assertSame(125000, $f['financial']['operating_cost_impact']['amount']);
+        $this->assertSame(500000, $f['financial']['potential_lost_revenue']['amount']);
+        $this->assertSame('configured', $f['financial']['operating_cost_impact']['status']);
+        $this->assertSame(125000, $f['ranking'][0]['operating_cost_impact']);
+    }
+
+    public function test_missing_rate_is_null_never_zero_and_zero_downtime_with_rate_is_zero(): void
+    {
+        $this->schedule($this->main);
+        $this->downtime($this->m1, '2026-10-05 09:00', '2026-10-05 10:00');
+        $none = $this->kpi('2026-10-01', '2026-10-31', ['machine_id' => (string) $this->m1->id]);
+        $this->assertNull($none['financial']['operating_cost_impact']['amount']);
+        $this->assertSame('not_configured', $none['financial']['potential_lost_revenue']['status']);
+
+        $this->rates($this->m2, 10000, null);
+        $zero = $this->kpi('2026-10-01', '2026-10-31', ['machine_id' => (string) $this->m2->id]);
+        $this->assertSame(0, $zero['financial']['operating_cost_impact']['amount']);
+        $this->assertNull($zero['financial']['potential_lost_revenue']['amount']);
+    }
+
+    public function test_partial_rates_sum_only_rated_machines_and_open_downtime_is_included(): void
+    {
+        $this->schedule($this->main);
+        $this->rates($this->m1, 60000, null);
+        $this->downtime($this->m1, '2026-11-19 09:00', '2026-11-19 10:00'); // 60 min
+        $this->downtime($this->m2, '2026-11-19 09:00', '2026-11-19 10:00'); // m2 has no rate
+        $f = $this->kpi('2026-11-01', '2026-11-30', ['branch_id' => (string) $this->main->id])['financial'];
+        $this->assertSame(60000, $f['operating_cost_impact']['amount']);
+        $this->assertSame('partial', $f['operating_cost_impact']['status']);
+        $this->assertSame(1, $f['operating_cost_impact']['rated_machine_count']);
+    }
+
+    public function test_rates_are_manageable_by_managers_only(): void
+    {
+        $this->schedule($this->main);
+        $viewer = $this->member('operator'); // machine_cost.view (read) but not operating_cost.manage
+        $this->assertArrayHasKey('financial', $this->kpi('2026-10-01', '2026-10-31', [], $viewer));
+
+        $url = "/api/v1/machines/{$this->m1->id}/financial-rates";
+        $this->actingAs($viewer)->putJson($url, ['operating_cost_per_hour' => 1, 'estimated_revenue_per_hour' => 1])->assertForbidden();
+        $this->actingAs($this->owner)->putJson($url, ['operating_cost_per_hour' => 12.5, 'estimated_revenue_per_hour' => null])->assertStatus(422);
+        $this->actingAs($this->owner)->putJson($url, ['operating_cost_per_hour' => 40000, 'estimated_revenue_per_hour' => null])->assertOk();
+        $this->actingAs($this->owner)->getJson($url)->assertOk()->assertJsonPath('data.operating_cost_per_hour', 40000)->assertJsonPath('data.estimated_revenue_per_hour', null);
+    }
+
+    public function test_event_list_exposes_incident_financial_breakdown_with_applied_rates(): void
+    {
+        $this->schedule($this->main);
+        $this->rates($this->m1, 30000, 90000);
+        $this->downtime($this->m1, '2026-10-05 09:00', '2026-10-05 11:00');
+        $row = $this->actingAs($this->owner)->getJson('/api/v1/downtime/events')->assertOk()->json('data.data.0');
+        $this->assertSame(['operating_cost_per_hour' => 30000, 'estimated_revenue_per_hour' => 90000, 'operating_cost_impact' => 60000, 'potential_lost_revenue' => 180000], $row['financial']);
     }
 }

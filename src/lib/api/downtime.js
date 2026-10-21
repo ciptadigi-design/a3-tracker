@@ -11,6 +11,9 @@ export const laravelDowntime = {
   addNote: (eventId, payload) => apiClient.post(`/downtime/events/${eventId}/notes`, payload),
   end: (eventId, payload) => apiClient.post(`/downtime/events/${eventId}/end`, payload),
 
+  financialRates: (machineId) => apiClient.get(`/machines/${machineId}/financial-rates`),
+  putFinancialRates: (machineId, payload) => apiClient.put(`/machines/${machineId}/financial-rates`, payload),
+
   branchSchedule: (branchId) => apiClient.get(`/operations/branches/${branchId}/production-schedule`),
   putBranchSchedule: (branchId, days) => apiClient.put(`/operations/branches/${branchId}/production-schedule`, { days }),
   machineOverride: (machineId) => apiClient.get(`/operations/machines/${machineId}/production-schedule-override`),

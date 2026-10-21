@@ -32,3 +32,6 @@ export const removeMachineScheduleOverride = async (machineId) => unwrapData(awa
 export const loadScheduleExceptions = async (branchId, year, month) => unwrapData(await laravelDowntime.scheduleExceptions(branchId, year, month))
 export const createScheduleException = async (branchId, payload) => unwrapData(await laravelDowntime.createScheduleException(branchId, payload))
 export const deleteScheduleException = async (exceptionId) => unwrapData(await laravelDowntime.deleteScheduleException(exceptionId))
+
+export const loadMachineFinancialRates = async (machineId) => unwrapData(await laravelDowntime.financialRates(machineId))
+export const saveMachineFinancialRates = async (machineId, payload) => unwrapData(await laravelDowntime.putFinancialRates(machineId, payload))

@@ -1,8 +1,8 @@
 import { createElement, useCallback, useEffect, useRef, useState } from 'react'
-import { AlertTriangle, BarChart3, Clock3, Gauge, RefreshCcw, Wrench } from 'lucide-react'
+import { AlertTriangle, BarChart3, CircleDollarSign, Clock3, Gauge, RefreshCcw, TrendingDown, Wrench } from 'lucide-react'
 import { userErrorMessage } from '../../lib/appErrors.js'
 import { loadDowntimeOverview } from '../../services/downtime.js'
-import { causeLabel, describeOwnerKpis, formatProductionDowntimeMinutes } from '../downtime/downtimeModel.js'
+import { causeLabel, describeFinancialBreakdown, describeFinancialImpact, describeOwnerKpis, FINANCIAL_ESTIMATE_NOTE, formatProductionDowntimeMinutes } from '../downtime/downtimeModel.js'
 
 function Kpi({ icon, label, value, hint, tone = 'blue' }) {
   return <article className="report-kpi glass-surface"><span className={`report-kpi-icon tone-${tone}`}>{createElement(icon, { size: 19 })}</span><div><span>{label}</span><strong>{value}</strong><small>{hint}</small></div></article>
@@ -58,6 +58,7 @@ export function DowntimeReportTab({ account, branch, machineId, period, refreshV
   if (!data) return null
 
   const kpi = describeOwnerKpis(data)
+  const money = describeFinancialImpact(data.financial)
   const hasEvents = data.event_count > 0
   const trendRows = data.trend ?? []
   return (
@@ -71,6 +72,31 @@ export function DowntimeReportTab({ account, branch, machineId, period, refreshV
         <Kpi icon={AlertTriangle} label="Jumlah Downtime" value={kpi.eventCount} hint={kpi.ongoingCount > 0 ? `${kpi.ongoingCount} masih berjalan` : 'Insiden pada periode ini'} tone="warning" />
         <Kpi icon={Wrench} label="Rata-rata Pemulihan" value={kpi.recovery} hint={kpi.completedCount > 0 ? `${kpi.completedCount} insiden selesai pada periode ini` : 'Hanya insiden yang sudah selesai'} />
       </section>
+
+      {money && (
+        <>
+          <section className="report-kpi-grid compact" aria-label="Dampak finansial downtime">
+            <Kpi icon={CircleDollarSign} label="Biaya Operasional Terdampak" value={money.operatingCost.value} hint={money.operatingCost.partialNote ?? 'Estimasi: jam downtime produksi × biaya operasional per jam'} tone="warning" />
+            <Kpi icon={TrendingDown} label="Potensi Pendapatan Hilang" value={money.lostRevenue.value} hint={money.lostRevenue.partialNote ?? 'Estimasi: jam downtime produksi × pendapatan per jam'} tone="purple" />
+          </section>
+          <p className="financial-note">{FINANCIAL_ESTIMATE_NOTE} Kedua angka dihitung terpisah dan tidak dijumlahkan.</p>
+          {(data.ranking ?? []).length > 0 && (
+            <section className="report-chart glass-surface financial-breakdown" aria-label="Rincian dampak finansial per mesin">
+              <header><div><span className="card-kicker">Downtime</span><h2>Dampak Finansial per Mesin</h2><p>Berdasarkan downtime produksi dan tarif per jam yang diterapkan</p></div></header>
+              <ul>
+                {data.ranking.map((row) => {
+                  const f = describeFinancialBreakdown(row)
+                  return <li key={row.machine_id}><strong>{row.machine_code}{row.machine_name ? ` · ${row.machine_name}` : ''}</strong><dl>
+                    <div><dt>Downtime Produksi</dt><dd>{formatProductionDowntimeMinutes(row.production_downtime_minutes)}</dd></div>
+                    <div><dt>Biaya Operasional Terdampak</dt><dd>{f.operatingCost}<small>{f.costRate}</small></dd></div>
+                    <div><dt>Potensi Pendapatan Hilang</dt><dd>{f.lostRevenue}<small>{f.revenueRate}</small></dd></div>
+                  </dl></li>
+                })}
+              </ul>
+            </section>
+          )}
+        </>
+      )}
 
       {!hasEvents ? <div className="report-empty glass-surface"><BarChart3 size={26} /><strong>Tidak ada downtime pada periode ini</strong><span>Tidak ada insiden downtime yang tercatat untuk cakupan dan periode yang dipilih.</span></div> : (
         <>

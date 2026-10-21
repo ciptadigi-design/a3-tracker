@@ -1,5 +1,7 @@
 // Operator-facing workflow: every label is Indonesian (the stored cause values
 // stay the stable English enum keys the API already accepts).
+import { formatIdrTotal } from '../machineCost/currencyFormat.js'
+
 export const downtimeCauses = [
   { value: 'paper_jam', label: 'Paper Jam' },
   { value: 'layar_blank', label: 'Layar Blank' },
@@ -283,6 +285,43 @@ export function resolveScheduleBranches(branches) {
 /** A branch selection is only valid while it is still one of the authorized branches. */
 export function effectiveScheduleBranchId(branches, selectedId) {
   return branches.some((item) => item.id === selectedId) ? selectedId : (branches[0]?.id ?? '')
+}
+
+export const FINANCIAL_ESTIMATE_NOTE = 'Estimasi berdasarkan tarif per jam yang dikonfigurasi, bukan kerugian akuntansi yang terkonfirmasi.'
+
+/** Rupiah estimate; a missing (null) amount is "Belum dikonfigurasi", never Rp0. */
+export function formatFinancialAmount(amount) {
+  return amount == null ? NOT_CONFIGURED_LABEL : formatIdrTotal(amount)
+}
+
+function describeFinancialIndicator(indicator) {
+  const status = indicator?.status ?? 'not_configured'
+  return {
+    value: formatFinancialAmount(indicator?.amount),
+    partialNote: status === 'partial' ? `Hanya ${indicator.rated_machine_count} mesin yang sudah memiliki tarif` : null,
+  }
+}
+
+/** Presentation of the server's `financial` block (GET /downtime/overview). Null when the viewer may not see financials. */
+export function describeFinancialImpact(financial) {
+  if (!financial) return null
+  return {
+    productionDowntime: formatProductionDowntimeMinutes(financial.production_downtime_minutes),
+    operatingCost: describeFinancialIndicator(financial.operating_cost_impact),
+    lostRevenue: describeFinancialIndicator(financial.potential_lost_revenue),
+  }
+}
+
+/** Per-incident / per-machine breakdown row: applied hourly rates plus the estimated impact. */
+export function describeFinancialBreakdown(row) {
+  if (!row) return null
+  const rate = (value) => (value == null ? NOT_CONFIGURED_LABEL : `${formatIdrTotal(value)}/jam`)
+  return {
+    costRate: rate(row.operating_cost_per_hour),
+    revenueRate: rate(row.estimated_revenue_per_hour),
+    operatingCost: formatFinancialAmount(row.operating_cost_impact),
+    lostRevenue: formatFinancialAmount(row.potential_lost_revenue),
+  }
 }
 
 export const NO_RECOVERY_LABEL = 'Belum ada pemulihan'

@@ -4,7 +4,7 @@ import { useTenant } from '../account/useTenant.js'
 import { machineIdPattern } from '../../hooks/useAppRoute.js'
 import { useMachines } from '../machines/useMachines.js'
 import { AddNoteDialog } from './AddNoteDialog.jsx'
-import { currentMonthValue, describeActiveEntry, describeEventDurations, describeEventStatus, formatAvailabilityPercent, formatDowntimeDateTime, formatProductionDowntimeMinutes, monthToPeriod, causeLabel, NOT_CONFIGURED_LABEL } from './downtimeModel.js'
+import { currentMonthValue, describeActiveEntry, describeEventDurations, describeEventStatus, describeFinancialBreakdown, formatAvailabilityPercent, formatDowntimeDateTime, formatProductionDowntimeMinutes, monthToPeriod, causeLabel, NOT_CONFIGURED_LABEL } from './downtimeModel.js'
 import { ticketStatusLabels } from '../maintenance/maintenanceUtils.js'
 import { EndDowntimeDialog } from './EndDowntimeDialog.jsx'
 import { StartDowntimeDialog } from './StartDowntimeDialog.jsx'
@@ -41,6 +41,7 @@ function HistoryEntry({ event, timezone, onOpenTicket }) {
   const state = describeEventStatus(event)
   const durations = describeEventDurations(event)
   const machine = event.machine
+  const money = describeFinancialBreakdown(event.financial)
   const identity = [machine?.machine_code && machine?.display_name ? machine.machine_code : null, event.branch_name, causeLabel(event.cause), event.error_code_text].filter(Boolean).join(' · ')
   return (
     <li>
@@ -51,6 +52,10 @@ function HistoryEntry({ event, timezone, onOpenTicket }) {
         <div><dt>Durasi</dt><dd>{durations.elapsedText}</dd></div>
         <div><dt>Downtime Produksi</dt><dd>{durations.productionText}</dd></div>
       </dl>
+      {money && <dl className="downtime-history-meta downtime-history-financial" aria-label="Estimasi dampak finansial">
+        <div><dt>Biaya Operasional Terdampak</dt><dd>{money.operatingCost}<small>Tarif {money.costRate}</small></dd></div>
+        <div><dt>Potensi Pendapatan Hilang</dt><dd>{money.lostRevenue}<small>Tarif {money.revenueRate}</small></dd></div>
+      </dl>}
       <div className="downtime-history-ticket">
         <span className={`machine-status ${state.state === 'active' ? 'machine-status-down' : ''}`}>{state.label}</span>
         {event.maintenance_ticket

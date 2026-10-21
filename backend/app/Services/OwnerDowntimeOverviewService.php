@@ -8,8 +8,10 @@ use Carbon\CarbonImmutable;
 
 /**
  * Owner downtime KPIs. Single source of truth for Overview and Reports; the
- * frontend only renders what this returns. Deliberately excludes OEE/MTBF/financial
- * projections.
+ * frontend only renders what this returns. Deliberately excludes OEE/MTBF.
+ * Financial impact (opt-in via $includeFinancial) is production downtime x a configured
+ * hourly rate per machine (DowntimeFinancialImpact); operating cost and lost revenue stay
+ * separate estimates, and a machine without a rate is never counted as Rp0.
  *
  * KPI semantics (each testable in DowntimeKpiAnalyticsTest):
  *
@@ -43,10 +45,10 @@ class OwnerDowntimeOverviewService
      * $periodStartDate/$periodEndDate are inclusive local calendar dates (Y-m-d).
      * $detail adds the Reports breakdowns (trend, machine ranking, causes).
      */
-    public function build(string $accountId, ?string $branchId, ?string $machineId, string $periodStartDate, string $periodEndDate, ?array $authorizedBranches, bool $detail = false): array
+    public function build(string $accountId, ?string $branchId, ?string $machineId, string $periodStartDate, string $periodEndDate, ?array $authorizedBranches, bool $detail = false, bool $includeFinancial = false): array
     {
         $now = CarbonImmutable::now();
-        $machines = Machine::with(['branch', 'account'])->where('account_id', $accountId)->where('status', '!=', 'retired')
+        $machines = Machine::with(['branch', 'account', 'financialRate'])->where('account_id', $accountId)->where('status', '!=', 'retired')
             ->when($authorizedBranches !== null, fn ($q) => $q->whereIn('branch_id', $authorizedBranches))
             ->when($branchId, fn ($q) => $q->where('branch_id', $branchId))
             ->when($machineId, fn ($q) => $q->whereKey($machineId))
@@ -63,6 +65,10 @@ class OwnerDowntimeOverviewService
         $ranking = [];
         $causes = [];
         $codes = [];
+        $costTotal = 0;
+        $revenueTotal = 0;
+        $costRated = 0;
+        $revenueRated = 0;
 
         foreach ($machines as $machine) {
             [$periodStart, $periodEnd] = $this->tz->range($machine, $periodStartDate, $periodEndDate);
@@ -92,8 +98,19 @@ class OwnerDowntimeOverviewService
                 $totalScheduled += $scheduled;
                 $totalProductionDowntime += $production;
             }
+            $money = DowntimeFinancialImpact::forMachine($machine->financialRate, $production);
+            if ($includeFinancial) {
+                if ($money['operating_cost_impact'] !== null) {
+                    $costTotal += $money['operating_cost_impact'];
+                    $costRated++;
+                }
+                if ($money['potential_lost_revenue'] !== null) {
+                    $revenueTotal += $money['potential_lost_revenue'];
+                    $revenueRated++;
+                }
+            }
             if ($detail && $machineEvents->isNotEmpty()) {
-                $ranking[] = [
+                $ranking[] = ($includeFinancial ? $money : []) + [
                     'machine_id' => $machine->id, 'machine_code' => $machine->machine_code, 'machine_name' => $machine->display_name, 'branch_name' => $machine->branch?->name,
                     'event_count' => $machineEvents->count(), 'production_downtime_minutes' => $production,
                     'availability_percent' => ($isConfigured && $scheduled > 0) ? round((($scheduled - $production) / $scheduled) * 100, 1) : null,
@@ -138,6 +155,15 @@ class OwnerDowntimeOverviewService
                 ] : null,
             ])->values(),
         ];
+
+        if ($includeFinancial) {
+            $count = $machines->count();
+            $result['financial'] = [
+                'production_downtime_minutes' => $result['production_downtime_minutes'],
+                'operating_cost_impact' => ['amount' => $costRated > 0 ? $costTotal : null, 'rated_machine_count' => $costRated, 'status' => DowntimeFinancialImpact::status($costRated, $count)],
+                'potential_lost_revenue' => ['amount' => $revenueRated > 0 ? $revenueTotal : null, 'rated_machine_count' => $revenueRated, 'status' => DowntimeFinancialImpact::status($revenueRated, $count)],
+            ];
+        }
 
         if ($detail) {
             usort($ranking, fn ($a, $b) => [$b['production_downtime_minutes'] ?? -1, $b['event_count']] <=> [$a['production_downtime_minutes'] ?? -1, $a['event_count']]);

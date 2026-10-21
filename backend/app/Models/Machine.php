@@ -42,6 +42,11 @@ class Machine extends Model
         return $this->hasMany(CounterReading::class);
     }
 
+    public function financialRate()
+    {
+        return $this->hasOne(MachineFinancialRate::class);
+    }
+
     public function components()
     {
         return $this->hasMany(MachineComponent::class);

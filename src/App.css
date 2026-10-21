@@ -2329,3 +2329,20 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .field-experience-activities li { min-width: 0; display: grid; gap: 2px; padding-left: 10px; border-left: 2px solid var(--border, rgba(128, 128, 128, .3)); }
 .field-experience-activities p { margin: 0; overflow-wrap: anywhere; font-size: 13px; line-height: 1.5; white-space: pre-wrap; }
 .field-experience-activities small, .field-experience-findings { color: var(--text-muted); font-size: 11px; }
+
+/* Financial Impact (estimates) - reuses .overview-target-metrics / .downtime-history-meta */
+.financial-impact { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--border, rgba(128,128,128,.25)); }
+.financial-impact h3 { margin: 0; font-size: 13px; font-weight: 720; }
+.financial-impact h3 small { margin-left: 6px; font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: .05em; }
+.financial-impact .overview-target-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); margin-top: 12px; }
+.financial-impact > p, .financial-note { margin: 10px 0 0; font-size: 11px; color: var(--text-muted); }
+.financial-breakdown ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.financial-breakdown li > strong { font-size: 13px; }
+.financial-breakdown dl { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 6px 0 0; }
+.financial-breakdown dt, .downtime-history-financial dt { color: var(--text-muted); font-size: 10px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; }
+.financial-breakdown dd, .downtime-history-financial dd { margin: 4px 0 0; font-weight: 680; }
+.financial-breakdown dd small, .downtime-history-financial dd small { display: block; font-size: 10px; font-weight: 600; color: var(--text-muted); }
+.financial-rates-panel form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)) auto; gap: 12px; align-items: end; }
+@media (max-width: 720px) {
+  .financial-impact .overview-target-metrics, .financial-breakdown dl, .financial-rates-panel form { grid-template-columns: minmax(0, 1fr); }
+}

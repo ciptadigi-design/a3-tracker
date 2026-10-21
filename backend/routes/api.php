@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\HealthController;
 use App\Http\Controllers\Api\IncidentsController;
 use App\Http\Controllers\Api\InventoryController;
 use App\Http\Controllers\Api\MachineCostController;
+use App\Http\Controllers\Api\MachineFinancialRateController;
 use App\Http\Controllers\Api\MaintenanceDocumentController;
 use App\Http\Controllers\Api\MaintenanceFieldExperienceController;
 use App\Http\Controllers\Api\MaintenanceKnowledgeBaseController;
@@ -125,6 +126,8 @@ Route::prefix('v1')->middleware('request.id')->group(function () {
             Route::post('selling-prices/{price}/void', [MachineCostController::class, 'voidSellingPrice']);
             Route::post('machines/{machine}/cost/operating-costs', [MachineCostController::class, 'createOperatingCost']);
             Route::post('operating-costs/{cost}/void', [MachineCostController::class, 'voidOperatingCost']);
+            Route::get('machines/{machine}/financial-rates', [MachineFinancialRateController::class, 'show']);
+            Route::put('machines/{machine}/financial-rates', [MachineFinancialRateController::class, 'update']);
             Route::get('machines/{machine}/click-target', [ClickTargetController::class, 'show']);
             Route::put('machines/{machine}/click-target', [ClickTargetController::class, 'upsertTarget']);
             Route::get('machines/{machine}/click-target/history', [ClickTargetController::class, 'history']);

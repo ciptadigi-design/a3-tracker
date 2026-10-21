@@ -37,7 +37,9 @@ class GovernanceAudit
         // OMITTED_FIELDS below.
         'cause', 'error_code_text', 'actual_start_at', 'actual_end_at', 'is_backdated', 'closed_by', 'downtime_event_id', 'day_of_week', 'is_operating', 'start_time', 'end_time', 'crosses_midnight', 'exception_date', 'override_start_time', 'override_end_time',
         // Phase 3.2 - maintenance activity/resolution: identifiers and a short enum label only; resolution prose stays out.
-        'internal_pic_person_id', 'internal_pic_name', 'external_vendor_name', 'resolution_test_result', 'resolved_by', 'operator_person_id', 'corrects_action_id'];
+        'internal_pic_person_id', 'internal_pic_name', 'external_vendor_name', 'resolution_test_result', 'resolved_by', 'operator_person_id', 'corrects_action_id',
+        // Financial impact - configured hourly estimates (whole Rupiah), no free text.
+        'operating_cost_per_hour', 'estimated_revenue_per_hour'];
 
     public const OMITTED_FIELDS = ['notes', 'description', 'address', 'phone', 'email', 'contact_name', 'linked_user_id', 'serial_number', 'problem', 'symptoms', 'solution', 'success_notes', 'manufacturer_description', 'operator_description', 'official_solution', 'solution_summary', 'instruction', 'file_path', 'operator_solution', 'technician_solution', 'error_message', 'raw_text', 'resolution_note', 'note', 'resolution_cause', 'resolution_action', 'resolution_notes', 'findings', 'correction_reason'];
 

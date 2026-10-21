@@ -16,7 +16,7 @@ import { loadClickTargetProjection } from '../services/clickTargets.js'
 import { createUIStateKey } from '../features/uiState/uiStateKeys.js'
 import { usePersistentUIState } from '../features/uiState/usePersistentUIState.js'
 import { userErrorMessage } from '../lib/appErrors.js'
-import { describeOwnerKpis, summarizeMachineHealth } from '../features/downtime/downtimeModel.js'
+import { describeFinancialImpact, describeOwnerKpis, FINANCIAL_ESTIMATE_NOTE, summarizeMachineHealth } from '../features/downtime/downtimeModel.js'
 import { loadDowntimeOverview } from '../services/downtime.js'
 
 function MachineHealthSection({ account, branch, machine, period }) {
@@ -40,6 +40,7 @@ function MachineHealthSection({ account, branch, machine, period }) {
 
   const health = overview ? summarizeMachineHealth({ machines: [machine], attention: overview.attention ?? [] }) : null
   const kpi = describeOwnerKpis(overview)
+  const money = describeFinancialImpact(overview?.financial)
   const pending = !health
   const dash = '\u2014'
 
@@ -58,6 +59,18 @@ function MachineHealthSection({ account, branch, machine, period }) {
           <div><dt>Jumlah Downtime</dt><dd>{pending ? dash : kpi.eventCount}{!pending && kpi.ongoingCount > 0 && <small>{kpi.ongoingCount} masih berjalan</small>}</dd></div>
           <div><dt>Rata-rata Pemulihan</dt><dd>{pending ? dash : kpi.recovery}{!pending && kpi.completedCount > 0 && <small>dari {kpi.completedCount} insiden selesai</small>}</dd></div>
         </dl>
+      )}
+
+      {!error && money && (
+        <div className="financial-impact" aria-label="Dampak finansial">
+          <h3>Dampak Finansial <small>Estimasi</small></h3>
+          <dl className="overview-target-metrics">
+            <div><dt>Downtime Produksi</dt><dd>{money.productionDowntime}</dd></div>
+            <div><dt>Biaya Operasional Terdampak</dt><dd>{money.operatingCost.value}{money.operatingCost.partialNote && <small>{money.operatingCost.partialNote}</small>}</dd></div>
+            <div><dt>Potensi Pendapatan Hilang</dt><dd>{money.lostRevenue.value}{money.lostRevenue.partialNote && <small>{money.lostRevenue.partialNote}</small>}</dd></div>
+          </dl>
+          <p>{FINANCIAL_ESTIMATE_NOTE} Diatur di Machine Cost › Tarif Per Jam.</p>
+        </div>
       )}
     </section>
   )

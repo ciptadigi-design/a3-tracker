@@ -10,6 +10,7 @@ use App\Models\Machine;
 use App\Services\AccountAccessResolver;
 use App\Services\BranchAccessResolver;
 use App\Services\DowntimeDurationCalculator;
+use App\Services\DowntimeFinancialImpact;
 use App\Services\DowntimeService;
 use App\Services\EffectiveCapabilityResolver;
 use App\Services\GovernanceAudit;
@@ -132,7 +133,7 @@ class DowntimeController extends Controller
                     }
                 });
             }
-        })->with(['machine.branch', 'machine.account', 'branch', 'notes', 'maintenanceTicket:id,downtime_event_id,status']);
+        })->with(['machine.branch', 'machine.account', 'machine.financialRate', 'branch', 'notes', 'maintenanceTicket:id,downtime_event_id,status']);
 
         if (! empty($v['machine_id'])) {
             $q->where('machine_id', $v['machine_id']);
@@ -156,7 +157,8 @@ class DowntimeController extends Controller
 
         $calc = app(DowntimeDurationCalculator::class);
         $page = $q->orderByDesc('actual_start_at')->paginate((int) ($v['per_page'] ?? 25));
-        $page->getCollection()->transform(function (DowntimeEvent $e) use ($calc) {
+        $canSeeFinancial = [];
+        $page->getCollection()->transform(function (DowntimeEvent $e) use ($calc, $r, &$canSeeFinancial) {
             $start = CarbonImmutable::parse($e->actual_start_at);
             $end = $e->actual_end_at ? CarbonImmutable::parse($e->actual_end_at) : CarbonImmutable::now();
             $note = $e->notes->last();
@@ -166,6 +168,8 @@ class DowntimeController extends Controller
             $row['branch_name'] = $e->branch?->name;
             $row['elapsed_minutes'] = $calc->elapsedMinutes($start, $end);
             $row['production_downtime_minutes'] = $e->machine ? $calc->productionDowntimeMinutes($e->machine, $start, $end) : null;
+            $canSeeFinancial[$e->account_id] ??= $e->machine && app(EffectiveCapabilityResolver::class)->allows($r->user(), $e->machine->account, 'machine_cost.view');
+            $row['financial'] = $canSeeFinancial[$e->account_id] ? DowntimeFinancialImpact::forMachine($e->machine->financialRate, $row['production_downtime_minutes']) : null;
             $row['note_count'] = $e->notes->count();
             $row['latest_note'] = $note ? ['note' => $note->note, 'occurred_at' => $note->occurred_at] : null;
 
@@ -193,6 +197,6 @@ class DowntimeController extends Controller
             $allowed = $account->branches()->where('is_active', true)->whereIn('id', $allowed)->pluck('id')->all();
         }
 
-        return response()->json(['data' => app(OwnerDowntimeOverviewService::class)->build($account->id, $v['branch_id'] ?? null, $v['machine_id'] ?? null, $v['period_start'], $v['period_end'], $allowed, (bool) ($v['detail'] ?? false))]);
+        return response()->json(['data' => app(OwnerDowntimeOverviewService::class)->build($account->id, $v['branch_id'] ?? null, $v['machine_id'] ?? null, $v['period_start'], $v['period_end'], $allowed, (bool) ($v['detail'] ?? false), app(EffectiveCapabilityResolver::class)->allows($r->user(), $account, 'machine_cost.view'))]);
     }
 }
