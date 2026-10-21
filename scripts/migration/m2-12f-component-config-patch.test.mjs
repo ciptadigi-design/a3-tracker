@@ -1,15 +1,18 @@
 import assert from 'node:assert/strict'
-import { readFile } from 'node:fs/promises'
+import { access, readFile } from 'node:fs/promises'
 import test from 'node:test'
 
 import { buildPlans, evaluateCompareAndSet, EXPECTED_NEW_SHA256, EXPECTED_PRODUCTION_SHA256 } from './m2-12f-component-config-patch.mjs'
 
 const capture = name => new URL(`../../.migration-private/m2-12f/20260903T094556Z/${name}`, import.meta.url)
-const source = JSON.parse(await readFile(capture('new-supabase.json'), 'utf8'))
-const production = JSON.parse(await readFile(capture('production-mariadb.json'), 'utf8'))
-const { patch, rollback } = buildPlans(source, production)
+// The raw captures hold operational data and live only in .migration-private (never committed); skip where absent (CI).
+const present = await access(capture('new-supabase.json')).then(() => access(capture('production-mariadb.json'))).then(() => true, () => false)
+const skip = present ? false : 'private M2.12F captures not available'
+const source = present ? JSON.parse(await readFile(capture('new-supabase.json'), 'utf8')) : null
+const production = present ? JSON.parse(await readFile(capture('production-mariadb.json'), 'utf8')) : null
+const { patch, rollback } = present ? buildPlans(source, production) : {}
 
-test('COMPONENT_PATCH_UPDATE_ONLY_TEST=PASS', () => {
+test('COMPONENT_PATCH_UPDATE_ONLY_TEST=PASS', { skip }, () => {
   assert.equal(patch.updates.length, 126)
   assert.equal(patch.update_counts.distinct_rows, 60)
   assert.ok(patch.updates.every(row => row.operation === 'UPDATE'))
@@ -21,17 +24,17 @@ test('COMPONENT_PATCH_UPDATE_ONLY_TEST=PASS', () => {
   assert.ok(patch.row_reviews.every(row => row.fields.length > 0 && row.fields.every(field => field.classification && field.decision && field.reason)))
 })
 
-test('NO_COMPONENT_CREATE_TEST=PASS', () => {
+test('NO_COMPONENT_CREATE_TEST=PASS', { skip }, () => {
   assert.deepEqual(patch.invariants.creates, { component_catalogs: 0, model_profile_slots: 0, machine_components: 0, component_lifecycles: 0 })
   assert.doesNotMatch(JSON.stringify(patch.updates), /"operation":"(?:CREATE|INSERT)"/)
 })
 
-test('NO_LIFECYCLE_MUTATION_TEST=PASS', () => {
+test('NO_LIFECYCLE_MUTATION_TEST=PASS', { skip }, () => {
   assert.ok(patch.updates.every(row => row.domain !== 'component_lifecycles'))
   assert.deepEqual(patch.invariants.before, patch.invariants.expected_after)
 })
 
-test('NO_DEV_UUID_WRITE_TEST=PASS', () => {
+test('NO_DEV_UUID_WRITE_TEST=PASS', { skip }, () => {
   const referenceIds = new Set(Object.values(source.tables).flatMap(rows => rows.flatMap(row => Object.entries(row)
     .filter(([key, value]) => (key === 'id' || key.endsWith('_id')) && typeof value === 'string')
     .map(([, value]) => value))))
@@ -42,7 +45,7 @@ test('NO_DEV_UUID_WRITE_TEST=PASS', () => {
   assert.doesNotMatch(JSON.stringify(patch), /created_by|updated_by|auth_user/)
 })
 
-test('COMPARE_AND_SET_PRECONDITION_TEST=PASS', () => {
+test('COMPARE_AND_SET_PRECONDITION_TEST=PASS', { skip }, () => {
   for (const update of patch.updates) {
     assert.equal(update.precondition.expected_current_value, update.current_value)
     assert.match(update.compare_and_set.sql_template, /^UPDATE (component_catalogs|model_profile_slots|machine_components) SET [a-z_]+ = \? WHERE id = \? AND [a-z_]+ <=> \?$/)
@@ -53,7 +56,7 @@ test('COMPARE_AND_SET_PRECONDITION_TEST=PASS', () => {
   }
 })
 
-test('UNEXPECTED_PRODUCTION_STATE_FAIL_CLOSED_TEST=PASS', () => {
+test('UNEXPECTED_PRODUCTION_STATE_FAIL_CLOSED_TEST=PASS', { skip }, () => {
   for (const update of patch.updates) {
     const unexpected = typeof update.current_value === 'number' ? -999 : '__unexpected__'
     assert.equal(evaluateCompareAndSet(unexpected, update), 'FAIL_CLOSED_UNEXPECTED_PRODUCTION_STATE')
@@ -61,7 +64,7 @@ test('UNEXPECTED_PRODUCTION_STATE_FAIL_CLOSED_TEST=PASS', () => {
   }
 })
 
-test('COMPONENT_PATCH_ROLLBACK_PLAN_TEST=PASS', () => {
+test('COMPONENT_PATCH_ROLLBACK_PLAN_TEST=PASS', { skip }, () => {
   assert.equal(rollback.plan_only, true)
   assert.equal(rollback.executed, false)
   assert.equal(rollback.updates.length, patch.updates.length)
@@ -76,7 +79,7 @@ test('COMPONENT_PATCH_ROLLBACK_PLAN_TEST=PASS', () => {
   }
 })
 
-test('COMPONENT_ROW_COUNTS_UNCHANGED_TEST=PASS', () => {
+test('COMPONENT_ROW_COUNTS_UNCHANGED_TEST=PASS', { skip }, () => {
   assert.equal(production.tables.component_catalogs.length, 28)
   assert.equal(production.tables.model_profiles.length, 1)
   assert.equal(production.tables.model_profile_slots.length, 28)
@@ -91,14 +94,14 @@ test('COMPONENT_ROW_COUNTS_UNCHANGED_TEST=PASS', () => {
   assert.equal(patch.invariants.expected_row_count_change, 0)
 })
 
-test('capture identities and classification totals remain fixed', () => {
+test('capture identities and classification totals remain fixed', { skip }, () => {
   assert.equal(patch.capture_identity.new_supabase_sha256, EXPECTED_NEW_SHA256)
   assert.equal(patch.capture_identity.production_mariadb_sha256, EXPECTED_PRODUCTION_SHA256)
   assert.deepEqual(patch.classification_counts, { RUNTIME_REQUIRED: 96, CANONICAL_METADATA: 30, REPRESENTATIONAL_ONLY: 0, UNSAFE_OR_AMBIGUOUS: 0 })
   assert.deepEqual(patch.update_counts.by_domain_field_updates, { component_catalogs: 4, model_profile_slots: 47, machine_components: 75 })
 })
 
-test('generator source is offline-only', async () => {
+test('generator source is offline-only', { skip }, async () => {
   const script = await readFile(new URL('./m2-12f-component-config-patch.mjs', import.meta.url), 'utf8')
   assert.doesNotMatch(script, /\bfetch\s*\(/)
   assert.doesNotMatch(script, /node:(?:net|http|https|tls|child_process)/)
