@@ -56,12 +56,13 @@ test('activity history keeps chronological groups, corrections and the correctio
   assert.match(detail, /Temuan: \{original\.findings\}/)
 })
 
-test('downtime history rows use one aligned grid with status and ticket grouped, and responsive fallbacks', () => {
+test('downtime history rows are two-level cards (operations, then financial + ticket) with responsive fallbacks', () => {
   assert.match(condition, /className="downtime-history-meta"/)
+  assert.match(condition, /className="downtime-history-finance"/)
   assert.match(condition, /className="downtime-history-ticket"/)
-  assert.match(ruleFor('.downtime-history-list li'), /align-items: start/)
-  assert.match(ruleFor('.downtime-history-meta'), /repeat\(4, minmax\(0, 1fr\)\)/)
-  assert.doesNotMatch(ruleFor('.downtime-history-list li') + ruleFor('.downtime-history-meta') + ruleFor('.downtime-history-ticket'), /min-height|\bheight:/)
+  assert.match(ruleFor('.downtime-history-list li.downtime-history-item'), /align-items: start/)
+  assert.match(ruleFor('.downtime-history-meta'), /repeat\(auto-fit, minmax\(130px, 1fr\)\)/)
+  assert.doesNotMatch(ruleFor('.downtime-history-list li.downtime-history-item') + ruleFor('.downtime-history-meta') + ruleFor('.downtime-history-ticket'), /min-height|\bheight:/)
   assert.match(css, /@media \(max-width: 760px\) \{\n {2}\.downtime-history-meta \{ grid-template-columns: repeat\(2/)
   assert.match(css, /\.downtime-history-ticket button \{ width: 100%; min-height: 44px; \}/)
 })
