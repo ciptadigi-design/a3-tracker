@@ -102,6 +102,18 @@ jobs:
           sec "OTHER LARGE DIRECTORIES UNDER HOME (depth 2, >50M)"
           du -h --max-depth=2 "$HOME" 2>/dev/null | awk '{ if ($1 ~ /[0-9]G$/ || ($1 ~ /M$/ && $1+0 >= 50)) print }' | sort -rh | head -25
 
+          sec "FILE (INODE) COUNTS - read-only count of entries, no contents"
+          cnt() { find "$1" -xdev 2>/dev/null | wc -l; }
+          echo "HOME_ENTRIES=$(cnt "$HOME")"
+          for p in "$HOME"/* "$HOME"/.[!.]*; do [ -e "$p" ] && printf '%s\t%s\n' "$(cnt "$p")" "$p"; done | sort -rn | head -10
+          echo "RELEASES_ENTRIES=$(cnt "$APP/releases")"
+          echo "ACTIVE_RELEASE_ENTRIES=$(cnt "$CUR")"
+          echo "PARTIAL_TARGET_RELEASE_ENTRIES=$(cnt "$APP/releases/eb815065786528293c36ce5123b7ca8248637721")"
+          echo "ACTIVE_RELEASE_VENDOR_ENTRIES=$(cnt "$CUR/backend/vendor")"
+          echo "ACTIVE_RELEASE_DIST_ENTRIES=$(cnt "$CUR/dist")"
+          echo "BACKUPS_ENTRIES=$(cnt "$APP/backups")"
+          echo "SHARED_ENTRIES=$(cnt "$APP/shared")"
+
           sec "PUBLIC_HTML SIZE"
           echo "PUBLIC_HTML=$(sz "$HOME/domains/a3.ciptagrafika.com/public_html")"
           echo; echo "INSPECTION=READ_ONLY_COMPLETE"
