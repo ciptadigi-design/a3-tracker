@@ -12,7 +12,7 @@ No written coverage criteria exist in the repo; the item is only named in `PHASE
 - **USER** J-code search confirmed by the user (acceptance doc).
 - Production field-experience rows were not read (no authenticated access; private data).
 
-## Sample (13 cases)
+## Sample (12 table rows, 13 codes)
 | Case | Code | Variant / page | Result | Evidence |
 |---|---|---|---|---|
 | C, official solution, single | C-3913 | MAIN_BODY, p1606, 5 steps | PASS | SRC all text/steps match |
@@ -44,7 +44,7 @@ Mechanical cross-check on the full datasets: 628/628 C and 375/376 J entries mat
 | Production field-experience content | BLOCKED | needs authenticated access; private data |
 
 ## Classification
-PASS 10 of the 12 content cases, PARTIAL 1 (numeric-only official search), GAP 1 case covering two codes (J-7272 SD-510, J-7524 FD), BLOCKED 1 (Production field-experience content). Details above.
+Content: PASS 11, GAP 1 (row covering two codes: J-7272 SD-510, J-7524 FD). Search: PARTIAL 1 (numeric-only official search is C-only), BLOCKED 1 (Production field-experience content), the rest PASS. Details above.
 
 ## Local test evidence
 Backend maintenance suites (Jam, Official Knowledge, Ingestion, Field Experience, Assisted, Error Knowledge, Troubleshooting flow): 74 passed, 1 SQLite-only failure (`MaintenanceOfficialKnowledgeTest` rollback test, pre-existing, green on MySQL CI); real-manual reproduction test passed with the source PDF; ingestion tests 25 passed. Frontend troubleshooting node tests 44/44.
